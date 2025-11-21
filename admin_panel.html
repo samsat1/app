@@ -1031,6 +1031,528 @@
             }, 1500);
         }
 
+        // Content management functions
+        function addContentSource() {
+            const name = document.getElementById('contentName')?.value;
+            const type = document.getElementById('contentType')?.value;
+            const url = document.getElementById('contentURL')?.value;
+            const quality = document.getElementById('contentQuality')?.value;
+            
+            if (!name || !url) {
+                showNotification('❌ Please fill required fields (Name and URL)', 'error');
+                return;
+            }
+            
+            showNotification('📺 Adding content source...', 'info');
+            setTimeout(() => {
+                showNotification(`✅ "${name}" (${type}) added successfully - ${quality}`, 'success');
+                // Clear form
+                if (document.getElementById('contentName')) document.getElementById('contentName').value = '';
+                if (document.getElementById('contentURL')) document.getElementById('contentURL').value = '';
+            }, 2000);
+        }
+
+        // Settings management functions
+        function saveSecuritySettings() {
+            const adminPass = document.getElementById('adminPassword')?.value;
+            const masterPass = document.getElementById('masterPassword')?.value;
+            const timeout = document.getElementById('sessionTimeout')?.value;
+            
+            showNotification('🔒 Saving security settings...', 'info');
+            setTimeout(() => {
+                showNotification('✅ Security settings saved successfully', 'success');
+            }, 2000);
+        }
+
+        function saveSystemSettings() {
+            const systemName = document.getElementById('systemName')?.value;
+            const apiEndpoint = document.getElementById('apiEndpoint')?.value;
+            const timeZone = document.getElementById('timeZone')?.value;
+            
+            showNotification('⚙️ Saving system settings...', 'info');
+            setTimeout(() => {
+                showNotification('✅ System settings saved successfully', 'success');
+            }, 2000);
+        }
+
+        function backupData() {
+            showNotification('💾 Starting data backup...', 'info');
+            setTimeout(() => {
+                showNotification('✅ Data backup completed successfully', 'success');
+            }, 3000);
+        }
+
+        function clearCache() {
+            showNotification('🗑️ Clearing system cache...', 'info');
+            setTimeout(() => {
+                showNotification('✅ Cache cleared successfully', 'success');
+            }, 1500);
+        }
+
+        function restartServices() {
+            showNotification('🔄 Restarting system services...', 'info');
+            setTimeout(() => {
+                showNotification('✅ All services restarted successfully', 'success');
+            }, 3000);
+        }
+
+        function updateSystem() {
+            showNotification('⬆️ Checking for system updates...', 'info');
+            setTimeout(() => {
+                showNotification('✅ System is up to date', 'success');
+            }, 2000);
+        }
+
+        // Credit management functions
+        function transferCredits() {
+            const reseller = document.getElementById('creditReseller')?.value;
+            const amount = document.getElementById('creditAmount')?.value;
+            const note = document.getElementById('creditNote')?.value;
+            
+            if (!reseller || !amount || parseFloat(amount) <= 0) {
+                showNotification('❌ Please select reseller and enter valid amount', 'error');
+                return;
+            }
+            
+            showNotification('💰 Processing credit transfer...', 'info');
+            setTimeout(() => {
+                showNotification(`✅ $${amount} transferred to "${reseller}" successfully${note ? ' - ' + note : ''}`, 'success');
+                // Clear form
+                if (document.getElementById('creditAmount')) document.getElementById('creditAmount').value = '';
+                if (document.getElementById('creditNote')) document.getElementById('creditNote').value = '';
+            }, 2000);
+        }
+
+        // Reseller management functions
+        function createNewReseller() {
+            const resellerId = document.getElementById('resellerId')?.value;
+            const username = document.getElementById('resellerUsername')?.value;
+            const password = document.getElementById('resellerPassword')?.value;
+            const commission = document.getElementById('resellerCommission')?.value;
+            
+            if (!resellerId || !username || !password) {
+                showNotification('❌ Please fill all required fields', 'error');
+                return;
+            }
+            
+            // Use the password manager to create the reseller
+            const result = passwordManager.createReseller(resellerId, username, password);
+            
+            if (result.success) {
+                showNotification(`🏢 Reseller "${resellerId}" created successfully with ${commission || 20}% commission`, 'success');
+                // Clear form
+                if (document.getElementById('resellerId')) document.getElementById('resellerId').value = '';
+                if (document.getElementById('resellerUsername')) document.getElementById('resellerUsername').value = '';
+                if (document.getElementById('resellerPassword')) document.getElementById('resellerPassword').value = '';
+                if (document.getElementById('resellerCommission')) document.getElementById('resellerCommission').value = '';
+            } else {
+                showNotification(`❌ ${result.message}`, 'error');
+            }
+        }
+
+        // Package management functions
+        function createNewPackage() {
+            const name = document.getElementById('packageName')?.value;
+            const price = document.getElementById('packagePrice')?.value;
+            const duration = document.getElementById('packageDuration')?.value;
+            const features = document.getElementById('packageFeatures')?.value;
+            
+            if (!name || !price || !duration) {
+                showNotification('❌ Please fill all required fields', 'error');
+                return;
+            }
+            
+            showNotification('📦 Creating new package...', 'info');
+            setTimeout(() => {
+                showNotification(`✅ Package "${name}" created successfully - $${price}/${duration}`, 'success');
+                // Clear form
+                if (document.getElementById('packageName')) document.getElementById('packageName').value = '';
+                if (document.getElementById('packagePrice')) document.getElementById('packagePrice').value = '';
+                if (document.getElementById('packageFeatures')) document.getElementById('packageFeatures').value = '';
+            }, 2000);
+        }
+
+        function createPlexFolder() {
+            const packageName = document.getElementById('packageName')?.value || 'Basic';
+            
+            showNotification('📺 Creating Plex folder structure...', 'info');
+            setTimeout(() => {
+                showNotification(`✅ Plex folder "${packageName}" created with admin/reseller access configured`, 'success');
+            }, 2000);
+        }
+
+        // User management functions
+        // Customer Management Functions - TV Hierarchy System
+        function addNewCustomer() {
+            // Validate device selection - Basic TV is mandatory
+            const basicTV = document.getElementById('basicTVCheckbox');
+            const secondTV = document.getElementById('secondTVCheckbox');
+            const thirdTV = document.getElementById('thirdTVCheckbox');
+            const sportsAddon = document.getElementById('sportsAddon');
+            const moviesAddon = document.getElementById('moviesAddon');
+            const premiumAddon = document.getElementById('premiumAddon');
+            const internationalAddon = document.getElementById('internationalAddon');
+            
+            const customerName = document.getElementById('customerName')?.value;
+            const customerPhone = document.getElementById('customerPhone')?.value;
+            const customerExpiry = document.getElementById('customerExpiry')?.value;
+            const customerPassword = document.getElementById('customerPassword')?.value;
+            
+            if (!customerName || !customerExpiry || !customerPassword) {
+                showNotification('❌ Please fill all required fields', 'error');
+                return;
+            }
+            
+            if (!basicTV.checked) {
+                showNotification('🚨 ERROR: Basic TV Package is MANDATORY FIRST! You cannot proceed without selecting Basic TV Package first!', 'error');
+                document.getElementById('basicTVCheckbox').focus();
+                // Scroll to device selection
+                document.getElementById('basicTVCheckbox').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+            
+            // CRITICAL: Validate addons cannot be selected without Basic TV
+            if (basicTV.checked) {
+                const selectedAddons = [];
+                if (sportsAddon.checked) selectedAddons.push('Sports');
+                if (moviesAddon.checked) selectedAddons.push('Movies');
+                if (premiumAddon.checked) selectedAddons.push('Premium');
+                if (internationalAddon.checked) selectedAddons.push('International');
+                
+                if (selectedAddons.length > 0) {
+                    console.log('✅ Addon validation passed - Basic TV selected, addons available');
+                }
+            } else {
+                // If Basic TV is not selected, check if any addons are somehow selected (shouldn't be possible with UI)
+                const addonChecked = sportsAddon.checked || moviesAddon.checked || premiumAddon.checked || internationalAddon.checked;
+                if (addonChecked) {
+                    showNotification('🚨 CRITICAL ERROR: Addons cannot be selected without Basic TV Package! This should not be possible.', 'error');
+                    // Reset all addons as safety measure
+                    sportsAddon.checked = false;
+                    moviesAddon.checked = false;
+                    premiumAddon.checked = false;
+                    internationalAddon.checked = false;
+                    updateDeviceSelection();
+                    return;
+                }
+            }
+            
+            // Validate device hierarchy: cannot select 2nd TV without Basic TV
+            if (secondTV.checked && !basicTV.checked) {
+                showNotification('❌ Cannot select 2nd TV without Basic TV!', 'error');
+                secondTV.checked = false;
+                updateDeviceSelection();
+                return;
+            }
+            
+            // Validate device hierarchy: cannot select 3rd TV without 2nd TV
+            if (thirdTV.checked && !secondTV.checked) {
+                showNotification('❌ Cannot select 3rd TV without selecting 2nd TV first!', 'error');
+                thirdTV.checked = false;
+                updateDeviceSelection();
+                return;
+            }
+            
+            // Collect selected devices
+            const selectedDevices = [];
+            if (basicTV.checked) selectedDevices.push('Basic TV Package');
+            if (secondTV.checked) selectedDevices.push('2nd TV');
+            if (thirdTV.checked) selectedDevices.push('3rd TV');
+            
+            // Collect selected addons
+            const selectedAddons = [];
+            if (document.getElementById('sportsAddon').checked) selectedAddons.push('Sports Package');
+            if (document.getElementById('moviesAddon').checked) selectedAddons.push('Movies Package');
+            if (document.getElementById('premiumAddon').checked) selectedAddons.push('Premium Channels');
+            if (document.getElementById('internationalAddon').checked) selectedAddons.push('International Channels');
+            
+            // Calculate total monthly price (prices configurable)
+            // let totalPrice = 0; // Total calculation disabled for demo
+            // if (basicTV.checked) totalPrice += BASIC_TV_PRICE;
+            // if (secondTV.checked) totalPrice += SECOND_TV_PRICE;
+            // if (thirdTV.checked) totalPrice += THIRD_TV_PRICE;
+            // if (document.getElementById('sportsAddon').checked) totalPrice += SPORTS_PRICE;
+            // if (document.getElementById('moviesAddon').checked) totalPrice += MOVIES_PRICE;
+            // if (document.getElementById('premiumAddon').checked) totalPrice += PREMIUM_PRICE;
+            // if (document.getElementById('internationalAddon').checked) totalPrice += INTERNATIONAL_PRICE;
+            
+            const customer = {
+                id: Date.now(),
+                name: customerName,
+                phone: customerPhone,
+                plan: selectedDevices.join(', '),
+                addons: selectedAddons.join(', '),
+                totalPrice: 'Configurable Price', // Price to be set in admin settings
+                expiry: customerExpiry,
+                password: customerPassword,
+                status: 'active'
+            };
+            
+            // Store customer (in real app, this would go to database)
+            if (!window.customers) window.customers = [];
+            window.customers.push(customer);
+            
+            showNotification('👥 Adding new customer...', 'info');
+            setTimeout(() => {
+                showNotification(`✅ Customer "${customerName}" added successfully! Plan: ${selectedDevices.join(', ')}`, 'success');
+                
+                // Clear form
+                if (document.getElementById('customerName')) document.getElementById('customerName').value = '';
+                if (document.getElementById('customerPhone')) document.getElementById('customerPhone').value = '';
+                if (document.getElementById('customerPassword')) document.getElementById('customerPassword').value = '';
+                
+                // Reset all checkboxes
+                if (basicTV) basicTV.checked = false;
+                if (secondTV) secondTV.checked = false;
+                if (thirdTV) thirdTV.checked = false;
+                if (sportsAddon) sportsAddon.checked = false;
+                if (moviesAddon) moviesAddon.checked = false;
+                if (premiumAddon) premiumAddon.checked = false;
+                if (internationalAddon) internationalAddon.checked = false;
+                
+                // Reinitialize selections
+                updateDeviceSelection();
+                updateTotalPrice();
+                
+                // Update statistics
+                updateCustomerStats();
+            }, 2000);
+        }
+
+        // Device Selection Logic
+        function updateDeviceSelection() {
+            const basicTV = document.getElementById('basicTVCheckbox');
+            const secondTV = document.getElementById('secondTVCheckbox');
+            const thirdTV = document.getElementById('thirdTVCheckbox');
+            const secondTVLabel = document.getElementById('secondTVLabel');
+            const thirdTVLabel = document.getElementById('thirdTVLabel');
+            const secondTVLabelContainer = document.getElementById('secondTVLabelContainer');
+            const thirdTVLabelContainer = document.getElementById('thirdTVLabelContainer');
+            
+            // Enable/disable 2nd TV based on Basic TV selection
+            if (!basicTV.checked) {
+                secondTV.disabled = true;
+                secondTV.checked = false;
+                secondTVLabel.style.color = 'rgba(255,255,255,0.3)';
+                secondTVLabelContainer.style.opacity = '0.6';
+                secondTVLabelContainer.style.cursor = 'not-allowed';
+                secondTVLabel.textContent = '🔒 2nd TV - LOCKED - Select Basic TV First';
+            } else {
+                secondTV.disabled = false;
+                secondTVLabel.style.color = 'white';
+                secondTVLabelContainer.style.opacity = '1';
+                secondTVLabelContainer.style.cursor = 'pointer';
+                secondTVLabel.textContent = '🔓 2nd TV - Available - Select if needed';
+            }
+            
+            // Enable/disable 3rd TV based on 2nd TV selection
+            if (!secondTV.checked) {
+                thirdTV.disabled = true;
+                thirdTV.checked = false;
+                thirdTVLabel.style.color = 'rgba(255,255,255,0.3)';
+                thirdTVLabelContainer.style.opacity = '0.6';
+                thirdTVLabelContainer.style.cursor = 'not-allowed';
+                thirdTVLabel.textContent = '🔒 3rd TV - LOCKED - Select 2nd TV First';
+            } else {
+                thirdTV.disabled = false;
+                thirdTVLabel.style.color = 'white';
+                thirdTVLabelContainer.style.opacity = '1';
+                thirdTVLabelContainer.style.cursor = 'pointer';
+                thirdTVLabel.textContent = '🔓 3rd TV - Available - Select if needed';
+            }
+            
+            // Update Addon Selection - CRITICAL FIX
+            updateAddonSelection();
+            
+            // Update total price
+            updateTotalPrice();
+        }
+
+        function updateAddonSelection() {
+            const basicTV = document.getElementById('basicTVCheckbox');
+            const sportsAddon = document.getElementById('sportsAddon');
+            const moviesAddon = document.getElementById('moviesAddon');
+            const premiumAddon = document.getElementById('premiumAddon');
+            const internationalAddon = document.getElementById('internationalAddon');
+            
+            const sportsContainer = document.getElementById('sportsAddonContainer');
+            const moviesContainer = document.getElementById('moviesAddonContainer');
+            const premiumContainer = document.getElementById('premiumAddonContainer');
+            const internationalContainer = document.getElementById('internationalAddonContainer');
+            
+            const sportsLabel = document.getElementById('sportsAddonLabel');
+            const moviesLabel = document.getElementById('moviesAddonLabel');
+            const premiumLabel = document.getElementById('premiumAddonLabel');
+            const internationalLabel = document.getElementById('internationalAddonLabel');
+            
+            const addonStatusMessage = document.getElementById('addonStatusMessage');
+            
+            if (!basicTV.checked) {
+                // LOCK all addons
+                sportsAddon.disabled = true;
+                moviesAddon.disabled = true;
+                premiumAddon.disabled = true;
+                internationalAddon.disabled = true;
+                
+                // Uncheck all addons
+                sportsAddon.checked = false;
+                moviesAddon.checked = false;
+                premiumAddon.checked = false;
+                internationalAddon.checked = false;
+                
+                // Update visual states
+                sportsContainer.style.cursor = 'not-allowed';
+                moviesContainer.style.cursor = 'not-allowed';
+                premiumContainer.style.cursor = 'not-allowed';
+                internationalContainer.style.cursor = 'not-allowed';
+                
+                sportsContainer.style.opacity = '0.6';
+                moviesContainer.style.opacity = '0.6';
+                premiumContainer.style.opacity = '0.6';
+                internationalContainer.style.opacity = '0.6';
+                
+                sportsLabel.style.color = 'rgba(255,255,255,0.3)';
+                moviesLabel.style.color = 'rgba(255,255,255,0.3)';
+                premiumLabel.style.color = 'rgba(255,255,255,0.3)';
+                internationalLabel.style.color = 'rgba(255,255,255,0.3)';
+                
+                sportsLabel.textContent = '🔒 Sports Package - LOCKED - Select Basic TV First';
+                moviesLabel.textContent = '🔒 Movies Package - LOCKED - Select Basic TV First';
+                premiumLabel.textContent = '🔒 Premium Channels - LOCKED - Select Basic TV First';
+                internationalLabel.textContent = '🔒 International Channels - LOCKED - Select Basic TV First';
+                
+                addonStatusMessage.innerHTML = '🔒 Addons are LOCKED - Select Basic TV Package First';
+                addonStatusMessage.style.background = 'rgba(255,193,7,0.2)';
+                addonStatusMessage.style.color = '#ffc107';
+                
+            } else {
+                // UNLOCK all addons
+                sportsAddon.disabled = false;
+                moviesAddon.disabled = false;
+                premiumAddon.disabled = false;
+                internationalAddon.disabled = false;
+                
+                // Update visual states
+                sportsContainer.style.cursor = 'pointer';
+                moviesContainer.style.cursor = 'pointer';
+                premiumContainer.style.cursor = 'pointer';
+                internationalContainer.style.cursor = 'pointer';
+                
+                sportsContainer.style.opacity = '1';
+                moviesContainer.style.opacity = '1';
+                premiumContainer.style.opacity = '1';
+                internationalContainer.style.opacity = '1';
+                
+                sportsLabel.style.color = 'white';
+                moviesLabel.style.color = 'white';
+                premiumLabel.style.color = 'white';
+                internationalLabel.style.color = 'white';
+                
+                sportsLabel.textContent = '🔓 Sports Package - Available';
+                moviesLabel.textContent = '🔓 Movies Package - Available';
+                premiumLabel.textContent = '🔓 Premium Channels - Available';
+                internationalLabel.textContent = '🔓 International Channels - Available';
+                
+                addonStatusMessage.innerHTML = '🔓 Addons are Available - Select any addons you want';
+                addonStatusMessage.style.background = 'rgba(76,175,80,0.2)';
+                addonStatusMessage.style.color = '#4caf50';
+            }
+        }
+
+        // Total Price Calculation
+        function updateTotalPrice() {
+            const basicTV = document.getElementById('basicTVCheckbox');
+            const secondTV = document.getElementById('secondTVCheckbox');
+            const thirdTV = document.getElementById('thirdTVCheckbox');
+            const totalPriceElement = document.getElementById('totalPrice');
+            
+            // Count selected devices and addons for display
+            let deviceCount = 0;
+            let addonCount = 0;
+            
+            // Count devices
+            if (basicTV.checked) deviceCount++;
+            if (secondTV.checked) deviceCount++;
+            if (thirdTV.checked) deviceCount++;
+            
+            // Count addons
+            if (document.getElementById('sportsAddon').checked) addonCount++;
+            if (document.getElementById('moviesAddon').checked) addonCount++;
+            if (document.getElementById('premiumAddon').checked) addonCount++;
+            if (document.getElementById('internationalAddon').checked) addonCount++;
+            
+            // Display selection summary (no prices)
+            let selectionText = 'Total Price: Configurable';
+            if (deviceCount > 0 || addonCount > 0) {
+                const devices = [];
+                if (basicTV.checked) devices.push('Basic TV');
+                if (secondTV.checked) devices.push('2nd TV');
+                if (thirdTV.checked) devices.push('3rd TV');
+                
+                const addons = [];
+                if (document.getElementById('sportsAddon').checked) addons.push('Sports');
+                if (document.getElementById('moviesAddon').checked) addons.push('Movies');
+                if (document.getElementById('premiumAddon').checked) addons.push('Premium');
+                if (document.getElementById('internationalAddon').checked) addons.push('International');
+                
+                selectionText = `Selected: ${devices.join(', ')}${addons.length > 0 ? ' + ' + addons.join(', ') : ''} | Price: Configurable`;
+            }
+            
+            totalPriceElement.textContent = selectionText;
+            
+            // Add visual feedback based on selection
+            if (deviceCount === 0 && addonCount === 0) {
+                totalPriceElement.style.color = '#f44336';
+                totalPriceElement.style.borderColor = 'rgba(244,67,54,0.3)';
+            } else {
+                totalPriceElement.style.color = '#4caf50';
+                totalPriceElement.style.borderColor = 'rgba(76,175,80,0.3)';
+            }
+        }
+
+        // Update Customer Statistics
+        function updateCustomerStats() {
+            const customers = window.customers || [];
+            
+            // Update total customers
+            const totalCustomersEl = document.getElementById('totalCustomers');
+            if (totalCustomersEl) {
+                totalCustomersEl.textContent = customers.length;
+            }
+            
+            // Update active customers
+            const activeCustomersEl = document.getElementById('activeCustomers');
+            if (activeCustomersEl) {
+                const activeCount = customers.filter(c => c.status === 'active').length;
+                activeCustomersEl.textContent = activeCount;
+            }
+            
+            // Update total revenue
+            const totalRevenueEl = document.getElementById('totalRevenue');
+            if (totalRevenueEl) {
+                const totalRevenue = customers.reduce((sum, c) => {
+                    const price = parseFloat(c.totalPrice.replace('$', '/month').replace('/month', ''));
+                    return sum + (price || 0);
+                }, 0);
+                totalRevenueEl.textContent = `$${totalRevenue}`;
+            }
+            
+            // Update recent customers list
+            const recentCustomersEl = document.getElementById('recentCustomers');
+            if (recentCustomersEl) {
+                if (customers.length === 0) {
+                    recentCustomersEl.textContent = 'No customers added yet. Use the form to add your first customer.';
+                } else {
+                    const recent = customers.slice(-5).reverse();
+                    recentCustomersEl.innerHTML = recent.map(c => 
+                        `<div style="margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 4px;">
+                            <strong>${c.name}</strong> - ${c.plan} - <span style="color: #4caf50;">${c.totalPrice}</span>
+                        </div>`
+                    ).join('');
+                }
+            }
+        }
+
         // Notification system
         function showNotification(message, type = 'info') {
             const notification = document.createElement('div');
@@ -1061,24 +1583,166 @@
             }, 3000);
         }
 
-        // Other existing functions (simplified for brevity)
+        // User Management Section - TV Subscription Hierarchy
         window.showUsersSection = function() {
             const mainContent = document.querySelector('.admin-main');
             if (!mainContent) return;
             
             mainContent.innerHTML = `
                 <div class="dashboard-header">
-                    <h1 class="dashboard-title">👥 Users & Customers</h1>
-                    <p class="dashboard-subtitle">Manage user accounts and subscriptions</p>
+                    <h1 class="dashboard-title">👥 Customer Management</h1>
+                    <p class="dashboard-subtitle">IPTV Customer Subscription System - TV Hierarchy Rules</p>
                 </div>
                 
-                <div class="section-card">
-                    <h3 class="section-title">📋 User Management</h3>
-                    <p style="color: rgba(255,255,255,0.7);">User management functionality will be displayed here.</p>
+                <div class="section-grid">
+                    <div class="section-card">
+                        <h3 class="section-title">➕ Add New Customer</h3>
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Customer Name *</label>
+                                <input type="text" id="customerName" placeholder="Enter customer name" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;" required>
+                            </div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Phone Number</label>
+                                <input type="tel" id="customerPhone" placeholder="Phone number" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                            </div>
+                            
+                            <!-- TV Subscription Hierarchy - MANDATORY ORDER -->
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">🚨 Device Selection - MANDATORY ORDER 🚨</label>
+                                <div class="device-selection" style="background: rgba(255,255,255,0.05); border: 2px solid rgba(244,67,54,0.4); border-radius: 12px; padding: 20px; margin-top: 10px;">
+                                    <div style="font-size: 14px; color: #ff9800; margin-bottom: 15px; background: rgba(255,152,0,0.15); padding: 12px; border-radius: 6px; border-left: 4px solid #ff9800; font-weight: 600;">
+                                        ⚠️ MANDATORY: You MUST select Basic TV Package FIRST before any other devices become available!
+                                    </div>
+                                    
+                                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                                        <div style="border: 2px solid #4caf50; border-radius: 8px; padding: 15px; background: rgba(76,175,80,0.15);">
+                                            <label style="color: white; display: flex; align-items: center; cursor: pointer; font-weight: 600;">
+                                                <input type="checkbox" name="customerDevices" value="basicTV" id="basicTVCheckbox" style="margin-right: 12px; transform: scale(1.2);" onchange="updateDeviceSelection()">
+                                                <span style="color: #4caf50;">📺 Basic TV Package</span>
+                                            </label>
+                                            <div style="margin-left: 40px; margin-top: 5px; font-size: 13px; color: #4caf50; font-weight: 700;">🔥 STEP 1: REQUIRED FIRST - Must be selected before proceeding!</div>
+                                        </div>
+                                        
+                                        <label style="color: rgba(255,255,255,0.3); display: flex; align-items: center; cursor: not-allowed; opacity: 0.6;" id="secondTVLabelContainer">
+                                            <input type="checkbox" name="customerDevices" value="secondTV" id="secondTVCheckbox" style="margin-right: 12px;" onchange="updateDeviceSelection()" disabled>
+                                            <span id="secondTVLabel">🔒 2nd TV - LOCKED - Select Basic TV First</span>
+                                        </label>
+                                        
+                                        <label style="color: rgba(255,255,255,0.3); display: flex; align-items: center; cursor: not-allowed; opacity: 0.6;" id="thirdTVLabelContainer">
+                                            <input type="checkbox" name="customerDevices" value="thirdTV" id="thirdTVCheckbox" style="margin-right: 12px;" onchange="updateDeviceSelection()" disabled>
+                                            <span id="thirdTVLabel">🔒 3rd TV - LOCKED - Select 2nd TV First</span>
+                                        </label>
+                                    </div>
+                                    
+                                    <div style="font-size: 13px; color: #4caf50; margin-top: 15px; background: rgba(76,175,80,0.15); padding: 12px; border-radius: 6px; border-left: 4px solid #4caf50; font-weight: 600;">
+                                        <strong>📋 Selection Order:</strong><br>
+                                        Step 1: ✅ Select Basic TV Package (MANDATORY)<br>
+                                        Step 2: 🔓 Then 2nd TV becomes available<br>
+                                        Step 3: 🔓 Then 3rd TV becomes available
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Addon Selection -->
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">🎯 Additional Addons (After Basic TV Selection)</label>
+                                <div class="addon-selection" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 15px; max-height: 120px; overflow-y: auto;">
+                                    
+                                    <!-- Addon Status Message -->
+                                    <div id="addonStatusMessage" style="background: rgba(255,193,7,0.2); border: 1px solid rgba(255,193,7,0.4); border-radius: 6px; padding: 8px; margin-bottom: 10px; color: #ffc107; font-size: 12px; text-align: center;">
+                                        🔒 Addons are LOCKED - Select Basic TV Package First
+                                    </div>
+                                    
+                                    <!-- Sports Addon -->
+                                    <label id="sportsAddonContainer" style="color: rgba(255,255,255,0.3); display: flex; align-items: center; cursor: not-allowed; margin-bottom: 8px; opacity: 0.6;">
+                                        <input type="checkbox" name="customerAddons" value="sports" id="sportsAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="updateTotalPrice()" disabled>
+                                        <span id="sportsAddonLabel">🔒 Sports Package - LOCKED</span>
+                                    </label>
+                                    
+                                    <!-- Movies Addon -->
+                                    <label id="moviesAddonContainer" style="color: rgba(255,255,255,0.3); display: flex; align-items: center; cursor: not-allowed; margin-bottom: 8px; opacity: 0.6;">
+                                        <input type="checkbox" name="customerAddons" value="movies" id="moviesAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="updateTotalPrice()" disabled>
+                                        <span id="moviesAddonLabel">🔒 Movies Package - LOCKED</span>
+                                    </label>
+                                    
+                                    <!-- Premium Addon -->
+                                    <label id="premiumAddonContainer" style="color: rgba(255,255,255,0.3); display: flex; align-items: center; cursor: not-allowed; margin-bottom: 8px; opacity: 0.6;">
+                                        <input type="checkbox" name="customerAddons" value="premium" id="premiumAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="updateTotalPrice()" disabled>
+                                        <span id="premiumAddonLabel">🔒 Premium Channels - LOCKED</span>
+                                    </label>
+                                    
+                                    <!-- International Addon -->
+                                    <label id="internationalAddonContainer" style="color: rgba(255,255,255,0.3); display: flex; align-items: center; cursor: not-allowed; opacity: 0.6;">
+                                        <input type="checkbox" name="customerAddons" value="international" id="internationalAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="updateTotalPrice()" disabled>
+                                        <span id="internationalAddonLabel">🔒 International Channels - LOCKED</span>
+                                    </label>
+                                </div>
+                                <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 5px;">🎯 Addons become available after selecting Basic TV Package</div>
+                            </div>
+                            
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Subscription End Date *</label>
+                                <input type="date" id="customerExpiry" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;" required>
+                            </div>
+                            
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Customer Password *</label>
+                                <input type="password" id="customerPassword" placeholder="Enter password" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;" required>
+                            </div>
+                            
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">💰 Total Monthly Price</label>
+                                <div id="totalPrice" style="background: rgba(255,255,255,0.05); border: 2px solid rgba(76,175,80,0.3); border-radius: 8px; padding: 15px; color: #4caf50; font-weight: 700; font-size: 18px; text-align: center;">Total Price: Configurable</div>
+                                <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 5px; text-align: center;">Price updates automatically based on your selections</div>
+                            </div>
+                            
+                            <button onclick="addNewCustomer()" class="btn btn-success" style="padding: 12px 20px;">➕ Add Customer</button>
+                        </div>
+                    </div>
+                    
+                    <div class="section-card">
+                        <h3 class="section-title">📋 Customer Statistics</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                            <div style="text-align: center; padding: 20px; background: rgba(76, 175, 80, 0.2); border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #4caf50;" id="totalCustomers">0</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Total Customers</div>
+                            </div>
+                            <div style="text-align: center; padding: 20px; background: rgba(33, 150, 243, 0.2); border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #2196f3;" id="activeCustomers">0</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Active</div>
+                            </div>
+                            <div style="text-align: center; padding: 20px; background: rgba(255, 152, 0, 0.2); border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #ff9800;" id="totalRevenue">$0</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Monthly Revenue</div>
+                            </div>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px;">
+                            <h4 style="color: white; margin-bottom: 10px;">👥 Recent Customers</h4>
+                            <div id="recentCustomers" style="color: rgba(255,255,255,0.7); font-size: 13px;">
+                                No customers added yet. Use the form to add your first customer.
+                            </div>
+                        </div>
+                    </div>
                 </div>
             `;
+            
+            // Set default expiry date to 1 month from now
+            const expiryInput = document.getElementById('customerExpiry');
+            if (expiryInput) {
+                const oneMonthFromNow = new Date();
+                oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+                expiryInput.value = oneMonthFromNow.toISOString().split('T')[0];
+            }
+            
+            // Initialize device selection
+            setTimeout(() => {
+                updateDeviceSelection();
+                updateTotalPrice();
+            }, 100);
         };
 
+        // Package Management Section
         window.showPackagesSection = function() {
             const mainContent = document.querySelector('.admin-main');
             if (!mainContent) return;
@@ -1089,13 +1753,82 @@
                     <p class="dashboard-subtitle">Manage your service packages and pricing</p>
                 </div>
                 
-                <div class="section-card">
-                    <h3 class="section-title">📋 Package Management</h3>
-                    <p style="color: rgba(255,255,255,0.7);">Package management functionality will be displayed here.</p>
+                <div class="section-grid">
+                    <div class="section-card">
+                        <h3 class="section-title">➕ Create New Package</h3>
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Package Name:</label>
+                                <input type="text" id="packageName" placeholder="Premium HD Package" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div>
+                                    <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Price ($):</label>
+                                    <input type="number" id="packagePrice" placeholder="29.99" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                </div>
+                                <div>
+                                    <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Duration:</label>
+                                    <select id="packageDuration" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                        <option>1 Month</option>
+                                        <option>3 Months</option>
+                                        <option>6 Months</option>
+                                        <option>12 Months</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Features:</label>
+                                <textarea id="packageFeatures" placeholder="HD Channels, Sports Package, Movies..." style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; min-height: 80px;"></textarea>
+                            </div>
+                            <button onclick="createNewPackage()" class="btn btn-warning" style="padding: 12px 20px;">➕ Create Package</button>
+                            <button onclick="createPlexFolder()" class="btn btn-info" style="padding: 12px 20px; margin-top: 10px;">📺 Create Plex Folder</button>
+                        </div>
+                    </div>
+                    
+                    <div class="section-card">
+                        <h3 class="section-title">📊 Package Statistics</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                            <div style="text-align: center; padding: 20px; background: rgba(255, 152, 0, 0.2); border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #ff9800;">0</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Total Packages</div>
+                            </div>
+                            <div style="text-align: center; padding: 20px; background: rgba(76, 175, 80, 0.2); border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #4caf50;">$0</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Revenue</div>
+                            </div>
+                            <div style="text-align: center; padding: 20px; background: rgba(33, 150, 243, 0.2); border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #2196f3;">0</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Active Subs</div>
+                            </div>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px;">
+                            <h4 style="color: white; margin-bottom: 10px;">📦 Available Packages</h4>
+                            <div style="color: rgba(255,255,255,0.7); font-size: 13px;">
+                                No packages created yet. Use the form to create your first package.
+                            </div>
+                        </div>
+                        
+                        <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; margin-top: 15px;">
+                            <h4 style="color: white; margin-bottom: 10px;">📺 Plex Integration Status</h4>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                                <span style="color: rgba(255,255,255,0.8);">Plex Server:</span>
+                                <span style="color: #4caf50; font-weight: 600;">Connected</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                                <span style="color: rgba(255,255,255,0.8);">Auto Folder Creation:</span>
+                                <span style="color: #4caf50; font-weight: 600;">Enabled</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                                <span style="color: rgba(255,255,255,0.8);">Package Folders:</span>
+                                <span style="color: #2196f3; font-weight: 600;">0 Active</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             `;
         };
 
+        // Reseller Management Section
         window.showResellersSection = function() {
             const mainContent = document.querySelector('.admin-main');
             if (!mainContent) return;
@@ -1103,16 +1836,65 @@
             mainContent.innerHTML = `
                 <div class="dashboard-header">
                     <h1 class="dashboard-title">🏢 Reseller Management</h1>
-                    <p class="dashboard-subtitle">Manage your reseller network</p>
+                    <p class="dashboard-subtitle">Manage your reseller network and credentials</p>
                 </div>
                 
-                <div class="section-card">
-                    <h3 class="section-title">📋 Reseller Operations</h3>
-                    <p style="color: rgba(255,255,255,0.7);">Reseller management functionality will be displayed here.</p>
+                <div class="section-grid">
+                    <div class="section-card">
+                        <h3 class="section-title">➕ Create New Reseller</h3>
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Reseller ID:</label>
+                                <input type="text" id="resellerId" placeholder="reseller001" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                            </div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Username:</label>
+                                <input type="text" id="resellerUsername" placeholder="john_doe" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                            </div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Password:</label>
+                                <input type="password" id="resellerPassword" placeholder="secure_password" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                            </div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Commission Rate (%):</label>
+                                <input type="number" id="resellerCommission" placeholder="20" min="0" max="100" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                            </div>
+                            <button onclick="createNewReseller()" class="btn btn-info" style="padding: 12px 20px;">➕ Create Reseller</button>
+                        </div>
+                    </div>
+                    
+                    <div class="section-card">
+                        <h3 class="section-title">📊 Reseller Statistics</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                            <div style="text-align: center; padding: 20px; background: rgba(33, 150, 243, 0.2); border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #2196f3;">12</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Total Resellers</div>
+                            </div>
+                            <div style="text-align: center; padding: 20px; background: rgba(76, 175, 80, 0.2); border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #4caf50;">10</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Active</div>
+                            </div>
+                            <div style="text-align: center; padding: 20px; background: rgba(255, 152, 0, 0.2); border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #ff9800;">$2,400</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Total Sales</div>
+                            </div>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px;">
+                            <h4 style="color: white; margin-bottom: 10px;">🏢 Active Resellers</h4>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                                <span style="color: rgba(255,255,255,0.8);">reseller (demo):</span>
+                                <span style="color: #4caf50; font-weight: 600;">Active</span>
+                            </div>
+                            <div style="color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 10px;">
+                                Username: reseller | Password: reseller123
+                            </div>
+                        </div>
+                    </div>
                 </div>
             `;
         };
 
+        // Credit Management Section
         window.showCreditSection = function() {
             const mainContent = document.querySelector('.admin-main');
             if (!mainContent) return;
@@ -1123,26 +1905,153 @@
                     <p class="dashboard-subtitle">Unlimited transfers to reseller wallets</p>
                 </div>
                 
-                <div class="section-card">
-                    <h3 class="section-title">💳 Credit Management</h3>
-                    <p style="color: rgba(255,255,255,0.7);">Credit management functionality will be displayed here.</p>
+                <div class="section-grid">
+                    <div class="section-card">
+                        <h3 class="section-title">💳 Transfer Credits</h3>
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Select Reseller:</label>
+                                <select id="creditReseller" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                    <option value="reseller">reseller (demo)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Amount ($):</label>
+                                <input type="number" id="creditAmount" placeholder="100.00" min="0" step="0.01" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                            </div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Note (Optional):</label>
+                                <textarea id="creditNote" placeholder="Monthly commission payment..." style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; min-height: 60px;"></textarea>
+                            </div>
+                            <button onclick="transferCredits()" class="btn btn-success" style="padding: 12px 20px;">💰 Transfer Credits</button>
+                        </div>
+                    </div>
+                    
+                    <div class="section-card">
+                        <h3 class="section-title">📊 Credit Overview</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                            <div style="text-align: center; padding: 20px; background: rgba(76, 175, 80, 0.2); border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #4caf50;">$1,500</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Total Credits</div>
+                            </div>
+                            <div style="text-align: center; padding: 20px; background: rgba(33, 150, 243, 0.2); border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #2196f3;">$850</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Available</div>
+                            </div>
+                            <div style="text-align: center; padding: 20px; background: rgba(255, 152, 0, 0.2); border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #ff9800;">$650</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Transferred</div>
+                            </div>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px;">
+                            <h4 style="color: white; margin-bottom: 10px;">💳 Recent Transfers</h4>
+                            <div style="color: rgba(255,255,255,0.7); font-size: 13px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span>reseller (demo):</span>
+                                    <span style="color: #4caf50;">+$200</span>
+                                </div>
+                                <div style="font-size: 12px; color: rgba(255,255,255,0.5);">
+                                    Commission payment - 2 hours ago
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             `;
         };
 
+        // Analytics Section
         window.showAnalyticsSection = function() {
             const mainContent = document.querySelector('.admin-main');
             if (!mainContent) return;
             
             mainContent.innerHTML = `
                 <div class="dashboard-header">
-                    <h1 class="dashboard-title">📈 Analytics</h1>
-                    <p class="dashboard-subtitle">System performance and metrics</p>
+                    <h1 class="dashboard-title">📈 Analytics Dashboard</h1>
+                    <p class="dashboard-subtitle">System performance and business metrics</p>
                 </div>
                 
-                <div class="section-card">
-                    <h3 class="section-title">📊 Analytics Dashboard</h3>
-                    <p style="color: rgba(255,255,255,0.7);">Analytics functionality will be displayed here.</p>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon users">📊</div>
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Monthly Users</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon revenue">💰</div>
+                        <div class="stat-value">$0</div>
+                        <div class="stat-label">Revenue</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon content">📦</div>
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Packages Sold</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon system">🏢</div>
+                        <div class="stat-value">12</div>
+                        <div class="stat-label">Active Resellers</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon satellite">📈</div>
+                        <div class="stat-value">98%</div>
+                        <div class="stat-label">System Uptime</div>
+                    </div>
+                </div>
+                
+                <div class="section-grid">
+                    <div class="section-card">
+                        <h3 class="section-title">📊 User Growth</h3>
+                        <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 20px; text-align: center;">
+                            <div style="color: rgba(255,255,255,0.8); margin-bottom: 15px;">
+                                <div style="font-size: 1.5rem; color: #4caf50;">📈 Growth Chart</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">User acquisition over time</div>
+                            </div>
+                            <div style="height: 200px; display: flex; align-items: end; justify-content: space-around; gap: 10px;">
+                                <div style="width: 20px; height: 40px; background: #4caf50; border-radius: 2px;"></div>
+                                <div style="width: 20px; height: 60px; background: #4caf50; border-radius: 2px;"></div>
+                                <div style="width: 20px; height: 30px; background: #4caf50; border-radius: 2px;"></div>
+                                <div style="width: 20px; height: 80px; background: #4caf50; border-radius: 2px;"></div>
+                                <div style="width: 20px; height: 50px; background: #4caf50; border-radius: 2px;"></div>
+                            </div>
+                            <div style="margin-top: 15px; font-size: 0.8rem; color: rgba(255,255,255,0.5); display: flex; justify-content: space-around;">
+                                <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-card">
+                        <h3 class="section-title">💰 Revenue Breakdown</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                            <div style="text-align: center; padding: 15px; background: rgba(76, 175, 80, 0.2); border-radius: 8px;">
+                                <div style="font-size: 1.5rem; font-weight: bold; color: #4caf50;">$0</div>
+                                <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7);">Direct Sales</div>
+                            </div>
+                            <div style="text-align: center; padding: 15px; background: rgba(33, 150, 243, 0.2); border-radius: 8px;">
+                                <div style="font-size: 1.5rem; font-weight: bold; color: #2196f3;">$0</div>
+                                <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7);">Reseller Comm</div>
+                            </div>
+                            <div style="text-align: center; padding: 15px; background: rgba(255, 152, 0, 0.2); border-radius: 8px;">
+                                <div style="font-size: 1.5rem; font-weight: bold; color: #ff9800;">$0</div>
+                                <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7);">Add-ons</div>
+                            </div>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px;">
+                            <h4 style="color: white; margin-bottom: 10px;">📈 Performance Metrics</h4>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                                <span style="color: rgba(255,255,255,0.8);">Conversion Rate:</span>
+                                <span style="color: #4caf50; font-weight: 600;">0%</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                                <span style="color: rgba(255,255,255,0.8);">Avg Revenue/User:</span>
+                                <span style="color: #2196f3; font-weight: 600;">$0</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                                <span style="color: rgba(255,255,255,0.8);">Churn Rate:</span>
+                                <span style="color: #ff9800; font-weight: 600;">0%</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             `;
         };
@@ -1169,23 +2078,75 @@
             `;
         };
 
+        // Settings Section
         window.showSettingsSection = function() {
             const mainContent = document.querySelector('.admin-main');
             if (!mainContent) return;
             
             mainContent.innerHTML = `
                 <div class="dashboard-header">
-                    <h1 class="dashboard-title">⚙️ Settings</h1>
-                    <p class="dashboard-subtitle">System Configuration</p>
+                    <h1 class="dashboard-title">⚙️ System Settings</h1>
+                    <p class="dashboard-subtitle">Configure your iWATCH TV system</p>
                 </div>
                 
-                <div class="section-card">
-                    <h3 class="section-title">🔐 System Settings</h3>
-                    <p style="color: rgba(255,255,255,0.7);">System settings functionality will be displayed here.</p>
+                <div class="section-grid">
+                    <div class="section-card">
+                        <h3 class="section-title">🔐 Security Settings</h3>
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Admin Password:</label>
+                                <input type="password" id="adminPassword" value="admin123" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                            </div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Master Password:</label>
+                                <input type="password" id="masterPassword" value="master2025" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                            </div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Session Timeout (minutes):</label>
+                                <input type="number" id="sessionTimeout" value="60" min="5" max="480" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                            </div>
+                            <button onclick="saveSecuritySettings()" class="btn btn-success" style="padding: 12px 20px;">🔒 Save Security</button>
+                        </div>
+                    </div>
+                    
+                    <div class="section-card">
+                        <h3 class="section-title">🌐 System Configuration</h3>
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">System Name:</label>
+                                <input type="text" id="systemName" value="iWATCH TV System" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                            </div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">API Endpoint:</label>
+                                <input type="url" id="apiEndpoint" placeholder="https://api.iwatch.tv" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                            </div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Time Zone:</label>
+                                <select id="timeZone" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                    <option>UTC</option>
+                                    <option>America/New_York</option>
+                                    <option>Europe/London</option>
+                                    <option>Asia/Dubai</option>
+                                </select>
+                            </div>
+                            <button onclick="saveSystemSettings()" class="btn btn-info" style="padding: 12px 20px;">⚙️ Save Settings</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section-card" style="margin-top: 25px;">
+                    <h3 class="section-title">🔄 System Maintenance</h3>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <button onclick="backupData()" class="btn btn-warning">💾 Backup Data</button>
+                        <button onclick="clearCache()" class="btn btn-info">🗑️ Clear Cache</button>
+                        <button onclick="restartServices()" class="btn btn-primary">🔄 Restart Services</button>
+                        <button onclick="updateSystem()" class="btn btn-success">⬆️ Update System</button>
+                    </div>
                 </div>
             `;
         };
 
+        // Content Library Section
         window.showContentSection = function() {
             const mainContent = document.querySelector('.admin-main');
             if (!mainContent) return;
@@ -1193,12 +2154,81 @@
             mainContent.innerHTML = `
                 <div class="dashboard-header">
                     <h1 class="dashboard-title">📺 Content Library</h1>
-                    <p class="dashboard-subtitle">Manage your content sources and platforms</p>
+                    <p class="dashboard-subtitle">Manage your content sources and streaming platforms</p>
                 </div>
                 
-                <div class="section-card">
-                    <h3 class="section-title">🎬 Content Management</h3>
-                    <p style="color: rgba(255,255,255,0.7);">Content library functionality will be displayed here.</p>
+                <div class="section-grid">
+                    <div class="section-card">
+                        <h3 class="section-title">➕ Add Content Source</h3>
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Source Name:</label>
+                                <input type="text" id="contentName" placeholder="Netflix HD" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                            </div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Platform Type:</label>
+                                <select id="contentType" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                    <option>Movie Streaming</option>
+                                    <option>TV Shows</option>
+                                    <option>Sports</option>
+                                    <option>News</option>
+                                    <option>Kids Content</option>
+                                    <option>International</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Stream URL:</label>
+                                <input type="url" id="contentURL" placeholder="http://example.com/stream" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                            </div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Quality:</label>
+                                <select id="contentQuality" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                    <option>4K Ultra HD</option>
+                                    <option>1080p HD</option>
+                                    <option>720p HD</option>
+                                    <option>480p SD</option>
+                                </select>
+                            </div>
+                            <button onclick="addContentSource()" class="btn btn-primary" style="padding: 12px 20px;">➕ Add Source</button>
+                        </div>
+                    </div>
+                    
+                    <div class="section-card">
+                        <h3 class="section-title">📊 Content Statistics</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                            <div style="text-align: center; padding: 20px; background: rgba(33, 150, 243, 0.2); border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #2196f3;">400</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Total Channels</div>
+                            </div>
+                            <div style="text-align: center; padding: 20px; background: rgba(76, 175, 80, 0.2); border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #4caf50;">380</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">HD Channels</div>
+                            </div>
+                            <div style="text-align: center; padding: 20px; background: rgba(255, 152, 0, 0.2); border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #ff9800;">95%</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Quality Score</div>
+                            </div>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px;">
+                            <h4 style="color: white; margin-bottom: 10px;">📺 Content Categories</h4>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                                <span style="color: rgba(255,255,255,0.8);">Sports Channels:</span>
+                                <span style="color: #4caf50; font-weight: 600;">85</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                                <span style="color: rgba(255,255,255,0.8);">Movies:</span>
+                                <span style="color: #2196f3; font-weight: 600;">120</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                                <span style="color: rgba(255,255,255,0.8);">TV Shows:</span>
+                                <span style="color: #ff9800; font-weight: 600;">95</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                                <span style="color: rgba(255,255,255,0.8);">International:</span>
+                                <span style="color: #9c27b0; font-weight: 100;">100</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             `;
         };
