@@ -1,0 +1,2182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Admin Panel - iWATCH TV</title>
+    <meta name="author" content="MiniMax Agent">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- iOS Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="iWATCH Admin">
+    
+    <!-- Theme Colors -->
+    <meta name="theme-color" content="#4caf50">
+    <meta name="msapplication-TileColor" content="#4caf50">
+    
+    <!-- Prevent zoom on input focus -->
+    <style>
+        input, select, textarea {
+            font-size: 16px !important;
+        }
+    </style>
+    
+    <!-- Enhanced Password Management System -->
+    <script>
+        const passwordManager = {
+            passwords: {
+                'adminLogin': 'admin123',
+                'masterPassword': 'master2025' // Master password to access any reseller panel
+            },
+            resellerCredentials: {}, // Store reseller credentials by ID
+            currentSession: null,
+            
+            initialize: function() {
+                console.log('🔧 PasswordManager initializing...');
+                this.initializeCredentials();
+                console.log('✅ PasswordManager initialized');
+            },
+            
+            initializeCredentials: function() {
+                // Load existing credentials
+                const savedCredentials = localStorage.getItem('resellerCredentials');
+                if (savedCredentials) {
+                    try {
+                        this.resellerCredentials = JSON.parse(savedCredentials);
+                    } catch (e) {
+                        console.error('Error loading reseller credentials:', e);
+                        this.resellerCredentials = {};
+                    }
+                } else {
+                    // Create default reseller
+                    this.resellerCredentials['reseller'] = {
+                        username: 'reseller',
+                        password: 'reseller123',
+                        createdAt: new Date().toISOString()
+                    };
+                    this.saveCredentials();
+                }
+            },
+            
+            saveCredentials: function() {
+                try {
+                    console.log('💾 Saving credentials to localStorage...');
+                    localStorage.setItem('resellerCredentials', JSON.stringify(this.resellerCredentials));
+                    localStorage.setItem('adminPasswords', JSON.stringify(this.passwords));
+                    
+                    // Verify save
+                    const testRead = localStorage.getItem('resellerCredentials');
+                    console.log('✅ Credentials saved successfully', testRead ? 'and verified' : 'but verification failed');
+                } catch (e) {
+                    console.error('❌ Error saving credentials:', e);
+                    throw e;
+                }
+            },
+            
+            verifyPassword: function(key, input) {
+                return this.passwords[key] === input;
+            },
+            
+            authenticateUser: function(username, password) {
+                // Admin authentication
+                if (username === 'admin' && password === this.passwords.adminLogin) {
+                    this.currentSession = {
+                        id: 'admin_' + Date.now(),
+                        username: 'admin',
+                        role: 'admin',
+                        plan: 'Admin Access',
+                        expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+                        status: 'active',
+                        permissions: ['admin', 'full_control']
+                    };
+                    return this.currentSession;
+                }
+                
+                // Master password access to reseller panels
+                if (password === this.passwords.masterPassword && username.startsWith('reseller_')) {
+                    const resellerId = username.replace('reseller_', '');
+                    if (this.resellerCredentials[resellerId]) {
+                        return {
+                            id: 'master_' + resellerId + '_' + Date.now(),
+                            username: 'reseller_' + resellerId,
+                            role: 'reseller',
+                            resellerId: resellerId,
+                            plan: 'Master Access',
+                            expiryDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
+                            status: 'active',
+                            permissions: ['reseller', 'master_access']
+                        };
+                    }
+                }
+                
+                // Regular reseller authentication
+                if (this.resellerCredentials[username]) {
+                    const reseller = this.resellerCredentials[username];
+                    if (reseller.password === password) {
+                        this.currentSession = {
+                            id: 'reseller_' + username + '_' + Date.now(),
+                            username: username,
+                            role: 'reseller',
+                            resellerId: username,
+                            plan: 'Reseller Access',
+                            expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                            status: 'active',
+                            permissions: ['reseller']
+                        };
+                        return this.currentSession;
+                    }
+                }
+                
+                return null;
+            },
+            
+            changeAdminPassword: function(currentPassword, newPassword) {
+                if (currentPassword !== this.passwords.adminLogin) {
+                    return { success: false, message: 'Current password is incorrect' };
+                }
+                
+                if (!newPassword || newPassword.length < 6) {
+                    return { success: false, message: 'New password must be at least 6 characters' };
+                }
+                
+                this.passwords.adminLogin = newPassword;
+                this.saveCredentials(); // Save to localStorage
+                return { success: true, message: 'Admin password updated successfully!' };
+            },
+            
+            changeMasterPassword: function(currentPassword, newPassword) {
+                if (currentPassword !== this.passwords.masterPassword) {
+                    return { success: false, message: 'Current master password is incorrect' };
+                }
+                
+                if (!newPassword || newPassword.length < 6) {
+                    return { success: false, message: 'New master password must be at least 6 characters' };
+                }
+                
+                this.passwords.masterPassword = newPassword;
+                this.saveCredentials(); // Save to localStorage
+                return { success: true, message: 'Master password updated successfully!' };
+            },
+            
+            createReseller: function(resellerId, username, password) {
+                console.log('🔧 Creating reseller:', { resellerId, username, password });
+                
+                if (!resellerId || !username || !password) {
+                    console.log('❌ Missing required fields');
+                    return { success: false, message: 'All fields are required' };
+                }
+                
+                if (this.resellerCredentials[resellerId]) {
+                    console.log('❌ Reseller ID already exists:', resellerId);
+                    return { success: false, message: 'Reseller ID already exists' };
+                }
+                
+                if (password.length < 6) {
+                    console.log('❌ Password too short');
+                    return { success: false, message: 'Password must be at least 6 characters' };
+                }
+                
+                this.resellerCredentials[resellerId] = {
+                    username: username,
+                    password: password,
+                    createdAt: new Date().toISOString()
+                };
+                
+                console.log('💾 Saving credentials...', this.resellerCredentials[resellerId]);
+                this.saveCredentials();
+                
+                // Verify saving worked
+                const saved = localStorage.getItem('resellerCredentials');
+                if (saved) {
+                    try {
+                        const parsed = JSON.parse(saved);
+                        if (parsed[resellerId]) {
+                            console.log('✅ Credentials saved and verified');
+                        } else {
+                            console.error('❌ Credentials not found after save');
+                        }
+                    } catch (e) {
+                        console.error('❌ Error verifying saved credentials:', e);
+                    }
+                } else {
+                    console.error('❌ localStorage save failed');
+                }
+                
+                return { success: true, message: `Reseller "${resellerId}" created successfully!` };
+            },
+            
+            getAllResellers: function() {
+                return Object.keys(this.resellerCredentials);
+            }
+        };
+        
+        // Initialize password system
+        passwordManager.initializeCredentials();
+        
+        let isLoggedIn = false;
+        let currentUser = null;
+        
+        // Global navigation function - available immediately
+        window.showSection = function(sectionName, event) {
+            console.log('🔧 Showing section:', sectionName);
+            
+            // Remove active class from all nav buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Add active class to clicked button
+            const activeBtn = document.querySelector(`[onclick="showSection('${sectionName}')"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+            }
+            
+            // Show appropriate section based on sectionName
+            switch(sectionName) {
+                case 'dashboard':
+                case 'admin':
+                    if (typeof showAdminDashboard === 'function') showAdminDashboard();
+                    break;
+                case 'users':
+                case 'customers':
+                    if (typeof showUsersSection === 'function') showUsersSection();
+                    break;
+                case 'packages':
+                    if (typeof showPackagesSection === 'function') showPackagesSection();
+                    break;
+                case 'content':
+                    if (typeof showContentSection === 'function') showContentSection();
+                    break;
+                case 'credit':
+                case 'credits':
+                    if (typeof showCreditSection === 'function') {
+                        showCreditSection();
+                    } else {
+                        showError('Credit section not available');
+                    }
+                    break;
+                case 'resellers':
+                    if (typeof showResellersSection === 'function') showResellersSection();
+                    break;
+                case 'analytics':
+                    if (typeof showAnalyticsSection === 'function') showAnalyticsSection();
+                    break;
+                case 'logs':
+                    if (typeof showLogsSection === 'function') showLogsSection();
+                    break;
+                case 'settings':
+                    if (typeof showSettingsSection === 'function') showSettingsSection();
+                    break;
+                default:
+                    console.log('Unknown section:', sectionName);
+                    if (typeof showAdminDashboard === 'function') showAdminDashboard();
+            }
+        };
+        
+        console.log('✅ Global showSection function initialized');
+        
+        // Define all section functions globally so they're available immediately
+        window.showAdminDashboard = function() {
+            const mainContent = document.querySelector('.admin-main');
+            if (!mainContent) return;
+            
+            mainContent.innerHTML = `
+                <div class="dashboard-header">
+                    <h1 class="dashboard-title">🔧 Admin Dashboard</h1>
+                    <p class="dashboard-subtitle">iWATCH TV Management System</p>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon users">👥</div>
+                        <div class="stat-value">${window.adminUsers ? window.adminUsers.length : 0}</div>
+                        <div class="stat-label">Total Users</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon content">📦</div>
+                        <div class="stat-value">${window.packages ? window.packages.length : 0}</div>
+                        <div class="stat-label">Packages</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon system">🔧</div>
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Add-ons</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon revenue">💰</div>
+                        <div class="stat-value">12</div>
+                        <div class="stat-label">Resellers</div>
+                    </div>
+                </div>
+                
+                <div class="section-grid">
+                    <div class="section-card">
+                        <h3 class="section-title">📊 Quick Actions</h3>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <button onclick="showSection('users', event); showUsersSection();" style="background: linear-gradient(135deg, #2196f3, #42a5f5); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px;">View Users</button>
+                            <button onclick="showSection('packages', event)" style="background: linear-gradient(135deg, #ff9800, #ffb74d); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px;">Manage Packages</button>
+                            <button onclick="showSection('resellers', event)" style="background: linear-gradient(135deg, #9c27b0, #ba68c8); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px;">Manage Resellers</button>
+                        </div>
+                    </div>
+                    
+                    <div class="section-card">
+                        <h3 class="section-title">🎯 System Status</h3>
+                        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: rgba(255,255,255,0.8);">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Admin Panel:</span>
+                                <span style="color: #4caf50;">✅ Online</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Credit System:</span>
+                                <span style="color: #4caf50;">✅ Active</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Reseller Panels:</span>
+                                <span style="color: #4caf50;">✅ 12 Ready</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Package System:</span>
+                                <span style="color: #4caf50;">✅ Ready</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+        
+        window.showUsersSection = function() {
+            showAdminDashboard(); // For now, just show dashboard
+        };
+        
+        window.showResellersSection = function() {
+            const mainContent = document.querySelector('.admin-main');
+            if (!mainContent) return;
+            
+            mainContent.innerHTML = `
+                <div class="dashboard-header">
+                    <h1 class="dashboard-title">🏢 Reseller Management</h1>
+                    <p class="dashboard-subtitle">Manage your reseller network</p>
+                </div>
+                
+                <div class="section-grid">
+                    <div class="section-card">
+                        <h3 class="section-title">📋 Reseller Operations</h3>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <button onclick="createReseller()" style="background: var(--admin-color); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer;">Create New Reseller</button>
+                            <button onclick="manageResellerCredentials()" style="background: #2196f3; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer;">Manage Resellers</button>
+                            <button onclick="showPanelAssignments()" style="background: #ff9800; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer;">View Panel Assignments</button>
+                        </div>
+                    </div>
+                    
+                    <div class="section-card">
+                        <h3 class="section-title">💰 Credit Management</h3>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <button onclick="showSection('credit', event)" style="background: #4caf50; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer;">Transfer Credits</button>
+                            <button onclick="showResellerCredentials()" style="background: #9c27b0; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer;">View Reseller Credentials</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+        
+        window.showAnalyticsSection = function() {
+            const mainContent = document.querySelector('.admin-main');
+            if (!mainContent) return;
+            
+            mainContent.innerHTML = `
+                <div class="dashboard-header">
+                    <h1 class="dashboard-title">📊 Analytics</h1>
+                    <p class="dashboard-subtitle">System performance and metrics</p>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon users">👥</div>
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Total Users</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon revenue">💰</div>
+                        <div class="stat-value">$0</div>
+                        <div class="stat-label">Monthly Revenue</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon system">🏢</div>
+                        <div class="stat-value">12</div>
+                        <div class="stat-label">Active Resellers</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon content">📦</div>
+                        <div class="stat-value">${window.packages ? window.packages.length : 0}</div>
+                        <div class="stat-label">Active Packages</div>
+                    </div>
+                </div>
+                
+                <div class="section-card">
+                    <h3 class="section-title">📈 System Status</h3>
+                    <p style="color: rgba(255,255,255,0.7);">Analytics dashboard coming soon...</p>
+                </div>
+            `;
+        };
+        
+        window.showLogsSection = function() {
+            const mainContent = document.querySelector('.admin-main');
+            if (!mainContent) return;
+            
+            mainContent.innerHTML = `
+                <div class="dashboard-header">
+                    <h1 class="dashboard-title">📋 System Logs</h1>
+                    <p class="dashboard-subtitle">Recent system activities</p>
+                </div>
+                
+                <div class="section-card">
+                    <h3 class="section-title">🔍 Log Viewer</h3>
+                    <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 20px; max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 12px; color: rgba(255,255,255,0.8);">
+                        <div>[${new Date().toLocaleString()}] INFO: Admin panel loaded successfully</div>
+                        <div>[${new Date().toLocaleString()}] INFO: Credit system initialized</div>
+                        <div>[${new Date().toLocaleString()}] INFO: Package system loaded</div>
+                        <div style="color: rgba(255,255,255,0.5);">Log viewer functionality will be expanded...</div>
+                    </div>
+                </div>
+            `;
+        };
+        
+        window.showSettingsSection = function() {
+            const mainContent = document.querySelector('.admin-main');
+            if (!mainContent) return;
+            
+            mainContent.innerHTML = `
+                <div class="dashboard-header">
+                    <h1 class="dashboard-title">⚙️ Settings</h1>
+                    <p class="dashboard-subtitle">System Configuration</p>
+                </div>
+                
+                <div class="section-grid">
+                    <div class="section-card">
+                        <h3 class="section-title">🔐 Password Management</h3>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <button onclick="changeAdminPassword()" style="background: var(--admin-color); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">Change Admin Password</button>
+                            <button onclick="changeMasterPassword()" style="background: #ff9800; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">Change Master Password</button>
+                        </div>
+                    </div>
+                    
+                    <div class="section-card">
+                        <h3 class="section-title">🏢 Reseller Management</h3>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <button onclick="createReseller()" style="background: var(--admin-color); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">Create Reseller</button>
+                            <button onclick="manageResellerCredentials()" style="background: #2196f3; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">Manage Resellers</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+        
+        window.showLogin = function() {
+            const overlay = document.getElementById('adminOverlay');
+            const modal = document.getElementById('loginModal');
+            overlay.style.display = 'flex';
+            modal.style.display = 'block';
+            document.getElementById('adminUsername').focus();
+        }
+        
+        window.hideLogin = function() {
+            document.getElementById('adminOverlay').style.display = 'none';
+            document.getElementById('loginModal').style.display = 'none';
+        }
+        
+        window.adminLogin = function() {
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+            
+            const user = passwordManager.authenticateUser(username, password);
+            if (user) {
+                isLoggedIn = true;
+                currentUser = user;
+                hideLogin();
+                showSuccess(`Login successful! Welcome ${user.role === 'admin' ? 'Admin' : 'Master'} ${user.username}`);
+                
+                // Show dashboard after successful login
+                setTimeout(() => {
+                    if (typeof showSection === 'function') {
+                        showSection('dashboard');
+                    }
+                }, 500);
+            } else {
+                showError('Invalid credentials');
+                document.getElementById('adminPassword').value = '';
+            }
+        }
+        
+        window.logout = function() {
+            isLoggedIn = false;
+            currentUser = null;
+            showLogin();
+        }
+        
+        window.changeAdminPassword = function() {
+            const currentPassword = prompt('Enter current admin password:');
+            if (!currentPassword) return;
+            
+            const newPassword = prompt('Enter new admin password:');
+            if (!newPassword || newPassword.length < 6) {
+                showError('Password must be at least 6 characters');
+                return;
+            }
+            
+            const confirmPassword = prompt('Confirm new password:');
+            if (newPassword !== confirmPassword) {
+                showError('Passwords do not match');
+                return;
+            }
+            
+            const result = passwordManager.changeAdminPassword(currentPassword, newPassword);
+            if (result.success) {
+                showSuccess(result.message);
+            } else {
+                showError(result.message);
+            }
+        }
+        
+        function changeMasterPassword() {
+            const currentPassword = prompt('Enter current master password:');
+            if (!currentPassword) return;
+            
+            const newPassword = prompt('Enter new master password:');
+            if (!newPassword || newPassword.length < 6) {
+                showError('Password must be at least 6 characters');
+                return;
+            }
+            
+            const confirmPassword = prompt('Confirm new master password:');
+            if (newPassword !== confirmPassword) {
+                showError('Passwords do not match');
+                return;
+            }
+            
+            const result = passwordManager.changeMasterPassword(currentPassword, newPassword);
+            if (result.success) {
+                showSuccess(result.message);
+            } else {
+                showError(result.message);
+            }
+        }
+        
+        function createReseller() {
+            // Get next available panel automatically
+            const assignedPanel = getNextAvailablePanel();
+            if (!assignedPanel) {
+                showError('All 12 reseller panels are already assigned. Please remove a reseller first.');
+                return;
+            }
+            
+            const resellerId = `reseller_${assignedPanel}`;
+            console.log(`🔧 Auto-assigning reseller to Panel #${assignedPanel} (${resellerId})`);
+            
+            const username = prompt(`Creating reseller for Panel #${assignedPanel}\n\nEnter reseller username:`);
+            if (!username) return;
+            
+            const password = prompt('Enter reseller password (min 6 characters):');
+            if (!password) return;
+            
+            const result = passwordManager.createReseller(resellerId, username, password);
+            if (result.success) {
+                // Set panel assignment
+                localStorage.setItem(`reseller_${resellerId}_panel`, assignedPanel);
+                localStorage.setItem(`reseller_${assignedPanel}_assigned`, 'true');
+                
+                console.log(`✅ Reseller ${resellerId} assigned to Panel #${assignedPanel}`);
+                showSuccess(result.message);
+                
+                // Show access instructions with panel info
+                setTimeout(() => {
+                    showResellerAccessInstructions(resellerId, username, password, assignedPanel);
+                }, 1500);
+                
+                showCreditSection(); // Refresh the credit section
+                showResellersSection(); // Refresh the reseller list
+            } else {
+                showError(result.message);
+            }
+        }
+
+        function getNextAvailablePanel() {
+            for (let i = 1; i <= 12; i++) {
+                const panelNum = String(i).padStart(3, '0');
+                const resellerId = `reseller_${panelNum}`;
+                
+                if (!passwordManager.resellerCredentials[resellerId]) {
+                    console.log(`📋 Found available panel: #${panelNum}`);
+                    return panelNum;
+                }
+            }
+            console.log('❌ No available panels found (001-012 all assigned)');
+            return null; // All panels assigned
+        }
+
+        function showPanelAssignments() {
+            const assignments = [];
+            
+            for (let i = 1; i <= 12; i++) {
+                const panelNum = String(i).padStart(3, '0');
+                const resellerId = `reseller_${panelNum}`;
+                const assignedPanel = localStorage.getItem(`reseller_${resellerId}_panel`);
+                
+                if (passwordManager.resellerCredentials[resellerId]) {
+                    const reseller = passwordManager.resellerCredentials[resellerId];
+                    assignments.push(`Panel #${panelNum}: ${reseller.username} (${resellerId})`);
+                } else {
+                    assignments.push(`Panel #${panelNum}: AVAILABLE`);
+                }
+            }
+            
+            alert(`📊 PANEL ASSIGNMENTS STATUS\n\n${assignments.join('\n')}\n\nTotal: 12 panels (${assignments.filter(a => a.includes('AVAILABLE')).length} available)`);
+        }
+
+        function validatePanelAssignments() {
+            console.log('🔍 Validating panel assignments...');
+            const resellers = passwordManager.getAllResellers();
+            const assignments = [];
+            
+            resellers.forEach(resellerId => {
+                const assignedPanel = localStorage.getItem(`reseller_${resellerId}_panel`);
+                if (assignedPanel) {
+                    assignments.push({ resellerId, assignedPanel });
+                    console.log(`✅ ${resellerId} → Panel #${assignedPanel}`);
+                } else {
+                    console.log(`❌ ${resellerId} → NO PANEL ASSIGNED`);
+                }
+            });
+            
+            return assignments;
+        }
+
+        function showResellerAccessInstructions(resellerId, username, password, assignedPanel) {
+            const panelFile = `reseller_${assignedPanel}_panel.html`;
+            const instructions = `
+🎯 RESELLER ACCESS INSTRUCTIONS
+
+📋 NEW RESELLER DETAILS:
+• Reseller ID: ${resellerId}
+• Username: ${username}
+• Password: ${password}
+• Assigned Panel: #${assignedPanel}
+• Panel File: ${panelFile}
+
+🌐 ACCESS YOUR PANEL:
+• Open: ${panelFile} (in your file browser)
+• Login with credentials above
+• Each panel works independently
+
+✅ FEATURES AVAILABLE:
+• Full customer management
+• Device selection (Basic TV, 2nd TV, 3rd TV)
+• Business rules validation
+• Automatic pricing calculation
+• Credit tracking
+• Package & add-on management
+
+📞 IMPORTANT:
+• Your panel is unique to you (Panel #${assignedPanel})
+• Only you have access to your customer data
+• Admin manages all packages centrally
+
+🔧 ADMIN ACCESS:
+• Panel: admin_panel.html
+• Login: admin / [admin password]
+• Can change your credentials anytime
+
+Press OK to close this window.
+`;
+            
+            alert(instructions);
+        }
+        
+        function showResellerAccessInstructions(resellerId, username, password) {
+            const panelFile = `${resellerId}_panel.html`;
+            const instructions = `
+🎯 RESELLER ACCESS INSTRUCTIONS
+
+📋 NEW RESELLER DETAILS:
+• Reseller ID: ${resellerId}
+• Username: ${username}
+• Password: ${password}
+• Panel File: ${panelFile}
+
+🌐 ACCESS PANEL:
+• Open: ${panelFile}
+• Login with the credentials above
+
+✅ FEATURES INCLUDED:
+• Full customer management
+• Device selection (Basic TV, 2nd TV, 3rd TV)
+• Business rules validation
+• Automatic pricing calculation
+• Credit tracking
+• Package & add-on management
+• Connected to admin system for packages/prices
+
+📞 NEXT STEPS:
+1. Share credentials with your reseller
+2. Reseller opens ${panelFile}
+3. Login with provided username/password
+4. Start managing customers immediately!
+
+🔗 Your panel is ready: ${panelFile}
+            `;
+            
+            alert(instructions);
+            
+            // Also update the reseller credentials section
+            updateResellerCredentialsDisplay();
+        }
+        
+        function showResellerCredentials() {
+            const resellers = passwordManager.getAllResellers();
+            let info = '🔐 RESELLER CREDENTIALS & ACCESS GUIDE\n\n';
+            info += '🌐 RESELLER PANEL ACCESS:\n';
+            info += 'File: reseller_panel_fixed.html\n\n';
+            info += '👤 ADMIN ACCESS:\n';
+            info += 'Admin Login: admin / [current admin password]\n\n';
+            info += '📋 EXISTING RESELLERS:\n';
+            
+            resellers.forEach(resellerId => {
+                const reseller = passwordManager.resellerCredentials[resellerId];
+                info += `\n${resellerId}:\n`;
+                info += `  Username: ${reseller.username}\n`;
+                info += `  Password: ${reseller.password}\n`;
+                info += `  Created: ${new Date(reseller.createdAt).toLocaleDateString()}\n`;
+                info += `  Panel: ${resellerId}_panel.html\n`;
+            });
+            
+            info += '\n📝 INSTRUCTIONS FOR RESELLERS:\n';
+            info += '1. Open your specific panel file (e.g., reseller_001_panel.html)\n';
+            info += '2. Login with provided credentials\n';
+            info += '3. Access all features including device selection\n';
+            info += '4. Manage customers and track credits\n';
+            
+            alert(info);
+        }
+        
+        function updateResellerCredentialsDisplay() {
+            // This function can be expanded to update a dedicated UI section
+            // showing all reseller information and access details
+            const resellers = passwordManager.getAllResellers();
+            if (resellers.length > 0) {
+                showResellerCredentials();
+            }
+        }
+        
+        function manageResellerCredentials() {
+            const resellers = passwordManager.getAllResellers();
+            if (resellers.length === 0) {
+                showError('No resellers found. Create a reseller first.');
+                return;
+            }
+            
+            let options = 'Select reseller to manage:\n';
+            resellers.forEach((resellerId, index) => {
+                options += `${index + 1}. ${resellerId}\n`;
+            });
+            
+            const choice = prompt(options + '\nEnter number (or Cancel):');
+            if (!choice) return;
+            
+            const index = parseInt(choice) - 1;
+            if (index < 0 || index >= resellers.length) {
+                showError('Invalid selection');
+                return;
+            }
+            
+            const resellerId = resellers[index];
+            const reseller = passwordManager.resellerCredentials[resellerId];
+            
+            const choice2 = prompt(`\nWhat do you want to do with ${resellerId}?\n1. Update Username\n2. Update Password\n3. Reset Both\n4. Delete Reseller\n\nEnter choice (1-4):`);
+            
+            if (!choice2) return;
+            
+            switch(choice2) {
+                case '1':
+                    const newUsername = prompt(`Current username: ${reseller.username}\nEnter new username:`);
+                    if (newUsername && newUsername.trim()) {
+                        reseller.username = newUsername.trim();
+                        passwordManager.saveCredentials();
+                        showSuccess(`Username updated for ${resellerId}`);
+                    }
+                    break;
+                    
+                case '2':
+                    const newPassword = prompt(`Enter new password for ${reseller.username}:`);
+                    if (newPassword && newPassword.length >= 6) {
+                        reseller.password = newPassword;
+                        passwordManager.saveCredentials();
+                        showSuccess(`Password updated for ${resellerId}`);
+                    } else {
+                        showError('Password must be at least 6 characters');
+                    }
+                    break;
+                    
+                case '3':
+                    const username = prompt(`Current username: ${reseller.username}\nEnter new username:`);
+                    const password = prompt(`Enter new password for ${username}:`);
+                    if (username && password && password.length >= 6) {
+                        reseller.username = username.trim();
+                        reseller.password = password;
+                        passwordManager.saveCredentials();
+                        showSuccess(`Credentials updated for ${resellerId}`);
+                    } else {
+                        showError('Invalid username or password too short');
+                    }
+                    break;
+                    
+                case '4':
+                    const confirm = prompt(`Are you sure you want to delete ${resellerId}? This cannot be undone.\nType 'YES' to confirm:`);
+                    if (confirm === 'YES') {
+                        delete passwordManager.resellerCredentials[resellerId];
+                        passwordManager.saveCredentials();
+                        showSuccess(`Reseller ${resellerId} deleted`);
+                    }
+                    break;
+                    
+                default:
+                    showError('Invalid choice');
+            }
+        }
+        
+        function showSuccess(message) {
+            showNotification(message, 'success');
+        }
+        
+        function showError(message) {
+            showNotification(message, 'error');
+        }
+        
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 500;
+                z-index: 10000;
+                transition: all 0.3s ease;
+                ${type === 'success' ? 'background: #4caf50;' : 'background: #f44336;'}
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+    </script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            --accent-blue: #667eea;
+            --accent-purple: #764ba2;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --error-color: #f44336;
+            --focus-color: #667eea;
+            --admin-color: #4caf50;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--primary-gradient);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .admin-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            min-height: 100vh;
+        }
+
+        .admin-sidebar {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 30px 20px;
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+        }
+
+        .admin-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .admin-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--admin-color), #66bb6a);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            color: white;
+            margin: 0 auto 15px;
+            box-shadow: 0 15px 35px rgba(76, 175, 80, 0.4);
+        }
+
+        .admin-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--admin-color);
+            margin-bottom: 5px;
+        }
+
+        .admin-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .admin-nav {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 10px;
+        }
+
+        .nav-btn {
+            width: 100%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 15px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: left;
+        }
+
+        .nav-btn:hover {
+            background: rgba(76, 175, 80, 0.2);
+            border-color: var(--admin-color);
+            transform: translateX(5px);
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, var(--admin-color), #66bb6a);
+            border-color: transparent;
+            color: white;
+        }
+
+        .nav-icon {
+            font-size: 18px;
+        }
+
+        .admin-main {
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .dashboard-header {
+            margin-bottom: 40px;
+        }
+
+        .dashboard-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .dashboard-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        .stat-icon.users {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .stat-icon.revenue {
+            background: linear-gradient(135deg, #4caf50, #66bb6a);
+        }
+
+        .stat-icon.content {
+            background: linear-gradient(135deg, #ff9800, #ffb74d);
+        }
+
+        .stat-icon.system {
+            background: linear-gradient(135deg, #9c27b0, #ba68c8);
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .section-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+        }
+
+        .section-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(20px);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--admin-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-icon {
+            font-size: 1.8rem;
+        }
+
+        /* Mobile Responsive Design */
+        @media (max-width: 768px) {
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                margin: 0;
+                padding: 0;
+                font-size: 14px;
+            }
+
+            /* Fix admin-container grid layout for mobile */
+            .admin-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+
+            .admin-sidebar {
+                padding: 15px;
+                border-right: none;
+                border-bottom: 1px solid var(--glass-border);
+                max-height: auto;
+                overflow: visible;
+            }
+
+            .admin-header {
+                margin-bottom: 20px;
+                padding-bottom: 15px;
+            }
+
+            .container {
+                padding: 10px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+
+            .stat-value {
+                font-size: 20px;
+            }
+
+            .stat-label {
+                font-size: 11px;
+            }
+        }
+
+        /* Extra small screens */
+        @media (max-width: 480px) {
+            .container {
+                padding: 5px;
+            }
+
+            /* Even better mobile handling */
+            .admin-sidebar {
+                padding: 10px;
+            }
+
+            .admin-header h1 {
+                font-size: 18px;
+            }
+
+            .tab {
+                padding: 10px 12px;
+                font-size: 12px;
+            }
+
+            .header-buttons button {
+                padding: 6px 8px;
+                font-size: 11px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar Navigation -->
+        <aside class="admin-sidebar">
+            <div class="admin-header">
+                <div class="admin-logo">🔧</div>
+                <h1 class="admin-title">Admin Panel</h1>
+                <p class="admin-subtitle">iWATCH TV System</p>
+            </div>
+            
+            <nav class="admin-nav">
+                <div class="nav-item">
+                    <button class="nav-btn active" onclick="showSection('dashboard', event)">
+                        <span class="nav-icon">📊</span>
+                        Dashboard
+                    </button>
+                </div>
+                <div class="nav-item">
+                    <button class="nav-btn" onclick="showSection('users', event)">
+                        <span class="nav-icon">👥</span>
+                        Users & Customers
+                    </button>
+                </div>
+                <div class="nav-item">
+                    <button class="nav-btn" onclick="showSection('content', event)">
+                        <span class="nav-icon">📺</span>
+                        Content Library
+                    </button>
+                </div>
+                <div class="nav-item">
+                    <button class="nav-btn" onclick="showSection('packages', event)">
+                        <span class="nav-icon">📦</span>
+                        Packages & Pricing
+                    </button>
+                </div>
+                <div class="nav-item">
+                    <button class="nav-btn" onclick="showSection('resellers', event)">
+                        <span class="nav-icon">🏢</span>
+                        Reseller Management
+                    </button>
+                </div>
+                <div class="nav-item">
+                    <button class="nav-btn" onclick="showSection('credit', event)">
+                        <span class="nav-icon">💰</span>
+                        Credit Manager
+                    </button>
+                </div>
+                <div class="nav-item">
+                    <button class="nav-btn" onclick="showSection('analytics', event)">
+                        <span class="nav-icon">📈</span>
+                        Analytics
+                    </button>
+                </div>
+                <div class="nav-item">
+                    <button class="nav-btn" onclick="showSection('settings', event)">
+                        <span class="nav-icon">⚙️</span>
+                        Settings
+                    </button>
+                </div>
+                <div class="nav-item">
+                    <button class="nav-btn" onclick="showSection('logs', event)">
+                        <span class="nav-icon">📋</span>
+                        System Logs
+                    </button>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="admin-main">
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">🔧 Welcome to Admin Panel</h1>
+                <p class="dashboard-subtitle">iWATCH TV Management System - Ready to use!</p>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon users">👥</div>
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon content">📦</div>
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">Packages</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon system">🔧</div>
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">Add-ons</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon revenue">💰</div>
+                    <div class="stat-value">12</div>
+                    <div class="stat-label">Resellers</div>
+                </div>
+            </div>
+            
+            <div class="section-grid">
+                <div class="section-card">
+                    <h3 class="section-title">📊 Quick Actions</h3>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button onclick="showSection('users'); showUsersSection();" style="background: linear-gradient(135deg, #2196f3, #42a5f5); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px;">View Users</button>
+                        <button onclick="showSection('packages', event)" style="background: linear-gradient(135deg, #ff9800, #ffb74d); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px;">Manage Packages</button>
+                        <button onclick="showSection('resellers', event)" style="background: linear-gradient(135deg, #9c27b0, #ba68c8); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px;">Manage Resellers</button>
+                    </div>
+                </div>
+                
+                <div class="section-card">
+                    <h3 class="section-title">🎯 System Status</h3>
+                    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: rgba(255,255,255,0.8);">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Admin Panel:</span>
+                            <span style="color: #4caf50;">✅ Online</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Credit System:</span>
+                            <span style="color: #4caf50;">✅ Active</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Reseller Panels:</span>
+                            <span style="color: #4caf50;">✅ 12 Ready</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Package System:</span>
+                            <span style="color: #4caf50;">✅ Ready</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Initialize admin data systems
+        function initializeGlobalVariables() {
+            // Initialize missing global variables
+            window.adminUsers = [];
+            window.addons = [];
+        }
+
+        function initializePackages() {
+            const saved = localStorage.getItem('adminPackages');
+            if (saved) {
+                try {
+                    window.packages = JSON.parse(saved);
+                } catch (e) {
+                    console.error('Error loading packages:', e);
+                    window.packages = [];
+                }
+            } else {
+                window.packages = [];
+            }
+        }
+        
+        function savePackages() {
+            try {
+                localStorage.setItem('adminPackages', JSON.stringify(window.packages));
+            } catch (e) {
+                console.error('Error saving packages:', e);
+            }
+        }
+
+        function saveContentLibrary() {
+            try {
+                localStorage.setItem('contentLibrary', JSON.stringify(window.contentLibrary));
+            } catch (e) {
+                console.error('Error saving content library:', e);
+            }
+        }
+
+        // Content Library System
+        function initializeContentLibrary() {
+            const saved = localStorage.getItem('adminContentLibrary');
+            if (saved) {
+                try {
+                    window.contentLibrary = JSON.parse(saved);
+                } catch (e) {
+                    console.error('Error loading content library:', e);
+                    initializeDefaultContentLibrary();
+                }
+            } else {
+                initializeDefaultContentLibrary();
+            }
+        }
+
+        function initializeDefaultContentLibrary() {
+            window.contentLibrary = {
+                plex: [
+                    { name: 'Main Plex Server', url: 'http://plex.example.com:32400', token: 'plex_token', status: 'Online', lastChecked: new Date().toISOString() }
+                ],
+                vod: [],
+                channels: [],
+                platforms: []
+            };
+            saveContentLibrary();
+        }
+
+        function showPackagesSection() {
+            const mainContent = document.querySelector('.admin-main');
+            if (!mainContent) return;
+            
+            mainContent.innerHTML = `
+                <div class="dashboard-header">
+                    <h1 class="dashboard-title">📦 Package Management</h1>
+                    <p class="dashboard-subtitle">Manage your service packages and pricing</p>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button onclick="addNewPackage()" style="background: var(--admin-color); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">Add Package</button>
+                    <button onclick="addNewAddon()" style="background: #ff9800; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">Add Addon</button>
+                </div>
+                
+                <div class="section-card">
+                    <h3 class="section-title">📋 Current Packages</h3>
+                    ${generatePackageList()}
+                </div>
+            `;
+        }
+
+        function generatePackageList() {
+            if (!window.packages || window.packages.length === 0) {
+                return '<div style="text-align: center; padding: 40px; color: var(--text-secondary);">📦 No packages found. Click "Add Package" to get started.</div>';
+            }
+            
+            return window.packages.map(pkg => `
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 20px; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4 style="color: white; margin-bottom: 5px;">${pkg.name}</h4>
+                            <p style="color: rgba(255,255,255,0.7); font-size: 14px;">$${pkg.price}/month</p>
+                        </div>
+                        <div>
+                            <button onclick="editPackage('${pkg.id}')" style="background: #ff9800; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 5px; font-size: 12px;">Edit</button>
+                            <button onclick="deletePackage('${pkg.id}')" style="background: #f44336; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showContentSection() {
+            const mainContent = document.querySelector('.admin-main');
+            if (!mainContent) return;
+            
+            mainContent.innerHTML = `
+                <div class="dashboard-header">
+                    <h1 class="dashboard-title">📺 Content Library</h1>
+                    <p class="dashboard-subtitle">Manage your content sources and platforms</p>
+                </div>
+                
+                <div class="section-grid">
+                    <div class="section-card">
+                        <h3 class="section-title">🎬 Plex Servers</h3>
+                        <div id="plexContent">
+                            ${generatePlexServers()}
+                        </div>
+                    </div>
+                    
+                    <div class="section-card">
+                        <h3 class="section-title">🎬 VOD Content</h3>
+                        <p style="color: rgba(255,255,255,0.7);">VOD management coming soon...</p>
+                    </div>
+                    
+                    <div class="section-card">
+                        <h3 class="section-title">📺 Live Channels</h3>
+                        <p style="color: rgba(255,255,255,0.7);">Channel management coming soon...</p>
+                    </div>
+                    
+                    <div class="section-card">
+                        <h3 class="section-title">🔗 Platforms</h3>
+                        <p style="color: rgba(255,255,255,0.7);">Platform management coming soon...</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generatePlexServers() {
+            if (!window.contentLibrary || !window.contentLibrary.plex || window.contentLibrary.plex.length === 0) {
+                return '<div style="text-align: center; padding: 20px; color: var(--text-secondary);">🔧 No Plex servers configured</div>';
+            }
+            
+            return window.contentLibrary.plex.map(server => `
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 15px; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4 style="color: white; margin-bottom: 5px;">${server.name}</h4>
+                            <p style="color: rgba(255,255,255,0.6); font-size: 12px;">${server.url}</p>
+                        </div>
+                        <div>
+                            <span style="color: ${server.status === 'Online' ? '#4caf50' : '#f44336'}; font-size: 12px;">${server.status}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Add Package Function
+        function addNewPackage() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                z-index: 10001;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(10px);
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 30px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2); width: 400px;">
+                    <h3 style="color: white; margin-bottom: 20px; text-align: center;">📦 Add New Package</h3>
+                    
+                    <form id="packageForm">
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; color: white; font-size: 14px;">Package Name *</label>
+                            <input type="text" id="packageName" required style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;" placeholder="e.g., Starter Plan">
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 5px; color: white; font-size: 14px;">Monthly Price ($) *</label>
+                            <input type="number" id="packagePrice" required style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;" placeholder="0.00" min="0" step="0.01">
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px;">
+                            <button type="button" onclick="closePackageModal()" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-weight: 500; cursor: pointer; font-size: 14px;">Cancel</button>
+                            <button type="submit" style="flex: 1; padding: 10px; background: var(--admin-color); border: none; border-radius: 6px; color: white; font-weight: 600; cursor: pointer; font-size: 14px;">Add Package</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            document.getElementById('packageName').focus();
+            
+            modal.querySelector('#packageForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const name = document.getElementById('packageName').value;
+                const price = parseFloat(document.getElementById('packagePrice').value);
+                
+                if (!name || price <= 0) {
+                    showError('Please fill in all required fields');
+                    return;
+                }
+                
+                const newPackage = {
+                    id: 'pkg_' + Date.now(),
+                    name: name,
+                    description: `Custom ${name} package`,
+                    price: price,
+                    status: 'active',
+                    createdAt: new Date().toLocaleDateString()
+                };
+                
+                window.packages.push(newPackage);
+                savePackages();
+                
+                closePackageModal();
+                showPackagesSection();
+                showSuccess(`Package "${name}" added successfully!`);
+            });
+            
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closePackageModal();
+                }
+            });
+        }
+        
+        function closePackageModal() {
+            const modal = document.querySelector('div[style*="z-index: 10001"]');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        // Add Addon Function
+        function addNewAddon() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                z-index: 10001;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(10px);
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 30px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2); width: 400px;">
+                    <h3 style="color: white; margin-bottom: 20px; text-align: center;">🔧 Add New Addon</h3>
+                    
+                    <form id="addonForm">
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; color: white; font-size: 14px;">Addon Name *</label>
+                            <input type="text" id="addonName" required style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;" placeholder="e.g., Sports Package">
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 5px; color: white; font-size: 14px;">Monthly Price ($) *</label>
+                            <input type="number" id="addonPrice" required style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;" placeholder="0.00" min="0" step="0.01">
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px;">
+                            <button type="button" onclick="closeAddonModal()" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-weight: 500; cursor: pointer; font-size: 14px;">Cancel</button>
+                            <button type="submit" style="flex: 1; padding: 10px; background: #ff9800; border: none; border-radius: 6px; color: white; font-weight: 600; cursor: pointer; font-size: 14px;">Add Addon</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            document.getElementById('addonName').focus();
+            
+            modal.querySelector('#addonForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const name = document.getElementById('addonName').value;
+                const price = parseFloat(document.getElementById('addonPrice').value);
+                
+                if (!name || price <= 0) {
+                    showError('Please fill in all required fields');
+                    return;
+                }
+                
+                const newAddon = {
+                    id: 'addon_' + Date.now(),
+                    name: name,
+                    price: price,
+                    type: 'addon',
+                    createdAt: new Date().toLocaleDateString()
+                };
+                
+                // For simplicity, we'll treat addons as packages for now
+                window.packages.push(newAddon);
+                savePackages();
+                
+                closeAddonModal();
+                showPackagesSection();
+                showSuccess(`Addon "${name}" added successfully!`);
+            });
+            
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeAddonModal();
+                }
+            });
+        }
+        
+        function closeAddonModal() {
+            const modal = document.querySelector('div[style*="z-index: 10001"]');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        function deletePackage(packageId) {
+            const pkg = window.packages.find(p => p.id === packageId);
+            if (!pkg) return;
+            
+            if (confirm(`Are you sure you want to delete package "${pkg.name}"?`)) {
+                window.packages = window.packages.filter(p => p.id !== packageId);
+                savePackages();
+                showPackagesSection();
+                showSuccess(`Package "${pkg.name}" deleted`);
+            }
+        }
+        
+        function editPackage(packageId) {
+            const pkg = window.packages.find(p => p.id === packageId);
+            if (!pkg) return;
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                z-index: 10001;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(10px);
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 30px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2); width: 400px;">
+                    <h3 style="color: white; margin-bottom: 20px; text-align: center;">✏️ Edit Package</h3>
+                    
+                    <form id="editPackageForm">
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; color: white; font-size: 14px;">Package Name *</label>
+                            <input type="text" id="editPackageName" required style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;" value="${pkg.name}">
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 5px; color: white; font-size: 14px;">Monthly Price ($) *</label>
+                            <input type="number" id="editPackagePrice" required style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;" value="${pkg.price}" min="0" step="0.01">
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px;">
+                            <button type="button" onclick="closeEditPackageModal()" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-weight: 500; cursor: pointer; font-size: 14px;">Cancel</button>
+                            <button type="submit" style="flex: 1; padding: 10px; background: var(--admin-color); border: none; border-radius: 6px; color: white; font-weight: 600; cursor: pointer; font-size: 14px;">Update Package</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            document.getElementById('editPackageName').focus();
+            
+            modal.querySelector('#editPackageForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const name = document.getElementById('editPackageName').value;
+                const price = parseFloat(document.getElementById('editPackagePrice').value);
+                
+                if (!name || price <= 0) {
+                    showError('Please fill in all required fields');
+                    return;
+                }
+                
+                pkg.name = name;
+                pkg.price = price;
+                pkg.updatedAt = new Date().toLocaleDateString();
+                
+                savePackages();
+                
+                closeEditPackageModal();
+                showPackagesSection();
+                showSuccess(`Package "${name}" updated successfully!`);
+            });
+            
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeEditPackageModal();
+                }
+            });
+        }
+        
+        function closeEditPackageModal() {
+            const modal = document.querySelector('div[style*="z-index: 10001"]');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Enhanced Credit Management System - UNLIMITED TRANSFERS & BUSINESS WORKFLOW
+        window.creditSystem = {
+            resellerCredits: {},
+            transactionHistory: [],
+            resellerInfo: {}, // Store reseller details and settings
+            
+            initializeCredits: function() {
+                // Load existing reseller wallet data (simple number format)
+                const savedWallet = localStorage.getItem('resellerWallet');
+                if (savedWallet) {
+                    try {
+                        const balance = parseFloat(savedWallet);
+                        this.resellerCredits = { 'reseller': balance || 0 };
+                    } catch (e) {
+                        console.error('Error loading reseller wallet:', e);
+                        this.resellerCredits = { 'reseller': 0 };
+                    }
+                } else {
+                    this.resellerCredits = { 'reseller': 0 };
+                }
+                
+                // Load transaction history
+                const savedTransactions = localStorage.getItem('creditTransactions');
+                if (savedTransactions) {
+                    try {
+                        this.transactionHistory = JSON.parse(savedTransactions);
+                    } catch (e) {
+                        console.error('Error loading transactions:', e);
+                        this.transactionHistory = [];
+                    }
+                } else {
+                    this.transactionHistory = [];
+                }
+                
+                console.log('Credits system initialized - loaded existing data');
+            },
+            
+            saveCredits: function() {
+                // Save all reseller credits in structured format
+                Object.keys(this.resellerCredits).forEach(resellerId => {
+                    const balance = this.resellerCredits[resellerId];
+                    localStorage.setItem(`resellerWallet_${resellerId}`, balance.toFixed(2));
+                });
+                
+                localStorage.setItem('creditTransactions', JSON.stringify(this.transactionHistory));
+                localStorage.setItem('resellerCredits', JSON.stringify(this.resellerCredits));
+                localStorage.setItem('resellerInfo', JSON.stringify(this.resellerInfo));
+                
+                console.log('💳 ADMIN: Enhanced credit system saved for all resellers');
+                
+                // Trigger reseller panel sync
+                localStorage.setItem('packagesUpdated', Date.now().toString());
+            },
+            
+            getRequiredBasicPackage: function() {
+                return 'basic_tv'; // The basic package ID that must be sold first
+            },
+            
+            validateSale: function(selectedPackages, selectedAddons = []) {
+                const requiredBasic = this.getRequiredBasicPackage();
+                const hasBasic = selectedPackages.includes(requiredBasic);
+                
+                if (!hasBasic) {
+                    return {
+                        valid: false,
+                        message: '❌ Basic TV Package must be sold first before any add-ons or additional TV packages',
+                        missing: 'Basic TV Package'
+                    };
+                }
+                
+                // Check if any additional packages require basic (they should by design)
+                const additionalPackages = selectedPackages.filter(pkg => pkg !== requiredBasic);
+                if (additionalPackages.length > 0 && !hasBasic) {
+                    return {
+                        valid: false,
+                        message: '❌ Additional packages require Basic TV Package',
+                        missing: 'Basic TV Package'
+                    };
+                }
+                
+                return { valid: true, message: '✅ Sale is valid' };
+            },
+            
+            calculateSaleCost: function(selectedPackages, selectedAddons = []) {
+                let totalCost = 0;
+                
+                // Calculate package costs
+                selectedPackages.forEach(packageId => {
+                    const pkg = window.packages.find(p => p.id === packageId);
+                    if (pkg) {
+                        totalCost += pkg.price;
+                    }
+                });
+                
+                // Calculate addon costs
+                selectedAddons.forEach(addonId => {
+                    const addon = window.addons.find(a => a.id === addonId);
+                    if (addon) {
+                        totalCost += addon.price;
+                    }
+                });
+                
+                return totalCost;
+            },
+            
+            // ENHANCED TRANSFER - Create reseller profile if doesn't exist
+            transferCredit: function(resellerId, amount, description = 'Credit Transfer', resellerName = '') {
+                amount = parseFloat(amount);
+                if (isNaN(amount) || amount <= 0) {
+                    return { success: false, message: 'Invalid amount' };
+                }
+                
+                if (!resellerId || resellerId.trim() === '') {
+                    return { success: false, message: 'Reseller ID is required' };
+                }
+                
+                if (!this.resellerCredits[resellerId]) {
+                    this.resellerCredits[resellerId] = 0;
+                    
+                    // Create reseller profile if new
+                    this.resellerInfo[resellerId] = {
+                        name: resellerName || resellerId,
+                        createdAt: new Date().toISOString(),
+                        totalTransferred: 0,
+                        totalSales: 0,
+                        status: 'active'
+                    };
+                }
+                
+                // UNLIMITED TRANSFER - Direct credit addition
+                this.resellerCredits[resellerId] += amount;
+                this.resellerInfo[resellerId].totalTransferred += amount;
+                
+                // Log transaction
+                const transaction = {
+                    id: 'TXN' + Date.now(),
+                    type: 'transfer',
+                    from: 'admin',
+                    to: resellerId,
+                    amount: amount,
+                    description: description,
+                    timestamp: new Date().toISOString(),
+                    date: new Date().toLocaleString()
+                };
+                this.transactionHistory.unshift(transaction);
+                
+                this.saveCredits();
+                return { success: true, message: `Successfully transferred $${amount} to ${resellerId}` };
+            },
+            
+            getResellerBalance: function(resellerId) {
+                return this.resellerCredits[resellerId] || 0;
+            }
+        };
+        
+        window.showCreditSection = function() {
+            const mainContent = document.querySelector('.admin-main');
+            const resellerList = Object.keys(creditSystem.resellerCredits).map(resellerId => {
+                const balance = creditSystem.getResellerBalance(resellerId);
+                return `
+                    <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4 style="color: white; margin: 0 0 5px 0;">${resellerId}</h4>
+                            <p style="color: rgba(255,255,255,0.7); margin: 0;">Current Balance: $${balance}</p>
+                        </div>
+                        <div>
+                            <button onclick="transferCreditModal('${resellerId}')" style="background: var(--admin-color); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-right: 10px;">Transfer</button>
+                            <button onclick="viewCreditHistory('${resellerId}')" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">History</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            mainContent.innerHTML = `
+                <div class="dashboard-header">
+                    <h1 class="dashboard-title">💳 Credit Manager</h1>
+                    <p class="dashboard-subtitle">Unlimited transfers to reseller wallets</p>
+                </div>
+                
+                <!-- Transfer Control Card -->
+                <div style="background: linear-gradient(135deg, #2c3e50, #34495e); border-radius: 12px; padding: 25px; margin-bottom: 30px; text-align: center; border: 1px solid rgba(255,255,255,0.2);">
+                    <h3 style="color: white; margin-bottom: 10px;">💰 Credit Transfer System</h3>
+                    <div style="font-size: 1.2rem; font-weight: 600; color: var(--admin-color); margin-bottom: 15px;">Unlimited Transfers</div>
+                    <button onclick="transferCreditModal()" style="background: var(--admin-color); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 16px;">💳 Transfer to Reseller</button>
+                </div>
+                
+                <!-- Reseller Credits -->
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 25px;">
+                    <h3 style="color: white; margin-bottom: 20px;">🏢 Reseller Credits</h3>
+                    ${resellerList || '<p style="color: rgba(255,255,255,0.7);">No resellers found. Make your first transfer to create a reseller account.</p>'}
+                </div>
+                
+                <!-- Recent Transactions -->
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 25px; margin-top: 30px;">
+                    <h3 style="color: white; margin-bottom: 20px;">📊 Recent Transactions</h3>
+                    ${generateCreditTransactions()}
+                </div>
+            `;
+        }
+        
+        function generateCreditTransactions() {
+            if (creditSystem.transactionHistory.length === 0) {
+                return '<p style="color: rgba(255,255,255,0.7);">No transactions yet</p>';
+            }
+            
+            return creditSystem.transactionHistory.slice(0, 10).map(tx => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <div>
+                        <div style="color: white; font-weight: 500;">${tx.description}</div>
+                        <div style="color: rgba(255,255,255,0.7); font-size: 0.9em;">${tx.date}</div>
+                    </div>
+                    <div style="color: #4caf50; font-weight: 600;">
+                        +$${tx.amount}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function transferCreditModal(resellerId = 'reseller') {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                z-index: 10001;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(10px);
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: linear-gradient(135deg, #2c3e50, #34495e); padding: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); width: 400px;">
+                    <h2 style="color: white; margin-bottom: 20px; text-align: center;">💳 Transfer Credit</h2>
+                    <div style="margin-bottom: 20px;">
+                        <label style="color: white; display: block; margin-bottom: 8px;">Reseller ID *</label>
+                        <input type="text" id="transferResellerId" value="${resellerId}" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white;" placeholder="reseller" required>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="color: white; display: block; margin-bottom: 8px;">Amount ($) *</label>
+                        <input type="number" id="transferAmount" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white;" placeholder="Enter amount" value="" min="0.01" step="0.01" required>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="color: white; display: block; margin-bottom: 8px;">Description</label>
+                        <input type="text" id="transferDescription" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white;" placeholder="Optional description">
+                    </div>
+                    <div style="margin-bottom: 20px; text-align: center;">
+                        <span style="color: rgba(255,255,255,0.7);">Transfer Type: </span>
+                        <span style="color: var(--admin-color); font-weight: 600;">Unlimited</span>
+                    </div>
+                    <div style="display: flex; gap: 15px;">
+                        <button onclick="confirmTransfer()" style="flex: 1; background: var(--admin-color); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 500;">Transfer</button>
+                        <button onclick="closeModal()" style="flex: 1; background: rgba(255,255,255,0.2); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer;">Cancel</button>
+                    </div>
+                </div>
+            `;
+            
+            // Store modal reference globally for confirmTransfer function
+            window.currentTransferModal = modal;
+            document.body.appendChild(modal);
+            
+            // Add event listeners
+            document.getElementById('transferAmount').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') confirmTransfer();
+            });
+            
+            // Focus on first input
+            document.getElementById('transferResellerId').focus();
+        }
+        
+        function confirmTransfer() {
+            const resellerId = document.getElementById('transferResellerId').value.trim();
+            const amount = document.getElementById('transferAmount').value;
+            const description = document.getElementById('transferDescription').value || 'Credit Transfer';
+            
+            console.log('💳 ADMIN: Transfer initiated - Reseller: ' + resellerId + ', Amount: $' + amount + ', Description: ' + description);
+            
+            if (!resellerId) {
+                alert('Please enter reseller ID');
+                return;
+            }
+            
+            if (!amount || parseFloat(amount) <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+            
+            const result = creditSystem.transferCredit(resellerId, amount, description);
+            
+            if (result.success) {
+                console.log('💳 ADMIN: Transfer completed successfully - ' + result.message);
+                alert(result.message);
+                closeModal();
+                showCreditSection(); // Refresh the section
+            } else {
+                console.log('💳 ADMIN: Transfer failed - ' + result.message);
+                alert('Error: ' + result.message);
+            }
+        }
+        
+        function viewCreditHistory(resellerId) {
+            const transactions = creditSystem.transactionHistory.filter(tx => tx.to === resellerId || tx.from === resellerId);
+            
+            if (transactions.length === 0) {
+                alert(`No transactions found for ${resellerId}`);
+                return;
+            }
+            
+            const historyText = transactions.slice(0, 20).map(tx => 
+                `[${tx.date}] ${tx.description} - $${tx.amount}`
+            ).join('\n');
+            
+            alert(`Credit History for ${resellerId}:\n\n${historyText}`);
+        }
+        
+        function closeModal() {
+            const modal = window.currentTransferModal;
+            if (modal) {
+                modal.remove();
+                window.currentTransferModal = null;
+            }
+        }
+
+        // Enhanced page initialization with better error handling
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 DOM Content Loaded - Initializing admin panel...');
+            
+            // Initialize password manager first
+            if (typeof passwordManager !== 'undefined') {
+                passwordManager.initialize();
+                console.log('✅ Password manager initialized');
+            } else {
+                console.error('❌ Password manager not found');
+            }
+            
+            // Initialize systems
+            initializeGlobalVariables();
+            initializePackages();
+            initializeContentLibrary();
+            
+            // Initialize credit system (with safety check)
+            if (typeof creditSystem !== 'undefined' && typeof creditSystem.initializeCredits === 'function') {
+                creditSystem.initializeCredits();
+                console.log('✅ Credit system initialized');
+            } else {
+                console.error('❌ Credit system not found');
+            }
+            
+            // Login modal will be shown after window load event
+        });
+        
+        // Additional load event with enhanced functionality
+        window.addEventListener('load', function() {
+            console.log('🔧 Window load event - Finalizing initialization...');
+            
+            // showSection function is already defined globally, no need to redefine
+            
+            // Show login modal after everything is initialized
+            setTimeout(function() {
+                console.log('🔧 Showing login modal...');
+                if (typeof showLogin === 'function') {
+                    showLogin();
+                    console.log('✅ Login modal displayed');
+                } else {
+                    console.error('❌ showLogin function not found');
+                }
+            }, 300);
+            
+            // All section functions are already defined globally, just ensure initialization
+            
+            console.log('✅ Admin panel initialized complete');
+        });
+    </script>
+    
+    <!-- Login Modal -->
+    <div id="adminOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; backdrop-filter: blur(10px);">
+        <div id="loginModal" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); width: 400px; text-align: center;">
+            <h2 style="color: white; margin-bottom: 30px; font-size: 24px;">🔐 Admin Login</h2>
+            <input type="text" name="username" id="adminUsername" autocomplete="username" placeholder="Username" required style="width: 100%; padding: 12px; margin-bottom: 15px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; font-size: 16px;" tabindex="1">
+            <input type="password" name="password" id="adminPassword" autocomplete="current-password" placeholder="Password" required style="width: 100%; padding: 12px; margin-bottom: 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; font-size: 16px;" onkeypress="if(event.key==='Enter'){adminLogin()}" tabindex="2">
+            <button onclick="adminLogin()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #4caf50, #66bb6a); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; margin-bottom: 10px; font-size: 16px;" tabindex="3">Login</button>
+            <div style="color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 10px;">
+                Default: admin / admin123
+            </div>
+        </div>
+    </div>
+    
+    <!-- No Flash Navigation -->
+    <div class="admin-header-top" style="position: fixed; top: 0; left: 0; right: 0; background: rgba(0,0,0,0.9); padding: 15px; z-index: 999; display: flex; justify-content: space-between; align-items: center;">
+        <div style="color: white; font-weight: 600;">🔧 Admin Panel - iWATCH TV</div>
+        <div>
+            <span id="adminUserInfo" style="color: rgba(255,255,255,0.7); margin-right: 15px;"></span>
+            <button onclick="logout()" style="background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Logout</button>
+        </div>
+    </div>
+
+    <body style="padding-top: 60px;">
+        <!-- Content will be dynamically loaded here -->
+    </body>
+
+<script>
+// Service Worker Registration
+if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('sw.js')
+            .then(function(registration) {
+                console.log('ServiceWorker registration successful');
+            })
+            .catch(function(error) {
+                console.log('ServiceWorker registration failed: ', error);
+            });
+    });
+} else if (window.location.protocol === 'file:') {
+    console.log('🔧 ServiceWorker registration skipped - file:// protocol not supported');
+}
+</script>
+
+</body>
+</html>
