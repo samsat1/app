@@ -217,6 +217,387 @@
         // Initialize password system
         passwordManager.initializeCredentials();
         
+        // ========================================
+        // REAL PLEX API INTEGRATION
+        // ========================================
+        
+        const plexAPIClient = {
+            baseURL: null,
+            token: null,
+            headers: {},
+            
+            // Initialize Plex API client
+            init: function(plexUrl, plexToken) {
+                this.baseURL = plexUrl.replace(/\/$/, ''); // Remove trailing slash
+                this.token = plexToken;
+                this.headers = {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Plex-Token': this.token
+                };
+                console.log('🔧 PlexAPIClient initialized:', this.baseURL);
+            },
+            
+            // Test connection to Plex server
+            async testConnection() {
+                try {
+                    const response = await fetch(`${this.baseURL}/?X-Plex-Token=${this.token}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        return {
+                            success: true,
+                            server: data.MediaContainer?.size ? 'Connected' : 'No Content',
+                            serverName: data.MediaContainer?.friendlyName || 'Unknown'
+                        };
+                    }
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                } catch (error) {
+                    console.error('Plex connection test failed:', error);
+                    return { success: false, error: error.message };
+                }
+            },
+            
+            // Get all libraries from Plex server
+            async getLibraries() {
+                try {
+                    const response = await fetch(`${this.baseURL}/library/sections?X-Plex-Token=${this.token}`);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    
+                    const data = await response.json();
+                    return data.MediaContainer?.Directory || [];
+                } catch (error) {
+                    console.error('Failed to fetch libraries:', error);
+                    throw error;
+                }
+            },
+            
+            // Get content from a specific library
+            async getLibraryContent(sectionId, limit = 50) {
+                try {
+                    const response = await fetch(`${this.baseURL}/library/sections/${sectionId}/all?X-Plex-Token=${this.token}&limit=${limit}`);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    
+                    const data = await response.json();
+                    return data.MediaContainer?.Metadata || [];
+                } catch (error) {
+                    console.error(`Failed to fetch content for section ${sectionId}:`, error);
+                    throw error;
+                }
+            },
+            
+            // Search for specific content
+            async searchContent(query, sectionId = null) {
+                try {
+                    let searchUrl = `${this.baseURL}/search?X-Plex-Token=${this.token}&query=${encodeURIComponent(query)}`;
+                    if (sectionId) searchUrl += `&section=${sectionId}`;
+                    
+                    const response = await fetch(searchUrl);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    
+                    const data = await response.json();
+                    return data.MediaContainer?.Metadata || [];
+                } catch (error) {
+                    console.error('Failed to search content:', error);
+                    throw error;
+                }
+            },
+            
+            // Get detailed information about a specific media item
+            async getMediaInfo(ratingKey) {
+                try {
+                    const response = await fetch(`${this.baseURL}/library/metadata/${ratingKey}?X-Plex-Token=${this.token}`);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    
+                    const data = await response.json();
+                    return data.MediaContainer?.Metadata?.[0];
+                } catch (error) {
+                    console.error(`Failed to fetch media info for ${ratingKey}:`, error);
+                    throw error;
+                }
+            },
+            
+            // Get Plex server status
+            async getServerStatus() {
+                try {
+                    const response = await fetch(`${this.baseURL}/updater/landing?X-Plex-Token=${this.token}`);
+                    const data = await response.json();
+                    
+                    return {
+                        status: 'online',
+                        updated: data.MediaContainer?.Status,
+                        message: 'Plex server is online and responding'
+                    };
+                } catch (error) {
+                    return {
+                        status: 'offline',
+                        message: 'Plex server is not responding',
+                        error: error.message
+                    };
+                }
+            },
+            
+            // Check if a content item requires authentication (adult content)
+            async checkAdultContent(ratingKey) {
+                try {
+                    const mediaInfo = await this.getMediaInfo(ratingKey);
+                    return {
+                        isAdult: mediaInfo?.contentRating?.includes('18') || 
+                               mediaInfo?.contentRating?.includes('XXX') ||
+                               mediaInfo?.contentRating?.includes('X'),
+                        contentRating: mediaInfo?.contentRating,
+                        ratingKey: ratingKey
+                    };
+                } catch (error) {
+                    console.error('Failed to check adult content:', error);
+                    return { isAdult: false, error: error.message };
+                }
+            }
+        };
+        
+        // Enhanced Plex Library Management
+        const plexLibraryManager = {
+            // Get Plex configuration from local storage
+            getPlexConfig() {
+                const config = localStorage.getItem('plexConfig');
+                return config ? JSON.parse(config) : {
+                    servers: [],
+                    activeServer: null
+                };
+            },
+            
+            // Save Plex configuration
+            savePlexConfig(config) {
+                localStorage.setItem('plexConfig', JSON.stringify(config));
+            },
+            
+            // Add a new Plex server
+            async addPlexServer(serverName, serverUrl, token, isAdult = false) {
+                try {
+                    // Test connection first
+                    plexAPIClient.init(serverUrl, token);
+                    const connectionTest = await plexAPIClient.testConnection();
+                    
+                    if (!connectionTest.success) {
+                        throw new Error(`Connection failed: ${connectionTest.error}`);
+                    }
+                    
+                    const config = this.getPlexConfig();
+                    const newServer = {
+                        id: Date.now().toString(),
+                        name: serverName,
+                        url: serverUrl,
+                        token: token,
+                        isAdult: isAdult,
+                        connected: true,
+                        serverInfo: {
+                            name: connectionTest.serverName || serverName,
+                            connected: connectionTest.server
+                        },
+                        libraries: [],
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    config.servers.push(newServer);
+                    if (!config.activeServer) config.activeServer = newServer.id;
+                    
+                    this.savePlexConfig(config);
+                    
+                    // Fetch libraries immediately
+                    await this.refreshLibraries(newServer.id);
+                    
+                    console.log('✅ Plex server added successfully');
+                    return { success: true, server: newServer };
+                } catch (error) {
+                    console.error('Failed to add Plex server:', error);
+                    return { success: false, error: error.message };
+                }
+            },
+            
+            // Remove a Plex server
+            removePlexServer(serverId) {
+                const config = this.getPlexConfig();
+                config.servers = config.servers.filter(s => s.id !== serverId);
+                
+                if (config.activeServer === serverId) {
+                    config.activeServer = config.servers.length > 0 ? config.servers[0].id : null;
+                }
+                
+                this.savePlexConfig(config);
+                return { success: true };
+            },
+            
+            // Set active server
+            setActiveServer(serverId) {
+                const config = this.getPlexConfig();
+                config.activeServer = serverId;
+                this.savePlexConfig(config);
+                
+                // Update API client
+                const server = config.servers.find(s => s.id === serverId);
+                if (server) {
+                    plexAPIClient.init(server.url, server.token);
+                }
+                
+                return { success: true };
+            },
+            
+            // Refresh libraries from a server
+            async refreshLibraries(serverId) {
+                try {
+                    const config = this.getPlexConfig();
+                    const server = config.servers.find(s => s.id === serverId);
+                    
+                    if (!server) throw new Error('Server not found');
+                    
+                    // Update API client
+                    plexAPIClient.init(server.url, server.token);
+                    
+                    // Fetch libraries
+                    const libraries = await plexAPIClient.getLibraries();
+                    server.libraries = libraries.map(lib => ({
+                        id: lib.key,
+                        name: lib.title,
+                        type: lib.type,
+                        isAdult: server.isAdult,
+                        contentCount: lib.childCount || 0,
+                        path: lib.key
+                    }));
+                    
+                    // Update library content for each library
+                    for (const lib of server.libraries) {
+                        try {
+                            const content = await plexAPIClient.getLibraryContent(lib.id, 20);
+                            lib.recentContent = content.map(item => ({
+                                ratingKey: item.ratingKey,
+                                title: item.title,
+                                year: item.year,
+                                thumb: item.thumb,
+                                type: item.type,
+                                duration: item.duration,
+                                isAdult: this.checkContentRating(item)
+                            }));
+                        } catch (error) {
+                            console.warn(`Failed to fetch content for library ${lib.name}:`, error);
+                            lib.recentContent = [];
+                        }
+                    }
+                    
+                    this.savePlexConfig(config);
+                    console.log('✅ Libraries refreshed successfully');
+                    return { success: true, libraries: server.libraries };
+                } catch (error) {
+                    console.error('Failed to refresh libraries:', error);
+                    return { success: false, error: error.message };
+                }
+            },
+            
+            // Check if content is adult based on rating
+            checkContentRating(mediaItem) {
+                const rating = mediaItem.contentRating;
+                return rating && (rating.includes('18') || rating.includes('XXX') || rating.includes('X'));
+            },
+            
+            // Get all libraries from all servers
+            getAllLibraries() {
+                const config = this.getPlexConfig();
+                const allLibraries = [];
+                
+                config.servers.forEach(server => {
+                    if (server.libraries) {
+                        server.libraries.forEach(lib => {
+                            allLibraries.push({
+                                ...lib,
+                                serverId: server.id,
+                                serverName: server.name,
+                                serverUrl: server.url
+                            });
+                        });
+                    }
+                });
+                
+                return allLibraries;
+            },
+            
+            // Get libraries filtered by adult content preference
+            getLibrariesByAdultPreference(includeAdult = false) {
+                const allLibraries = this.getAllLibraries();
+                
+                if (!includeAdult) {
+                    return allLibraries.filter(lib => !lib.isAdult);
+                }
+                
+                return allLibraries;
+            }
+        };
+        
+        // Package to Plex Library Mapping
+        const packageLibraryMapper = {
+            // Map package to Plex libraries
+            mapPackageToLibraries(packageId, libraryIds) {
+                const mappings = this.getAllMappings();
+                mappings[packageId] = libraryIds;
+                localStorage.setItem('packageLibraryMappings', JSON.stringify(mappings));
+                return { success: true };
+            },
+            
+            // Get libraries mapped to a package
+            getLibrariesForPackage(packageId) {
+                const mappings = this.getAllMappings();
+                return mappings[packageId] || [];
+            },
+            
+            // Get all mappings
+            getAllMappings() {
+                const mappings = localStorage.getItem('packageLibraryMappings');
+                return mappings ? JSON.parse(mappings) : {};
+            },
+            
+            // Remove library from all package mappings
+            removeLibraryFromAllMappings(libraryId) {
+                const mappings = this.getAllMappings();
+                Object.keys(mappings).forEach(packageId => {
+                    mappings[packageId] = mappings[packageId].filter(id => id !== libraryId);
+                });
+                localStorage.setItem('packageLibraryMappings', JSON.stringify(mappings));
+            }
+        };
+        
+        // Sync Plex libraries with admin panel content library
+        function syncPlexWithContentLibrary() {
+            if (!window.contentLibrary) window.contentLibrary = {};
+            if (!window.contentLibrary.plex) window.contentLibrary.plex = [];
+            
+            const allLibraries = plexLibraryManager.getAllLibraries();
+            
+            // Clear existing Plex entries
+            window.contentLibrary.plex = [];
+            
+            // Add each library from Plex servers
+            allLibraries.forEach(lib => {
+                const plexEntry = {
+                    name: `${lib.serverName} - ${lib.name}`,
+                    url: `${lib.serverUrl}/library/sections/${lib.id}`,
+                    type: lib.type,
+                    isAdult: lib.isAdult,
+                    serverInfo: {
+                        serverId: lib.serverId,
+                        serverName: lib.serverName,
+                        serverUrl: lib.serverUrl,
+                        libraryId: lib.id,
+                        libraryName: lib.name,
+                        contentCount: lib.contentCount
+                    },
+                    status: 'Active',
+                    lastUpdated: new Date().toISOString()
+                };
+                
+                window.contentLibrary.plex.push(plexEntry);
+            });
+            
+            saveContentLibrary();
+            console.log('✅ Plex libraries synced with content library');
+        }
+        
         let isLoggedIn = false;
         let currentUser = null;
         
@@ -2730,24 +3111,42 @@ Press OK to close this window.
             document.body.appendChild(modal);
             document.getElementById('plexName').focus();
             
-            modal.querySelector('#addPlexForm').addEventListener('submit', function(e) {
+            modal.querySelector('#addPlexForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
-                const newPlex = {
-                    name: document.getElementById('plexName').value,
-                    url: document.getElementById('plexUrl').value,
-                    type: document.getElementById('plexType').value,
-                    server: document.getElementById('plexServer').value,
-                    token: document.getElementById('plexToken').value,
-                    status: document.getElementById('plexStatus').value,
-                    isAdult: document.getElementById('plexIsAdult').checked
-                };
+                // Show loading state
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = 'Connecting...';
+                submitBtn.disabled = true;
                 
-                window.contentLibrary.plex.push(newPlex);
-                saveContentLibrary(); // Save to localStorage so mobile app can access
-                closeModal();
-                showContentSection();
-                showSuccess(`Plex library "${newPlex.name}" added successfully!`);
+                try {
+                    const serverName = document.getElementById('plexServer').value;
+                    const serverUrl = document.getElementById('plexUrl').value;
+                    const token = document.getElementById('plexToken').value;
+                    const isAdult = document.getElementById('plexIsAdult').checked;
+                    
+                    // Add server using real API
+                    const result = await plexLibraryManager.addPlexServer(serverName, serverUrl, token, isAdult);
+                    
+                    if (result.success) {
+                        // Sync with content library
+                        syncPlexWithContentLibrary();
+                        
+                        closeModal();
+                        showContentSection();
+                        showSuccess(`✅ Plex server "${result.server.name}" added successfully! ${result.server.libraries.length} libraries found.`);
+                    } else {
+                        showError(`Failed to add Plex server: ${result.error}`);
+                    }
+                } catch (error) {
+                    console.error('Error adding Plex server:', error);
+                    showError(`Error adding Plex server: ${error.message}`);
+                } finally {
+                    // Restore button state
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                }
             });
             
             modal.addEventListener('click', function(e) {
@@ -4497,7 +4896,7 @@ let customerIdCounter = 1;
                         
                         <div style="margin-bottom: 20px;">
                             <label style="display: block; margin-bottom: 8px; color: white; font-weight: 500;">Subscription Plan *</label>
-                            <select id="customerPlan" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;">
+                            <select id="customerPlan" required onchange="updatePlexAccessPreview(); updatePriceCalculation()" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;">
                                 <option value="">Select a plan</option>
                                 ${generatePackageOptions()}
                             </select>
@@ -4539,6 +4938,20 @@ let customerIdCounter = 1;
                             <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 5px;">Select any additional packages you want to include</div>
                         </div>
                         
+                        <!-- Plex Library Access Preview -->
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; color: white; font-weight: 500;">📚 Plex Library Access Preview</label>
+                            <div id="plexAccessPreview" style="background: rgba(33, 150, 243, 0.1); border: 1px solid #2196f3; border-radius: 8px; padding: 15px; max-height: 150px; overflow-y: auto;">
+                                <div style="color: rgba(255,255,255,0.7); font-size: 14px; text-align: center; padding: 20px;">
+                                    📺 Select a plan to see available Plex libraries
+                                </div>
+                            </div>
+                            <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 5px;">
+                                <span style="color: #ff5722;">🔞</span> = Adult content (18+) 
+                                <span style="margin-left: 15px; color: #4caf50;">📺</span> = General content
+                            </div>
+                        </div>
+                        
                         <div style="margin-bottom: 20px;">
                             <label style="display: block; margin-bottom: 8px; color: white; font-weight: 500;">Subscription End Date *</label>
                             <div style="display: flex; gap: 10px;">
@@ -4575,6 +4988,9 @@ let customerIdCounter = 1;
             
             // Initialize device selection business rules
             updateDeviceSelection();
+            
+            // Initialize Plex library preview
+            updatePlexAccessPreview();
             
             // Handle form submission
             modal.querySelector('#customerForm').addEventListener('submit', function(e) {
@@ -4769,8 +5185,27 @@ let customerIdCounter = 1;
         }
         
         function generatePackageOptions() {
-            // Only show Basic TV Package in dropdown
-            return '<option value="Basic TV Package">Basic TV Package</option>';
+            if (!window.packages || window.packages.length === 0) {
+                return '<option value="">No packages available</option>';
+            }
+            
+            return window.packages.map(pkg => {
+                const libraries = packageLibraryMapper.getLibrariesForPackage(pkg.id);
+                let libraryInfo = '';
+                
+                if (libraries && libraries.length > 0) {
+                    const libraryNames = libraries.map(libId => {
+                        // Find the library details
+                        const allLibraries = plexLibraryManager.getAllLibraries();
+                        const lib = allLibraries.find(l => l.serverId + '_' + l.id === libId);
+                        return lib ? lib.name : 'Unknown Library';
+                    });
+                    
+                    libraryInfo = libraryNames.length > 0 ? ` (${libraryNames.join(', ')})` : '';
+                }
+                
+                return `<option value="${pkg.id}">${pkg.name} - $${pkg.price}/month${libraryInfo}</option>`;
+            }).join('');
         }
         
         function generateEditPackageOptions(currentPlan) {
@@ -4781,6 +5216,90 @@ let customerIdCounter = 1;
             return currentDisabled + basicOption;
         }
         
+        // Update Plex Library Access Preview
+        function updatePlexAccessPreview() {
+            const preview = document.getElementById('plexAccessPreview');
+            if (!preview) return;
+            
+            const selectedPlan = document.getElementById('customerPlan')?.value;
+            const selectedAddons = Array.from(document.querySelectorAll('input[name="customerAddons"]:checked'))
+                .map(cb => cb.value);
+            
+            if (!selectedPlan) {
+                preview.innerHTML = `
+                    <div style="color: rgba(255,255,255,0.7); font-size: 14px; text-align: center; padding: 20px;">
+                        📺 Select a plan to see available Plex libraries
+                    </div>
+                `;
+                return;
+            }
+            
+            // Get selected packages and addons
+            const selectedPackageIds = [selectedPlan];
+            selectedAddons.forEach(addonName => {
+                const addon = window.addons.find(a => a.name === addonName);
+                if (addon) {
+                    selectedPackageIds.push(addon.id);
+                }
+            });
+            
+            // Get all libraries that will be accessible
+            const accessibleLibraries = [];
+            selectedPackageIds.forEach(packageId => {
+                const mappedLibraries = packageLibraryMapper.getLibrariesForPackage(packageId);
+                mappedLibraries.forEach(libId => {
+                    if (!accessibleLibraries.some(lib => lib === libId)) {
+                        accessibleLibraries.push(libId);
+                    }
+                });
+            });
+            
+            if (accessibleLibraries.length === 0) {
+                preview.innerHTML = `
+                    <div style="color: rgba(255,193,7,0.9); font-size: 14px; text-align: center; padding: 20px;">
+                        ⚠️ This package doesn't include Plex library access. Add Plex servers and map libraries to packages first.
+                    </div>
+                `;
+                return;
+            }
+            
+            // Get library details
+            const allLibraries = plexLibraryManager.getAllLibraries();
+            const accessibleLibraryDetails = accessibleLibraries.map(libId => {
+                return allLibraries.find(lib => lib.serverId + '_' + lib.id === libId);
+            }).filter(Boolean);
+            
+            // Group by server for better display
+            const servers = {};
+            accessibleLibraryDetails.forEach(lib => {
+                if (!servers[lib.serverName]) {
+                    servers[lib.serverName] = [];
+                }
+                servers[lib.serverName].push(lib);
+            });
+            
+            let previewHTML = '';
+            Object.keys(servers).forEach(serverName => {
+                const libraries = servers[serverName];
+                previewHTML += `
+                    <div style="margin-bottom: 15px;">
+                        <h4 style="color: #64b5f6; margin: 0 0 8px 0; font-size: 14px; font-weight: 600;">📡 ${serverName}</h4>
+                        ${libraries.map(lib => `
+                            <div style="display: flex; align-items: center; margin-bottom: 6px; padding-left: 10px;">
+                                <span style="margin-right: 8px; font-size: 16px;">
+                                    ${lib.isAdult ? '🔞' : '📺'}
+                                </span>
+                                <span style="color: rgba(255,255,255,0.9); font-size: 13px;">${lib.name}</span>
+                                <span style="margin-left: auto; color: rgba(255,255,255,0.5); font-size: 11px;">(${lib.type})</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            });
+            
+            preview.innerHTML = previewHTML;
+        }
+        
         function generateAddonOptions() {
             if (!window.addons || window.addons.length === 0) {
                 return '<div style="color: rgba(255,255,255,0.5); font-size: 12px; text-align: center;">No addons available</div>';
@@ -4788,7 +5307,7 @@ let customerIdCounter = 1;
             
             return window.addons.map(addon => `
                 <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
-                    <input type="checkbox" name="customerAddons" value="${addon.name}" onchange="updatePriceCalculation()" style="margin-right: 8px;">
+                    <input type="checkbox" name="customerAddons" value="${addon.name}" onchange="updatePriceCalculation(); updatePlexAccessPreview()" style="margin-right: 8px;">
                     <span style="color: white; font-size: 14px;">${addon.name}</span>
                     <span style="margin-left: auto; color: rgba(255,255,255,0.7); font-size: 12px;">+$${addon.price}/month</span>
                 </label>
@@ -4808,7 +5327,7 @@ let customerIdCounter = 1;
                 
                 return `
                     <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: ${isCurrentAddon ? 'not-allowed' : 'pointer'};">
-                        <input type="checkbox" name="editCustomerAddons" value="${addon.name}" ${isCurrentAddon ? 'checked disabled' : ''} onchange="updatePriceCalculation()" style="margin-right: 8px;">
+                        <input type="checkbox" name="editCustomerAddons" value="${addon.name}" ${isCurrentAddon ? 'checked disabled' : ''} onchange="updatePriceCalculation(); updatePlexAccessPreview()" style="margin-right: 8px;">
                         <span style="color: ${isCurrentAddon ? 'rgba(255,255,255,0.6)' : 'white'}; font-size: 14px;">${addon.name} ${isCurrentAddon ? '(Current - Locked)' : '(Available to Add)'}</span>
                         <span style="margin-left: auto; color: ${isCurrentAddon ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.7)'}; font-size: 12px;">+$${addon.price}/month</span>
                     </label>
@@ -4884,8 +5403,11 @@ let customerIdCounter = 1;
                 backdrop-filter: blur(10px);
             `;
             
+            // Get available Plex libraries
+            const availableLibraries = plexLibraryManager.getAllLibraries();
+            
             modal.innerHTML = `
-                <div style="background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 30px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2); width: 400px;">
+                <div style="background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 30px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2); width: 500px; max-height: 80vh; overflow-y: auto;">
                     <h3 style="color: white; margin-bottom: 20px; text-align: center;">📦 Add New Package</h3>
                     
                     <form id="packageForm">
@@ -4894,10 +5416,43 @@ let customerIdCounter = 1;
                             <input type="text" id="packageName" required style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;" placeholder="e.g., Starter Plan">
                         </div>
                         
-                        <div style="margin-bottom: 20px;">
+                        <div style="margin-bottom: 15px;">
                             <label style="display: block; margin-bottom: 5px; color: white; font-size: 14px;">Monthly Price ($) *</label>
                             <input type="number" id="packagePrice" required style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;" placeholder="0.00" min="0" step="0.01">
                         </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 5px; color: white; font-size: 14px;">Description</label>
+                            <textarea id="packageDescription" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px; resize: vertical; height: 80px;" placeholder="Package description..."></textarea>
+                        </div>
+                        
+                        ${availableLibraries.length > 0 ? `
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 10px; color: white; font-size: 14px; font-weight: 600;">
+                                📚 Plex Libraries Access (Optional)
+                            </label>
+                            <div style="max-height: 120px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; padding: 10px; background: rgba(255,255,255,0.05);">
+                                ${availableLibraries.map(lib => `
+                                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                        <input type="checkbox" id="plexLibrary_${lib.serverId}_${lib.id}" value="${lib.serverId}_${lib.id}" style="margin-right: 8px; cursor: pointer;">
+                                        <label for="plexLibrary_${lib.serverId}_${lib.id}" style="color: rgba(255,255,255,0.9); font-size: 13px; cursor: pointer; flex: 1;">
+                                            ${lib.serverName} - ${lib.name}
+                                            ${lib.isAdult ? '<span style="color: #ff5722; font-size: 11px;">(18+)</span>' : ''}
+                                        </label>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <small style="color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 5px; display: block;">
+                                Select Plex libraries that customers with this package can access
+                            </small>
+                        </div>
+                        ` : `
+                        <div style="margin-bottom: 20px; padding: 15px; background: rgba(255,193,7,0.1); border: 1px solid rgba(255,193,7,0.3); border-radius: 6px;">
+                            <div style="color: #ffc107; font-size: 13px; text-align: center;">
+                                ⚠️ No Plex libraries found. Add Plex servers first in the Content section.
+                            </div>
+                        </div>
+                        `}
                         
                         <div style="display: flex; gap: 10px;">
                             <button type="button" onclick="closePackageModal()" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-weight: 500; cursor: pointer; font-size: 14px;">Cancel</button>
@@ -4915,13 +5470,14 @@ let customerIdCounter = 1;
                 
                 const name = document.getElementById('packageName').value;
                 const price = parseFloat(document.getElementById('packagePrice').value);
+                const description = document.getElementById('packageDescription').value;
                 
                 if (!name || price <= 0) {
                     showError('Please fill in all required fields');
                     return;
                 }
                 
-                // Determine package type based on price or add as generic addon
+                // Determine package type based on price
                 let packageType = 'addon';
                 let requiresBasic = true; // Most add-ons require basic TV
                 let features = ['Custom package', 'Added by admin'];
@@ -4935,25 +5491,49 @@ let customerIdCounter = 1;
                     packageType = 'addon';
                 }
                 
+                // Get selected Plex libraries
+                const selectedLibraries = [];
+                const checkboxes = this.querySelectorAll('input[type="checkbox"][id^="plexLibrary_"]:checked');
+                checkboxes.forEach(checkbox => {
+                    const [serverId, libraryId] = checkbox.value.split('_');
+                    selectedLibraries.push({
+                        serverId: serverId,
+                        libraryId: libraryId,
+                        fullId: `${serverId}_${libraryId}`
+                    });
+                });
+                
                 const newPackage = {
                     id: 'pkg_' + Date.now(),
                     name: name,
-                    description: `Custom ${name} package - BASIC REQUIRED`,
+                    description: description || `Custom ${name} package - BASIC REQUIRED`,
                     price: price,
                     required: false,
                     status: 'active',
                     type: packageType,
                     features: features,
                     requiresBasic: requiresBasic,
+                    plexLibraries: selectedLibraries.map(lib => lib.fullId),
                     createdAt: new Date().toLocaleDateString()
                 };
+                
+                // Map package to Plex libraries
+                if (selectedLibraries.length > 0) {
+                    const libraryIds = selectedLibraries.map(lib => lib.fullId);
+                    packageLibraryMapper.mapPackageToLibraries(newPackage.id, libraryIds);
+                }
                 
                 window.packages.push(newPackage);
                 savePackages();
                 
                 closePackageModal();
                 showPackagesSection();
-                showSuccess(`Package "${name}" added successfully!`);
+                
+                if (selectedLibraries.length > 0) {
+                    showSuccess(`Package "${name}" added successfully! Mapped to ${selectedLibraries.length} Plex libraries.`);
+                } else {
+                    showSuccess(`Package "${name}" added successfully!`);
+                }
             });
             
             modal.addEventListener('click', function(e) {
