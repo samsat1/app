@@ -1842,88 +1842,257 @@
             updateContentByLibraries(userPackage.libraries);
         }
 
-        // Update content based on assigned Plex libraries
-        function updateContentByLibraries(libraryIds) {
-            console.log('🔧 updateContentByLibraries called with library IDs:', libraryIds);
-            
-            // If no libraries assigned, preserve existing content
-            if (!libraryIds || libraryIds.length === 0) {
-                console.log('⚠️ No libraries assigned, preserving existing content');
-                return;
+        // Plex API Manager for Client Interface
+        class ClientPlexAPI {
+            constructor() {
+                this.servers = [];
+                this.connectedServers = new Map();
+                this.loadServerConfigs();
             }
             
-            // Simulate content based on library assignments
-            // In a real implementation, this would fetch content from Plex API
+            loadServerConfigs() {
+                const configs = localStorage.getItem('plexServerConfigs');
+                if (configs) {
+                    this.servers = JSON.parse(configs);
+                    console.log('📡 Loaded Plex server configs:', this.servers.length);
+                }
+            }
             
-            const contentMapping = {
-                '1': { // Movies library
+            async testConnection(server) {
+                try {
+                    const response = await fetch(`${server.url}/identity?X-Plex-Token=${server.token}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.connectedServers.set(server.id, {
+                            ...server,
+                            deviceName: data.MediaContainer.deviceName,
+                            platform: data.MediaContainer.platform,
+                            version: data.MediaContainer.version
+                        });
+                        return { success: true, data };
+                    }
+                } catch (error) {
+                    console.warn('Plex connection failed for server:', server.name, error);
+                    return { success: false, error: error.message };
+                }
+            }
+            
+            async getContentFromLibrary(serverId, libraryId, limit = 50) {
+                const server = this.connectedServers.get(serverId);
+                if (!server) return [];
+                
+                try {
+                    const response = await fetch(`${server.url}/library/sections/${libraryId}/all?X-Plex-Token=${server.token}&limit=${limit}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        return data.MediaContainer.Metadata?.map(item => ({
+                            id: `plex_${serverId}_${libraryId}_${item.ratingKey}`,
+                            name: item.title,
+                            description: item.summary || 'No description available',
+                            category: this.getCategoryFromType(item.type),
+                            type: 'mp4',
+                            thumb: `${server.url}${item.thumb}?X-Plex-Token=${server.token}`,
+                            art: `${server.url}${item.art}?X-Plex-Token=${server.token}`,
+                            url: `${server.url}/library/metadata/${item.ratingKey}/children?X-Plex-Token=${server.token}`,
+                            streamingMode: this.getStreamingMode(item.type),
+                            year: item.year,
+                            duration: item.duration,
+                            viewCount: item.viewCount || 0,
+                            plexData: {
+                                ratingKey: item.ratingKey,
+                                libraryId: libraryId,
+                                serverId: serverId,
+                                serverName: server.name
+                            }
+                        })) || [];
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch Plex content:', error);
+                    return [];
+                }
+            }
+            
+            getCategoryFromType(type) {
+                switch (type) {
+                    case 'movie': return 'movie';
+                    case 'show': return 'series';
+                    case 'episode': return 'episode';
+                    default: return 'content';
+                }
+            }
+            
+            getStreamingMode(type) {
+                // Movies and episodes are always-streaming, shows are on-demand
+                return type === 'movie' || type === 'episode' ? 'always-streaming' : 'on-demand';
+            }
+            
+            async getContentFromAssignedLibraries(libraryIds) {
+                console.log('🔄 Fetching content from assigned Plex libraries:', libraryIds);
+                
+                if (!libraryIds || libraryIds.length === 0) {
+                    console.log('⚠️ No libraries assigned, using default content');
+                    return this.getDefaultContent();
+                }
+                
+                let allContent = [];
+                
+                // Process each library assignment
+                for (const libraryAssignment of libraryIds) {
+                    const [serverId, libraryId] = libraryAssignment.split('_');
+                    
+                    // Test connection first
+                    const server = this.servers.find(s => s.id == serverId);
+                    if (server) {
+                        const connectionResult = await this.testConnection(server);
+                        if (connectionResult.success) {
+                            const content = await this.getContentFromLibrary(serverId, libraryId, 50);
+                            allContent = allContent.concat(content);
+                            console.log(`✅ Fetched ${content.length} items from ${server.name}`);
+                        } else {
+                            console.warn(`❌ Failed to connect to server: ${server.name}`);
+                        }
+                    }
+                }
+                
+                if (allContent.length === 0) {
+                    console.log('⚠️ No content retrieved, using default content');
+                    return this.getDefaultContent();
+                }
+                
+                console.log(`📺 Total Plex content loaded: ${allContent.length} items`);
+                return this.organizeContentByType(allContent);
+            }
+            
+            organizeContentByType(content) {
+                const organized = {
+                    movies: [],
+                    series: [],
+                    vod: [],
+                    live: []
+                };
+                
+                content.forEach(item => {
+                    switch (item.category) {
+                        case 'movie':
+                            organized.movies.push(item);
+                            break;
+                        case 'series':
+                        case 'episode':
+                            organized.series.push(item);
+                            break;
+                        default:
+                            organized.vod.push(item);
+                            break;
+                    }
+                });
+                
+                return organized;
+            }
+            
+            getDefaultContent() {
+                // Fallback content when no Plex libraries are assigned
+                return {
                     movies: [
-                        { 
-                            id: 'movie1', 
-                            name: 'Featured Movie 1', 
-                            description: 'Premium movie from Movies library', 
-                            category: 'movie', 
-                            type: 'mp4', 
+                        {
+                            id: 'demo_movie_1',
+                            name: 'Welcome to iWATCH TV',
+                            description: 'Enjoy your streaming experience! Contact support for premium content.',
+                            category: 'movie',
+                            type: 'mp4',
                             url: '#',
-                            streamingMode: 'always-streaming' // Movies are always-streaming
-                        },
-                        { 
-                            id: 'movie2', 
-                            name: 'Featured Movie 2', 
-                            description: 'Premium movie from Movies library', 
-                            category: 'movie', 
-                            type: 'mp4', 
-                            url: '#',
-                            streamingMode: 'always-streaming' // Movies are always-streaming
+                            streamingMode: 'on-demand'
                         }
-                    ]
-                },
-                '2': { // TV Shows library
-                    vod: [
-                        { 
-                            id: 'show1', 
-                            name: 'Featured TV Show 1', 
-                            description: 'Premium show from TV Shows library', 
-                            category: 'series', 
-                            type: 'mp4', 
-                            url: '#',
-                            streamingMode: 'on-demand' // VOD is on-demand
-                        },
-                        { 
-                            id: 'show2', 
-                            name: 'Featured TV Show 2', 
-                            description: 'Premium show from TV Shows library', 
-                            category: 'series', 
-                            type: 'mp4', 
-                            url: '#',
-                            streamingMode: 'on-demand' // VOD is on-demand
-                        }
-                    ]
-                }
-            };
+                    ],
+                    series: [],
+                    vod: [],
+                    live: []
+                };
+            }
+        }
+        
+        // Initialize Client Plex API
+        window.clientPlexAPI = new ClientPlexAPI();
 
-            // Clear existing content only when libraries are assigned
-            console.log('🧹 Clearing existing content for library update');
-            contentData.movies.content = [];
-            contentData.vod.content = [];
-
-            // Add content based on assigned libraries
-            libraryIds.forEach(libraryId => {
-                const libraryContent = contentMapping[libraryId];
-                if (libraryContent) {
-                    Object.keys(libraryContent).forEach(contentType => {
-                        if (contentData[contentType]) {
-                            contentData[contentType].content = libraryContent[contentType];
-                        }
-                    });
-                }
-            });
-
-            console.log('✅ Content updated based on assigned libraries with streaming modes');
+        // Update content based on assigned Plex libraries
+        async function updateContentByLibraries(libraryIds) {
+            console.log('🔧 updateContentByLibraries called with library IDs:', libraryIds);
             
-            // Refresh display if currently viewing affected sections
-            if (['movies', 'vod'].includes(currentSource)) {
-                displayContent(currentSource);
+            // Show loading state
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.id = 'plexLoadingIndicator';
+            loadingIndicator.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.9);
+                color: white;
+                padding: 20px;
+                border-radius: 12px;
+                z-index: 10000;
+                text-align: center;
+            `;
+            loadingIndicator.innerHTML = `
+                <div style="margin-bottom: 15px;">📺</div>
+                <div>Loading Plex content...</div>
+            `;
+            document.body.appendChild(loadingIndicator);
+            
+            try {
+                const plexContent = await window.clientPlexAPI.getContentFromAssignedLibraries(libraryIds);
+                
+                // Clear existing content
+                contentData.movies.content = [];
+                contentData.vod.content = [];
+                contentData.series.content = [];
+                
+                // Update with Plex content
+                if (plexContent.movies.length > 0) {
+                    contentData.movies.content = plexContent.movies;
+                    console.log(`🎬 Loaded ${plexContent.movies.length} movies`);
+                }
+                
+                if (plexContent.series.length > 0) {
+                    contentData.series.content = plexContent.series;
+                    console.log(`📺 Loaded ${plexContent.series.length} series/episodes`);
+                }
+                
+                if (plexContent.vod.length > 0) {
+                    contentData.vod.content = plexContent.vod;
+                    console.log(`📀 Loaded ${plexContent.vod.length} VOD items`);
+                }
+                
+                // Update tab labels with real counts
+                const moviesTab = document.getElementById('moviesTab');
+                const vodTab = document.getElementById('vodTab');
+                if (moviesTab) moviesTab.textContent = `Movies (${contentData.movies.content.length})`;
+                if (vodTab) vodTab.textContent = `VOD (${contentData.vod.content.length})`;
+                
+                console.log('✅ Content updated from Plex libraries');
+                
+                // Refresh display if currently viewing affected sections
+                if (['movies', 'vod', 'series'].includes(currentSource)) {
+                    displayContent(currentSource);
+                }
+                
+                // Show success message
+                if (libraryIds && libraryIds.length > 0) {
+                    showSuccess(`Loaded ${plexContent.movies.length + plexContent.series.length + plexContent.vod.length} items from your Plex libraries`);
+                }
+                
+            } catch (error) {
+                console.error('Error loading Plex content:', error);
+                showError('Failed to load Plex content. Using default content.');
+                // Fall back to default content
+                const defaultContent = window.clientPlexAPI.getDefaultContent();
+                contentData.movies.content = defaultContent.movies;
+                displayContent('movies');
+            } finally {
+                // Remove loading indicator
+                const indicator = document.getElementById('plexLoadingIndicator');
+                if (indicator) {
+                    indicator.remove();
+                }
             }
         }
 

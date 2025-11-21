@@ -2,124 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Admin Panel - iWATCH TV</title>
     <meta name="author" content="MiniMax Agent">
     
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
     
-    <!-- Firebase Configuration - Replace with your Firebase config -->
-    <script>
-        // TODO: Replace with your actual Firebase configuration
-        const firebaseConfig = {
-            apiKey: "your-api-key",
-            authDomain: "your-project.firebaseapp.com",
-            projectId: "your-project-id",
-            storageBucket: "your-project.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "your-app-id"
-        };
-        
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        
-        // Smart localStorage wrapper with cloud sync
-        const smartStorage = {
-            initialized: false,
-            
-            async initialize() {
-                console.log('☁️ Initializing smart storage...');
-                try {
-                    await db.collection('adminSettings').doc('connection').get();
-                    this.initialized = true;
-                    console.log('✅ Cloud sync enabled');
-                } catch (error) {
-                    console.warn('⚠️ Cloud sync unavailable, using localStorage only');
-                }
-            },
-            
-            async setItem(key, value) {
-                try {
-                    // Always save to localStorage as primary storage
-                    localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
-                    
-                    // Try to save to cloud if available
-                    if (this.initialized && key.length < 50) { // Avoid very long keys
-                        await db.collection('storage').doc(key).set({
-                            value: value,
-                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                    }
-                } catch (error) {
-                    console.warn('Storage operation failed:', error);
-                }
-            },
-            
-            async getItem(key) {
-                try {
-                    // Try to get from cloud first if available
-                    if (this.initialized && key.length < 50) {
-                        try {
-                            const doc = await db.collection('storage').doc(key).get();
-                            if (doc.exists) {
-                                return doc.data().value;
-                            }
-                        } catch (error) {
-                            console.warn('Cloud read failed:', error);
-                        }
-                    }
-                    
-                    // Fallback to localStorage
-                    const value = localStorage.getItem(key);
-                    return value ? JSON.parse(value) : null;
-                } catch (error) {
-                    console.warn('Get item failed:', error);
-                    return localStorage.getItem(key);
-                }
-            },
-            
-            async removeItem(key) {
-                try {
-                    localStorage.removeItem(key);
-                    if (this.initialized && key.length < 50) {
-                        await db.collection('storage').doc(key).delete().catch(() => {});
-                    }
-                } catch (error) {
-                    console.warn('Remove item failed:', error);
-                }
-            }
-        };
-        
-        // Initialize smart storage when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            smartStorage.initialize();
-        });
-        
-        // Override localStorage with cloud sync capability
-        window.localStorage = {
-            ...localStorage,
-            setItem: (key, value) => {
-                smartStorage.setItem(key, value);
-            },
-            getItem: async (key) => {
-                const result = await smartStorage.getItem(key);
-                return result;
-            },
-            removeItem: (key) => {
-                smartStorage.removeItem(key);
-                localStorage.removeItem(key); // Always remove from localStorage too
-            }
-        };
-        
-        // Global cloud sync functions for compatibility
-        const cloudSync = {
-            saveData: (collection, docId, data) => smartStorage.setItem(`${collection}_${docId}`, data),
-            loadData: (collection, docId) => smartStorage.getItem(`${collection}_${docId}`)
-        };
-    </script>
+    <!-- iOS Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="iWATCH Admin">
+    
+    <!-- Theme Colors -->
+    <meta name="theme-color" content="#4caf50">
+    <meta name="msapplication-TileColor" content="#4caf50">
+    
+    <!-- Prevent zoom on input focus -->
+    <style>
+        input, select, textarea {
+            font-size: 16px !important;
+        }
+    </style>
     
     <!-- Enhanced Password Management System -->
     <script>
@@ -160,10 +64,13 @@
             
             saveCredentials: function() {
                 try {
-                    console.log('💾 Saving credentials to cloud + localStorage...');
-                    smartStorage.setItem('resellerCredentials', this.resellerCredentials);
-                    smartStorage.setItem('adminPasswords', this.passwords);
-                    console.log('✅ Credentials saved successfully with cloud sync');
+                    console.log('💾 Saving credentials to localStorage...');
+                    localStorage.setItem('resellerCredentials', JSON.stringify(this.resellerCredentials));
+                    localStorage.setItem('adminPasswords', JSON.stringify(this.passwords));
+                    
+                    // Verify save
+                    const testRead = localStorage.getItem('resellerCredentials');
+                    console.log('✅ Credentials saved successfully', testRead ? 'and verified' : 'but verification failed');
                 } catch (e) {
                     console.error('❌ Error saving credentials:', e);
                     throw e;
@@ -756,8 +663,6 @@ Press OK to close this window.
             padding: 30px 20px;
             backdrop-filter: blur(20px);
             border-right: 1px solid var(--glass-border);
-            position: relative;
-            z-index: 10;
         }
 
         .admin-header {
@@ -838,7 +743,6 @@ Press OK to close this window.
         .admin-main {
             padding: 40px;
             overflow-y: auto;
-            margin-left: 300px; /* Account for sidebar width */
         }
 
         .dashboard-header {
@@ -1216,202 +1120,480 @@ Press OK to close this window.
         ::-webkit-scrollbar-thumb:hover {
             background: #66bb6a;
         }
-    </style>
-    
-    <!-- Mobile Responsive CSS -->
-    <style>
+
+        /* Mobile App Specific Styles */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Hide scrollbars but keep functionality */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        * {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* App-like container */
+        .app-container {
+            max-width: 100vw;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            position: relative;
+        }
+
+        /* Standalone app look */
+        @media (display-mode: standalone) {
+            body {
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+        }
+
         /* Mobile Responsive Design */
         @media (max-width: 768px) {
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                margin: 0;
+                padding: 0;
+                font-size: 14px;
+            }
+
+            /* Fix admin-container grid layout for mobile */
             .admin-container {
                 grid-template-columns: 1fr;
                 grid-template-rows: auto 1fr;
             }
-            
+
             .admin-sidebar {
-                width: 100%;
                 padding: 15px;
-                position: fixed;
-                top: 0;
-                left: 0;
-                z-index: 1000;
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-                height: 100vh;
-                overflow-y: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--glass-border);
+                max-height: auto;
+                overflow: visible;
             }
-            
-            .admin-sidebar.active {
-                transform: translateX(0);
+
+            .admin-header {
+                margin-bottom: 20px;
+                padding-bottom: 15px;
             }
-            
-            .admin-main {
-                padding: 20px 15px;
-                margin-left: 0;
+
+            .container {
+                padding: 10px;
             }
-            
-            .mobile-menu-toggle {
-                display: block;
-                position: fixed;
-                top: 15px;
-                right: 15px;
-                z-index: 1001;
-                background: var(--admin-color);
-                color: white;
-                border: none;
-                padding: 12px;
-                border-radius: 8px;
-                cursor: pointer;
-                font-size: 18px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-                font-size: 16px;
-                width: 50px;
-                height: 50px;
+
+            .tabs {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .tab {
+                padding: 12px 15px;
+                font-size: 13px;
+                border-radius: 0;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+                border-right: none;
+            }
+
+            .tab.active {
+                border-bottom: 1px solid #4caf50;
+                background: rgba(76, 175, 80, 0.1);
+            }
+
+            .tab-content {
+                margin-top: 0;
+                padding: 15px;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+                padding: 15px;
+            }
+
+            .header-info {
+                font-size: 13px;
+            }
+
+            .header-buttons {
+                width: 100%;
                 display: flex;
-                align-items: center;
-                justify-content: center;
+                gap: 10px;
+                justify-content: flex-end;
             }
-            
-            /* Hide mobile menu toggle on desktop */
-            .mobile-menu-toggle {
-                display: none;
+
+            .header-buttons button {
+                padding: 8px 12px;
+                font-size: 12px;
             }
-            
-            .content-grid {
+
+            .dashboard-grid {
                 grid-template-columns: 1fr;
                 gap: 15px;
             }
-            
-            .stats-grid {
-                grid-template-columns: 1fr 1fr;
-                gap: 10px;
-            }
-            
-            .package-card, .user-card, .addon-card, .reseller-card {
-                padding: 15px;
-                margin-bottom: 10px;
-            }
-            
-            .dashboard-title {
-                font-size: 1.5rem;
-                margin-bottom: 15px;
-            }
-            
-            .nav-btn {
-                padding: 12px 15px;
-                font-size: 14px;
-            }
-            
-            .btn {
-                padding: 12px 20px;
-                font-size: 14px;
-                width: 100%;
-                margin-bottom: 10px;
-            }
-            
-            input, select, textarea {
-                padding: 12px;
-                font-size: 16px; /* Prevents zoom on iOS */
-            }
-            
-            .modal-content {
-                width: 95%;
-                max-width: none;
-                margin: 20px;
-                max-height: 90vh;
-                overflow-y: auto;
-            }
-            
-            .content-tabs {
-                display: flex;
-                flex-direction: column;
-                gap: 5px;
-            }
-            
-            .content-tab {
-                text-align: left;
-                padding: 10px 12px;
-                font-size: 14px;
-            }
-            
-            .content-item {
-                padding: 15px;
-                margin-bottom: 10px;
-            }
-            
-            .content-item img {
-                width: 50px;
-                height: 50px;
-            }
-            
-            .content-name {
-                font-size: 14px;
-                font-weight: 600;
-            }
-            
-            .content-meta {
-                font-size: 11px;
-            }
-            
-            .action-btn {
-                padding: 8px 12px;
-                font-size: 12px;
-                margin: 2px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .admin-main {
-                padding: 15px 10px;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .dashboard-title {
-                font-size: 1.3rem;
-            }
-            
-            .modal-content {
-                width: 98%;
-                margin: 10px;
-                padding: 15px;
-            }
-            
+
             .form-group {
                 margin-bottom: 15px;
             }
-            
-            input, select, textarea {
-                padding: 10px;
-            }
-            
-            .btn {
-                padding: 10px 16px;
+
+            .form-group label {
                 font-size: 13px;
+                margin-bottom: 5px;
             }
-        }
-        
-        /* Touch-friendly improvements */
-        @media (hover: none) and (pointer: coarse) {
-            .nav-btn, .btn, .action-btn {
-                min-height: 44px; /* iOS touch target */
+
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                padding: 10px;
+                font-size: 14px;
             }
-            
-            .content-tab {
-                min-height: 44px;
+
+            .form-row {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .form-row .form-group {
+                width: 100%;
+            }
+
+            button {
+                padding: 12px 16px;
+                font-size: 14px;
+                border-radius: 6px;
+            }
+
+            /* Mobile user list styling */
+            .user-item {
+                padding: 15px;
+                margin-bottom: 10px;
+                border-radius: 8px;
+                background: rgba(255,255,255,0.05);
+                border: 1px solid rgba(255,255,255,0.1);
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .user-info {
+                display: flex;
+                gap: 12px;
+                align-items: flex-start;
+            }
+
+            .user-avatar {
+                width: 45px;
+                height: 45px;
+                border-radius: 50%;
+                background: #4caf50;
+                color: white;
                 display: flex;
                 align-items: center;
+                justify-content: center;
+                font-weight: bold;
+                font-size: 16px;
+                flex-shrink: 0;
+            }
+
+            .user-details {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .user-details h4 {
+                color: white;
+                margin: 0 0 5px 0;
+                font-size: 16px;
+                font-weight: 600;
+                word-wrap: break-word;
+            }
+
+            .user-details p {
+                color: rgba(255,255,255,0.7);
+                margin: 0;
+                font-size: 13px;
+                line-height: 1.4;
+            }
+
+            .user-status {
+                display: inline-block;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 11px;
+                font-weight: 600;
+                margin-bottom: 10px;
+                width: fit-content;
+            }
+
+            .status-active {
+                background: rgba(76, 175, 80, 0.2);
+                color: #4caf50;
+            }
+
+            .status-expiring {
+                background: rgba(255, 193, 7, 0.2);
+                color: #ffc107;
+            }
+
+            .status-expired {
+                background: rgba(244, 67, 54, 0.2);
+                color: #f44336;
+            }
+
+            .action-btn {
+                background: rgba(255,255,255,0.1);
+                border: 1px solid rgba(255,255,255,0.2);
+                color: white;
+                padding: 8px 12px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 11px;
+                margin-right: 5px;
+                margin-bottom: 5px;
+                transition: all 0.2s;
+            }
+
+            .action-btn:hover {
+                background: rgba(255,255,255,0.2);
+                transform: translateY(-1px);
+            }
+
+            table {
+                font-size: 12px;
+                overflow-x: auto;
+                display: block;
+            }
+
+            table thead {
+                display: none;
+            }
+
+            table tbody,
+            table tr,
+            table td {
+                display: block;
+                width: 100%;
+            }
+
+            table tr {
+                border: 1px solid rgba(255,255,255,0.1);
+                margin-bottom: 15px;
+                border-radius: 8px;
+                padding: 10px;
+                background: rgba(255,255,255,0.05);
+            }
+
+            table td {
+                border: none;
+                padding: 8px 0;
+                text-align: left;
+            }
+
+            table td:before {
+                content: attr(data-label) ": ";
+                font-weight: bold;
+                color: #4caf50;
+            }
+
+            .actions {
+                display: flex;
+                gap: 5px;
+                margin-top: 10px;
+                flex-wrap: wrap;
+            }
+
+            .actions button {
+                padding: 6px 10px;
+                font-size: 11px;
+                flex: 1;
+                min-width: 0;
+            }
+
+            .modal {
+                padding: 10px;
+                margin: 0;
+                height: 100vh;
+                width: 100vw;
+                border-radius: 0;
+                overflow-y: auto;
+            }
+
+            .modal-content {
+                width: 100%;
+                max-width: none;
+                margin: 0;
+                padding: 15px;
+                border-radius: 0;
+                min-height: 100vh;
+            }
+
+            .modal-header h2 {
+                font-size: 18px;
+                margin-bottom: 10px;
+            }
+
+            .price-display {
+                padding: 15px;
+                font-size: 16px;
+            }
+
+            .section-title {
+                font-size: 16px;
+                margin-bottom: 15px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+
+            .stat-value {
+                font-size: 20px;
+            }
+
+            .stat-label {
+                font-size: 11px;
+            }
+
+            .device-options,
+            .addon-list {
+                padding: 10px;
+            }
+
+            .device-option,
+            .addon-item {
+                padding: 10px;
+                font-size: 13px;
+            }
+
+            /* Better touch targets for mobile */
+            input[type="checkbox"],
+            input[type="radio"] {
+                min-width: 18px;
+                min-height: 18px;
+            }
+
+            select {
+                padding: 12px 8px;
+            }
+
+            /* Fix modal button positioning on mobile */
+            .modal-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .modal-buttons button {
+                width: 100%;
+            }
+        }
+
+        /* Extra small screens */
+        @media (max-width: 480px) {
+            .container {
+                padding: 5px;
+            }
+
+            /* Even better mobile handling */
+            .admin-sidebar {
+                padding: 10px;
+            }
+
+            .admin-header h1 {
+                font-size: 18px;
+            }
+
+            .tab {
+                padding: 10px 12px;
+                font-size: 12px;
+            }
+
+            .header-buttons button {
+                padding: 6px 8px;
+                font-size: 11px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                padding: 10px;
+            }
+
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                padding: 12px;
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+
+            button {
+                padding: 14px 16px;
+                font-size: 15px;
+            }
+
+            .user-item {
+                padding: 12px;
+            }
+
+            .user-avatar {
+                width: 40px;
+                height: 40px;
+                font-size: 14px;
+            }
+
+            .user-details h4 {
+                font-size: 15px;
+            }
+
+            .action-btn {
+                padding: 10px 12px;
+                font-size: 12px;
+            }
+        }
+
+        /* Landscape mobile optimization */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .modal {
+                padding: 5px;
+            }
+
+            .modal-content {
+                padding: 10px;
+            }
+
+            .form-row {
+                flex-direction: row;
             }
         }
     </style>
 </head>
 <body>
-    <button class="back-btn" onclick="window.location.href='CLIENT_INTERFACE.html'">← Back to Client</button>
-    <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
-    
-    <div class="admin-container">
-        <div class="admin-sidebar" id="mobileSidebar">
+    <div class="app-container">
+        <button class="back-btn" onclick="window.location.href='CLIENT_INTERFACE.html'">← Back to Client</button>
+        
+        <div class="admin-container">
+        <div class="admin-sidebar">
             <div class="admin-header">
                 <div class="admin-logo">🔧</div>
                 <div class="admin-title">Admin Panel</div>
@@ -1516,12 +1698,19 @@ Press OK to close this window.
             <div id="dashboard-section" class="section-grid">
                 <!-- Users Section -->
                 <div class="section-card">
-                    <h3 class="section-title">
-                        <span class="section-icon">👥</span>
-                        Recent Users
-                    </h3>
-                    <div class="user-list">
-                        <div style="text-align: center; padding: 40px; color: var(--text-secondary);">👥 No users found. Add customers to get started.</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 class="section-title" style="margin: 0;">
+                            <span class="section-icon">👥</span>
+                            Recent Users
+                        </h3>
+                        <button onclick="showSection('users'); showUsersSection();" style="background: linear-gradient(135deg, #2196f3, #42a5f5); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px;">View All</button>
+                    </div>
+                    <div class="user-list" id="dashboard-users">
+                        <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                            <div style="font-size: 48px; margin-bottom: 10px;">👥</div>
+                            <div>No users found.</div>
+                            <button onclick="showSection('users'); showUsersSection();" style="background: linear-gradient(135deg, #4caf50, #66bb6a); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 15px;">➕ Add Customers</button>
+                        </div>
                     </div>
                 </div>
                 
@@ -1557,6 +1746,8 @@ Press OK to close this window.
             switch(section) {
                 case 'dashboard':
                     dashboardSection.style.display = 'grid';
+                    initializeAdminCustomers(); // Ensure fresh data
+                    updateDashboardUsers(); // Load customers to dashboard
                     break;
                 case 'users':
                     showUsersSection();
@@ -1585,7 +1776,18 @@ Press OK to close this window.
             }
         }
         
+        function refreshUsersDisplay() {
+            // Force sync data first, then refresh display
+            forceSyncCustomerData();
+            // Refresh the users section if currently visible
+            const currentSection = document.querySelector('.dashboard-title');
+            if (currentSection && currentSection.textContent.includes('User Management')) {
+                showUsersSection();
+            }
+        }
+
         function showUsersSection() {
+            initializeAdminCustomers(); // Ensure fresh data
             const mainContent = document.querySelector('.admin-main');
             mainContent.innerHTML = `
                 <div class="dashboard-header">
@@ -1595,24 +1797,27 @@ Press OK to close this window.
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-icon users">👥</div>
-                        <div class="stat-value">${getTotalCustomers()}</div>
+                        <div class="stat-value">0</div>
                         <div class="stat-label">Total Users</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon users">✅</div>
-                        <div class="stat-value">${getActiveCustomers()}</div>
+                        <div class="stat-value">0</div>
                         <div class="stat-label">Active Subscribers</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon users">⏰</div>
-                        <div class="stat-value">${getExpiringCustomers()}</div>
+                        <div class="stat-value">0</div>
                         <div class="stat-label">Expiring Soon</div>
                     </div>
                 </div>
                 <div class="section-card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h3 class="section-title">User Accounts</h3>
-                        <button onclick="addNewCustomer()" style="background: linear-gradient(135deg, #4caf50, #66bb6a); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">➕ Add New Customer</button>
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                            <button onclick="quickAddCustomers()" style="background: linear-gradient(135deg, #e91e63, #f06292); color: white; border: none; padding: 10px 10px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 11px;">⚡ Quick Add</button>
+                            <button onclick="addNewCustomer()" style="background: linear-gradient(135deg, #4caf50, #66bb6a); color: white; border: none; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 11px;">➕ Add New</button>
+                        </div>
                     </div>
                     <div class="user-list">
                         ${generateUserList()}
@@ -1621,26 +1826,259 @@ Press OK to close this window.
             `;
         }
         
+        function loadContentLibrary() {
+            try {
+                const savedContent = localStorage.getItem('adminContentLibrary');
+                if (savedContent) {
+                    window.contentLibrary = JSON.parse(savedContent);
+                    console.log('✅ Content library loaded from localStorage');
+                    return true;
+                }
+            } catch (e) {
+                console.error('Error loading content library:', e);
+            }
+            return false;
+        }
+        
+        // Adult Content Access System
+        function initializeAdultContentAccess() {
+            // Initialize showAdultContent as false on app start
+            window.showAdultContent = false;
+            window.adultAccessSession = false;
+            
+            // Check for existing session on page load (but auto-hide anyway for security)
+            window.showAdultContent = false;
+            
+            // Add keyboard listener for 1818 sequence
+            document.addEventListener('keydown', function(e) {
+                const key = e.key;
+                const allowedKeys = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+                
+                if (allowedKeys.includes(key)) {
+                    if (!window.keySequence) {
+                        window.keySequence = '';
+                    }
+                    window.keySequence += key;
+                    
+                    // Keep only last 4 digits
+                    if (window.keySequence.length > 4) {
+                        window.keySequence = window.keySequence.slice(-4);
+                    }
+                    
+                    // Check for 1818 sequence
+                    if (window.keySequence === '1818') {
+                        window.keySequence = ''; // Reset sequence
+                        showAdultPasswordModal();
+                        e.preventDefault();
+                    }
+                }
+            });
+        }
+        
+        function showAdultPasswordModal() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.9); z-index: 10002; display: flex;
+                align-items: center; justify-content: center; backdrop-filter: blur(10px);
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); width: 400px; text-align: center;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">🔐</div>
+                    <h2 style="color: white; margin-bottom: 15px;">Adult Content Access</h2>
+                    <p style="color: rgba(255,255,255,0.7); margin-bottom: 25px; font-size: 14px;">Enter 6-digit password to access adult content</p>
+                    
+                    <form id="adultPasswordForm">
+                        <div style="margin-bottom: 20px;">
+                            <input type="password" id="adultPassword" maxlength="6" style="width: 200px; padding: 15px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; font-size: 20px; text-align: center; letter-spacing: 5px;" placeholder="------" autofocus>
+                        </div>
+                        
+                        <div style="display: flex; gap: 15px; margin-top: 20px;">
+                            <button type="button" onclick="closeAdultPasswordModal()" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">Cancel</button>
+                            <button type="submit" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #ff5722, #ff7043); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">Unlock</button>
+                        </div>
+                        
+                        <div id="passwordError" style="color: #ff5722; margin-top: 15px; font-size: 14px; display: none;">❌ Invalid password</div>
+                    </form>
+                    
+                    <div style="margin-top: 25px; padding: 15px; background: rgba(255,87,34,0.1); border-radius: 8px; border: 1px solid rgba(255,87,34,0.3);">
+                        <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin: 0;">
+                            ⚠️ Adult content is restricted. This access will be automatically removed when the app is restarted.
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            document.getElementById('adultPassword').focus();
+            
+            modal.querySelector('#adultPassword').addEventListener('input', function(e) {
+                // Only allow numbers and limit to 6 digits
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 6) value = value.slice(0, 6);
+                e.target.value = value;
+            });
+            
+            modal.querySelector('#adultPasswordForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const password = document.getElementById('adultPassword').value;
+                
+                // Validate 6-digit password (you can change this to any 6-digit code)
+                if (password === '123456') {
+                    closeAdultPasswordModal();
+                    accessAdultContent();
+                } else {
+                    const errorElement = document.getElementById('passwordError');
+                    errorElement.style.display = 'block';
+                    document.getElementById('adultPassword').style.borderColor = '#ff5722';
+                    document.getElementById('adultPassword').value = '';
+                    document.getElementById('adultPassword').focus();
+                    
+                    // Hide error after 3 seconds
+                    setTimeout(() => {
+                        errorElement.style.display = 'none';
+                        document.getElementById('adultPassword').style.borderColor = 'rgba(255,255,255,0.2)';
+                    }, 3000);
+                }
+            });
+            
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeAdultPasswordModal();
+                }
+            });
+            
+            // Handle escape key
+            document.addEventListener('keydown', function escapeHandler(e) {
+                if (e.key === 'Escape') {
+                    closeAdultPasswordModal();
+                    document.removeEventListener('keydown', escapeHandler);
+                }
+            });
+        }
+        
+        function closeAdultPasswordModal() {
+            const modal = document.querySelector('div[style*="z-index: 10002"]');
+            if (modal) {
+                modal.remove();
+            }
+            window.keySequence = ''; // Reset key sequence
+        }
+        
+        function accessAdultContent() {
+            window.showAdultContent = true;
+            window.adultAccessSession = true;
+            
+            // Add exit adult mode button
+            addExitAdultModeButton();
+            
+            // Refresh content to show adult content
+            if (typeof showContentSection === 'function') {
+                showContentSection();
+            }
+            
+            // Show confirmation message
+            showSuccess('🔓 Adult content unlocked. Use "Exit Adult Mode" to hide content again.');
+        }
+        
+        function addExitAdultModeButton() {
+            // Remove existing exit button if any
+            const existingButton = document.getElementById('exitAdultModeBtn');
+            if (existingButton) {
+                existingButton.remove();
+            }
+            
+            // Add exit button to the content section header
+            const contentHeader = document.querySelector('.dashboard-header, .content-header, .section-header');
+            if (contentHeader) {
+                const exitButton = document.createElement('button');
+                exitButton.id = 'exitAdultModeBtn';
+                exitButton.innerHTML = '🔒 Exit Adult Mode';
+                exitButton.style.cssText = `
+                    background: linear-gradient(135deg, #ff5722, #ff7043); 
+                    color: white; 
+                    border: none; 
+                    padding: 8px 16px; 
+                    border-radius: 6px; 
+                    cursor: pointer; 
+                    font-size: 12px; 
+                    font-weight: 600;
+                    margin-left: 15px;
+                    animation: pulse 2s infinite;
+                `;
+                
+                exitButton.onclick = function() {
+                    exitAdultMode();
+                };
+                
+                // Add pulse animation
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes pulse {
+                        0% { transform: scale(1); }
+                        50% { transform: scale(1.05); }
+                        100% { transform: scale(1); }
+                    }
+                `;
+                document.head.appendChild(style);
+                
+                contentHeader.appendChild(exitButton);
+            }
+        }
+        
+        function exitAdultMode() {
+            window.showAdultContent = false;
+            window.adultAccessSession = false;
+            
+            // Remove exit button
+            const exitButton = document.getElementById('exitAdultModeBtn');
+            if (exitButton) {
+                exitButton.remove();
+            }
+            
+            // Refresh content to hide adult content
+            if (typeof showContentSection === 'function') {
+                showContentSection();
+            }
+            
+            showSuccess('🔒 Adult content hidden. Enter 1818 + password to access again.');
+        }
+        
+        function toggleAdultContent() {
+            // Check if adult mode is active
+            if (window.adultAccessSession) {
+                window.showAdultContent = !window.showAdultContent;
+                showContentSection(); // Refresh to apply filtering
+            } else {
+                showAdultPasswordModal();
+            }
+        }
+        
         function showContentSection() {
             const mainContent = document.querySelector('.admin-main');
             
-            // Initialize content if not exists
+            // Load content library from localStorage or initialize with defaults
             if (!window.contentLibrary) {
-                window.contentLibrary = {
-                    channels: [],
-                    vod: [],
-                    plex: [],
-                    tvPlatforms: [
-                        {
-                            name: "IMDb TV",
-                            logo: "tv_platform_icon.png",
-                            category: "Streaming Platform",
-                            compatiblePlatforms: "Android TV, LG WebOS, Samsung Tizen, Roku, iOS",
-                            status: "Active",
-                            description: "Free streaming service with movies and TV shows"
-                        }
-                    ]
-                };
+                if (!loadContentLibrary()) {
+                    // Initialize with defaults if no saved data
+                    window.contentLibrary = {
+                        channels: [],
+                        basicChannels: [],
+                        vod: [],
+                        plex: [],
+                        tvPlatforms: [
+                            {
+                                name: "IMDb TV",
+                                logo: "tv_platform_icon.png",
+                                category: "Streaming Platform",
+                                compatiblePlatforms: "Android TV, LG WebOS, Samsung Tizen, Roku, iOS",
+                                status: "Active",
+                                description: "Free streaming service with movies and TV shows"
+                            }
+                        ]
+                    };
+                }
             }
             
             const stats = `
@@ -1681,6 +2119,7 @@ Press OK to close this window.
                         <h3 class="section-title">Content Library</h3>
                         <div style="display: flex; gap: 10px;">
                             <button onclick="addChannelModal()" style="background: #2196f3; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: 500;">Add Channel</button>
+                            <button onclick="addBasicChannelModal()" style="background: #e91e63; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: 500;">Add Basic Channel</button>
                             <button onclick="addVODModal()" style="background: #ff9800; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: 500;">Add VOD</button>
                             <button onclick="addPlexModal()" style="background: #4caf50; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: 500;">Add Plex</button>
                             <button onclick="addTVPlatformModal()" style="background: #9c27b0; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: 500;">Add TV Platform</button>
@@ -1690,6 +2129,7 @@ Press OK to close this window.
                     <!-- Content Tabs -->
                     <div style="display: flex; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 20px;">
                         <button onclick="showContentTab('channels')" id="channelsTab" class="content-tab active">Live Channels (${window.contentLibrary.channels.length})</button>
+                        <button onclick="showContentTab('basicChannels')" id="basicChannelsTab" class="content-tab">📺 Basic Channels (${(window.contentLibrary.basicChannels || []).length})</button>
                         <button onclick="showContentTab('vod')" id="vodTab" class="content-tab">VOD Content (${window.contentLibrary.vod.length})</button>
                         <button onclick="showContentTab('plex')" id="plexTab" class="content-tab">Plex Libraries (${window.contentLibrary.plex.length})</button>
                         <button onclick="showContentTab('tvPlatforms')" id="tvPlatformsTab" class="content-tab">TV Platforms (${window.contentLibrary.tvPlatforms.length})</button>
@@ -1724,9 +2164,11 @@ Press OK to close this window.
                     
                     <!-- VOD Content -->
                     <div id="vodContent" class="content-tab-content" style="display: none;">
-                        ${window.contentLibrary.vod.length === 0 ? 
-                            '<div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">No VOD content added yet. Click "Add VOD" to get started.</div>' :
-                            window.contentLibrary.vod.map(vod => `
+                        ${(window.contentLibrary.vod || []).filter(vod => !vod.isAdult || window.showAdultContent).length === 0 ? 
+                            '<div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">No public VOD content. Toggle "View Adult Content" to see all content.</div>' :
+                            (window.contentLibrary.vod || []).filter(vod => !vod.isAdult || window.showAdultContent).map((vod, filteredIndex) => {
+                                const originalIndex = window.contentLibrary.vod.indexOf(vod);
+                                return `
                                 <div class="content-item">
                                     <div class="content-thumbnail">
                                         <img src="${vod.thumbnail || ''}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; background: #333; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">
@@ -1742,8 +2184,8 @@ Press OK to close this window.
                                         <div class="content-url">${vod.url || 'No URL'}</div>
                                     </div>
                                     <div class="content-actions">
-                                        <button onclick="editContent('vod', ${window.contentLibrary.vod.indexOf(vod)})" style="background: #ff9800; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 5px;">Edit</button>
-                                        <button onclick="deleteContent('vod', ${window.contentLibrary.vod.indexOf(vod)})" style="background: #f44336; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Delete</button>
+                                        <button onclick="editContent('vod', ${originalIndex})" style="background: #ff9800; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 5px;">Edit</button>
+                                        <button onclick="deleteContent('vod', ${originalIndex})" style="background: #f44336; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Delete</button>
                                     </div>
                                 </div>
                             `).join('')
@@ -1752,9 +2194,21 @@ Press OK to close this window.
                     
                     <!-- Plex Content -->
                     <div id="plexContent" class="content-tab-content" style="display: none;">
-                        ${window.contentLibrary.plex.length === 0 ? 
+                        <!-- Adult Content Toggle -->
+                        <div style="margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+                            <button onclick="toggleAdultContent()" id="adultToggleBtn" style="background: #ff5722; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                                🔒 ${window.showAdultContent && window.adultAccessSession ? 'Hide Adult Content' : 'View Adult Content'} (${window.contentLibrary.plex.filter(p => p.isAdult).length})
+                            </button>
+                            <span style="color: rgba(255,255,255,0.7); margin-left: 15px; font-size: 14px;">
+                                Adult content is hidden by default. Click to toggle visibility.
+                            </span>
+                        </div>
+                        
+                        ${window.contentLibrary.plex.filter(plex => !plex.isAdult).length === 0 && window.contentLibrary.plex.filter(p => p.isAdult).length === 0 ?
                             '<div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">No Plex libraries added yet. Click "Add Plex" to get started.</div>' :
-                            window.contentLibrary.plex.map(plex => `
+                            window.contentLibrary.plex.filter(plex => !plex.isAdult).length === 0 ?
+                                '<div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">No public Plex libraries. Toggle "View Adult Content" to see all servers.</div>' :
+                                window.contentLibrary.plex.filter(plex => !plex.isAdult).map(plex => `
                                 <div class="content-item">
                                     <div class="content-thumbnail">
                                         <img src="${plex.logo || ''}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; background: #333; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">
@@ -1775,6 +2229,75 @@ Press OK to close this window.
                                 </div>
                             `).join('')
                         }
+                        
+                        <!-- Protected Adult Content Section (Hidden by default) -->
+                        <div id="adultPlexSection" style="display: none; margin-top: 30px; padding: 20px; background: rgba(255, 87, 34, 0.1); border: 2px solid #ff5722; border-radius: 10px;">
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <h3 style="color: #ff5722; margin: 0;">🔒 ADULT CONTENT SECTION</h3>
+                                <p style="color: rgba(255,255,255,0.7); margin: 5px 0;">Protected Plex Libraries - Restricted Access</p>
+                            </div>
+                            
+                            ${window.contentLibrary.plex.filter(plex => plex.isAdult).length === 0 ?
+                                '<div style="text-align: center; padding: 20px; color: rgba(255,255,255,0.6);">No adult content Plex libraries.</div>' :
+                                window.contentLibrary.plex.filter(plex => plex.isAdult).map(plex => `
+                                <div class="content-item" style="border-left: 4px solid #ff5722;">
+                                    <div class="content-thumbnail">
+                                        <img src="${plex.logo || ''}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; background: #333; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">
+                                    </div>
+                                    <div class="content-details">
+                                        <div class="content-name" style="color: #ff5722;">🔒 ${plex.name} (ADULT)</div>
+                                        <div class="content-meta">
+                                            <span style="color: #ff5722; font-weight: 600;">${plex.type || 'Adult Library'}</span> • 
+                                            <span>${plex.server || 'Unknown'}</span> • 
+                                            <span>${plex.status || 'Active'}</span>
+                                        </div>
+                                        <div class="content-url">${plex.url || 'No URL'}</div>
+                                    </div>
+                                    <div class="content-actions">
+                                        <button onclick="editContent('plex', ${window.contentLibrary.plex.indexOf(plex)})" style="background: #4caf50; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 5px;">Edit</button>
+                                        <button onclick="deleteContent('plex', ${window.contentLibrary.plex.indexOf(plex)})" style="background: #f44336; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Delete</button>
+                                    </div>
+                                </div>
+                            `).join('')
+                            }
+                        </div>
+                    </div>
+                    
+                    <!-- Basic Channels Content -->
+                    <div id="basicChannelsContent" class="content-tab-content" style="display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 class="section-title">📺 Basic Channels</h3>
+                            <button onclick="addBasicChannelModal()" style="background: linear-gradient(135deg, #2196f3, #42a5f5); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">➕ Add Channel</button>
+                        </div>
+                        <div id="basicChannelsList" class="content-grid">
+                            ${(window.contentLibrary.basicChannels || []).filter(channel => !channel.isAdult || window.showAdultContent).length === 0 ? 
+                                '<div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">No public basic channels. Toggle "View Adult Content" to see all content.</div>' :
+                                (window.contentLibrary.basicChannels || []).filter(channel => !channel.isAdult || window.showAdultContent).map((channel, filteredIndex) => {
+                                    const originalIndex = (window.contentLibrary.basicChannels || []).indexOf(channel);
+                                    return `
+                                        <div class="content-item">
+                                            <div class="content-thumbnail">
+                                                <img src="${channel.logo || ''}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; background: #333; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">
+                                            </div>
+                                            <div class="content-details">
+                                                <div class="content-name">${channel.name}</div>
+                                                <div class="content-meta">
+                                                    <span>${channel.category || 'Basic'}</span> • 
+                                                    <span>${channel.number || 'N/A'}</span> • 
+                                                    <span>${channel.status || 'Active'}</span>
+                                                    ${channel.isAdult ? '<span> • 🔞 Adult</span>' : ''}
+                                                </div>
+                                                <div class="content-url">${channel.streamUrl || 'No URL'}</div>
+                                            </div>
+                                            <div class="content-actions">
+                                                <button onclick="editContent('basicChannels', ${originalIndex})" style="background: #ff9800; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 5px;">Edit</button>
+                                                <button onclick="deleteContent('basicChannels', ${originalIndex})" style="background: #f44336; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Delete</button>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')
+                            }
+                        </div>
                     </div>
                     
                     <!-- TV Platforms Content -->
@@ -1922,6 +2445,112 @@ Press OK to close this window.
             });
         }
         
+        function addBasicChannelModal() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.8); z-index: 10001; display: flex;
+                align-items: center; justify-content: center; backdrop-filter: blur(10px);
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 0; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); width: 500px; height: 650px; display: flex; flex-direction: column;">
+                    <div style="padding: 20px 40px; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                        <h2 style="color: white; margin: 0; text-align: center;">Add Basic Channel</h2>
+                    </div>
+                    
+                    <div style="flex: 1; padding: 20px 40px; overflow-y: auto;">
+                        <form id="addBasicChannelForm" style="height: 100%;">
+                            <div style="display: flex; flex-direction: column; height: 100%;">
+                                <div style="flex: 1;">
+                                    <div style="margin-bottom: 20px;">
+                                        <label style="display: block; margin-bottom: 8px; color: white; font-weight: 500;">Channel Name *</label>
+                                        <input type="text" id="basicChannelName" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;">
+                                    </div>
+                                    
+                                    <div style="margin-bottom: 20px;">
+                                        <label style="display: block; margin-bottom: 8px; color: white; font-weight: 500;">Stream URL *</label>
+                                        <input type="url" id="basicChannelUrl" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;" placeholder="http://example.com/stream.m3u8">
+                                    </div>
+                                    
+                                    <div style="margin-bottom: 20px;">
+                                        <label style="display: block; margin-bottom: 8px; color: white; font-weight: 500;">Logo URL</label>
+                                        <input type="url" id="basicChannelLogo" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;" placeholder="http://example.com/logo.png">
+                                    </div>
+                                    
+                                    <div style="margin-bottom: 20px;">
+                                        <label style="display: block; margin-bottom: 8px; color: white; font-weight: 500;">Category</label>
+                                        <select id="basicChannelCategory" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;">
+                                            <option value="News">News</option>
+                                            <option value="Sports">Sports</option>
+                                            <option value="Entertainment">Entertainment</option>
+                                            <option value="Movies">Movies</option>
+                                            <option value="Music">Music</option>
+                                            <option value="Kids">Kids</option>
+                                            <option value="Documentary">Documentary</option>
+                                            <option value="General">General</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div style="margin-bottom: 20px;">
+                                        <label style="display: block; margin-bottom: 8px; color: white; font-weight: 500;">Status</label>
+                                        <select id="basicChannelStatus" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;">
+                                            <option value="Active">Active</option>
+                                            <option value="Inactive">Inactive</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div style="margin-bottom: 20px;">
+                                        <label style="display: flex; align-items: center; gap: 8px; color: white; font-weight: 500;">
+                                            <input type="checkbox" id="basicChannelIsAdult" style="width: 16px; height: 16px; margin: 0;">
+                                            <span>🔞 Adult Content (requires password)</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                                    <button type="button" onclick="closeModal()" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">Cancel</button>
+                                    <button type="submit" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #e91e63, #f06292); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">Add Basic Channel</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            document.getElementById('basicChannelName').focus();
+            
+            modal.querySelector('#addBasicChannelForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const newChannel = {
+                    name: document.getElementById('basicChannelName').value,
+                    streamUrl: document.getElementById('basicChannelUrl').value,
+                    logo: document.getElementById('basicChannelLogo').value,
+                    category: document.getElementById('basicChannelCategory').value,
+                    status: document.getElementById('basicChannelStatus').value,
+                    isAdult: document.getElementById('basicChannelIsAdult').checked,
+                    number: (window.contentLibrary.basicChannels?.length || 0) + 1
+                };
+                
+                // Initialize array if not exists
+                if (!window.contentLibrary.basicChannels) {
+                    window.contentLibrary.basicChannels = [];
+                }
+                
+                window.contentLibrary.basicChannels.push(newChannel);
+                saveContentLibrary();
+                closeModal();
+                showContentSection();
+                showSuccess(`Basic Channel "${newChannel.name}" added successfully!`);
+            });
+            
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) closeModal();
+            });
+        }
+        
         function addVODModal() {
             const modal = document.createElement('div');
             modal.style.cssText = `
@@ -1984,6 +2613,13 @@ Press OK to close this window.
                                             <option value="Inactive">Inactive</option>
                                         </select>
                                     </div>
+                                    
+                                    <div style="margin-bottom: 20px;">
+                                        <label style="display: flex; align-items: center; color: white; font-weight: 500; cursor: pointer;">
+                                            <input type="checkbox" id="vodIsAdult" style="margin-right: 10px; cursor: pointer;">
+                                            Mark as Adult Content (18+)
+                                        </label>
+                                    </div>
                                 </div>
                                 
                                 <div style="display: flex; gap: 15px; margin-top: 20px;">
@@ -2009,7 +2645,8 @@ Press OK to close this window.
                     year: document.getElementById('vodYear').value,
                     duration: document.getElementById('vodDuration').value,
                     thumbnail: document.getElementById('vodThumbnail').value,
-                    status: document.getElementById('vodStatus').value
+                    status: document.getElementById('vodStatus').value,
+                    isAdult: document.getElementById('vodIsAdult').checked
                 };
                 
                 window.contentLibrary.vod.push(newVOD);
@@ -2075,6 +2712,13 @@ Press OK to close this window.
                             </select>
                         </div>
                         
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: flex; align-items: center; color: white; font-weight: 500; cursor: pointer;">
+                                <input type="checkbox" id="plexIsAdult" style="margin-right: 10px; cursor: pointer;">
+                                Mark as Adult Content (18+)
+                            </label>
+                        </div>
+                        
                         <div style="display: flex; gap: 15px;">
                             <button type="button" onclick="closeModal()" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">Cancel</button>
                             <button type="submit" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #4caf50, #66bb6a); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">Add Plex</button>
@@ -2095,10 +2739,12 @@ Press OK to close this window.
                     type: document.getElementById('plexType').value,
                     server: document.getElementById('plexServer').value,
                     token: document.getElementById('plexToken').value,
-                    status: document.getElementById('plexStatus').value
+                    status: document.getElementById('plexStatus').value,
+                    isAdult: document.getElementById('plexIsAdult').checked
                 };
                 
                 window.contentLibrary.plex.push(newPlex);
+                saveContentLibrary(); // Save to localStorage so mobile app can access
                 closeModal();
                 showContentSection();
                 showSuccess(`Plex library "${newPlex.name}" added successfully!`);
@@ -2217,6 +2863,18 @@ Press OK to close this window.
                 return;
             }
             
+            // Special handling for Plex content
+            if (type === 'plex') {
+                editPlexModal(index);
+                return;
+            }
+            
+            // Special handling for Basic Channels
+            if (type === 'basicChannels') {
+                editBasicChannelModal(index);
+                return;
+            }
+            
             // For other content types, show a simple alert for now
             alert(`Edit functionality for ${type}: ${content.name || content.title}\n\nThis would open an edit modal with the current values populated.`);
         }
@@ -2321,18 +2979,219 @@ Press OK to close this window.
             });
         }
         
+        function editPlexModal(index) {
+            const plex = window.contentLibrary.plex[index];
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.8); z-index: 10001; display: flex;
+                align-items: center; justify-content: center; backdrop-filter: blur(10px);
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); width: 500px;">
+                    <h2 style="color: white; margin-bottom: 20px; text-align: center;">Edit Plex Library</h2>
+                    
+                    <form id="editPlexForm">
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; color: white; font-weight: 500;">Library Name *</label>
+                            <input type="text" id="editPlexName" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;" value="${plex.name}">
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; color: white; font-weight: 500;">Plex URL *</label>
+                            <input type="url" id="editPlexUrl" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;" value="${plex.url}">
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; color: white; font-weight: 500;">Library Type</label>
+                            <select id="editPlexType" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;">
+                                <option value="Movies" ${plex.type === 'Movies' ? 'selected' : ''}>Movies</option>
+                                <option value="TV Shows" ${plex.type === 'TV Shows' ? 'selected' : ''}>TV Shows</option>
+                                <option value="Music" ${plex.type === 'Music' ? 'selected' : ''}>Music</option>
+                                <option value="Photos" ${plex.type === 'Photos' ? 'selected' : ''}>Photos</option>
+                                <option value="Other" ${plex.type === 'Other' ? 'selected' : ''}>Other</option>
+                            </select>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; color: white; font-weight: 500;">Server Name</label>
+                            <input type="text" id="editPlexServer" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;" value="${plex.server || ''}">
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; color: white; font-weight: 500;">Token (Optional)</label>
+                            <input type="text" id="editPlexToken" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;" value="${plex.token || ''}">
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; color: white; font-weight: 500;">Status</label>
+                            <select id="editPlexStatus" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;">
+                                <option value="Active" ${plex.status === 'Active' ? 'selected' : ''}>Active</option>
+                                <option value="Inactive" ${plex.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
+                            </select>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: flex; align-items: center; color: white; font-weight: 500; cursor: pointer;">
+                                <input type="checkbox" id="editPlexIsAdult" style="margin-right: 10px; cursor: pointer;" ${plex.isAdult ? 'checked' : ''}>
+                                Mark as Adult Content (18+)
+                            </label>
+                        </div>
+                        
+                        <div style="display: flex; gap: 15px;">
+                            <button type="button" onclick="closeModal()" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">Cancel</button>
+                            <button type="submit" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #9c27b0, #ba68c8); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">Update Plex</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            document.getElementById('editPlexName').focus();
+            
+            modal.querySelector('#editPlexForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const updatedPlex = {
+                    name: document.getElementById('editPlexName').value,
+                    url: document.getElementById('editPlexUrl').value,
+                    type: document.getElementById('editPlexType').value,
+                    server: document.getElementById('editPlexServer').value,
+                    token: document.getElementById('editPlexToken').value,
+                    status: document.getElementById('editPlexStatus').value,
+                    isAdult: document.getElementById('editPlexIsAdult').checked
+                };
+                
+                window.contentLibrary.plex[index] = updatedPlex;
+                saveContentLibrary(); // Save to localStorage so mobile app can access
+                closeModal();
+                showContentSection();
+                showSuccess(`Plex library "${updatedPlex.name}" updated successfully!`);
+            });
+            
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) closeModal();
+            });
+        }
+        
+        function editBasicChannelModal(index) {
+            const channel = window.contentLibrary.basicChannels[index];
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.8); z-index: 10001; display: flex;
+                align-items: center; justify-content: center; backdrop-filter: blur(10px);
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); width: 500px; height: 650px; display: flex; flex-direction: column;">
+                    <h2 style="color: white; margin-bottom: 20px; text-align: center;">Edit Basic Channel</h2>
+                    
+                    <form id="editBasicChannelForm" style="flex: 1; overflow-y: auto;">
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; color: white; font-weight: 500;">Channel Name *</label>
+                                <input type="text" id="editBasicChannelName" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;" value="${channel.name}">
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; color: white; font-weight: 500;">Stream URL *</label>
+                                <input type="url" id="editBasicChannelUrl" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;" value="${channel.streamUrl}">
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; color: white; font-weight: 500;">Logo URL</label>
+                                <input type="url" id="editBasicChannelLogo" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;" value="${channel.logo || ''}">
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; color: white; font-weight: 500;">Category</label>
+                                <select id="editBasicChannelCategory" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;">
+                                    <option value="News" ${channel.category === 'News' ? 'selected' : ''}>News</option>
+                                    <option value="Sports" ${channel.category === 'Sports' ? 'selected' : ''}>Sports</option>
+                                    <option value="Entertainment" ${channel.category === 'Entertainment' ? 'selected' : ''}>Entertainment</option>
+                                    <option value="Movies" ${channel.category === 'Movies' ? 'selected' : ''}>Movies</option>
+                                    <option value="Music" ${channel.category === 'Music' ? 'selected' : ''}>Music</option>
+                                    <option value="Kids" ${channel.category === 'Kids' ? 'selected' : ''}>Kids</option>
+                                    <option value="Documentary" ${channel.category === 'Documentary' ? 'selected' : ''}>Documentary</option>
+                                    <option value="General" ${channel.category === 'General' ? 'selected' : ''}>General</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; color: white; font-weight: 500;">Status</label>
+                                <select id="editBasicChannelStatus" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;">
+                                    <option value="Active" ${channel.status === 'Active' ? 'selected' : ''}>Active</option>
+                                    <option value="Inactive" ${channel.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label style="display: flex; align-items: center; gap: 8px; color: white; font-weight: 500;">
+                                    <input type="checkbox" id="editBasicChannelIsAdult" style="width: 16px; height: 16px; margin: 0;" ${channel.isAdult ? 'checked' : ''}>
+                                    <span>🔞 Adult Content (requires password)</span>
+                                </label>
+                            </div>
+                            
+                            <div style="display: flex; gap: 15px; margin-top: 20px;">
+                                <button type="button" onclick="closeModal()" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">Cancel</button>
+                                <button type="submit" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #e91e63, #f06292); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">Update Channel</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            document.getElementById('editBasicChannelName').focus();
+            
+            modal.querySelector('#editBasicChannelForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const updatedChannel = {
+                    name: document.getElementById('editBasicChannelName').value,
+                    streamUrl: document.getElementById('editBasicChannelUrl').value,
+                    logo: document.getElementById('editBasicChannelLogo').value,
+                    category: document.getElementById('editBasicChannelCategory').value,
+                    status: document.getElementById('editBasicChannelStatus').value,
+                    isAdult: document.getElementById('editBasicChannelIsAdult').checked,
+                    number: channel.number || (index + 1)
+                };
+                
+                window.contentLibrary.basicChannels[index] = updatedChannel;
+                saveContentLibrary();
+                closeModal();
+                showContentSection();
+                showSuccess(`Basic Channel "${updatedChannel.name}" updated successfully!`);
+            });
+            
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) closeModal();
+            });
+        }
+        
         function deleteContent(type, index) {
             const content = window.contentLibrary[type][index];
             const contentName = content.name || content.title;
             
             if (confirm(`Are you sure you want to delete "${contentName}"?`)) {
                 window.contentLibrary[type].splice(index, 1);
+                saveContentLibrary(); // Save to localStorage so mobile app can access
                 showContentSection();
                 showSuccess(`Content "${contentName}" deleted successfully!`);
             }
         }
         
         function closeModal() {
+            // Handle transfer modal specifically
+            if (window.currentTransferModal) {
+                document.body.removeChild(window.currentTransferModal);
+                window.currentTransferModal = null;
+                return;
+            }
+            
+            // Handle general modals by z-index
             const modal = document.querySelector('div[style*="z-index: 10001"]');
             if (modal) {
                 modal.remove();
@@ -2432,8 +3291,8 @@ Press OK to close this window.
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon users">👥</div>
-                        <div class="stat-value">${getTotalResellerCustomers()}</div>
-                        <div class="stat-label">Total Customers</div>
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Customers</div>
                     </div>
                 </div>
                 <div class="section-card">
@@ -2566,24 +3425,268 @@ Press OK to close this window.
         
 let customerIdCounter = 1;
         
-        function generateUserList() {
-            // Load customers from adminCustomers (supports both admin and reseller customers)
-            const adminCustomers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
+        // Data Sync Functions for Mobile-PC synchronization
+        // SUPER SIMPLE: Quick Add - Paste customer data directly
+        function quickAddCustomers() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.9);
+                z-index: 10001;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(10px);
+            `;
             
-            if (adminCustomers.length === 0) {
+            modal.innerHTML = `
+                <div style="background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 30px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2); width: 600px; max-height: 90vh; overflow-y: auto;">
+                    <h2 style="color: white; margin-bottom: 15px; text-align: center;">⚡ Quick Add Customers</h2>
+                    
+                    <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.2);">
+                        <h4 style="color: #ffeb3b; margin: 0 0 10px 0;">📋 Format Example:</h4>
+                        <div style="font-family: monospace; color: #e0e0e0; font-size: 12px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;">
+                            John Doe, +1234567890, Basic Plan, 2025-12-01<br>
+                            Jane Smith, +0987654321, Premium Plan, 2025-12-15<br>
+                            Mike Johnson, +1555123456, Standard Plan, 2026-01-01
+                        </div>
+                        <p style="color: #b0b0b0; font-size: 12px; margin: 10px 0 0 0;">
+                            <strong>Format:</strong> Name, Phone, Plan, Expiry Date (YYYY-MM-DD)
+                        </p>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <textarea id="quickCustomerData" style="width: 100%; height: 200px; padding: 15px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; font-family: monospace; font-size: 12px;" placeholder="Paste your customer data here..."></textarea>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button onclick="processQuickCustomers()" style="background: linear-gradient(135deg, #4caf50, #66bb6a); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: 600;">✅ Add Customers</button>
+                        <button onclick="closeQuickAddModal()" style="background: linear-gradient(135deg, #757575, #9e9e9e); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: 600;">❌ Cancel</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Make modal closable
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    closeQuickAddModal();
+                }
+            };
+            
+            window.closeQuickAddModal = function() {
+                document.body.removeChild(modal);
+            };
+        }
+        
+        function processQuickCustomers() {
+            const data = document.getElementById('quickCustomerData').value.trim();
+            if (!data) {
+                alert('❌ Please paste customer data!');
+                return;
+            }
+            
+            const lines = data.split('\n');
+            const newCustomers = [];
+            let added = 0;
+            
+            lines.forEach(line => {
+                line = line.trim();
+                if (!line) return;
+                
+                const parts = line.split(',').map(p => p.trim());
+                if (parts.length >= 3) {
+                    const [name, phone, plan, expiryDate] = parts;
+                    
+                    const customer = {
+                        id: 'customer_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                        name: name || 'Unknown Customer',
+                        phone: phone || '',
+                        plan: plan || 'Basic Plan',
+                        avatar: name ? name.charAt(0).toUpperCase() : '?',
+                        status: 'Active',
+                        createdAt: new Date().toLocaleDateString(),
+                        addons: [],
+                        devices: [],
+                        endDate: expiryDate || new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0]
+                    };
+                    
+                    newCustomers.push(customer);
+                    added++;
+                }
+            });
+            
+            // Add to existing customers
+            if (!window.adminUsers) {
+                window.adminUsers = [];
+            }
+            
+            window.adminUsers = [...window.adminUsers, ...newCustomers];
+            localStorage.setItem('adminCustomers', JSON.stringify(window.adminUsers));
+            
+            // Update dashboard display
+            updateDashboardUsers();
+            
+            closeQuickAddModal();
+            showUsersSection();
+            
+            alert(`✅ Successfully added ${added} customers!\n\nCustomers are now visible on both PC and Mobile!`);
+        }
+        
+        function updateDashboardUsers() {
+            const dashboardUsersDiv = document.getElementById('dashboard-users');
+            if (!dashboardUsersDiv) return;
+            
+            // Ensure we have the latest customer data
+            const saved = localStorage.getItem('adminCustomers');
+            if (saved) {
+                try {
+                    const customers = JSON.parse(saved);
+                    if (customers.length > 0) {
+                        const recentCustomers = customers.slice(0, 3); // Show only 3 recent
+                        
+                        dashboardUsersDiv.innerHTML = recentCustomers.map(customer => `
+                            <div style="display: flex; align-items: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1);">
+                                <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #2196f3, #42a5f5); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-right: 15px;">
+                                    ${customer.avatar}
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="color: white; font-weight: 600;">${customer.name}</div>
+                                    <div style="color: rgba(255,255,255,0.7); font-size: 12px;">${customer.phone || 'No phone'} • ${customer.plan}</div>
+                                </div>
+                                <div style="color: #4caf50; font-size: 12px; font-weight: 600;">Active</div>
+                            </div>
+                        `).join('');
+                        
+                        if (customers.length > 3) {
+                            dashboardUsersDiv.innerHTML += `
+                                <div style="text-align: center; padding: 15px; color: var(--text-secondary); font-size: 12px;">
+                                    And ${customers.length - 3} more customers...
+                                </div>
+                            `;
+                        }
+                        
+                        return;
+                    }
+                } catch(e) {
+                    console.error('Error loading customers for dashboard:', e);
+                }
+            }
+            
+            // If no customers, show empty state
+            dashboardUsersDiv.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                    <div style="font-size: 48px; margin-bottom: 10px;">👥</div>
+                    <div>No users found.</div>
+                    <button onclick="showSection('users'); showUsersSection();" style="background: linear-gradient(135deg, #4caf50, #66bb6a); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 15px;">➕ Add Customers</button>
+                </div>
+            `;
+        }
+        
+        function exportCustomerData() {
+            try {
+                const data = localStorage.getItem('adminCustomers');
+                if (!data) {
+                    alert('❌ No customer data found to export!');
+                    return;
+                }
+                
+                const blob = new Blob([data], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `iwatch-customers-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                console.log('✅ Customer data exported successfully');
+                alert('✅ Customer data exported successfully!\n\nSend this file to other devices and use Import to load it.');
+                
+            } catch (error) {
+                console.error('❌ Export failed:', error);
+                alert('❌ Export failed! ' + error.message);
+            }
+        }
+        
+        function importCustomerData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        
+                        // Validate data structure
+                        if (!Array.isArray(data)) {
+                            throw new Error('Invalid data format. Expected array.');
+                        }
+                        
+                        // Confirm import
+                        if (confirm(`⚠️ Import ${data.length} customers?\n\nThis will REPLACE all existing customer data!`)) {
+                            localStorage.setItem('adminCustomers', JSON.stringify(data));
+                            window.adminUsers = data;
+                            
+                            // Refresh display
+                            showUsersSection();
+                            
+                            console.log('✅ Customer data imported successfully');
+                            alert(`✅ Successfully imported ${data.length} customers!\n\nCustomer data is now synced.`);
+                        }
+                        
+                    } catch (error) {
+                        console.error('❌ Import failed:', error);
+                        alert('❌ Import failed! ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        }
+
+        function generateUserList() {
+            // Debug: Check if adminUsers exists and has data
+            console.log('📱 Mobile - Checking adminUsers:', window.adminUsers);
+            console.log('📱 Mobile - AdminUsers length:', window.adminUsers ? window.adminUsers.length : 'undefined');
+            console.log('📱 Mobile - LocalStorage key "adminCustomers":', localStorage.getItem('adminCustomers'));
+            
+            // Always reload from localStorage to ensure fresh data
+            const saved = localStorage.getItem('adminCustomers');
+            if (saved) {
+                try {
+                    window.adminUsers = JSON.parse(saved);
+                    console.log('📱 Mobile - Fresh loaded adminUsers:', window.adminUsers);
+                } catch(e) {
+                    console.error('📱 Mobile - Error parsing customers:', e);
+                    window.adminUsers = [];
+                }
+            } else {
+                window.adminUsers = [];
+                console.log('📱 Mobile - No saved customers found');
+            }
+            
+            if (!window.adminUsers || window.adminUsers.length === 0) {
+                console.log('📱 Mobile - Still no customers, showing empty message');
                 return '<div style="text-align: center; padding: 40px; color: var(--text-secondary);">👥 No customers found. Click "Add New Customer" to get started.</div>';
             }
             
-            return adminCustomers.map(customer => {
+            console.log('📱 Mobile - Rendering', window.adminUsers.length, 'customers');
+            return window.adminUsers.map(customer => {
                 // Calculate days until expiry
                 const statusInfo = calculateCustomerStatus(customer);
                 const statusClass = statusInfo.className;
                 const statusText = statusInfo.text;
-                
-                // Add reseller attribution display
-                const resellerAttribution = customer.resellerId ? 
-                    `<p style="color: #ff9800; font-size: 11px; margin-top: 2px;">📍 Reseller: ${customer.resellerId}</p>` : 
-                    `<p style="color: #4caf50; font-size: 11px; margin-top: 2px;">👑 Admin Created</p>`;
                 
                 return `
                 <div class="user-item">
@@ -2593,7 +3696,6 @@ let customerIdCounter = 1;
                             <h4>${customer.name}</h4>
                             <p>${customer.phone || 'No phone'} • ${customer.plan} Plan/month</p>
                             ${customer.addons && customer.addons.length > 0 ? `<p style="color: rgba(255,255,255,0.6); font-size: 11px; margin-top: 2px;">Addons: ${customer.addons.join(', ')}</p>` : ''}
-                            ${resellerAttribution}
                         </div>
                     </div>
                     <div>
@@ -2741,26 +3843,17 @@ let customerIdCounter = 1;
             
             return resellers.map(resellerId => {
                 const balance = creditSystem.getResellerBalance(resellerId);
-                
-                // Get reseller customers from admin customers
-                const adminCustomers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
-                const resellerCustomers = adminCustomers.filter(c => c.resellerId === resellerId);
-                const customerCount = resellerCustomers.length;
-                const activeCustomers = resellerCustomers.filter(c => c.status === 'Active').length;
-                
                 return `
-                    <div class="user-item" style="margin-bottom: 20px; border: 2px solid rgba(255,255,255,0.2);">
+                    <div class="user-item">
                         <div class="user-info">
                             <div class="user-avatar">R</div>
                             <div class="user-details">
                                 <h4>${resellerId}</h4>
                                 <p>Credit Balance: $${balance}</p>
-                                <p style="color: #4caf50; font-weight: 600;">Customers: ${customerCount} (${activeCustomers} active)</p>
                             </div>
                         </div>
                         <div>
                             <div class="user-status status-active">Active</div>
-                            <button class="action-btn" onclick="showResellerCustomers('${resellerId}')">👥 View Customers</button>
                             <button class="action-btn" onclick="editReseller('${resellerId}')">Edit</button>
                             <button class="action-btn" onclick="changeResellerPassword('${resellerId}')">Change Password</button>
                             <button class="action-btn-delete" onclick="deleteReseller('${resellerId}')">Delete</button>
@@ -2772,59 +3865,6 @@ let customerIdCounter = 1;
         
         function getTotalResellerCredits() {
             return Object.values(creditSystem.resellerCredits).reduce((total, balance) => total + balance, 0);
-        }
-
-        function getTotalResellerCustomers() {
-            const adminCustomers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
-            const resellerCustomers = adminCustomers.filter(c => c.resellerId);
-            return resellerCustomers.length;
-        }
-
-        function getTotalCustomers() {
-            const adminCustomers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
-            return adminCustomers.length;
-        }
-
-        function getActiveCustomers() {
-            const adminCustomers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
-            return adminCustomers.filter(c => c.status === 'Active').length;
-        }
-
-        function getExpiringCustomers() {
-            const adminCustomers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
-            const today = new Date();
-            
-            return adminCustomers.filter(customer => {
-                if (!customer.endDate || customer.status !== 'Active') return false;
-                
-                const endDate = new Date(customer.endDate);
-                const timeDiff = endDate.getTime() - today.getTime();
-                const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
-                
-                return daysDiff <= 3 && daysDiff >= 0;
-            }).length;
-        }
-
-        function showResellerCustomers(resellerId) {
-            const adminCustomers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
-            const resellerCustomers = adminCustomers.filter(c => c.resellerId === resellerId);
-            
-            if (resellerCustomers.length === 0) {
-                alert(`No customers found for ${resellerId}`);
-                return;
-            }
-            
-            let customerList = `Customers for ${resellerId}:\n\n`;
-            resellerCustomers.forEach(customer => {
-                customerList += `Name: ${customer.name}\n`;
-                customerList += `Plan: ${customer.plan} ($${customer.balance}/month)\n`;
-                customerList += `Status: ${customer.status}\n`;
-                customerList += `Expires: ${customer.endDate}\n`;
-                if (customer.phone) customerList += `Phone: ${customer.phone}\n`;
-                customerList += `Password: ${customer.password}\n\n`;
-            });
-            
-            alert(customerList);
         }
 
         function deleteReseller(resellerId) {
@@ -3074,42 +4114,26 @@ let customerIdCounter = 1;
         }
         
         function changeUserPassword(customerId) {
-            const adminCustomers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
-            const customer = adminCustomers.find(c => c.id === customerId);
+            const customer = window.adminUsers.find(c => c.id === customerId);
             if (!customer) return;
             
-            const newPassword = prompt(`Change password for ${customer.name}\n\nReseller: ${customer.resellerId || 'Admin'}\n\nEnter new password:`);
+            const newPassword = prompt(`Change password for ${customer.name}\n\nEnter new password:`);
             if (newPassword && newPassword.trim()) {
                 customer.password = newPassword.trim();
-                
-                // Update in admin customers
-                localStorage.setItem('adminCustomers', JSON.stringify(adminCustomers));
-                
-                // Update in reseller-specific storage if applicable
-                if (customer.resellerId) {
-                    const resellerCustomers = JSON.parse(localStorage.getItem(`${customer.resellerId}_customers`) || '[]');
-                    const resellerCustomer = resellerCustomers.find(c => c.id === customerId);
-                    if (resellerCustomer) {
-                        resellerCustomer.password = newPassword.trim();
-                        localStorage.setItem(`${customer.resellerId}_customers`, JSON.stringify(resellerCustomers));
-                    }
-                }
-                
+                saveAdminCustomers(); // Save changes to localStorage
                 showSuccess(`Password updated for "${customer.name}"`);
             }
         }
 
         function renewCustomerSubscription(customerId) {
-            const adminCustomers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
-            const customer = adminCustomers.find(c => c.id === customerId);
+            const customer = window.adminUsers.find(c => c.id === customerId);
             if (!customer) {
                 showError('Customer not found');
                 return;
             }
 
             // Ask for renewal period
-            const resellerInfo = customer.resellerId ? ` (Reseller: ${customer.resellerId})` : '';
-            const months = prompt(`Renew subscription for ${customer.name}${resellerInfo}\n\nEnter number of months to extend (default: 1 month):`, '1');
+            const months = prompt(`Renew subscription for ${customer.name}\n\nEnter number of months to extend (default: 1 month):`, '1');
             if (months === null) return; // User cancelled
             
             const extendMonths = parseInt(months);
@@ -3135,21 +4159,9 @@ let customerIdCounter = 1;
             customer.endDate = newEndDate.toISOString().split('T')[0]; // YYYY-MM-DD format
             customer.status = 'Active'; // Set status to Active when renewed
             
-            // Save to admin customers
-            localStorage.setItem('adminCustomers', JSON.stringify(adminCustomers));
-            
-            // Save to reseller-specific storage if applicable
-            if (customer.resellerId) {
-                const resellerCustomers = JSON.parse(localStorage.getItem(`${customer.resellerId}_customers`) || '[]');
-                const resellerCustomer = resellerCustomers.find(c => c.id === customerId);
-                if (resellerCustomer) {
-                    resellerCustomer.endDate = customer.endDate;
-                    resellerCustomer.status = customer.status;
-                    localStorage.setItem(`${customer.resellerId}_customers`, JSON.stringify(resellerCustomers));
-                }
-            }
-            
+            saveAdminCustomers(); // Save changes to localStorage
             showUsersSection(); // Refresh the user list
+            
             showSuccess(`Subscription renewed for "${customer.name}" - Extended ${extendMonths} month(s) until ${newEndDate.toLocaleDateString()}`);
         }
 
@@ -3616,9 +4628,7 @@ let customerIdCounter = 1;
                     status: 'Active',
                     avatar: name.charAt(0).toUpperCase(),
                     createdAt: new Date().toLocaleDateString(),
-                    endDate: formattedEndDate, // YYYY-MM-DD format from user selection
-                    resellerId: 'admin', // Admin-created customers are attributed to admin
-                    resellerName: 'Admin Panel'
+                    endDate: formattedEndDate // YYYY-MM-DD format from user selection
                 };
                 
                 window.adminUsers.push(newCustomer);
@@ -3686,18 +4696,9 @@ let customerIdCounter = 1;
         
         function savePackages() {
             try {
-                smartStorage.setItem('adminPackages', window.packages);
-                // Save packages in the format reseller expects: { name: {...} }
-                const resellerPackages = {};
-                window.packages.forEach(pkg => {
-                    resellerPackages[pkg.name] = {
-                        name: pkg.name,
-                        price: pkg.price,
-                        channels: pkg.features ? pkg.features.length + '+' : '100+',
-                        description: pkg.description
-                    };
-                });
-                smartStorage.setItem('iptvPackages', resellerPackages);
+                localStorage.setItem('adminPackages', JSON.stringify(window.packages));
+                // Save packages in the format reseller expects: { packages: [...] }
+                localStorage.setItem('adminPackagesForReseller', JSON.stringify({ packages: window.packages }));
                 
                 // Trigger real-time synchronization for reseller panels
                 localStorage.setItem('packagesUpdated', Date.now().toString());
@@ -3707,7 +4708,7 @@ let customerIdCounter = 1;
                     packages: window.packages.length
                 }));
                 
-                console.log('📦 ADMIN: Packages saved with cloud sync to reseller panels');
+                console.log('📦 ADMIN: Packages saved and synced to reseller panels');
                 
                 // Show success feedback
                 showSuccess(`Packages saved and synchronized (${window.packages.length} packages)`);
@@ -3832,12 +4833,18 @@ let customerIdCounter = 1;
         
         function saveAddons() {
             try {
-                // Save for admin panel
                 localStorage.setItem('adminAddons', JSON.stringify(window.addons));
-                // Save for reseller panel in expected format
-                localStorage.setItem('iptvAddons', JSON.stringify(window.addons));
             } catch (e) {
                 console.error('Error saving addons:', e);
+            }
+        }
+        
+        function saveContentLibrary() {
+            try {
+                localStorage.setItem('adminContentLibrary', JSON.stringify(window.contentLibrary));
+                console.log('✅ Content library saved (Plex, VOD, Channels, TV Platforms)');
+            } catch (e) {
+                console.error('Error saving content library:', e);
             }
         }
         
@@ -4053,22 +5060,20 @@ let customerIdCounter = 1;
             if (saved) {
                 try {
                     window.devicePricing = JSON.parse(saved);
-                    // Ensure basicTV is always present
-                    if (window.devicePricing.basicTV === undefined) {
-                        window.devicePricing.basicTV = 25.00;
+                    // Remove firstTV if it exists (legacy data)
+                    if (window.devicePricing.firstTV !== undefined) {
+                        delete window.devicePricing.firstTV;
                         saveDevicePricing();
                     }
                 } catch (e) {
                     console.error('Error loading device pricing:', e);
                     window.devicePricing = {
-                        basicTV: 25.00,
                         secondTV: 0,
                         thirdTV: 0
                     };
                 }
             } else {
                 window.devicePricing = {
-                    basicTV: 25.00,
                     secondTV: 0,
                     thirdTV: 0
                 };
@@ -4077,12 +5082,7 @@ let customerIdCounter = 1;
         
         function saveDevicePricing() {
             try {
-                // Ensure basicTV is included in device pricing
-                const pricingWithBasic = {
-                    basicTV: 25.00, // Fixed price for Basic TV
-                    ...window.devicePricing
-                };
-                localStorage.setItem('devicePricing', JSON.stringify(pricingWithBasic));
+                localStorage.setItem('devicePricing', JSON.stringify(window.devicePricing));
             } catch (e) {
                 console.error('Error saving device pricing:', e);
             }
@@ -4337,8 +5337,7 @@ let customerIdCounter = 1;
         // Save customers to localStorage
         function saveAdminCustomers() {
             try {
-                smartStorage.setItem('adminCustomers', window.adminUsers);
-                console.log('✅ Customers saved with cloud sync');
+                localStorage.setItem('adminCustomers', JSON.stringify(window.adminUsers));
             } catch (e) {
                 console.error('Error saving customers:', e);
             }
@@ -4665,12 +5664,7 @@ let customerIdCounter = 1;
             alert(`Credit History for ${resellerId}:\n\n${historyText}`);
         }
         
-        function closeModal() {
-            if (window.currentTransferModal) {
-                document.body.removeChild(window.currentTransferModal);
-                window.currentTransferModal = null;
-            }
-        }
+        // Transfer modal close functionality moved to showTransferModal function
         
         // Check login status on page load
         window.addEventListener('load', function() {
@@ -4684,14 +5678,22 @@ let customerIdCounter = 1;
                 console.error('❌ Password manager not found');
             }
             
-            loadAdminCustomers();
+            initializeAdminCustomers();
             initializePackages();
             initializeAddons();
             initializeDevicePricing();
             creditSystem.initializeCredits();
             showLogin();
             
+            // Force refresh users display after data is loaded
+            setTimeout(() => {
+                refreshUsersDisplay();
+            }, 100);
+            
             console.log('✅ Admin panel initialized complete');
+            
+            // Initialize adult content access system
+            initializeAdultContentAccess();
         });
     </script>
     
@@ -4699,8 +5701,8 @@ let customerIdCounter = 1;
     <div id="adminOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; backdrop-filter: blur(10px);">
         <div id="loginModal" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); width: 400px; text-align: center;">
             <h2 style="color: white; margin-bottom: 30px; font-size: 24px;">🔐 Admin Login</h2>
-            <input type="text" id="adminUsername" placeholder="Username" style="width: 100%; padding: 12px; margin-bottom: 15px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;">
-            <input type="password" id="adminPassword" placeholder="Password" style="width: 100%; padding: 12px; margin-bottom: 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;" onkeypress="if(event.key==='Enter'){adminLogin()}">
+            <input type="text" name="username" id="adminUsername" autocomplete="username" placeholder="Username" required style="width: 100%; padding: 12px; margin-bottom: 15px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;">
+            <input type="password" name="password" id="adminPassword" autocomplete="current-password" placeholder="Password" required style="width: 100%; padding: 12px; margin-bottom: 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white;" onkeypress="if(event.key==='Enter'){adminLogin()}">
             <button onclick="adminLogin()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #4caf50, #66bb6a); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; margin-bottom: 10px;">Login</button>
         </div>
     </div>
@@ -4724,90 +5726,135 @@ let customerIdCounter = 1;
 creditSystem.initializeCredits();
 showCreditSection(); // Initialize credit section with loaded data
 
-// Mobile Menu Toggle Functionality
-function toggleMobileMenu() {
-    const sidebar = document.getElementById('mobileSidebar');
-    sidebar.classList.toggle('active');
-}
+// PWA Service Worker Registration
+let deferredPrompt;
 
-// Dashboard Section
-function showDashboard() {
-    const mainContent = document.querySelector('.admin-main');
-    mainContent.innerHTML = `
-        <div class="dashboard-header">
-            <h1 class="dashboard-title">📊 Dashboard Overview</h1>
-            <p class="dashboard-subtitle">Welcome to iWATCH TV Admin Panel</p>
-        </div>
-        
-        <!-- Statistics Grid -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon users">👥</div>
-                <div class="stat-value">247</div>
-                <div class="stat-label">Total Users</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon content">📺</div>
-                <div class="stat-value">1,234</div>
-                <div class="stat-label">Content Items</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon revenue">💰</div>
-                <div class="stat-value">$12,450</div>
-                <div class="stat-label">Monthly Revenue</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon system">🖥️</div>
-                <div class="stat-value">99.9%</div>
-                <div class="stat-label">System Uptime</div>
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    // Show install button or banner
+    showInstallBanner();
+});
+
+window.addEventListener('appinstalled', () => {
+    console.log('PWA was installed');
+    hideInstallBanner();
+});
+
+function showInstallBanner() {
+    const banner = document.createElement('div');
+    banner.id = 'install-banner';
+    banner.innerHTML = `
+        <div style="position: fixed; top: 0; left: 0; right: 0; background: #4caf50; color: white; padding: 10px; text-align: center; z-index: 10000; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+            <span>📱 Install iWATCH Admin App</span>
+            <div>
+                <button onclick="installApp()" style="background: white; color: #4caf50; border: none; padding: 5px 10px; border-radius: 4px; margin-right: 5px; font-weight: bold;">Install</button>
+                <button onclick="hideInstallBanner()" style="background: transparent; color: white; border: 1px solid white; padding: 5px 10px; border-radius: 4px;">×</button>
             </div>
         </div>
     `;
+    document.body.appendChild(banner);
     
-    // Close mobile menu if open
-    if (window.innerWidth <= 768) {
-        document.getElementById('mobileSidebar').classList.remove('active');
+    // Adjust body padding to account for banner
+    document.body.style.paddingTop = '50px';
+}
+
+function hideInstallBanner() {
+    const banner = document.getElementById('install-banner');
+    if (banner) {
+        banner.remove();
+        document.body.style.paddingTop = '0';
     }
 }
 
-// Close mobile menu when clicking on main content
-function showSection(sectionName) {
-    const sidebar = document.getElementById('mobileSidebar');
-    if (window.innerWidth <= 768) {
-        sidebar.classList.remove('active');
+function installApp() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('User accepted the install prompt');
+            }
+            deferredPrompt = null;
+            hideInstallBanner();
+        });
+    } else {
+        // Fallback for browsers that don't support the prompt
+        alert('To install this app on your phone:\n\n1. Open browser menu (⋮)\n2. "Add to Home Screen" or "Install App"\n3. Confirm installation');
     }
-    // Call original showSection function
-    if (sectionName === 'dashboard') showDashboard();
-    else if (sectionName === 'users') showUsersSection();
-    else if (sectionName === 'content') showContentSection();
-    else if (sectionName === 'packages') showPackagesSection();
-    else if (sectionName === 'resellers') showResellersSection();
-    else if (sectionName === 'analytics') showAnalyticsSection();
-    else if (sectionName === 'settings') showSettingsSection();
-    else if (sectionName === 'logs') showLogsSection();
-    else if (sectionName === 'credits') showCreditSection();
 }
 
-// Close mobile menu when clicking outside
-document.addEventListener('click', function(event) {
-    const sidebar = document.getElementById('mobileSidebar');
-    const toggle = document.querySelector('.mobile-menu-toggle');
-    
-    if (window.innerWidth <= 768 && 
-        sidebar.classList.contains('active') && 
-        !sidebar.contains(event.target) && 
-        !toggle.contains(event.target)) {
-        sidebar.classList.remove('active');
-    }
-});
+// Silent background Plex server connectivity testing
+function testPlexServer(server, timeout = 5000) {
+    return new Promise((resolve) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+        
+        fetch(`${server.url}/?X-Plex-Token=${server.token}`, {
+            method: 'HEAD',
+            signal: controller.signal,
+            mode: 'no-cors'
+        })
+        .then(() => {
+            clearTimeout(timeoutId);
+            resolve({ online: true, server: server.name });
+        })
+        .catch(() => {
+            clearTimeout(timeoutId);
+            resolve({ online: false, server: server.name });
+        });
+    });
+}
 
-// Auto-close mobile menu on window resize
-window.addEventListener('resize', function() {
-    if (window.innerWidth > 768) {
-        document.getElementById('mobileSidebar').classList.remove('active');
+async function backgroundPlexHealthCheck() {
+    if (!window.contentLibrary || !window.contentLibrary.plex) return;
+    
+    const promises = window.contentLibrary.plex.map(server => testPlexServer(server));
+    const results = await Promise.all(promises);
+    
+    results.forEach(result => {
+        const serverIndex = window.contentLibrary.plex.findIndex(s => s.name === result.server);
+        if (serverIndex !== -1) {
+            window.contentLibrary.plex[serverIndex].status = result.online ? 'Online' : 'Offline';
+            window.contentLibrary.plex[serverIndex].lastChecked = new Date().toISOString();
+        }
+    });
+    
+    saveContentLibrary(); // Save updated status to localStorage
+    saveAdminData();
+    
+    // Update UI silently if content section is visible
+    if (document.getElementById('plexContent') && document.getElementById('plexContent').style.display !== 'none') {
+        showContentSection();
     }
-});
+}
+
+// Start silent background monitoring every 5 minutes
+function startPlexMonitoring() {
+    // Initial check after 30 seconds
+    setTimeout(backgroundPlexHealthCheck, 30000);
+    
+    // Then check every 5 minutes
+    setInterval(backgroundPlexHealthCheck, 5 * 60 * 1000);
+}
+
+// Start monitoring when admin panel loads
+document.addEventListener('DOMContentLoaded', startPlexMonitoring);
+
+// Service Worker Registration
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('sw.js')
+            .then(function(registration) {
+                console.log('ServiceWorker registration successful');
+            })
+            .catch(function(error) {
+                console.log('ServiceWorker registration failed: ', error);
+            });
+    });
+}
 </script>
 
+    </div>
 </body>
 </html>

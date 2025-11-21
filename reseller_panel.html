@@ -98,55 +98,40 @@
         .login-btn {
             width: 100%;
             padding: 12px;
-            background: linear-gradient(135deg, #4caf50, #45a049);
+            background: linear-gradient(135deg, #4caf50, #66bb6a);
             color: white;
             border: none;
             border-radius: 8px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: transform 0.3s;
         }
         
         .login-btn:hover {
             transform: translateY(-2px);
         }
         
-        .reseller-panel {
+        .dashboard {
             display: none;
-            min-height: 100vh;
-            background: #f5f5f5;
-        }
-        
-        .panel-header {
-            background: linear-gradient(135deg, #4caf50, #45a049);
-            color: white;
             padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
-        .reseller-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .reseller-name {
-            font-size: 24px;
-            font-weight: bold;
-        }
-        
-        .logout-btn {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        
-        .panel-content {
+        .header {
+            background: white;
             padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
         }
         
         .stats-grid {
@@ -158,1367 +143,1204 @@
         
         .stat-card {
             background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 25px;
+            border-radius: 15px;
             text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
         }
         
-        .stat-number {
-            font-size: 32px;
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
             font-weight: bold;
             color: #4caf50;
+            margin-bottom: 5px;
         }
         
         .stat-label {
             color: #666;
-            margin-top: 5px;
+            font-size: 0.9rem;
         }
         
-        .quick-actions {
+        .section {
             background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 15px;
+            padding: 25px;
             margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
         
-        .action-btn {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-            background: linear-gradient(135deg, #2196f3, #42a5f5);
-            color: white;
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 10px 20px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            font-weight: 600;
-        }
-        
-        .customers-section {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            display: none;
-        }
-        
-        .customer-card {
-            border: 1px solid #eee;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 8px;
-        }
-        
-        .customer-name {
-            font-weight: bold;
-            color: #333;
-        }
-        
-        .customer-package {
-            color: #4caf50;
             font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
         }
         
-        .customer-balance {
-            color: #ff9800;
-            font-weight: bold;
+        .btn-primary {
+            background: #4caf50;
+            color: white;
         }
-
-        /* Modal Styles */
+        
+        .btn-primary:hover {
+            background: #45a049;
+        }
+        
+        .btn-secondary {
+            background: #2196f3;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #1976d2;
+        }
+        
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+        
         .modal {
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.8);
-            z-index: 10001;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(10px);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
         }
-
+        
         .modal-content {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            padding: 40px;
-            border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.2);
-            width: 500px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
             max-height: 80vh;
             overflow-y: auto;
-            color: white;
         }
-
-        .modal h2 {
-            color: white;
-            margin-bottom: 20px;
-            text-align: center;
+        
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: #666;
+            font-size: 24px;
+            cursor: pointer;
         }
-
+        
+        .close:hover {
+            color: #333;
+        }
+        
         .form-group {
             margin-bottom: 20px;
         }
-
+        
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            color: white;
-            font-weight: 500;
+            color: #333;
+            font-weight: 600;
         }
-
-        .form-group input, .form-group select {
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
             width: 100%;
             padding: 12px;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
+            border: 2px solid #ddd;
             border-radius: 8px;
-            color: white;
+            font-size: 16px;
+            transition: border-color 0.3s;
         }
-
-        .device-selection {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 8px;
-            padding: 15px;
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4caf50;
         }
-
-        .device-option {
-            display: flex;
-            align-items: center;
-            margin: 10px 0;
+        
+        .customers-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
         }
-
-        .device-option input {
-            margin-right: 8px;
+        
+        .customers-table th,
+        .customers-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
         }
-
-        .device-option label {
-            margin: 0;
-            cursor: pointer;
-        }
-
-        .price-display {
-            margin-top: 15px;
-            padding: 15px;
-            background: rgba(76, 175, 80, 0.1);
-            border: 1px solid #4caf50;
-            border-radius: 8px;
-            display: none;
-        }
-
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
+        
+        .customers-table th {
+            background: #f5f5f5;
             font-weight: 600;
-            transition: transform 0.2s;
         }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #4caf50, #66bb6a);
-            color: white;
+        
+        .customers-table tr:hover {
+            background: #f9f9f9;
         }
-
-        .btn-secondary {
-            background: rgba(255,255,255,0.1);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .alert {
-            padding: 15px;
-            border-radius: 8px;
-            margin: 10px 0;
+        
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
             font-weight: 500;
         }
-
-        .alert-success {
-            background: rgba(76, 175, 80, 0.1);
-            border: 1px solid #4caf50;
+        
+        .status-active {
+            background: #e8f5e8;
             color: #4caf50;
         }
-
-        .alert-error {
-            background: rgba(244, 67, 54, 0.1);
-            border: 1px solid #f44336;
+        
+        .status-expired {
+            background: #ffebee;
             color: #f44336;
         }
-
-        .alert-warning {
-            background: rgba(255, 152, 0, 0.1);
-            border: 1px solid #ff9800;
+        
+        .status-suspended {
+            background: #fff3e0;
             color: #ff9800;
         }
-
-        .wallet-display {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            text-align: center;
+        
+        .wallet-item {
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-
-        .wallet-balance {
-            font-size: 28px;
+        
+        .wallet-info {
+            flex: 1;
+        }
+        
+        .wallet-info h4 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .wallet-info p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .wallet-amount {
+            font-size: 1.2rem;
             font-weight: bold;
             color: #4caf50;
         }
-
-        .wallet-label {
-            color: #666;
-            margin-top: 5px;
-        }
-
-        .customer-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .btn-small {
-            padding: 6px 12px;
-            font-size: 12px;
-        }
-
-        .reseller-attribution {
-            font-size: 12px;
-            color: #999;
-            margin-top: 5px;
-        }
-
-        .tabs {
-            display: flex;
-            border-bottom: 2px solid #eee;
-            margin-bottom: 20px;
-        }
-
-        .tab {
-            padding: 12px 20px;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: all 0.3s;
-        }
-
-        .tab.active {
-            border-bottom-color: #4caf50;
+        
+        .wallet-amount.positive {
             color: #4caf50;
         }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
+        
+        .wallet-amount.negative {
+            color: #f44336;
         }
         
-        /* Mobile Optimizations */
+        .search-box {
+            margin-bottom: 20px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .alert-success {
+            background: #e8f5e8;
+            color: #4caf50;
+            border: 1px solid #4caf50;
+        }
+        
+        .alert-error {
+            background: #ffebee;
+            color: #f44336;
+            border: 1px solid #f44336;
+        }
+        
+        .alert-warning {
+            background: #fff3e0;
+            color: #ff9800;
+            border: 1px solid #ff9800;
+        }
+        
+        .plex-library-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .plex-library-card {
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .plex-library-card:hover {
+            border-color: #4caf50;
+            transform: translateY(-2px);
+        }
+        
+        .plex-library-card.selected {
+            border-color: #4caf50;
+            background: #f1f8e9;
+        }
+        
+        .plex-library-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .plex-library-icon {
+            font-size: 1.5rem;
+        }
+        
+        .plex-library-name {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .plex-library-type {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .plex-content-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .plex-content-item {
+            text-align: center;
+        }
+        
+        .plex-content-thumbnail {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 6px;
+            background: #f5f5f5;
+        }
+        
+        .plex-content-title {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .assigned-libraries {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .assigned-libraries h4 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .library-tag {
+            display: inline-block;
+            background: #4caf50;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin: 2px;
+        }
+        
         @media (max-width: 768px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .reseller-info {
-                flex-direction: column;
-                gap: 10px;
-                text-align: center;
-            }
-            
-            .panel-content {
+            .dashboard {
                 padding: 10px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+            
+            .modal-content {
+                margin: 20px;
+                width: calc(100% - 40px);
+            }
+            
+            .customers-table {
+                font-size: 14px;
+            }
+            
+            .customers-table th,
+            .customers-table td {
+                padding: 8px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Login Form -->
     <div class="login-container" id="loginContainer">
         <div class="login-box">
             <div class="logo">
-                <h1>📺 iWATCH TV</h1>
-                <p>Reseller Panel</p>
+                <h1>🎛️ Reseller Panel</h1>
+                <p>Professional IPTV Management</p>
             </div>
             
             <form id="loginForm">
                 <div class="form-group">
-                    <label for="username">Username:</label>
-                    <input type="text" id="username" required>
+                    <label>Reseller ID</label>
+                    <input type="text" id="resellerId" required placeholder="Enter your reseller ID">
                 </div>
                 
                 <div class="form-group">
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" required>
+                    <label>Password</label>
+                    <input type="password" id="password" required placeholder="Enter your password">
                 </div>
                 
-                <button type="submit" class="login-btn">Login</button>
+                <button type="submit" class="login-btn">Login to Dashboard</button>
             </form>
-            
-            <div style="margin-top: 20px; text-align: center; color: #666; font-size: 12px;">
-                <p>Contact your admin for login credentials</p>
-            </div>
         </div>
     </div>
-
-    <!-- Reseller Panel -->
-    <div class="reseller-panel" id="resellerPanel">
-        <div class="panel-header">
-            <div class="reseller-info">
-                <div>
-                    <div class="reseller-name" id="resellerName">Reseller Panel</div>
-                    <div id="resellerId" style="opacity: 0.8;">Panel ID: -</div>
-                </div>
-                <button class="logout-btn" onclick="logout()">Logout</button>
+    
+    <div class="dashboard" id="dashboard">
+        <div class="header">
+            <h1>🎛️ Reseller Dashboard</h1>
+            <p>Manage your customers and track earnings</p>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-value" id="totalCustomers">0</div>
+                <div class="stat-label">Total Customers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">💰</div>
+                <div class="stat-value" id="totalEarnings">$0</div>
+                <div class="stat-label">Total Earnings</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📦</div>
+                <div class="stat-value" id="activeCustomers">0</div>
+                <div class="stat-label">Active Subscriptions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📺</div>
+                <div class="stat-value" id="plexContentCount">0</div>
+                <div class="stat-label">Plex Content Items</div>
             </div>
         </div>
         
-        <div class="panel-content">
-            <!-- Stats Section -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number" id="customerCount">0</div>
-                    <div class="stat-label">Total Customers</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="totalBalance">$0</div>
-                    <div class="stat-label">Total Balance</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="activePackages">0</div>
-                    <div class="stat-label">Active Packages</div>
-                </div>
+        <div class="section">
+            <div class="section-title">
+                👥 Customer Management
+                <button class="btn btn-primary" onclick="showModal('addCustomerModal')">Add Customer</button>
             </div>
             
-            <!-- Quick Actions -->
-            <div class="quick-actions">
-                <h3>Quick Actions</h3>
-                <div class="tabs">
-                    <div class="tab active" onclick="switchTab('dashboard')">Dashboard</div>
-                    <div class="tab" onclick="switchTab('customers')">Customers</div>
-                    <div class="tab" onclick="switchTab('packages')">Packages</div>
-                    <div class="tab" onclick="switchTab('wallet')">Wallet</div>
-                    <div class="tab" onclick="switchTab('passwords')">Passwords</div>
-                </div>
-                
-                <!-- Dashboard Tab -->
-                <div id="dashboardTab" class="tab-content active">
-                    <button class="action-btn" onclick="showCustomers()">Add New Customer</button>
-                    <button class="action-btn" onclick="showPackages()">View/Buy Packages</button>
-                    <button class="action-btn" onclick="showWallet()">Credit Management</button>
-                    <button class="action-btn" onclick="showPasswordManagement()">Password Management</button>
-                </div>
-                
-                <!-- Customers Tab -->
-                <div id="customersTab" class="tab-content">
-                    <button class="action-btn" onclick="addNewCustomer()">➕ Add New Customer</button>
-                    <button class="action-btn" onclick="viewCustomers()">👥 View All Customers</button>
-                    <button class="action-btn" onclick="renewCustomer()">🔄 Renew Customer</button>
-                </div>
-                
-                <!-- Packages Tab -->
-                <div id="packagesTab" class="tab-content">
-                    <button class="action-btn" onclick="viewAvailablePackages()">📦 View Available Packages</button>
-                    <button class="action-btn" onclick="calculatePricing()">💰 Pricing Calculator</button>
-                </div>
-                
-                <!-- Wallet Tab -->
-                <div id="walletTab" class="tab-content">
-                    <div class="wallet-display">
-                        <div class="wallet-balance" id="currentBalance">$0.00</div>
-                        <div class="wallet-label">Available Credit</div>
-                        <button class="btn btn-secondary" onclick="showCreditHistory()" style="margin-top: 15px;">📊 Transaction History</button>
-                    </div>
-                </div>
-                
-                <!-- Passwords Tab -->
-                <div id="passwordsTab" class="tab-content">
-                    <button class="action-btn" onclick="changeAdultPassword()">🔒 Adult Content Password</button>
-                    <button class="action-btn" onclick="manageCustomerPasswords()">👤 Customer Passwords</button>
-                    <button class="action-btn" onclick="showPasswordHelp()">❓ Password Help</button>
-                </div>
+            <div class="search-box">
+                <input type="text" id="customerSearch" placeholder="Search customers..." onkeyup="filterCustomers()">
             </div>
             
-            <!-- Wallet Display -->
-            <div class="wallet-display" id="walletDisplay" style="display: none;">
-                <div class="wallet-balance" id="currentBalance">$0.00</div>
-                <div class="wallet-label">Available Credit</div>
-                <p style="font-size: 12px; color: #666; margin-top: 10px;">
-                    Credits are added by admin only
-                </p>
+            <div id="customersTable">
+                <!-- Customers will be loaded here -->
             </div>
-            
-            <!-- Customers Section -->
-            <div class="customers-section" id="customersSection">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3>My Customers</h3>
-                    <button class="btn btn-primary btn-small" onclick="addNewCustomer()">➕ Add New Customer</button>
-                </div>
-                <div id="customersList">
-                    <p style="text-align: center; color: #666;">No customers yet. Add customers to start managing them here.</p>
-                </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">
+                💰 Earnings & Wallet
             </div>
-            
-            <!-- Packages Section -->
-            <div class="customers-section" id="packagesSection">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3>Available Packages</h3>
-                    <button class="btn btn-primary btn-small" onclick="closeSection('packagesSection')">✖ Close</button>
-                </div>
-                <div id="packagesList">
-                    <p style="text-align: center; color: #666;">Loading packages...</p>
-                </div>
+            <div id="walletHistory">
+                <!-- Wallet history will be loaded here -->
             </div>
-            
-            <!-- Wallet Section -->
-            <div class="customers-section" id="walletSection">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3>Credit Management</h3>
-                    <button class="btn btn-primary btn-small" onclick="closeSection('walletSection')">✖ Close</button>
-                </div>
-                <div class="wallet-display">
-                    <div class="wallet-balance" id="walletBalance">$0.00</div>
-                    <div class="wallet-label">Available Credit</div>
-                    <div style="margin-top: 15px; color: #666; font-size: 12px;">
-                        Contact admin to add credits to your wallet
-                    </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">
+                📺 Plex Content Management
+                <button class="btn btn-secondary" onclick="showPlexLibraries()">Browse Plex Libraries</button>
+                <button class="btn btn-primary" onclick="assignPlexContent()">Assign Content to Customer</button>
+            </div>
+            <div id="plexContentSection">
+                <div style="text-align: center; padding: 40px; color: #666;">
+                    Click "Browse Plex Libraries" to see available content from your configured Plex servers
                 </div>
             </div>
         </div>
     </div>
-
+    
+    <!-- Add Customer Modal -->
+    <div id="addCustomerModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('addCustomerModal')">&times;</span>
+            <h2>Add New Customer</h2>
+            
+            <form id="addCustomerForm">
+                <div class="form-group">
+                    <label>Customer Name *</label>
+                    <input type="text" id="customerName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="customerEmail">
+                </div>
+                
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" id="customerPhone">
+                </div>
+                
+                <div class="form-group">
+                    <label>Subscription Package *</label>
+                    <select id="customerPackage" required>
+                        <option value="basic">Basic Package - $10/month</option>
+                        <option value="premium">Premium Package - $20/month</option>
+                        <option value="family">Family Package - $30/month</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Duration *</label>
+                    <select id="customerDuration" required>
+                        <option value="1">1 Month</option>
+                        <option value="3">3 Months</option>
+                        <option value="6">6 Months</option>
+                        <option value="12">1 Year</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Payment Amount ($)</label>
+                    <input type="number" id="customerAmount" step="0.01" min="0">
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Add Customer</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Plex Libraries Modal -->
+    <div id="plexLibrariesModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('plexLibrariesModal')">&times;</span>
+            <h2>Plex Libraries & Content</h2>
+            
+            <div id="plexLibrariesContainer">
+                <!-- Plex libraries will be loaded here -->
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center;">
+                <button onclick="refreshPlexContent()" class="btn btn-secondary">Refresh Content</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Assign Content Modal -->
+    <div id="assignContentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('assignContentModal')">&times;</span>
+            <h2>Assign Plex Content to Customer</h2>
+            
+            <form id="assignContentForm">
+                <div class="form-group">
+                    <label>Select Customer *</label>
+                    <select id="assignCustomer" required>
+                        <option value="">Choose customer...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Available Plex Libraries</label>
+                    <div id="assignLibraryOptions">
+                        <!-- Library checkboxes will be loaded here -->
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Assign Content</button>
+            </form>
+        </div>
+    </div>
+    
     <script>
-        // Reseller Panel System - Complete Implementation
-        const resellerPanel = {
-            currentReseller: null,
-            currentResellerId: null,
-            credentials: {},
-            packages: {},
-            addons: {},
-            devicePricing: {},
-            
-            // Initialize panel
-            initialize: function() {
-                console.log('🔧 Reseller panel initializing...');
-                this.loadCredentials();
-                this.loadPackages();
-                this.loadAddons();
-                this.loadDevicePricing();
-                this.loadWallet();
-                this.checkLogin();
-                console.log('✅ Reseller panel initialized');
-            },
-            
-            // Load credentials from localStorage
-            loadCredentials: function() {
-                const savedCredentials = localStorage.getItem('resellerCredentials');
-                if (savedCredentials) {
-                    try {
-                        this.credentials = JSON.parse(savedCredentials);
-                    } catch (e) {
-                        console.error('Error loading credentials:', e);
-                        this.credentials = {};
-                    }
-                }
-            },
-            
-            // Load packages from admin panel
-            loadPackages: function() {
-                const savedPackages = localStorage.getItem('iptvPackages');
-                if (savedPackages) {
-                    try {
-                        this.packages = JSON.parse(savedPackages);
-                    } catch (e) {
-                        console.error('Error loading packages:', e);
-                        this.packages = {};
-                    }
-                } else {
-                    // Default packages
-                    this.packages = {
-                        'Basic TV': { name: 'Basic TV', price: 25.00, channels: '100+', description: 'Essential channels' },
-                        'Premium TV': { name: 'Premium TV', price: 35.00, channels: '200+', description: 'Premium channels' },
-                        'Ultimate TV': { name: 'Ultimate TV', price: 45.00, channels: '300+', description: 'All channels' }
-                    };
-                }
-            },
-            
-            // Load addons from admin panel
-            loadAddons: function() {
-                const savedAddons = localStorage.getItem('iptvAddons');
-                if (savedAddons) {
-                    try {
-                        this.addons = JSON.parse(savedAddons);
-                    } catch (e) {
-                        console.error('Error loading addons:', e);
-                        this.addons = {};
-                    }
-                } else {
-                    // Default addons
-                    this.addons = [
-                        { name: 'Sports Pack', price: 10.00, description: 'All sports channels' },
-                        { name: 'Movies Pack', price: 15.00, description: 'Latest movies' },
-                        { name: 'International', price: 8.00, description: 'International channels' }
-                    ];
-                }
-            },
-            
-            // Load device pricing from admin panel
-            loadDevicePricing: function() {
-                const savedDevicePricing = localStorage.getItem('devicePricing');
-                if (savedDevicePricing) {
-                    try {
-                        this.devicePricing = JSON.parse(savedDevicePricing);
-                    } catch (e) {
-                        console.error('Error loading device pricing:', e);
-                        this.devicePricing = {};
-                    }
-                } else {
-                    // Default device pricing
-                    this.devicePricing = {
-                        basicTV: 25.00,
-                        secondTV: 15.00,
-                        thirdTV: 12.00
-                    };
-                }
-            },
-            
-            // Check for admin updates
-            checkForUpdates: function() {
-                const lastUpdate = localStorage.getItem('packagesUpdated');
-                if (lastUpdate) {
-                    const updateTime = parseInt(lastUpdate);
-                    if (Date.now() - updateTime < 5000) {
-                        // Recent update, refresh data
-                        this.loadPackages();
-                        this.loadAddons();
-                        this.loadDevicePricing();
-                        this.loadWallet();
-                        this.updateStats();
-                        console.log('🔄 Reseller panel updated with latest packages/prices');
-                    }
-                }
-            },
-            
-            // Check if already logged in (including master password access)
-            checkLogin: function() {
-                const session = localStorage.getItem('resellerSession');
-                if (session) {
-                    try {
-                        const parsed = JSON.parse(session);
-                        if (parsed.timestamp && (Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000)) {
-                            // Valid session
-                            this.login(parsed.username, parsed.isMasterAccess);
-                            return;
-                        }
-                    } catch (e) {
-                        // Invalid session, clear it
-                        localStorage.removeItem('resellerSession');
-                    }
-                }
-                this.showLogin();
-            },
-            
-            // Login function (supports master password access)
-            login: function(username, isMasterAccess = false) {
-                this.currentReseller = username;
-                this.currentResellerId = username.replace('reseller_', '');
-                
-                document.getElementById('loginContainer').style.display = 'none';
-                document.getElementById('resellerPanel').style.display = 'block';
-                
-                // Set reseller info
-                const resellerName = isMasterAccess ? `Admin Access (Reseller ${this.currentResellerId})` : `Reseller ${this.currentResellerId}`;
-                document.getElementById('resellerName').textContent = resellerName;
-                document.getElementById('resellerId').textContent = `Panel ID: ${username}`;
-                
-                // Show master access indicator
-                if (isMasterAccess) {
-                    document.getElementById('resellerName').style.color = '#ff9800';
-                }
-                
-                // Load reseller data
-                this.loadResellerData();
-                this.updateStats();
-                this.updateWalletDisplay();
-                
-                // Save session
-                localStorage.setItem('resellerSession', JSON.stringify({
-                    username: username,
-                    timestamp: Date.now(),
-                    isMasterAccess: isMasterAccess
-                }));
-            },
-            
-            // Logout function
-            logout: function() {
-                localStorage.removeItem('resellerSession');
-                this.currentReseller = null;
-                this.currentResellerId = null;
-                document.getElementById('loginContainer').style.display = 'block';
-                document.getElementById('resellerPanel').style.display = 'none';
-            },
-            
-            // Load reseller data
-            loadResellerData: function() {
-                const customers = localStorage.getItem(`reseller_${this.currentReseller}_customers`);
-                if (customers) {
-                    try {
-                        return JSON.parse(customers);
-                    } catch (e) {
-                        console.error('Error loading customer data:', e);
-                    }
-                }
-                return [];
-            },
-            
-            // Save reseller data and sync to admin panel
-            saveResellerData: function(customers) {
-                // Save to reseller storage
-                localStorage.setItem(`reseller_${this.currentReseller}_customers`, JSON.stringify(customers));
-                
-                // Sync to admin panel with reseller attribution
-                this.syncToAdminPanel(customers);
-                
-                // Update wallet display
-                this.updateWalletDisplay();
-            },
-            
-            // Sync reseller customers to admin panel with reseller attribution
-            syncToAdminPanel: function(resellerCustomers) {
-                // Load admin customers
-                const adminCustomers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
-                
-                // Remove existing customers from this reseller
-                const filteredAdminCustomers = adminCustomers.filter(c => c.resellerId !== this.currentReseller);
-                
-                // Add reseller customers with attribution
-                const attributedCustomers = resellerCustomers.map(customer => ({
-                    ...customer,
-                    resellerId: this.currentReseller, // Add reseller attribution
-                    resellerName: this.currentReseller
-                }));
-                
-                // Merge and save
-                const allCustomers = [...filteredAdminCustomers, ...attributedCustomers];
-                localStorage.setItem('adminCustomers', JSON.stringify(allCustomers));
-                
-                console.log(`🔄 Synced ${resellerCustomers.length} customers to admin panel with reseller attribution`);
-            },
-            
-            // Load wallet/credit data
-            loadWallet: function() {
-                const walletKey = `resellerWallet_${this.currentReseller}`;
-                const balance = parseFloat(localStorage.getItem(walletKey) || '0');
-                return balance;
-            },
-            
-            // Update wallet display
-            updateWalletDisplay: function() {
-                const balance = this.loadWallet();
-                const balanceElement = document.getElementById('currentBalance');
-                const walletBalanceElement = document.getElementById('walletBalance');
-                
-                if (balanceElement) balanceElement.textContent = `$${balance.toFixed(2)}`;
-                if (walletBalanceElement) walletBalanceElement.textContent = `$${balance.toFixed(2)}`;
-            },
-            
-            // Check if reseller has sufficient credit
-            hasSufficientCredit: function(amount) {
-                const balance = this.loadWallet();
-                return balance >= amount;
-            },
-            
-            // Deduct credit from wallet
-            deductCredit: function(amount, description) {
-                const balance = this.loadWallet();
-                if (balance >= amount) {
-                    const newBalance = balance - amount;
-                    const walletKey = `resellerWallet_${this.currentReseller}`;
-                    localStorage.setItem(walletKey, newBalance.toFixed(2));
-                    
-                    // Record transaction
-                    this.recordTransaction(amount, description, 'debit');
-                    
-                    this.updateWalletDisplay();
-                    return true;
-                }
-                return false;
-            },
-            
-            // Record transaction
-            recordTransaction: function(amount, description, type) {
-                const transactions = JSON.parse(localStorage.getItem('creditTransactions') || '[]');
-                const transaction = {
-                    id: Date.now(),
-                    resellerId: this.currentReseller,
-                    amount: amount,
-                    type: type,
-                    description: description,
-                    timestamp: new Date().toISOString()
-                };
-                
-                transactions.unshift(transaction);
-                
-                // Keep only last 50 transactions
-                if (transactions.length > 50) {
-                    transactions.splice(50);
-                }
-                
-                localStorage.setItem('creditTransactions', JSON.stringify(transactions));
-            },
-            
-            // Update dashboard stats
-            updateStats: function() {
-                const customers = this.loadResellerData();
-                
-                document.getElementById('customerCount').textContent = customers.length;
-                
-                let totalBalance = 0;
-                let activePackages = 0;
-                
-                customers.forEach(customer => {
-                    totalBalance += parseFloat(customer.balance || 0);
-                    if (customer.status === 'active') {
-                        activePackages++;
-                    }
-                });
-                
-                document.getElementById('totalBalance').textContent = `$${totalBalance.toFixed(2)}`;
-                document.getElementById('activePackages').textContent = activePackages;
-            },
-            
-            // Calculate total price for customer subscription
-            calculatePrice: function(plan, selectedDevices, selectedAddons) {
-                let totalPrice = 0;
-                
-                // Add plan price
-                if (this.packages[plan]) {
-                    totalPrice += this.packages[plan].price;
-                }
-                
-                // Add device prices
-                selectedDevices.forEach(device => {
-                    if (device === 'basicTV') totalPrice += this.devicePricing.basicTV;
-                    if (device === 'secondTV') totalPrice += this.devicePricing.secondTV;
-                    if (device === 'thirdTV') totalPrice += this.devicePricing.thirdTV;
-                });
-                
-                // Add addon prices
-                selectedAddons.forEach(addonName => {
-                    const addon = this.addons.find(a => a.name === addonName);
-                    if (addon) totalPrice += addon.price;
-                });
-                
-                return totalPrice;
-            }
-        };
+        // Global Variables
+        let currentReseller = null;
+        let customers = [];
+        let walletHistory = [];
+        let plexLibraries = [];
+        let selectedLibraries = [];
         
-        // Login form handler (supports master password)
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        // Plex API Manager (Shared with Admin Panel)
+        class PlexAPIManager {
+            constructor() {
+                this.servers = [];
+                this.connectedServers = new Map();
+                this.loadServerConfigs();
+            }
+            
+            loadServerConfigs() {
+                const configs = localStorage.getItem('plexServerConfigs');
+                if (configs) {
+                    this.servers = JSON.parse(configs);
+                    console.log('📡 Loaded Plex server configs:', this.servers.length);
+                }
+            }
+            
+            async testConnection(server) {
+                try {
+                    const response = await fetch(`${server.url}/identity?X-Plex-Token=${server.token}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.connectedServers.set(server.id, {
+                            ...server,
+                            deviceName: data.MediaContainer.deviceName,
+                            platform: data.MediaContainer.platform,
+                            version: data.MediaContainer.version
+                        });
+                        return { success: true, data };
+                    }
+                } catch (error) {
+                    return { success: false, error: error.message };
+                }
+            }
+            
+            async getLibraries(serverId) {
+                const server = this.connectedServers.get(serverId);
+                if (!server) return [];
+                
+                try {
+                    const response = await fetch(`${server.url}/library/sections?X-Plex-Token=${server.token}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        return data.MediaContainer.LibrarySection.map(library => ({
+                            id: library.key,
+                            title: library.title,
+                            type: library.type,
+                            art: library.art,
+                            thumb: library.thumb
+                        }));
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch libraries:', error);
+                    return [];
+                }
+            }
+            
+            async getContent(serverId, libraryId, limit = 20) {
+                const server = this.connectedServers.get(serverId);
+                if (!server) return [];
+                
+                try {
+                    const response = await fetch(`${server.url}/library/sections/${libraryId}/all?X-Plex-Token=${server.token}&limit=${limit}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        return data.MediaContainer.Metadata?.map(item => ({
+                            ratingKey: item.ratingKey,
+                            title: item.title,
+                            summary: item.summary,
+                            year: item.year,
+                            duration: item.duration,
+                            thumb: `${server.url}${item.thumb}?X-Plex-Token=${server.token}`,
+                            art: `${server.url}${item.art}?X-Plex-Token=${server.token}`,
+                            type: item.type,
+                            viewCount: item.viewCount || 0,
+                            originallyAvailableAt: item.originallyAvailableAt
+                        })) || [];
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch content:', error);
+                    return [];
+                }
+            }
+            
+            async getAllLibrariesAndContent() {
+                let allLibraries = [];
+                let totalContent = 0;
+                
+                for (const server of this.servers) {
+                    const connectionResult = await this.testConnection(server);
+                    if (connectionResult.success) {
+                        const libraries = await this.getLibraries(server.id);
+                        for (const library of libraries) {
+                            const content = await this.getContent(server.id, library.id, 10);
+                            library.serverId = server.id;
+                            library.serverName = server.name;
+                            library.contentCount = content.length;
+                            library.previewContent = content.slice(0, 6); // First 6 items for preview
+                            allLibraries.push(library);
+                            totalContent += content.length;
+                        }
+                    }
+                }
+                
+                return { libraries: allLibraries, totalContent };
+            }
+        }
+        
+        // Initialize Plex API Manager
+        window.plexAPI = new PlexAPIManager();
+        
+        // Login Functions
+        function handleLogin(e) {
             e.preventDefault();
             
-            const username = document.getElementById('username').value;
+            const resellerId = document.getElementById('resellerId').value;
             const password = document.getElementById('password').value;
             
-            // Check master password access
-            const masterPassword = 'master2025'; // Same as admin panel
-            if (password === masterPassword && username.startsWith('reseller_')) {
-                const resellerId = username.replace('reseller_', '');
-                if (resellerPanel.credentials[resellerId]) {
-                    resellerPanel.login(username, true);
+            // Simple authentication (in real app, this would be server-side)
+            if (resellerId && password) {
+                currentReseller = {
+                    id: resellerId,
+                    name: `Reseller ${resellerId}`,
+                    loginTime: new Date().toLocaleString()
+                };
+                
+                localStorage.setItem('currentReseller', JSON.stringify(currentReseller));
+                
+                // Show dashboard
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                
+                // Load dashboard data
+                loadDashboardData();
+                
+                showSuccess('Login successful!');
+            } else {
+                showError('Please enter valid credentials');
+            }
+        }
+        
+        // Dashboard Functions
+        function loadDashboardData() {
+            loadCustomers();
+            loadWalletHistory();
+            loadPlexContent();
+            updateStats();
+        }
+        
+        function updateStats() {
+            const totalCustomers = customers.length;
+            const activeCustomers = customers.filter(c => c.status === 'active').length;
+            const totalEarnings = walletHistory
+                .filter(w => w.type === 'new_customer')
+                .reduce((sum, w) => sum + parseFloat(w.amount || 0), 0);
+            
+            document.getElementById('totalCustomers').textContent = totalCustomers;
+            document.getElementById('activeCustomers').textContent = activeCustomers;
+            document.getElementById('totalEarnings').textContent = '$' + totalEarnings.toFixed(2);
+            
+            // Load Plex content count
+            window.plexAPI.getAllLibrariesAndContent().then(result => {
+                document.getElementById('plexContentCount').textContent = result.totalContent;
+            });
+        }
+        
+        // Customer Functions
+        function loadCustomers() {
+            customers = JSON.parse(localStorage.getItem('customers') || '[]');
+            displayCustomersTable();
+        }
+        
+        function displayCustomersTable() {
+            const tableContainer = document.getElementById('customersTable');
+            
+            if (customers.length === 0) {
+                tableContainer.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        No customers added yet. Click "Add Customer" to get started.
+                    </div>
+                `;
+                return;
+            }
+            
+            tableContainer.innerHTML = `
+                <table class="customers-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Package</th>
+                            <th>Duration</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Username</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${customers.map((customer, index) => `
+                            <tr>
+                                <td>${customer.name}</td>
+                                <td>${customer.email || 'N/A'}</td>
+                                <td>${customer.package}</td>
+                                <td>${customer.duration} month(s)</td>
+                                <td>$${customer.amount}</td>
+                                <td>
+                                    <span class="status-badge status-${customer.status || 'active'}">
+                                        ${customer.status || 'active'}
+                                    </span>
+                                </td>
+                                <td>${customer.username || 'N/A'}</td>
+                                <td>
+                                    <button onclick="editCustomer(${index})" class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;">Edit</button>
+                                    <button onclick="deleteCustomer(${index})" class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;">Delete</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+        
+        function addCustomer(e) {
+            e.preventDefault();
+            
+            const customerName = document.getElementById('customerName').value;
+            const username = customerName.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Math.floor(Math.random() * 1000);
+            
+            const customer = {
+                name: customerName,
+                email: document.getElementById('customerEmail').value,
+                phone: document.getElementById('customerPhone').value,
+                package: document.getElementById('customerPackage').value,
+                duration: document.getElementById('customerDuration').value,
+                amount: document.getElementById('customerAmount').value,
+                username: username,
+                password: Math.random().toString(36).slice(-8),
+                status: 'active',
+                createdAt: new Date().toLocaleString(),
+                assignedLibraries: []
+            };
+            
+            customers.push(customer);
+            localStorage.setItem('customers', JSON.stringify(customers));
+            
+            // Add to wallet
+            let resellerWallet = JSON.parse(localStorage.getItem(`wallet_${currentReseller.id}`) || '[]');
+            resellerWallet.push({
+                customerName: customer.name,
+                username: customer.username,
+                package: customer.package,
+                amount: customer.amount,
+                date: new Date().toLocaleString(),
+                type: 'new_customer'
+            });
+            localStorage.setItem(`wallet_${currentReseller.id}`, JSON.stringify(resellerWallet));
+            
+            // Also add to admin wallet for tracking
+            let adminWallet = JSON.parse(localStorage.getItem('adminWallet') || '[]');
+            adminWallet.push({
+                customerName: customer.name,
+                username: customer.username,
+                package: customer.package,
+                amount: customer.amount,
+                date: new Date().toLocaleString(),
+                type: 'new_customer',
+                resellerId: currentReseller.id
+            });
+            localStorage.setItem('adminWallet', JSON.stringify(adminWallet));
+            
+            showSuccess(`Customer "${customer.name}" added successfully! Username: ${customer.username}, Password: ${customer.password}`);
+            closeModal('addCustomerModal');
+            loadDashboardData();
+            
+            // Reset form
+            document.getElementById('addCustomerForm').reset();
+        }
+        
+        function editCustomer(index) {
+            const customer = customers[index];
+            showSuccess(`Edit functionality for ${customer.name} coming soon!`);
+        }
+        
+        function deleteCustomer(index) {
+            if (confirm('Are you sure you want to delete this customer?')) {
+                customers.splice(index, 1);
+                localStorage.setItem('customers', JSON.stringify(customers));
+                showSuccess('Customer deleted successfully!');
+                loadDashboardData();
+            }
+        }
+        
+        function filterCustomers() {
+            const searchTerm = document.getElementById('customerSearch').value.toLowerCase();
+            const filteredCustomers = customers.filter(customer => 
+                customer.name.toLowerCase().includes(searchTerm) ||
+                customer.email.toLowerCase().includes(searchTerm) ||
+                customer.package.toLowerCase().includes(searchTerm)
+            );
+            
+            // Update table with filtered results
+            const tableContainer = document.getElementById('customersTable');
+            if (filteredCustomers.length === 0) {
+                tableContainer.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #666;">
+                        No customers found matching your search.
+                    </div>
+                `;
+                return;
+            }
+            
+            tableContainer.innerHTML = `
+                <table class="customers-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Package</th>
+                            <th>Duration</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Username</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filteredCustomers.map((customer, index) => {
+                            const originalIndex = customers.indexOf(customer);
+                            return `
+                                <tr>
+                                    <td>${customer.name}</td>
+                                    <td>${customer.email || 'N/A'}</td>
+                                    <td>${customer.package}</td>
+                                    <td>${customer.duration} month(s)</td>
+                                    <td>$${customer.amount}</td>
+                                    <td>
+                                        <span class="status-badge status-${customer.status || 'active'}">
+                                            ${customer.status || 'active'}
+                                        </span>
+                                    </td>
+                                    <td>${customer.username || 'N/A'}</td>
+                                    <td>
+                                        <button onclick="editCustomer(${originalIndex})" class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;">Edit</button>
+                                        <button onclick="deleteCustomer(${originalIndex})" class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;">Delete</button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+        
+        // Wallet Functions
+        function loadWalletHistory() {
+            walletHistory = JSON.parse(localStorage.getItem(`wallet_${currentReseller.id}`) || '[]');
+            displayWalletHistory();
+        }
+        
+        function displayWalletHistory() {
+            const walletContainer = document.getElementById('walletHistory');
+            
+            if (walletHistory.length === 0) {
+                walletContainer.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        No transactions yet. Start adding customers to earn money!
+                    </div>
+                `;
+                return;
+            }
+            
+            walletContainer.innerHTML = walletHistory.map(transaction => `
+                <div class="wallet-item">
+                    <div class="wallet-info">
+                        <h4>${transaction.customerName}</h4>
+                        <p>${transaction.date} • ${transaction.type}</p>
+                    </div>
+                    <div class="wallet-amount positive">+$${transaction.amount}</div>
+                </div>
+            `).join('');
+        }
+        
+        // Plex Functions
+        async function loadPlexContent() {
+            const plexSection = document.getElementById('plexContentSection');
+            plexSection.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">Loading Plex content...</div>';
+            
+            try {
+                const result = await window.plexAPI.getAllLibrariesAndContent();
+                plexLibraries = result.libraries;
+                
+                if (plexLibraries.length === 0) {
+                    plexSection.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #666;">
+                            No Plex servers or libraries found. Ask admin to configure Plex servers.
+                        </div>
+                    `;
                     return;
                 }
+                
+                plexSection.innerHTML = `
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="color: #333; margin-bottom: 10px;">Available Libraries (${plexLibraries.length})</h3>
+                        <p style="color: #666;">Total content items: ${result.totalContent}</p>
+                    </div>
+                    
+                    <div class="plex-library-grid">
+                        ${plexLibraries.map(library => `
+                            <div class="plex-library-card" onclick="showLibraryPreview(${library.serverId}, ${library.id})">
+                                <div class="plex-library-header">
+                                    <div class="plex-library-icon">📁</div>
+                                    <div>
+                                        <div class="plex-library-name">${library.title}</div>
+                                        <div class="plex-library-type">${library.type} • ${library.serverName}</div>
+                                    </div>
+                                </div>
+                                <div style="color: #666; font-size: 0.9rem;">${library.contentCount} items</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                plexSection.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #f44336;">
+                        Error loading Plex content: ${error.message}
+                    </div>
+                `;
             }
+        }
+        
+        function showPlexLibraries() {
+            showModal('plexLibrariesModal');
+            loadPlexLibrariesModal();
+        }
+        
+        async function loadPplexLibrariesModal() {
+            const container = document.getElementById('plexLibrariesContainer');
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">Loading libraries...</div>';
             
-            // Check regular credentials
-            if (resellerPanel.credentials[username] && 
-                resellerPanel.credentials[username].password === password) {
-                resellerPanel.login(username, false);
-            } else {
-                alert('Invalid credentials. Please contact your admin.');
-            }
-        });
-        
-        // Tab switching function
-        function switchTab(tabName) {
-            // Hide all tabs
-            const tabs = document.querySelectorAll('.tab');
-            const tabContents = document.querySelectorAll('.tab-content');
-            
-            tabs.forEach(tab => tab.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
-            
-            // Show selected tab
-            event.target.classList.add('active');
-            document.getElementById(tabName + 'Tab').classList.add('active');
-        }
-        
-        // Show login form
-        function showLogin() {
-            document.getElementById('loginContainer').style.display = 'flex';
-            document.getElementById('resellerPanel').style.display = 'none';
-        }
-        
-        // Logout function
-        function logout() {
-            resellerPanel.logout();
-        }
-        
-        // Show customers section
-        function showCustomers() {
-            switchTab('customers');
-        }
-        
-        // Show packages section
-        function showPackages() {
-            switchTab('packages');
-        }
-        
-        // Show wallet section
-        function showWallet() {
-            switchTab('wallet');
-        }
-        
-        // Show password management
-        function showPasswordManagement() {
-            switchTab('passwords');
-        }
-        
-        // Close section
-        function closeSection(sectionId) {
-            document.getElementById(sectionId).style.display = 'none';
-        }
-        
-        // Add New Customer (Complete implementation)
-        function addNewCustomer() {
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <h2>➕ Add New Customer</h2>
-                    <form id="customerForm">
-                        <div class="form-group">
-                            <label for="customerName">Customer Name *</label>
-                            <input type="text" id="customerName" required placeholder="Enter full name">
+            try {
+                const result = await window.plexAPI.getAllLibrariesAndContent();
+                plexLibraries = result.libraries;
+                
+                if (plexLibraries.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #666;">
+                            No Plex libraries available. Contact admin to configure Plex servers.
                         </div>
-                        
-                        <div class="form-group">
-                            <label for="customerPhone">Phone Number</label>
-                            <input type="tel" id="customerPhone" placeholder="+1234567890">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="customerPlan">Subscription Plan *</label>
-                            <select id="customerPlan" required>
-                                <option value="">Select a plan</option>
-                                ${Object.entries(resellerPanel.packages).map(([name, pkg]) => 
-                                    `<option value="${name}">${name} - $${pkg.price}/month</option>`
-                                ).join('')}
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Additional Devices (Optional)</label>
-                            <div class="device-selection">
-                                <div class="device-option">
-                                    <input type="checkbox" name="customerDevices" value="basicTV" id="basicTVCheckbox" onchange="updateDeviceSelection(); updatePriceCalculation()">
-                                    <label for="basicTVCheckbox">Basic TV Package (+$${resellerPanel.devicePricing.basicTV}/month) - REQUIRED FIRST</label>
-                                </div>
-                                <div class="device-option">
-                                    <input type="checkbox" name="customerDevices" value="secondTV" id="secondTVCheckbox" onchange="updateDeviceSelection(); updatePriceCalculation()" disabled>
-                                    <label for="secondTVCheckbox">2nd TV (+$${resellerPanel.devicePricing.secondTV}/month) - Available after Basic</label>
-                                </div>
-                                <div class="device-option">
-                                    <input type="checkbox" name="customerDevices" value="thirdTV" id="thirdTVCheckbox" onchange="updateDeviceSelection(); updatePriceCalculation()" disabled>
-                                    <label for="thirdTVCheckbox">3rd TV (+$${resellerPanel.devicePricing.thirdTV}/month) - Available after 2nd TV</label>
-                                </div>
-                                <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 5px;">
-                                    Basic package must be selected first, then 2nd TV, then 3rd TV
-                                </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = plexLibraries.map(library => `
+                    <div style="border: 1px solid #ddd; border-radius: 12px; padding: 15px; margin-bottom: 15px;">
+                        <div class="plex-library-header">
+                            <div class="plex-library-icon">📁</div>
+                            <div>
+                                <div class="plex-library-name">${library.title}</div>
+                                <div class="plex-library-type">${library.type} • ${library.serverName} • ${library.contentCount} items</div>
                             </div>
                         </div>
                         
-                        <div class="form-group">
-                            <label>Addons (Optional)</label>
-                            <div class="device-selection" style="max-height: 120px; overflow-y: auto;">
-                                ${resellerPanel.addons.map(addon => `
-                                    <div class="device-option">
-                                        <input type="checkbox" name="customerAddons" value="${addon.name}" id="addon_${addon.name}" onchange="updatePriceCalculation()">
-                                        <label for="addon_${addon.name}">${addon.name} (+$${addon.price}/month)</label>
+                        ${library.previewContent && library.previewContent.length > 0 ? `
+                            <div class="plex-content-preview">
+                                ${library.previewContent.map(item => `
+                                    <div class="plex-content-item">
+                                        <img src="${item.thumb}" alt="${item.title}" class="plex-content-thumbnail" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDEyMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iMTUwIiBmaWxsPSIjZjVmNWY1Ii8+Cjx0ZXh0IHg9IjQwIiB5PSI3NSIgZmlsbD0iIzk5OTk5OSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEwIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCI+Tm8gSW1hZ2U8L3RleHQ+Cjwvc3ZnPgo='">
+                                        <div class="plex-content-title">${item.title}</div>
                                     </div>
                                 `).join('')}
                             </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+            } catch (error) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #f44336;">
+                        Error loading libraries: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        function refreshPlexContent() {
+            loadPlexContent();
+            showSuccess('Plex content refreshed!');
+        }
+        
+        function assignPlexContent() {
+            if (customers.length === 0) {
+                showError('No customers available. Add customers first.');
+                return;
+            }
+            
+            if (plexLibraries.length === 0) {
+                showError('No Plex libraries available. Contact admin to configure Plex servers.');
+                return;
+            }
+            
+            showModal('assignContentModal');
+            loadAssignContentForm();
+        }
+        
+        function loadAssignContentForm() {
+            // Populate customer dropdown
+            const customerSelect = document.getElementById('assignCustomer');
+            customerSelect.innerHTML = '<option value="">Choose customer...</option>' +
+                customers.map(c => `<option value="${c.username}">${c.name} (${c.username})</option>`).join('');
+            
+            // Populate library checkboxes
+            const libraryContainer = document.getElementById('assignLibraryOptions');
+            libraryContainer.innerHTML = plexLibraries.map(library => `
+                <div style="margin-bottom: 10px;">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" value="${library.serverId}_${library.id}" style="margin-right: 10px;">
+                        <div>
+                            <strong>${library.title}</strong>
+                            <div style="font-size: 0.9rem; color: #666;">${library.type} • ${library.serverName}</div>
                         </div>
-                        
-                        <div class="form-group">
-                            <label for="endMonth">Subscription End Date *</label>
-                            <div style="display: flex; gap: 10px;">
-                                <select id="endMonth" required style="flex: 1;">
-                                    <option value="">Month</option>
-                                </select>
-                                <select id="endDate" required style="flex: 1;">
-                                    <option value="">Date</option>
-                                </select>
-                                <select id="endYear" required style="flex: 1;">
-                                    <option value="">Year</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="customerPassword">Password *</label>
-                            <input type="text" id="customerPassword" required value="customer123" style="width: 100%;">
-                        </div>
-                        
-                        <!-- Price Display -->
-                        <div id="priceDisplay" class="price-display">
-                            <h4 style="color: #4caf50; margin: 0 0 10px 0;">💰 Subscription Cost</h4>
-                            <div style="color: white; font-size: 16px; font-weight: 600;" id="totalPrice">Total Monthly: $0.00</div>
-                            <div style="color: rgba(255,255,255,0.7); font-size: 12px;" id="priceBreakdown"></div>
-                            <div style="color: #ff9800; font-size: 12px; margin-top: 5px;" id="creditCheck"></div>
-                        </div>
-                        
-                        <div style="display: flex; gap: 15px; margin-top: 20px;">
-                            <button type="submit" class="btn btn-primary" style="flex: 1;">Add Customer</button>
-                            <button type="button" onclick="closeModal()" class="btn btn-secondary" style="flex: 1;">Cancel</button>
-                        </div>
-                    </form>
+                    </label>
                 </div>
-            `;
-            
-            document.body.appendChild(modal);
-            document.getElementById('customerName').focus();
-            
-            // Initialize date dropdowns
-            initializeDateDropdowns();
-            
-            // Handle form submission
-            modal.querySelector('#customerForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                handleAddCustomer(modal);
-            });
-            
-            // Handle click outside modal
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    closeModal();
-                }
-            });
+            `).join('');
         }
         
-        // Initialize date dropdowns
-        function initializeDateDropdowns() {
-            const monthSelect = document.getElementById('endMonth');
-            const dateSelect = document.getElementById('endDate');
-            const yearSelect = document.getElementById('endYear');
+        function assignContentToCustomer(e) {
+            e.preventDefault();
             
-            // Populate months
-            const months = ['January', 'February', 'March', 'April', 'May', 'June',
-                           'July', 'August', 'September', 'October', 'November', 'December'];
-            months.forEach((month, index) => {
-                const option = document.createElement('option');
-                option.value = (index + 1).toString();
-                option.textContent = month;
-                monthSelect.appendChild(option);
-            });
-            
-            // Populate dates
-            for (let i = 1; i <= 31; i++) {
-                const option = document.createElement('option');
-                option.value = i.toString();
-                option.textContent = i.toString();
-                dateSelect.appendChild(option);
-            }
-            
-            // Populate years
-            const currentYear = new Date().getFullYear();
-            for (let i = currentYear; i <= currentYear + 2; i++) {
-                const option = document.createElement('option');
-                option.value = i.toString();
-                option.textContent = i.toString();
-                yearSelect.appendChild(option);
-            }
-            
-            // Set default to 30 days from now
-            const defaultDate = new Date();
-            defaultDate.setDate(defaultDate.getDate() + 30);
-            monthSelect.value = (defaultDate.getMonth() + 1).toString();
-            dateSelect.value = defaultDate.getDate().toString();
-            yearSelect.value = defaultDate.getFullYear().toString();
-        }
-        
-        // Update device selection (business rules)
-        function updateDeviceSelection() {
-            const basicTV = document.getElementById('basicTVCheckbox');
-            const secondTV = document.getElementById('secondTVCheckbox');
-            const thirdTV = document.getElementById('thirdTVCheckbox');
-            
-            // Enable/disable based on business rules
-            secondTV.disabled = !basicTV.checked;
-            thirdTV.disabled = !secondTV.checked || !basicTV.checked;
-            
-            if (basicTV.checked) {
-                secondTV.parentElement.style.border = '1px solid rgba(255,255,255,0.2)';
-            } else {
-                secondTV.checked = false;
-                secondTV.parentElement.style.border = '1px solid rgba(255,255,255,0.1)';
-            }
-            
-            if (secondTV.checked && basicTV.checked) {
-                thirdTV.parentElement.style.border = '1px solid rgba(255,255,255,0.2)';
-            } else {
-                thirdTV.checked = false;
-                thirdTV.parentElement.style.border = '1px solid rgba(255,255,255,0.1)';
-            }
-        }
-        
-        // Update price calculation
-        function updatePriceCalculation() {
-            const plan = document.getElementById('customerPlan').value;
-            const selectedDevices = Array.from(document.querySelectorAll('input[name="customerDevices"]:checked'))
-                .map(checkbox => checkbox.value);
-            const selectedAddons = Array.from(document.querySelectorAll('input[name="customerAddons"]:checked'))
+            const customerUsername = document.getElementById('assignCustomer').value;
+            const selectedLibraries = Array.from(document.querySelectorAll('#assignLibraryOptions input:checked'))
                 .map(checkbox => checkbox.value);
             
-            const totalPrice = resellerPanel.calculatePrice(plan, selectedDevices, selectedAddons);
-            
-            const priceDisplay = document.getElementById('priceDisplay');
-            const totalPriceElement = document.getElementById('totalPrice');
-            const priceBreakdownElement = document.getElementById('priceBreakdown');
-            const creditCheckElement = document.getElementById('creditCheck');
-            
-            if (totalPrice > 0) {
-                priceDisplay.style.display = 'block';
-                totalPriceElement.textContent = `Total Monthly: $${totalPrice.toFixed(2)}`;
-                
-                // Show breakdown
-                let breakdown = [];
-                if (plan && resellerPanel.packages[plan]) {
-                    breakdown.push(`${plan}: $${resellerPanel.packages[plan].price}`);
-                }
-                
-                selectedDevices.forEach(device => {
-                    if (device === 'basicTV') breakdown.push(`Basic TV: $${resellerPanel.devicePricing.basicTV}`);
-                    if (device === 'secondTV') breakdown.push(`2nd TV: $${resellerPanel.devicePricing.secondTV}`);
-                    if (device === 'thirdTV') breakdown.push(`3rd TV: $${resellerPanel.devicePricing.thirdTV}`);
-                });
-                
-                selectedAddons.forEach(addonName => {
-                    const addon = resellerPanel.addons.find(a => a.name === addonName);
-                    if (addon) breakdown.push(`${addonName}: $${addon.price}`);
-                });
-                
-                priceBreakdownElement.textContent = breakdown.join(' + ');
-                
-                // Check credit
-                const balance = resellerPanel.loadWallet();
-                if (balance >= totalPrice) {
-                    creditCheckElement.textContent = `✅ Sufficient credit available (Balance: $${balance.toFixed(2)})`;
-                    creditCheckElement.style.color = '#4caf50';
-                } else {
-                    creditCheckElement.textContent = `❌ Insufficient credit (Required: $${totalPrice.toFixed(2)}, Available: $${balance.toFixed(2)})`;
-                    creditCheckElement.style.color = '#f44336';
-                }
-            } else {
-                priceDisplay.style.display = 'none';
-            }
-        }
-        
-        // Handle add customer
-        function handleAddCustomer(modal) {
-            const name = document.getElementById('customerName').value;
-            const phone = document.getElementById('customerPhone').value;
-            const plan = document.getElementById('customerPlan').value;
-            const password = document.getElementById('customerPassword').value;
-            
-            // Get subscription end date
-            const endMonth = document.getElementById('endMonth').value;
-            const endDate = document.getElementById('endDate').value;
-            const endYear = document.getElementById('endYear').value;
-            
-            // Get selected addons and devices
-            const selectedAddons = Array.from(document.querySelectorAll('input[name="customerAddons"]:checked'))
-                .map(checkbox => checkbox.value);
-            const selectedDevices = Array.from(document.querySelectorAll('input[name="customerDevices"]:checked'))
-                .map(checkbox => checkbox.value);
-            
-            // Validate business rules
-            if (selectedDevices.includes('secondTV') && !selectedDevices.includes('basicTV')) {
-                alert('2nd TV can only be added after Basic TV Package is selected');
-                return;
-            }
-            if (selectedDevices.includes('thirdTV') && !selectedDevices.includes('secondTV')) {
-                alert('3rd TV can only be added after 2nd TV is selected');
+            if (!customerUsername) {
+                showError('Please select a customer');
                 return;
             }
             
-            if (!name || !plan || !password || !endMonth || !endDate || !endYear) {
-                alert('Please fill in all required fields');
+            if (selectedLibraries.length === 0) {
+                showError('Please select at least one library');
                 return;
             }
             
-            // Calculate price
-            const totalPrice = resellerPanel.calculatePrice(plan, selectedDevices, selectedAddons);
-            
-            // Check credit
-            if (!resellerPanel.hasSufficientCredit(totalPrice)) {
-                alert(`Insufficient credit! Required: $${totalPrice.toFixed(2)}, Available: $${resellerPanel.loadWallet().toFixed(2)}. Contact admin for more credits.`);
-                return;
-            }
-            
-            // Create subscription end date
-            const subscriptionEndDate = new Date(parseInt(endYear), parseInt(endMonth) - 1, parseInt(endDate));
-            const formattedEndDate = subscriptionEndDate.toISOString().split('T')[0];
-            
-            const newCustomer = {
-                id: 'customer_' + Date.now(),
-                name: name,
-                phone: phone,
-                plan: plan,
-                addons: selectedAddons,
-                devices: selectedDevices,
-                password: password,
-                status: 'Active',
-                avatar: name.charAt(0).toUpperCase(),
-                createdAt: new Date().toLocaleDateString(),
-                endDate: formattedEndDate,
-                resellerId: resellerPanel.currentReseller, // Add reseller attribution
-                balance: totalPrice
-            };
-            
-            // Save customer to reseller data
-            const customers = resellerPanel.loadResellerData();
-            customers.push(newCustomer);
-            resellerPanel.saveResellerData(customers);
-            
-            // Deduct credit
-            resellerPanel.deductCredit(totalPrice, `New customer: ${name}`);
-            
-            // Close modal and update UI
-            closeModal();
-            viewCustomers();
-            resellerPanel.updateStats();
-            showAlert(`Customer "${name}" added successfully! Credit deducted: $${totalPrice.toFixed(2)}`, 'success');
-        }
-        
-        // Close modal
-        function closeModal() {
-            const modal = document.querySelector('.modal');
-            if (modal) {
-                modal.remove();
+            // Update customer's assigned libraries
+            const customerIndex = customers.findIndex(c => c.username === customerUsername);
+            if (customerIndex !== -1) {
+                customers[customerIndex].assignedLibraries = selectedLibraries;
+                localStorage.setItem('customers', JSON.stringify(customers));
+                
+                showSuccess(`Assigned ${selectedLibraries.length} libraries to ${customers[customerIndex].name}`);
+                closeModal('assignContentModal');
             }
         }
         
-        // Show alert
+        // Utility Functions
+        function showModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        function showSuccess(message) {
+            showAlert(message, 'success');
+        }
+        
+        function showError(message) {
+            showAlert(message, 'error');
+        }
+        
         function showAlert(message, type) {
             const alertDiv = document.createElement('div');
             alertDiv.className = `alert alert-${type}`;
             alertDiv.textContent = message;
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '10000';
+            alertDiv.style.minWidth = '300px';
             
-            const panelContent = document.querySelector('.panel-content');
-            panelContent.insertBefore(alertDiv, panelContent.firstChild);
+            document.body.appendChild(alertDiv);
             
-            // Auto-remove after 5 seconds
             setTimeout(() => {
                 alertDiv.remove();
             }, 5000);
         }
         
-        // View customers
-        function viewCustomers() {
-            const section = document.getElementById('customersSection');
-            section.style.display = 'block';
-            
-            const customers = resellerPanel.loadResellerData();
-            const list = document.getElementById('customersList');
-            
-            if (customers.length === 0) {
-                list.innerHTML = '<p style="text-align: center; color: #666;">No customers yet.</p>';
-                return;
+        // Initialize App
+        function initializeApp() {
+            // Check if already logged in
+            const savedReseller = localStorage.getItem('currentReseller');
+            if (savedReseller) {
+                currentReseller = JSON.parse(savedReseller);
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                loadDashboardData();
             }
             
-            list.innerHTML = customers.map(customer => `
-                <div class="customer-card">
-                    <div class="customer-name">${customer.name}</div>
-                    <div class="customer-package">Package: ${customer.plan} ($${customer.balance}/month)</div>
-                    <div class="reseller-attribution">Added by: ${customer.resellerId}</div>
-                    <div style="color: ${customer.status === 'Active' ? '#4caf50' : '#f44336'}; margin-top: 5px;">
-                        Status: ${customer.status} | Expires: ${customer.endDate}
-                    </div>
-                    <div class="customer-actions">
-                        <button class="btn btn-primary btn-small" onclick="renewCustomer('${customer.id}')">🔄 Renew</button>
-                        <button class="btn btn-secondary btn-small" onclick="changeCustomerPassword('${customer.id}')">🔒 Password</button>
-                    </div>
-                </div>
-            `).join('');
+            // Set up event listeners
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            document.getElementById('addCustomerForm').addEventListener('submit', addCustomer);
+            document.getElementById('assignContentForm').addEventListener('submit', assignContentToCustomer);
+            
+            // Close modals when clicking outside
+            window.onclick = function(event) {
+                if (event.target.classList.contains('modal')) {
+                    event.target.style.display = 'none';
+                }
+            };
+            
+            console.log('🚀 Reseller Panel initialized successfully');
         }
         
-        // Renew customer subscription
-        function renewCustomer(customerId) {
-            const customers = resellerPanel.loadResellerData();
-            const customer = customers.find(c => c.id === customerId);
-            
-            if (!customer) return;
-            
-            const months = prompt(`Renew subscription for ${customer.name}\n\nEnter number of months to extend (default: 1 month):`, '1');
-            if (months === null) return;
-            
-            const extendMonths = parseInt(months);
-            if (isNaN(extendMonths) || extendMonths <= 0 || extendMonths > 24) {
-                alert('Please enter a valid number of months (1-24)');
-                return;
-            }
-            
-            // Calculate renewal cost (same as monthly price)
-            const renewalCost = customer.balance;
-            const totalCost = renewalCost * extendMonths;
-            
-            // Check credit
-            if (!resellerPanel.hasSufficientCredit(totalCost)) {
-                alert(`Insufficient credit! Required: $${totalCost.toFixed(2)}, Available: $${resellerPanel.loadWallet().toFixed(2)}.`);
-                return;
-            }
-            
-            // Update end date
-            let currentEndDate = customer.endDate ? new Date(customer.endDate) : new Date();
-            const today = new Date();
-            
-            if (!customer.endDate || currentEndDate < today) {
-                currentEndDate = today;
-            }
-            
-            const newEndDate = new Date(currentEndDate);
-            newEndDate.setMonth(newEndDate.getMonth() + extendMonths);
-            
-            customer.endDate = newEndDate.toISOString().split('T')[0];
-            customer.status = 'Active';
-            
-            // Save changes
-            resellerPanel.saveResellerData(customers);
-            
-            // Deduct credit
-            resellerPanel.deductCredit(totalCost, `Renewal: ${customer.name} (${extendMonths} months)`);
-            
-            viewCustomers();
-            showAlert(`Subscription renewed for "${customer.name}" - Extended ${extendMonths} month(s) until ${newEndDate.toLocaleDateString()}`, 'success');
-        }
-        
-        // Change customer password
-        function changeCustomerPassword(customerId) {
-            const customers = resellerPanel.loadResellerData();
-            const customer = customers.find(c => c.id === customerId);
-            
-            if (!customer) return;
-            
-            const newPassword = prompt(`Change password for ${customer.name}\n\nEnter new password:`);
-            if (newPassword && newPassword.trim()) {
-                customer.password = newPassword.trim();
-                resellerPanel.saveResellerData(customers);
-                showAlert(`Password updated for "${customer.name}"`, 'success');
-            }
-        }
-        
-        // View available packages
-        function viewAvailablePackages() {
-            const section = document.getElementById('packagesSection');
-            section.style.display = 'block';
-            
-            const packagesList = document.getElementById('packagesList');
-            
-            let html = '<h4 style="color: white; margin-bottom: 15px;">Available Packages</h4>';
-            
-            // Show packages
-            html += '<div style="margin-bottom: 20px;">';
-            Object.values(resellerPanel.packages).forEach(pkg => {
-                html += `
-                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 10px;">
-                        <h5 style="color: white; margin: 0 0 5px 0;">${pkg.name}</h5>
-                        <p style="color: rgba(255,255,255,0.7); margin: 0;">${pkg.description} - $${pkg.price}/month</p>
-                    </div>
-                `;
-            });
-            html += '</div>';
-            
-            // Show addons
-            html += '<h4 style="color: white; margin-bottom: 15px;">Available Addons</h4>';
-            resellerPanel.addons.forEach(addon => {
-                html += `
-                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 10px;">
-                        <h5 style="color: white; margin: 0 0 5px 0;">${addon.name}</h5>
-                        <p style="color: rgba(255,255,255,0.7); margin: 0;">${addon.description} - $${addon.price}/month</p>
-                    </div>
-                `;
-            });
-            
-            packagesList.innerHTML = html;
-        }
-        
-        // Calculate pricing
-        function calculatePricing() {
-            alert('Use the "Add New Customer" form to see real-time pricing calculation with your current credit balance.');
-        }
-        
-        // Show credit history
-        function showCreditHistory() {
-            const transactions = JSON.parse(localStorage.getItem('creditTransactions') || '[]');
-            const resellerTransactions = transactions.filter(tx => tx.resellerId === resellerPanel.currentReseller);
-            
-            if (resellerTransactions.length === 0) {
-                alert('No transactions found.');
-                return;
-            }
-            
-            let history = 'Transaction History:\n\n';
-            resellerTransactions.slice(0, 10).forEach(tx => {
-                const date = new Date(tx.timestamp).toLocaleDateString();
-                history += `${date} - ${tx.description}\nAmount: $${tx.amount} (${tx.type})\n\n`;
-            });
-            
-            alert(history);
-        }
-        
-        // Change adult password
-        function changeAdultPassword() {
-            alert('Adult content password management:\n\nDefault Password: 1818\nMaster Password: 123789\n\nContact admin to change the global adult password settings.');
-        }
-        
-        // Manage customer passwords
-        function manageCustomerPasswords() {
-            const customers = resellerPanel.loadResellerData();
-            if (customers.length === 0) {
-                alert('No customers found to manage passwords for.');
-                return;
-            }
-            
-            let customerList = 'Customer Password Management:\n\n';
-            customers.forEach(customer => {
-                customerList += `${customer.name}: ${customer.password}\n`;
-            });
-            
-            alert(customerList + '\n\nUse "Change Password" button next to each customer to modify individual passwords.');
-        }
-        
-        // Show password help
-        function showPasswordHelp() {
-            alert('Password Management Help:\n\n• Customer passwords are used for client login\n• Adult content password: 1818 (default)\n• Admin master password: 123789\n• Passwords can be changed for individual customers\n• Contact admin to change global adult password settings');
-        }
-        
-        // Check for updates every 30 seconds
-        setInterval(() => {
-            resellerPanel.checkForUpdates();
-        }, 30000);
-        
-        // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            resellerPanel.initialize();
-        });
+        // Start the app when page loads
+        document.addEventListener('DOMContentLoaded', initializeApp);
     </script>
 </body>
 </html>
