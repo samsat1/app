@@ -1,0 +1,252 @@
+{
+  "version": "1.0",
+  "exportDate": "2025-12-04T20:37:35.456Z",
+  "customers": [
+    {
+      "id": "CUST_1764860761457",
+      "username": "sam6",
+      "name": "sam6",
+      "phone": "555-1234",
+      "plan": "Basic TV Package",
+      "addons": "Movies Package, Adult Content Package",
+      "monthlyPrice": 18.5,
+      "totalPrice": 18.5,
+      "expiryDate": "2026-01-04",
+      "password": "sam6123",
+      "status": "active",
+      "duration": "1 Month",
+      "durationMonths": 1,
+      "createdAt": "2025-12-04T15:06:01.457Z",
+      "updatedAt": "2025-12-04T15:08:03.807Z"
+    },
+    {
+      "id": "CUST_1764874326050",
+      "username": "anthony",
+      "name": "anthony",
+      "phone": "555-1234",
+      "plan": "Basic TV Package",
+      "addons": "Movies Package",
+      "monthlyPrice": 15,
+      "totalPrice": 15,
+      "expiryDate": "2026-01-04",
+      "password": "123456",
+      "status": "active",
+      "duration": "1 Month",
+      "durationMonths": 1,
+      "createdAt": "2025-12-04T18:52:06.050Z",
+      "updatedAt": "2025-12-04T18:54:43.894Z"
+    }
+  ],
+  "packages": [
+    {
+      "name": "Basic",
+      "price": 7,
+      "duration": "1 Month",
+      "features": "",
+      "secondTVPrice": 2,
+      "thirdTVPrice": 3,
+      "sportsPrice": 0,
+      "moviesPrice": 0,
+      "isAdult": "",
+      "adultPackagePrice": 0,
+      "approved": true,
+      "approvedDate": "2025-12-04T15:06:23.572Z",
+      "approvedBy": "admin",
+      "rejectedDate": null,
+      "rejectedBy": null,
+      "rejectionReason": null,
+      "createdAt": "2025-12-04T15:06:23.572Z",
+      "id": "PKG_1764860783572"
+    },
+    {
+      "name": "Movies Package ",
+      "price": 8.5,
+      "duration": "1 Month",
+      "features": "",
+      "secondTVPrice": 0,
+      "thirdTVPrice": 0,
+      "sportsPrice": 8.5,
+      "moviesPrice": 0,
+      "isAdult": "",
+      "adultPackagePrice": 0,
+      "approved": true,
+      "approvedDate": "2025-12-04T15:06:55.473Z",
+      "approvedBy": "admin",
+      "rejectedDate": null,
+      "rejectedBy": null,
+      "rejectionReason": null,
+      "createdAt": "2025-12-04T15:06:55.473Z",
+      "id": "PKG_1764860815473"
+    },
+    {
+      "name": "Adult Package ",
+      "price": 3.5,
+      "duration": "1 Month",
+      "features": "+18",
+      "secondTVPrice": 0,
+      "thirdTVPrice": 0,
+      "sportsPrice": 0,
+      "moviesPrice": 0,
+      "isAdult": true,
+      "adultPackagePrice": 3.5,
+      "approved": true,
+      "approvedDate": "2025-12-04T15:07:24.049Z",
+      "approvedBy": "admin",
+      "rejectedDate": null,
+      "rejectedBy": null,
+      "rejectionReason": null,
+      "createdAt": "2025-12-04T15:07:24.049Z",
+      "id": "PKG_1764860844049"
+    }
+  ],
+  "resellers": {
+    "reseller001": {
+      "name": "Reseller 001",
+      "id": "reseller001",
+      "username": "reseller001",
+      "password": "res001_pass",
+      "status": "active",
+      "commissionRate": 20
+    },
+    "reseller002": {
+      "name": "Reseller 002",
+      "id": "reseller002",
+      "username": "reseller002",
+      "password": "res002_pass",
+      "status": "active",
+      "commissionRate": 20
+    },
+    "reseller003": {
+      "name": "Reseller 003",
+      "id": "reseller003",
+      "username": "reseller003",
+      "password": "res003_pass",
+      "status": "active",
+      "commissionRate": 20
+    },
+    "reseller004": {
+      "name": "Reseller 004",
+      "id": "reseller004",
+      "username": "reseller004",
+      "password": "res004_pass",
+      "status": "active",
+      "commissionRate": 20
+    },
+    "reseller005": {
+      "name": "Reseller 005",
+      "id": "reseller005",
+      "username": "reseller005",
+      "password": "res005_pass",
+      "status": "active",
+      "commissionRate": 20
+    },
+    "reseller006": {
+      "name": "Reseller 006",
+      "id": "reseller006",
+      "username": "reseller006",
+      "password": "res006_pass",
+      "status": "active",
+      "commissionRate": 20
+    },
+    "reseller007": {
+      "name": "Reseller 007",
+      "id": "reseller007",
+      "username": "reseller007",
+      "password": "res007_pass",
+      "status": "active",
+      "commissionRate": 20
+    },
+    "reseller008": {
+      "name": "Reseller 008",
+      "id": "reseller008",
+      "username": "reseller008",
+      "password": "res008_pass",
+      "status": "active",
+      "commissionRate": 20
+    },
+    "reseller009": {
+      "name": "Reseller 009",
+      "id": "reseller009",
+      "username": "reseller009",
+      "password": "res009_pass",
+      "status": "active",
+      "commissionRate": 20
+    },
+    "reseller010": {
+      "name": "Reseller 010",
+      "id": "reseller010",
+      "username": "reseller010",
+      "password": "res010_pass",
+      "status": "active",
+      "commissionRate": 20
+    },
+    "reseller011": {
+      "name": "Reseller 011",
+      "id": "reseller011",
+      "username": "reseller011",
+      "password": "res011_pass",
+      "status": "active",
+      "commissionRate": 20
+    },
+    "reseller012": {
+      "name": "Reseller 012",
+      "id": "reseller012",
+      "username": "reseller012",
+      "password": "res012_pass",
+      "status": "active",
+      "commissionRate": 20
+    }
+  },
+  "plexConfig": {
+    "serverUrl": "http://192.168.1.100:32400",
+    "token": "qvdrjFLuyFzzixe3r5sbsy11q",
+    "moviesSection": "",
+    "adultSection": ""
+  },
+  "contentMappings": {
+    "PKG_1764860783572": {
+      "packageId": "PKG_1764860783572",
+      "packageName": "Basic",
+      "contentMapping": {
+        "movies": false,
+        "adult": false,
+        "live": false,
+        "sports": false
+      },
+      "active": true,
+      "createdDate": "2025-12-04T15:08:52.248Z",
+      "libraries": []
+    },
+    "PKG_1764860815473": {
+      "packageId": "PKG_1764860815473",
+      "packageName": "Movies Package ",
+      "contentMapping": {
+        "movies": true,
+        "adult": false,
+        "live": false,
+        "sports": false
+      },
+      "active": true,
+      "createdDate": "2025-12-04T15:08:52.248Z",
+      "libraries": []
+    },
+    "PKG_1764860844049": {
+      "packageId": "PKG_1764860844049",
+      "packageName": "Adult Package ",
+      "contentMapping": {
+        "movies": false,
+        "adult": true,
+        "live": false,
+        "sports": false
+      },
+      "active": true,
+      "createdDate": "2025-12-04T15:08:52.248Z",
+      "libraries": []
+    }
+  },
+  "adminCredentials": {
+    "adminLogin": "admin123",
+    "masterPassword": "master2025"
+  },
+  "tvSyncUrl": ""
+}
