@@ -2071,7 +2071,7 @@
                             <div style="display: flex; flex-direction: column; gap: 10px;">
                                 <div>
                                     <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Server IP:</label>
-                                    <input type="text" placeholder="192.168.1.100" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: white;">
+                                    <input type="text" placeholder="185.187.94.41" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: white;">
                                 </div>
                                 <div>
                                     <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Port:</label>
@@ -3619,7 +3619,7 @@
             if (existingLibraries.length > 0) {
                 // Assign first library as default for Movies section
                 const defaultLibraryId = existingLibraries[0].id || 'library_1';
-                const serverUrl = localStorage.getItem('plexServerUrl') || 'http://192.168.1.100:32400';
+                const serverUrl = localStorage.getItem('plexServerUrl') || 'http://185.187.94.41:32400';
                 const serverId = serverUrl.replace(/[:\/]/g, '_'); // Convert URL to ID
                 const libraryAssignment = `${serverId}_${defaultLibraryId}`;
                 
@@ -3870,7 +3870,7 @@
         }
         
         function testPlexConnection() {
-            const serverUrl = document.getElementById('plexServerUrl')?.value || 'http://192.168.1.100:32400';
+            const serverUrl = document.getElementById('plexServerUrl')?.value || 'http://185.187.94.41:32400';
             const accessToken = document.getElementById('plexToken')?.value || localStorage.getItem('plexAutoToken') || localStorage.getItem('plexToken');
             
             if (!serverUrl) {
@@ -3899,7 +3899,7 @@
         
         function loadPlexLibraries() {
             // Get server URL and token from input fields or localStorage
-            const serverUrl = document.getElementById('plexServerUrl')?.value || localStorage.getItem('plexServerUrl') || 'http://192.168.1.100:32400';
+            const serverUrl = document.getElementById('plexServerUrl')?.value || localStorage.getItem('plexServerUrl') || 'http://185.187.94.41:32400';
             const accessToken = document.getElementById('plexToken')?.value || localStorage.getItem('plexAutoToken') || localStorage.getItem('plexToken');
             
             // Debug: Check what values we actually have
@@ -4127,7 +4127,7 @@
         
         // Enhanced load libraries with content caching
         async function loadAndCachePlexContent() {
-            const serverUrl = document.getElementById('plexServerUrl')?.value || localStorage.getItem('plexServerUrl') || 'http://192.168.1.100:32400';
+            const serverUrl = document.getElementById('plexServerUrl')?.value || localStorage.getItem('plexServerUrl') || 'http://185.187.94.41:32400';
             const accessToken = document.getElementById('plexToken')?.value || localStorage.getItem('plexAutoToken') || localStorage.getItem('plexToken');
             
             if (!accessToken) {
@@ -4316,7 +4316,7 @@
         
         // Your Plex Configuration (auto-detected)
         const PLEX_CONFIG = {
-            serverUrl: 'http://192.168.1.100:32400',
+            serverUrl: 'http://185.187.94.41:32400',
             localUrl: 'http://127.0.0.1:32400',
             token: '8ZG__GsXB4YJ5wrn7rRV',
             sections: {
@@ -6176,7 +6176,7 @@ Network: Always Streaming → Optimized for instant access`;
                                 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 15px;">
                                     <div>
                                         <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Plex Server URL:</label>
-                                        <input type="text" id="plexServerUrl" placeholder="http://192.168.1.100:32400" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                        <input type="text" id="plexServerUrl" placeholder="http://185.187.94.41:32400" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
                                     </div>
                                     <div>
                                         <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Access Token:</label>
@@ -6199,7 +6199,7 @@ Network: Always Streaming → Optimized for instant access`;
                     <!-- MANUAL VIDEO ENTRY SECTION -->
                     <div class="section-card" style="border: 2px solid #4caf50;">
                         <h3 class="section-title">📥 Import Videos from Plex (Easy Method)</h3>
-                        <p style="color: #4caf50; margin-bottom: 15px; font-weight: bold;">✅ Your Plex: 192.168.1.100:32400 | Token: 3exQDyc... | Movies: Section 26 | Adult: Section 21</p>
+                        <p style="color: #4caf50; margin-bottom: 15px; font-weight: bold;">✅ Your Plex: 185.187.94.41:32400 | Token: 3exQDyc... | Movies: Section 26 | Adult: Section 21</p>
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                             <!-- Movies Import -->
