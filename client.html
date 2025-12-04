@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 5.6 - Fixed Backspace in Login + Mobile Scroll 2025-12-05 -->
+<!-- VERSION 6.0 - Scroll Wheel Fix + Auto-Sync Hardcoded 2025-12-05 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1913,14 +1913,8 @@
                 </div>
             </div>
             
-            <!-- Settings Button -->
-            <button class="settings-btn" id="settingsBtn" onclick="showSettingsModal()" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; color: white; font-weight: 500; font-size: 14px; cursor: pointer; transition: all 0.3s ease;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                Sync
-            </button>
+            <!-- Settings Button - Hidden, auto-sync enabled -->
+            <!-- Sync button removed - data syncs automatically on startup -->
             
             <!-- Logout Button -->
             <button class="logout-btn" id="logoutBtn" onclick="logoutUser()">
@@ -4826,8 +4820,48 @@
             alert(message);
         }
 
+        // Auto-sync function - runs on startup
+        // HARDCODED SYNC URL - No customer setup required
+        const SYNC_URL = 'https://raw.githubusercontent.com/samsat1/app/main/admin_data.json';
+        
+        window.autoSyncData = async function() {
+            const syncUrl = SYNC_URL; // Use hardcoded URL
+            
+            try {
+                console.log('📡 Auto-syncing data from:', syncUrl);
+                const response = await fetch(syncUrl + '?t=' + Date.now()); // Cache bust
+                if (!response.ok) throw new Error('Fetch failed');
+                
+                const data = await response.json();
+                
+                // Import customers
+                if (data.customers && Array.isArray(data.customers)) {
+                    localStorage.setItem('adminCustomers', JSON.stringify(data.customers));
+                }
+                // Import packages
+                if (data.packages && Array.isArray(data.packages)) {
+                    localStorage.setItem('adminPackages', JSON.stringify(data.packages));
+                }
+                // Import Plex settings
+                if (data.plexServerUrl) localStorage.setItem('plexServerUrl', data.plexServerUrl);
+                if (data.plexToken) localStorage.setItem('plexToken', data.plexToken);
+                if (data.plexMoviesSection) localStorage.setItem('plexMoviesSection', data.plexMoviesSection);
+                if (data.plexAdultSection) localStorage.setItem('plexAdultSection', data.plexAdultSection);
+                
+                localStorage.setItem('lastAutoSync', new Date().toISOString());
+                console.log('✅ Auto-sync completed successfully');
+                return true;
+            } catch (error) {
+                console.log('⚠️ Auto-sync failed:', error.message);
+                return false;
+            }
+        };
+
         // Global function for app initialization - defined early for onload access
-        window.initApp = function() {
+        window.initApp = async function() {
+            // Auto-sync on startup (silent, non-blocking)
+            autoSyncData();
+            
             // DEBUG: Show all localStorage keys
             console.log('🔑 ALL localStorage keys:', Object.keys(localStorage));
             console.log('🔑 adminPackages raw:', localStorage.getItem('adminPackages'));
@@ -5209,8 +5243,30 @@
             },
             
             // Setup scroll wheel for LG Magic Remote, Samsung Smart Remote
+            // Also allows natural scrolling in scrollable containers
             setupScrollWheel() {
                 document.addEventListener('wheel', (e) => {
+                    // Check if scrolling inside a scrollable container (content list, modal, etc.)
+                    const scrollableSelectors = ['.content-list', '.package-content', '.login-content', '.adult-content'];
+                    const isInScrollable = scrollableSelectors.some(selector => {
+                        const container = e.target.closest(selector);
+                        if (container) {
+                            // Check if container can scroll
+                            const canScrollDown = container.scrollTop < (container.scrollHeight - container.clientHeight - 5);
+                            const canScrollUp = container.scrollTop > 5;
+                            // Allow natural scroll if there's room to scroll
+                            if ((e.deltaY > 0 && canScrollDown) || (e.deltaY < 0 && canScrollUp)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+                    
+                    // Allow natural scrolling in scrollable containers
+                    if (isInScrollable) {
+                        return; // Let browser handle the scroll naturally
+                    }
+                    
                     e.preventDefault();
                     
                     const now = Date.now();
@@ -5909,85 +5965,7 @@
             }
         }
     </style>
-    <!-- Hidden file input for importing admin data -->
-    <input type="file" id="adminDataFileInput" accept=".json" style="display: none;" onchange="handleAdminDataFile(event)">
-    
-    <!-- Settings Modal for Data Sync -->
-    <div class="settings-modal" id="settingsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; justify-content: center; align-items: center;">
-        <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 20px; padding: 30px; max-width: 450px; width: 90%; border: 1px solid rgba(255,255,255,0.2);">
-            <h2 style="color: #667eea; margin-bottom: 20px; text-align: center;">⚙️ Settings & Data Sync</h2>
-            
-            <div style="margin-bottom: 20px;">
-                <h3 style="color: white; margin-bottom: 10px; font-size: 14px;">📁 Import Admin Data (for login on this device)</h3>
-                <button onclick="document.getElementById('adminDataFileInput').click()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea, #764ba2); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer;">
-                    📥 Import from JSON File
-                </button>
-            </div>
-            
-            <div style="margin-bottom: 20px;">
-                <h3 style="color: white; margin-bottom: 10px; font-size: 14px;">🔗 Sync from URL (for TV)</h3>
-                <input type="text" id="syncUrlInput" placeholder="https://your-domain.com/admin_data.json" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; color: white; margin-bottom: 10px; box-sizing: border-box;">
-                <button onclick="syncFromUrl()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #4CAF50, #45a049); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer;">
-                    🔄 Sync Data from URL
-                </button>
-            </div>
-            
-            <div style="margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
-                <p style="color: #b0b0b0; font-size: 12px; margin: 0;">
-                    <strong>Quick Login:</strong> Use <span style="color: #667eea;">admin / admin123</span> for testing without sync.
-                </p>
-            </div>
-            
-            <button onclick="hideSettingsModal()" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; color: white; font-weight: 600; cursor: pointer;">
-                ❌ Close
-            </button>
-        </div>
-    </div>
-    
-    <script>
-        // Settings Modal functions
-        window.showSettingsModal = function() {
-            document.getElementById('settingsModal').style.display = 'flex';
-        };
-        
-        window.hideSettingsModal = function() {
-            document.getElementById('settingsModal').style.display = 'none';
-        };
-        
-        // Sync data from URL (useful for TV where file upload is difficult)
-        window.syncFromUrl = async function() {
-            const url = document.getElementById('syncUrlInput').value.trim();
-            if (!url) {
-                showNotification('❌ Please enter a valid URL', 'error');
-                return;
-            }
-            
-            try {
-                showNotification('🔄 Syncing data...', 'info');
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Failed to fetch');
-                
-                const adminData = await response.json();
-                
-                // Import the data
-                if (adminData.customers) {
-                    localStorage.setItem('adminCustomers', JSON.stringify(adminData.customers));
-                }
-                if (adminData.packages) {
-                    localStorage.setItem('adminPackages', JSON.stringify(adminData.packages));
-                }
-                
-                showNotification('✅ Data synced successfully! Please login.', 'success');
-                hideSettingsModal();
-                
-                // Reload to apply changes
-                setTimeout(() => location.reload(), 1500);
-                
-            } catch (error) {
-                console.error('Sync error:', error);
-                showNotification('❌ Failed to sync. Check URL and try again.', 'error');
-            }
-        };
-    </script>
+    <!-- Auto-sync enabled - no manual sync UI needed for customers -->
+    <!-- Data syncs automatically on app startup from configured URL -->
 </body>
 </html>
