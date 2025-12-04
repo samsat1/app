@@ -3202,6 +3202,116 @@
             }, 2000);
         }
 
+        // Save GitHub Settings
+        window.saveGithubSettings = function() {
+            const username = document.getElementById('githubUsername')?.value || '';
+            const repo = document.getElementById('githubRepo')?.value || '';
+            const token = document.getElementById('githubToken')?.value || '';
+            
+            localStorage.setItem('githubUsername', username);
+            localStorage.setItem('githubRepo', repo);
+            localStorage.setItem('githubToken', token);
+            
+            // Auto-generate sync URL
+            if (username && repo) {
+                const syncUrl = `https://raw.githubusercontent.com/${username}/${repo}/main/admin_data.json`;
+                localStorage.setItem('tvSyncUrl', syncUrl);
+            }
+            
+            showNotification('✅ GitHub settings saved!', 'success');
+        };
+        
+        // Load GitHub Settings
+        window.loadGithubSettings = function() {
+            const usernameInput = document.getElementById('githubUsername');
+            const repoInput = document.getElementById('githubRepo');
+            const tokenInput = document.getElementById('githubToken');
+            
+            if (usernameInput) usernameInput.value = localStorage.getItem('githubUsername') || '';
+            if (repoInput) repoInput.value = localStorage.getItem('githubRepo') || '';
+            if (tokenInput) tokenInput.value = localStorage.getItem('githubToken') || '';
+        };
+        
+        // Upload to GitHub with one click
+        window.uploadToGithub = async function() {
+            const username = localStorage.getItem('githubUsername');
+            const repo = localStorage.getItem('githubRepo');
+            const token = localStorage.getItem('githubToken');
+            
+            if (!username || !repo || !token) {
+                showNotification('⚠️ Please configure GitHub settings first!', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('uploadGithubBtn');
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Uploading...';
+            
+            try {
+                // Prepare data
+                const exportData = {
+                    version: '1.0',
+                    exportDate: new Date().toISOString(),
+                    customers: JSON.parse(localStorage.getItem('adminCustomers') || '[]'),
+                    packages: JSON.parse(localStorage.getItem('adminPackages') || '[]'),
+                    resellers: JSON.parse(localStorage.getItem('adminResellers') || '[]'),
+                    plexServerUrl: localStorage.getItem('plexServerUrl') || '',
+                    plexToken: localStorage.getItem('plexToken') || '',
+                    plexMoviesSection: localStorage.getItem('plexMoviesSection') || '',
+                    plexAdultSection: localStorage.getItem('plexAdultSection') || '',
+                    tvSyncUrl: `https://raw.githubusercontent.com/${username}/${repo}/main/admin_data.json`
+                };
+                
+                const content = btoa(unescape(encodeURIComponent(JSON.stringify(exportData, null, 2))));
+                const apiUrl = `https://api.github.com/repos/${username}/${repo}/contents/admin_data.json`;
+                
+                // Check if file exists (to get SHA for update)
+                let sha = null;
+                try {
+                    const checkRes = await fetch(apiUrl, {
+                        headers: { 'Authorization': `token ${token}` }
+                    });
+                    if (checkRes.ok) {
+                        const fileData = await checkRes.json();
+                        sha = fileData.sha;
+                    }
+                } catch (e) {}
+                
+                // Upload/Update file
+                const body = {
+                    message: `Update admin_data.json - ${new Date().toLocaleString()}`,
+                    content: content
+                };
+                if (sha) body.sha = sha;
+                
+                const response = await fetch(apiUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Upload failed: ' + response.status);
+                }
+                
+                showNotification('✅ Uploaded to GitHub! TVs will auto-sync.', 'success');
+                btn.innerHTML = '✅ Uploaded!';
+                setTimeout(() => {
+                    btn.innerHTML = '🚀 Upload to GitHub (One-Click)';
+                    btn.disabled = false;
+                }, 3000);
+                
+            } catch (error) {
+                console.error('GitHub upload error:', error);
+                showNotification('❌ Upload failed: ' + error.message, 'error');
+                btn.innerHTML = '🚀 Upload to GitHub (One-Click)';
+                btn.disabled = false;
+            }
+        };
+        
         function backupData() {
             // Export all data to a JSON file
             try {
@@ -3218,7 +3328,8 @@
                         adultSection: localStorage.getItem('plexAdultSection') || ''
                     },
                     contentMappings: JSON.parse(localStorage.getItem('packageContentMappings') || '{}'),
-                    adminCredentials: JSON.parse(localStorage.getItem('adminPasswords') || '{}')
+                    adminCredentials: JSON.parse(localStorage.getItem('adminPasswords') || '{}'),
+                    tvSyncUrl: localStorage.getItem('tvSyncUrl') || ''
                 };
                 
                 const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
@@ -4834,6 +4945,8 @@ Network: Always Streaming → Optimized for instant access`;
             const customerPhone = document.getElementById('customerPhone')?.value;
             const customerExpiry = document.getElementById('customerExpiry')?.value;
             const customerPassword = document.getElementById('customerPassword')?.value;
+            const customerMacAddress = document.getElementById('customerMacAddress')?.value?.toUpperCase()?.trim() || '';
+            const customerAdultPassword = document.getElementById('customerAdultPassword')?.value || '1818';
             
             if (!customerName || !customerUsername || !customerExpiry || !customerPassword) {
                 showNotification('❌ Please fill all required fields: Name, Username, Expiry Date, and Password', 'error');
@@ -4961,6 +5074,8 @@ Network: Always Streaming → Optimized for instant access`;
                         totalPrice: parseFloat(calculation.totalPrice.replace('$', '')),
                         expiryDate: finalExpiryDate,
                         password: customerPassword,
+                        macAddress: customerMacAddress,
+                        adultPassword: selectedAddons.includes('Adult Content Package') ? customerAdultPassword : '',
                         status: 'active',
                         duration: calculation.duration,
                         durationMonths: calculation.durationMonths,
@@ -5006,6 +5121,8 @@ Network: Always Streaming → Optimized for instant access`;
                     totalPrice: parseFloat(calculation.totalPrice.replace('$', '')),
                     expiryDate: finalExpiryDate,
                     password: customerPassword,
+                    macAddress: customerMacAddress,
+                    adultPassword: selectedAddons.includes('Adult Content Package') ? customerAdultPassword : '',
                     status: 'active',
                     duration: calculation.duration,
                     durationMonths: calculation.durationMonths,
@@ -5241,6 +5358,21 @@ Network: Always Streaming → Optimized for instant access`;
                 }
             }
             
+            // Show/hide adult password section based on adult addon selection
+            const adultPasswordSection = document.getElementById('adultPasswordSection');
+            const adultPasswordInput = document.getElementById('customerAdultPassword');
+            if (adultPasswordSection) {
+                if (adultAddon?.checked) {
+                    adultPasswordSection.style.display = 'block';
+                    // Set default password if empty
+                    if (adultPasswordInput && !adultPasswordInput.value) {
+                        adultPasswordInput.value = '1818';
+                    }
+                } else {
+                    adultPasswordSection.style.display = 'none';
+                }
+            }
+            
             // Update the main addon status message to include adult addon status
             if (addonStatusMessage) {
                 if (!basicTV?.checked) {
@@ -5471,7 +5603,7 @@ Network: Always Streaming → Optimized for instant access`;
         }
         
         function clearCustomerForm() {
-            const fields = ['customerName', 'customerPhone', 'customerPassword'];
+            const fields = ['customerName', 'customerPhone', 'customerPassword', 'customerMacAddress', 'customerAdultPassword'];
             fields.forEach(field => {
                 const element = document.getElementById(field);
                 if (element) element.value = '';
@@ -5492,6 +5624,12 @@ Network: Always Streaming → Optimized for instant access`;
                 const oneMonthFromNow = new Date();
                 oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
                 expiryInput.value = oneMonthFromNow.toISOString().split('T')[0];
+            }
+            
+            // Hide adult password section
+            const adultPasswordSection = document.getElementById('adultPasswordSection');
+            if (adultPasswordSection) {
+                adultPasswordSection.style.display = 'none';
             }
             
             updateDeviceSelection();
@@ -5749,6 +5887,22 @@ Network: Always Streaming → Optimized for instant access`;
                                 <input type="password" id="customerPassword" placeholder="Auto-generated from username" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;" required>
                                 <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 5px;">
                                     🔑 Auto-generated when you enter username. Client can change password later in their account.
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">📱 MAC Address (Device Lock)</label>
+                                <input type="text" id="customerMacAddress" placeholder="e.g., AA:BB:CC:DD:EE:FF" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; text-transform: uppercase;" maxlength="17">
+                                <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 5px;">
+                                    🔒 Lock account to this device. Customer can only login from this MAC address. Leave empty to allow any device.
+                                </div>
+                            </div>
+                            
+                            <div id="adultPasswordSection" style="display: none;">
+                                <label style="color: #ff4757; font-size: 14px;">🔞 Adult Content Password</label>
+                                <input type="text" id="customerAdultPassword" placeholder="4-digit PIN (e.g., 1234)" style="width: 100%; padding: 10px; background: rgba(255,71,87,0.1); border: 1px solid rgba(255,71,87,0.4); border-radius: 6px; color: #ff4757; letter-spacing: 4px; text-align: center; font-size: 18px;" maxlength="4" pattern="[0-9]{4}">
+                                <div style="font-size: 12px; color: rgba(255,71,87,0.7); margin-top: 5px;">
+                                    🔐 Customer must enter this PIN to access adult content. Default: 1818
                                 </div>
                             </div>
                             
@@ -6957,13 +7111,51 @@ Network: Always Streaming → Optimized for instant access`;
                 </div>
                 
                 <div class="section-card" style="margin-top: 25px;">
-                    <h3 class="section-title">📦 Data Sync (Export/Import)</h3>
+                    <h3 class="section-title">📦 GitHub Auto-Sync</h3>
                     <p style="color: rgba(255,255,255,0.7); margin-bottom: 15px; font-size: 14px;">
-                        Export data from one device and import on another to sync customers, packages, and settings.
+                        One-click upload to GitHub. Customers will auto-sync when they open the app.
                     </p>
-                    <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;">
-                        <button onclick="backupData()" class="btn btn-success" style="padding: 15px 25px; font-size: 16px;">📤 Export All Data</button>
-                        <button onclick="importData()" class="btn btn-warning" style="padding: 15px 25px; font-size: 16px;">📥 Import Data</button>
+                    
+                    <!-- GitHub Settings -->
+                    <div style="margin-bottom: 20px; padding: 15px; background: rgba(102,126,234,0.1); border-radius: 10px; border: 1px solid rgba(102,126,234,0.3);">
+                        <h4 style="color: #667eea; margin-bottom: 15px;">🔧 GitHub Settings</h4>
+                        <div style="display: grid; gap: 10px;">
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 12px;">GitHub Username:</label>
+                                <input type="text" id="githubUsername" placeholder="e.g., samsat1" 
+                                    style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; box-sizing: border-box;">
+                            </div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 12px;">Repository Name:</label>
+                                <input type="text" id="githubRepo" placeholder="e.g., app" 
+                                    style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; box-sizing: border-box;">
+                            </div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 12px;">Personal Access Token: <a href="https://github.com/settings/tokens" target="_blank" style="color: #667eea;">(Get Token)</a></label>
+                                <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxx" 
+                                    style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; box-sizing: border-box;">
+                            </div>
+                            <button onclick="saveGithubSettings()" class="btn btn-info" style="padding: 10px;">💾 Save GitHub Settings</button>
+                        </div>
+                    </div>
+                    
+                    <!-- One-Click Upload -->
+                    <div style="margin-bottom: 20px;">
+                        <button onclick="uploadToGithub()" id="uploadGithubBtn" class="btn btn-success" style="width: 100%; padding: 18px; font-size: 18px;">
+                            🚀 Upload to GitHub (One-Click)
+                        </button>
+                        <p style="color: rgba(255,255,255,0.5); font-size: 12px; text-align: center; margin-top: 8px;">
+                            Uploads all data to GitHub. TVs will auto-sync on startup.
+                        </p>
+                    </div>
+                    
+                    <!-- Manual Export/Import -->
+                    <div style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                        <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin-bottom: 10px;">Manual backup:</p>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button onclick="backupData()" class="btn btn-primary" style="padding: 10px 20px;">📤 Export</button>
+                            <button onclick="importData()" class="btn btn-warning" style="padding: 10px 20px;">📥 Import</button>
+                        </div>
                     </div>
                 </div>
                 
@@ -6976,6 +7168,11 @@ Network: Always Streaming → Optimized for instant access`;
                     </div>
                 </div>
             `;
+            
+            // Load saved TV Sync URL
+            setTimeout(() => {
+                loadGithubSettings();
+            }, 100);
         };
 
         // Content Library Section
@@ -7259,6 +7456,18 @@ Network: Always Streaming → Optimized for instant access`;
             document.getElementById('customerUsername').value = customer.username || '';
             document.getElementById('customerPhone').value = customer.phone || '';
             document.getElementById('customerPassword').value = customer.password || '';
+            
+            // Set MAC Address
+            const macAddressField = document.getElementById('customerMacAddress');
+            if (macAddressField) {
+                macAddressField.value = customer.macAddress || '';
+            }
+            
+            // Set Adult Password
+            const adultPasswordField = document.getElementById('customerAdultPassword');
+            if (adultPasswordField) {
+                adultPasswordField.value = customer.adultPassword || '1818';
+            }
             
             // Handle expiry date conversion from ISO date string to months
             let monthsValue = '1'; // default
