@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 6.2 - Auto Device Lock + Custom Adult Password 2025-12-05 -->
+<!-- VERSION 6.1 - MAC Address Lock + Custom Adult Password 2025-12-05 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -271,68 +271,34 @@
                 
                 // Check if customer exists and password matches
                 if (customer && customer.password === password) {
-                    // AUTOMATIC DEVICE LOCK - Silent Protection
-                    // Generates unique device fingerprint and locks account to first device
-                    // No admin setup needed - fully automatic - nobody knows why it fails
-                    
-                    // Generate or get this device's unique fingerprint
-                    let deviceFingerprint = localStorage.getItem('iwatch_device_fp');
-                    if (!deviceFingerprint) {
-                        // Create unique fingerprint based on device characteristics
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        ctx.textBaseline = 'top';
-                        ctx.font = '14px Arial';
-                        ctx.fillText('iWatch-TV-Fingerprint', 2, 2);
-                        const canvasData = canvas.toDataURL();
-                        
-                        const fpData = [
-                            navigator.userAgent,
-                            navigator.language,
-                            screen.width + 'x' + screen.height,
-                            screen.colorDepth,
-                            new Date().getTimezoneOffset(),
-                            navigator.hardwareConcurrency || 'unknown',
-                            canvasData.slice(-50),
-                            Date.now().toString(36)
-                        ].join('|');
-                        
-                        // Create hash of fingerprint
-                        let hash = 0;
-                        for (let i = 0; i < fpData.length; i++) {
-                            const char = fpData.charCodeAt(i);
-                            hash = ((hash << 5) - hash) + char;
-                            hash = hash & hash;
+                    // MAC ADDRESS PROTECTION - Check device lock
+                    if (customer.macAddress && customer.macAddress.trim() !== '') {
+                        // Get or generate device ID
+                        let deviceId = localStorage.getItem('iwatch_device_id');
+                        if (!deviceId) {
+                            // First time on this device - generate unique ID
+                            deviceId = 'DEV_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                            localStorage.setItem('iwatch_device_id', deviceId);
                         }
-                        deviceFingerprint = 'DFP_' + Math.abs(hash).toString(36) + '_' + Date.now().toString(36);
-                        localStorage.setItem('iwatch_device_fp', deviceFingerprint);
-                    }
-                    
-                    // Check device lock for this customer
-                    const lockKey = 'iwatch_lock_' + customer.id;
-                    const lockTimeKey = 'iwatch_locktime_' + customer.id;
-                    let storedFingerprint = localStorage.getItem(lockKey);
-                    const lockTime = parseInt(localStorage.getItem(lockTimeKey) || '0');
-                    
-                    // Check if admin requested device reset (new TV scenario)
-                    if (customer.resetDeviceLock && customer.resetDeviceLock > lockTime) {
-                        // Admin reset the device lock - clear old lock and allow new device
-                        localStorage.removeItem(lockKey);
-                        localStorage.removeItem(lockTimeKey);
-                        storedFingerprint = null;
-                        console.log('Device lock reset by admin');
-                    }
-                    
-                    if (!storedFingerprint) {
-                        // FIRST LOGIN or RESET - Lock this account to this device automatically
-                        localStorage.setItem(lockKey, deviceFingerprint);
-                        localStorage.setItem(lockTimeKey, Date.now().toString());
-                        console.log('Device locked for customer');
-                    } else if (storedFingerprint !== deviceFingerprint) {
-                        // DIFFERENT DEVICE - Block silently with generic error
-                        // Don't reveal it's a device check - just say invalid credentials
-                        console.log('Access denied');
-                        return null; // Will show "Invalid credentials" - nobody knows why
+                        
+                        // Check if this device is registered for this customer
+                        const registeredDevice = localStorage.getItem('iwatch_registered_mac_' + customer.username);
+                        
+                        if (!registeredDevice) {
+                            // First login - register this device with the customer's MAC
+                            // Only allow if device ID matches the expected MAC pattern or is new
+                            localStorage.setItem('iwatch_registered_mac_' + customer.username, customer.macAddress);
+                            localStorage.setItem('iwatch_device_for_' + customer.username, deviceId);
+                            console.log('📱 Device registered for', customer.username);
+                        } else {
+                            // Check if this is the same device
+                            const registeredDeviceId = localStorage.getItem('iwatch_device_for_' + customer.username);
+                            if (registeredDeviceId !== deviceId) {
+                                console.log('🚫 MAC Address mismatch - Device not authorized');
+                                alert('⚠️ This device is not authorized for your account.\n\nYour account is locked to another device (MAC: ' + customer.macAddress + ').\n\nContact your administrator to update your device.');
+                                return null;
+                            }
+                        }
                     }
                     
                     // Check if customer has active subscription
