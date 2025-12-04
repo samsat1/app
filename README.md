@@ -1,52 +1,53 @@
-# iWATCH TV - IPTV Streaming Platform
+# iWatch TV - IPTV Management System
 
-A professional IPTV streaming service with live TV, movies, VOD, and premium content access.
+A complete IPTV subscription management system with Admin, Reseller, and Client panels.
 
-## 🚀 Quick Start
+## 🌐 Live URLs
 
-Upload these files to your GitHub repository to deploy:
+| Panel | URL |
+|-------|-----|
+| **Client (TV/Mobile)** | https://samsat1.github.io/app/client.html |
+| **Admin Panel** | https://samsat1.github.io/app/admin.html |
+| **Reseller Panel** | https://samsat1.github.io/app/reseller.html |
 
-### File Structure
-```
-samsat1/iw/
-├── client_interface.html    # Customer streaming interface
-├── admin_panel.html         # Admin panel for management
-├── reseller_panel.html      # Reseller panel for resellers
-└── manifest.json           # PWA manifest
-```
+## 📱 Installation
 
-### GitHub Pages URLs (after upload)
-- **Client Interface**: https://samsat1.github.io/iw/client_interface.html
-- **Admin Panel**: https://samsat1.github.io/iw/admin_panel.html
-- **Reseller Panel**: https://samsat1.github.io/iw/reseller_panel.html
+### For Smart TVs (LG WebOS / Samsung Tizen)
+1. Open the TV browser
+2. Go to: `https://samsat1.github.io/app/client.html`
+3. Add to Home Screen / Bookmarks
 
-### Features
-- ✅ Live TV streaming
-- ✅ Movies & VOD content
-- ✅ Adult content with password protection (1818)
-- ✅ User authentication
-- ✅ Admin panel integration
-- ✅ Responsive design for TV/PC/Mobile
-- ✅ PWA support for app-like experience
+### For Mobile / Tablet
+1. Open Chrome/Safari
+2. Go to: `https://samsat1.github.io/app/client.html`
+3. Add to Home Screen (PWA supported)
 
-## 📱 Adult Content Access
+## 🔧 Features
 
-Type **1818** anywhere on the interface to unlock adult content with 6-digit password.
+### Admin Panel
+- Customer management (add/edit/delete)
+- Package management with pricing
+- Reseller management
+- Plex server integration
+- Data export/import
+- TV sync URL configuration
 
-## 🔧 Local Testing
+### Reseller Panel
+- Add customers under reseller account
+- View assigned packages
+- Customer subscription management
 
-1. Open `client_interface.html` in your browser
-2. Test login functionality
-3. Check video player controls
-4. Verify all navigation tabs work
+### Client Interface
+- PIN-based login
+- Live TV channels
+- Movies & Series (Plex integration)
+- Multi-platform support (TV, Mobile, Desktop)
+- Offline capability (PWA)
 
-## 🎯 Next Steps
+## 📦 Version
 
-1. Upload files to GitHub repository
-2. Enable GitHub Pages in repository settings
-3. Test URLs in your browser
-4. Share with customers
+**Current Version: 5.7**
 
----
+## 📄 License
 
-**Ready for Production Deployment** ✨
+Private - All rights reserved
