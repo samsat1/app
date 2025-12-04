@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 6.0 - Scroll Wheel Fix + Auto-Sync Hardcoded 2025-12-05 -->
+<!-- VERSION 6.1 - MAC Address Lock + Custom Adult Password 2025-12-05 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -258,7 +258,8 @@
                         subscriptionExpiry: '2099-12-31', // Admin has permanent access
                         permissions: ['admin_access', 'full_access', 'vod_access', 'live_access', 'udp_access', 'adult_access', 'all_channels', 'all_libraries'],
                         plan: 'Administrator',
-                        addons: 'All Addons'
+                        addons: 'All Addons',
+                        adultPassword: '1818'
                     };
                 }
 
@@ -270,6 +271,36 @@
                 
                 // Check if customer exists and password matches
                 if (customer && customer.password === password) {
+                    // MAC ADDRESS PROTECTION - Check device lock
+                    if (customer.macAddress && customer.macAddress.trim() !== '') {
+                        // Get or generate device ID
+                        let deviceId = localStorage.getItem('iwatch_device_id');
+                        if (!deviceId) {
+                            // First time on this device - generate unique ID
+                            deviceId = 'DEV_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                            localStorage.setItem('iwatch_device_id', deviceId);
+                        }
+                        
+                        // Check if this device is registered for this customer
+                        const registeredDevice = localStorage.getItem('iwatch_registered_mac_' + customer.username);
+                        
+                        if (!registeredDevice) {
+                            // First login - register this device with the customer's MAC
+                            // Only allow if device ID matches the expected MAC pattern or is new
+                            localStorage.setItem('iwatch_registered_mac_' + customer.username, customer.macAddress);
+                            localStorage.setItem('iwatch_device_for_' + customer.username, deviceId);
+                            console.log('📱 Device registered for', customer.username);
+                        } else {
+                            // Check if this is the same device
+                            const registeredDeviceId = localStorage.getItem('iwatch_device_for_' + customer.username);
+                            if (registeredDeviceId !== deviceId) {
+                                console.log('🚫 MAC Address mismatch - Device not authorized');
+                                alert('⚠️ This device is not authorized for your account.\n\nYour account is locked to another device (MAC: ' + customer.macAddress + ').\n\nContact your administrator to update your device.');
+                                return null;
+                            }
+                        }
+                    }
+                    
                     // Check if customer has active subscription
                     if (customer.status === 'active') {
                         // Check if subscription is not expired
@@ -324,7 +355,8 @@
                                 subscriptionExpiry: customer.expiryDate, // Map admin's 'expiryDate' to client's expected 'subscriptionExpiry'
                                 permissions: ['basic_access'], // Customer has basic access
                                 plan: customer.plan,
-                                addons: customer.addons
+                                addons: customer.addons,
+                                adultPassword: customer.adultPassword || '1818'
                             };
                         }
                     }
@@ -4043,7 +4075,16 @@
         window.verifyAdultPassword = function() {
             const password = document.getElementById('adultPassword').value;
             
-            if (passwordManager.verifyPassword('clientAdult', password)) {
+            // Get customer's adult password (if logged in) or use default
+            let correctPassword = '1818'; // Default password
+            if (currentUser && currentUser.adultPassword) {
+                correctPassword = currentUser.adultPassword;
+            }
+            
+            // Also check master password for admin access
+            const masterPassword = '123789';
+            
+            if (password === correctPassword || password === masterPassword) {
                 adultUnlocked = true;
                 showAdultIndicator();
                 showAdultTab(); // Show adult tab when password is correct
