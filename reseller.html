@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Professional Reseller Panel - Reseller003</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0A0B0D;
+            color: #ffffff;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: #1A1D1F;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #00F5A0;
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: #1A1D1F;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #2A2D30;
+        }
+        
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #00F5A0;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #8B8F93;
+            font-size: 14px;
+        }
+        
+        .section {
+            background: #1A1D1F;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #2A2D30;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #00F5A0;
+        }
+        
+        .packages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        
+        .package-card {
+            background: #25292E;
+            border: 1px solid #3A3F45;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .package-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .package-price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00F5A0;
+            margin-bottom: 10px;
+        }
+        
+        .package-features {
+            color: #8B8F93;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            background: #00F5A0;
+            color: #0A0B0D;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            background: #00D68F;
+            transform: translateY(-1px);
+        }
+        
+        .btn:disabled {
+            background: #3A3F45;
+            color: #8B8F93;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #8B8F93;
+            font-size: 14px;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            background: #25292E;
+            border: 1px solid #3A3F45;
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 14px;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #00F5A0;
+        }
+        
+        .customers-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .customers-table th,
+        .customers-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #2A2D30;
+        }
+        
+        .customers-table th {
+            background: #25292E;
+            color: #8B8F93;
+            font-weight: 500;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1A1D1F;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #00F5A0;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: #8B8F93;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        /* Login Screen Styles */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0A0B0D;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .login-container {
+            background: #1A1D1F;
+            padding: 40px;
+            border-radius: 12px;
+            border: 1px solid #2A2D30;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .login-title {
+            color: #00F5A0;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .login-subtitle {
+            color: #8B8F93;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .login-input {
+            width: 100%;
+            padding: 12px;
+            background: #25292E;
+            border: 1px solid #3A3F45;
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 14px;
+        }
+        
+        .login-input:focus {
+            outline: none;
+            border-color: #00F5A0;
+        }
+        
+        .login-btn {
+            background: #00F5A0;
+            color: #0A0B0D;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .login-btn:hover {
+            background: #00D68F;
+            transform: translateY(-1px);
+        }
+        
+        .login-btn:disabled {
+            background: #3A3F45;
+            color: #8B8F93;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .login-error {
+            color: #f44336;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .main-content {
+            display: none;
+        }
+        
+        .logout-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 1000;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .packages-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-group input,
+            .form-group select {
+                font-size: 16px; /* Prevent zoom on iOS */
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-container">
+            <h2 class="login-title">🎯 Reseller Login</h2>
+            <p class="login-subtitle">Access your reseller panel</p>
+            
+            <form class="login-form" id="loginForm">
+                <input 
+                    type="text" 
+                    id="loginUsername" 
+                    class="login-input" 
+                    placeholder="Enter username"
+                    required
+                >
+                <input 
+                    type="password" 
+                    id="loginPassword" 
+                    class="login-input" 
+                    placeholder="Enter password"
+                    required
+                >
+                <button type="submit" class="login-btn" id="loginBtn">
+                    🔐 Login
+                </button>
+                <div class="login-error" id="loginError">
+                    Invalid username or password
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Logout Button -->
+    <button class="logout-btn" id="logoutBtn" onclick="logout()" style="display: none;">
+        🚪 Logout
+    </button>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🎯 Professional Reseller 003 Panel</h1>
+            <p id="resellerInfo">Loading...</p>
+        </div>
+        
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="walletBalance">$0.00</div>
+                <div class="stat-label">Wallet Balance</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalCustomers">0</div>
+                <div class="stat-label">Total Customers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalPackages">0</div>
+                <div class="stat-label">Available Packages</div>
+            </div>
+        </div>
+        
+        <!-- Packages Section -->
+        <div class="section">
+            <div class="section-title">📦 Available Packages</div>
+            <div class="packages-grid" id="packagesGrid">
+                <div style="text-align: center; color: #8B8F93; padding: 40px;">
+                    🔄 Loading packages...
+                </div>
+            </div>
+        </div>
+        
+        <!-- Customer Management -->
+        <div class="section">
+            <div class="section-title">👥 Customer Management</div>
+            <button class="btn" onclick="showAddCustomerModal()">➕ Add New Customer</button>
+            
+            <table class="customers-table" id="customersTable" style="margin-top: 20px;">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Username</th>
+                        <th>Package</th>
+                        <th>Price</th>
+                        <th>Expiry</th>
+                    </tr>
+                </thead>
+                <tbody id="customersTableBody">
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #8B8F93; padding: 20px;">
+                            No customers yet
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+
+        <!-- Transaction History Section -->
+        <div class="section">
+            <div class="section-title">📋 Wallet Transaction History</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <p style="color: #8B8F93; margin: 0; font-size: 13px;">Complete record of all wallet transactions</p>
+                <button onclick="exportMyTransactions()" class="btn" style="padding: 6px 12px; font-size: 11px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">📤 Export</button>
+            </div>
+            <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; max-height: 300px; overflow-y: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.2);">
+                            <th style="text-align: left; padding: 8px; color: rgba(255,255,255,0.9); font-weight: 600; font-size: 11px;">Date/Time</th>
+                            <th style="text-align: left; padding: 8px; color: rgba(255,255,255,0.9); font-weight: 600; font-size: 11px;">Type</th>
+                            <th style="text-align: left; padding: 8px; color: rgba(255,255,255,0.9); font-weight: 600; font-size: 11px;">Amount</th>
+                            <th style="text-align: left; padding: 8px; color: rgba(255,255,255,0.9); font-weight: 600; font-size: 11px;">Balance</th>
+                            <th style="text-align: left; padding: 8px; color: rgba(255,255,255,0.9); font-weight: 600; font-size: 11px;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="myTransactionHistory">
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 15px; color: rgba(255,255,255,0.5); font-size: 12px;">Loading transaction history...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    <!-- Add Customer Modal -->
+    <div id="addCustomerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">➕ Add New Customer</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            
+            <form id="addCustomerForm">
+                <div class="form-group">
+                    <label for="customerName">Customer Name *</label>
+                    <input type="text" id="customerName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customerUsername">Username *</label>
+                    <input type="text" id="customerUsername" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customerPassword">Password *</label>
+                    <input type="password" id="customerPassword" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customerPhone">Phone</label>
+                    <input type="tel" id="customerPhone">
+                </div>
+                
+                <div class="form-group">
+                    <label for="customerEmail">Email</label>
+                    <input type="email" id="customerEmail">
+                </div>
+                
+                <div class="form-group">
+                    <label>Device Packages *</label>
+                    <div style="display: flex; flex-direction: column; gap: 8px; margin: 8px 0;">
+                        <label style="display: flex; align-items: center; cursor: pointer; color: #fff; background: #2a3138; padding: 8px; border-radius: 4px;">
+                            <input type="checkbox" id="basicTVCheckbox" checked disabled style="margin-right: 8px;">
+                            <span style="flex: 1;">📺 Basic TV Package - $25.00/month</span>
+                            <span style="font-weight: bold;">Required</span>
+                        </label>
+                        <label style="display: flex; align-items: center; cursor: pointer; color: #fff; background: #2a3138; padding: 8px; border-radius: 4px;">
+                            <input type="checkbox" id="secondTVCheckbox" onchange="updateDeviceSelection()" style="margin-right: 8px;">
+                            <span style="flex: 1;">📺 2nd TV - $15.00/month</span>
+                            <span style="color: #ccc;">Add to Basic TV</span>
+                        </label>
+                        <label style="display: flex; align-items: center; cursor: pointer; color: #fff; background: #2a3138; padding: 8px; border-radius: 4px;">
+                            <input type="checkbox" id="thirdTVCheckbox" onchange="updateDeviceSelection()" style="margin-right: 8px;">
+                            <span style="flex: 1;">📺 3rd TV - $10.00/month</span>
+                            <span style="color: #ccc;">Requires 2nd TV</span>
+                        </label>
+                    </div>
+                    <div style="color: #ccc; font-size: 12px; margin-top: 4px;">
+                        💡 Basic TV is required. 2nd TV requires Basic TV. 3rd TV requires 2nd TV.
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Additional Packages</label>
+                    <div style="display: flex; flex-direction: column; gap: 8px; margin: 8px 0;">
+                        <label style="display: flex; align-items: center; cursor: pointer; color: #fff; background: #2a3138; padding: 8px; border-radius: 4px;">
+                            <input type="checkbox" id="sportsAddon" onchange="updateDeviceSelection()" style="margin-right: 8px;">
+                            <span style="flex: 1;">🏈 Sports Package - $8.00/month</span>
+                            <span style="color: #ccc;">Optional</span>
+                        </label>
+                        <label style="display: flex; align-items: center; cursor: pointer; color: #fff; background: #2a3138; padding: 8px; border-radius: 4px;">
+                            <input type="checkbox" id="moviesAddon" onchange="updateDeviceSelection()" style="margin-right: 8px;">
+                            <span style="flex: 1;">🎬 Movies Package - $8.00/month</span>
+                            <span style="color: #ccc;">Optional</span>
+                        </label>
+                        <label style="display: flex; align-items: center; cursor: pointer; color: #fff; background: #2a3138; padding: 8px; border-radius: 4px;">
+                            <input type="checkbox" id="premiumAddon" onchange="updateDeviceSelection()" style="margin-right: 8px;">
+                            <span style="flex: 1;">⭐ Premium Channels - $5.00/month</span>
+                            <span style="color: #ccc;">Optional</span>
+                        </label>
+                        <label style="display: flex; align-items: center; cursor: pointer; color: #fff; background: #2a3138; padding: 8px; border-radius: 4px;">
+                            <input type="checkbox" id="internationalAddon" onchange="updateDeviceSelection()" style="margin-right: 8px;">
+                            <span style="flex: 1;">🌍 International Channels - $10.00/month</span>
+                            <span style="color: #ccc;">Optional</span>
+                        </label>
+                        <label style="display: flex; align-items: center; cursor: pointer; color: #fff; background: #2a3138; padding: 8px; border-radius: 4px;">
+                            <input type="checkbox" id="adultAddon" onchange="updateDeviceSelection()" style="margin-right: 8px;">
+                            <span style="flex: 1;">🔞 Adult Content Package - $8.00/month</span>
+                            <span style="color: #ccc;">18+ Only</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Total Monthly Cost</label>
+                    <div id="packageCost" style="font-size: 18px; font-weight: bold; color: #00F5A0; padding: 12px; background: #25292E; border-radius: 6px;">
+                        $25.00/month
+                    </div>
+                    <div id="totalPrice" style="color: #ccc; font-size: 12px; margin-top: 4px;">
+                        Duration: <span id="durationDisplay">1 month</span> = <span id="finalPrice">$25.00</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customerExpiry">Expiry Date *</label>
+                    <input type="date" id="customerExpiry" required>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 30px;">
+                    <button type="button" class="btn" style="background: #8B8F93; color: white;" onclick="closeModal()">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn" style="flex: 1;">
+                        Create Customer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    </div>
+    
+    <script>
+        // Configuration
+        const RESELLER_ID = 'reseller003';
+        const RESELLER_NAME = 'Reseller 003';
+        
+        // Authentication System
+        function authenticateReseller(username, password) {
+            // Get reseller credentials from admin panel data
+            const resellerAccounts = JSON.parse(localStorage.getItem('RESELLER_ACCOUNTS')) || {};
+            
+            // Check if the reseller exists and credentials match
+            const reseller = resellerAccounts[RESELLER_ID];
+            if (reseller && reseller.username === username && reseller.password === password) {
+                return {
+                    success: true,
+                    user: {
+                        id: reseller.id,
+                        username: reseller.username,
+                        role: 'reseller',
+                        resellerId: RESELLER_ID,
+                        name: reseller.name
+                    }
+                };
+            }
+            
+            return { success: false, message: 'Invalid credentials' };
+        }
+        
+        function showMainContent() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('logoutBtn').style.display = 'block';
+        }
+        
+        function showLoginScreen() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('logoutBtn').style.display = 'none';
+        }
+        
+        function logout() {
+            localStorage.removeItem(`resellerSession_${RESELLER_ID}`);
+            currentUser = null;
+            showLoginScreen();
+            
+            // Clear login form
+            document.getElementById('loginForm').reset();
+            document.getElementById('loginError').style.display = 'none';
+        }
+        
+        // Check for existing session on page load
+        function checkExistingSession() {
+            const savedSession = localStorage.getItem(`resellerSession_${RESELLER_ID}`);
+            if (savedSession) {
+                try {
+                    const sessionData = JSON.parse(savedSession);
+                    const expiry = new Date(sessionData.expiry);
+                    
+                    if (expiry > new Date()) {
+                        // Valid session found
+                        currentUser = sessionData.user;
+                        showMainContent();
+                        initializeApp(); // Initialize the main app
+                        return true;
+                    } else {
+                        // Session expired
+                        localStorage.removeItem(`resellerSession_${RESELLER_ID}`);
+                    }
+                } catch (e) {
+                    // Invalid session data
+                    localStorage.removeItem(`resellerSession_${RESELLER_ID}`);
+                }
+            }
+            
+            // No valid session, show login screen
+            showLoginScreen();
+            return false;
+        }
+        
+        // Handle login form submission
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const loginError = document.getElementById('loginError');
+            
+            // Clear previous errors
+            loginError.style.display = 'none';
+            loginBtn.disabled = true;
+            loginBtn.textContent = '🔐 Authenticating...';
+            
+            // Authenticate
+            setTimeout(() => {
+                const result = authenticateReseller(username, password);
+                
+                if (result.success) {
+                    // Save session
+                    const sessionData = {
+                        user: result.user,
+                        expiry: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+                    };
+                    localStorage.setItem(`resellerSession_${RESELLER_ID}`, JSON.stringify(sessionData));
+                    
+                    currentUser = result.user;
+                    showMainContent();
+                    initializeApp(); // Initialize the main app
+                    
+                    loginBtn.textContent = '🔐 Login';
+                    loginBtn.disabled = false;
+                } else {
+                    // Show error
+                    loginError.textContent = result.message || 'Invalid username or password';
+                    loginError.style.display = 'block';
+                    loginBtn.textContent = '🔐 Login';
+                    loginBtn.disabled = false;
+                }
+            }, 500); // Small delay for better UX
+        }
+        
+        // Initialize login screen
+        document.addEventListener('DOMContentLoaded', function() {
+            // Setup login form
+            const loginForm = document.getElementById('loginForm');
+            loginForm.addEventListener('submit', handleLogin);
+            
+            // Check for existing session
+            checkExistingSession();
+            
+            // Initialize transaction history after a delay
+            setTimeout(() => {
+                if (typeof loadMyTransactionHistory === 'function') {
+                    loadMyTransactionHistory();
+                }
+            }, 1000);
+        });
+        
+        // Global variables
+        let packages = [];
+        let customers = [];
+        let currentUser = null;
+        
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+        
+        async function initializeApp() {
+            try {
+                console.log('🚀 Initializing fresh reseller panel...');
+                
+                // Set reseller info
+                document.getElementById('resellerInfo').textContent = `${RESELLER_NAME}`;
+                
+                // Set default expiry date (1 month from now)
+                const defaultExpiry = new Date();
+                defaultExpiry.setMonth(defaultExpiry.getMonth() + 1);
+                document.getElementById('customerExpiry').value = defaultExpiry.toISOString().split('T')[0];
+                
+                // Load data
+                await loadAllData();
+                
+                // Setup event listeners
+                document.getElementById('addCustomerForm').addEventListener('submit', createCustomer);
+                
+                console.log('✅ Fresh reseller panel initialized successfully!');
+                
+            } catch (error) {
+                console.error('❌ Initialization failed:', error);
+                alert('Failed to initialize application. Please refresh the page.');
+            }
+        }
+        
+        async function loadAllData() {
+            try {
+                console.log('📊 Loading all data...');
+                
+                await Promise.all([
+                    loadPackages(),
+                    loadCustomers(),
+                    loadWalletBalance()
+                ]);
+                
+                console.log('✅ All data loaded successfully');
+                
+            } catch (error) {
+                console.error('❌ Failed to load data:', error);
+            }
+        }
+        
+        async function loadPackages() {
+            try {
+                console.log('📦 Loading packages from admin panel...');
+                
+                // Load packages from admin panel (primary source)
+                const adminPackages = JSON.parse(localStorage.getItem('adminPackages')) || [];
+                console.log('📦 Raw admin packages:', adminPackages.length);
+                
+                // Load backup packages
+                const backupPackages = JSON.parse(localStorage.getItem('packages')) || [];
+                console.log('📦 Backup packages:', backupPackages.length);
+                
+                // Merge packages and remove duplicates
+                packages = [...adminPackages, ...backupPackages];
+                packages = packages.filter((pkg, index, self) => 
+                    pkg && pkg.id && index === self.findIndex(p => p && p.id === pkg.id)
+                );
+                
+                // Filter approved packages only (allow undefined/null as approved)
+                packages = packages.filter(pkg => pkg.approved !== false);
+                
+                console.log('📦 Final packages after filtering:', packages.length);
+                console.log('📦 Packages data:', packages);
+                
+                displayPackages();
+                updateStats();
+                
+                
+            } catch (error) {
+                console.error('❌ Failed to load packages:', error);
+                document.getElementById('packagesGrid').innerHTML = 
+                    '<div style="text-align: center; color: #f44336; padding: 20px;">❌ Failed to load packages</div>';
+            }
+        }
+        
+        function displayPackages() {
+            const grid = document.getElementById('packagesGrid');
+            
+            if (packages.length === 0) {
+                grid.innerHTML = `
+                    <div style="text-align: center; color: #8B8F93; padding: 40px;">
+                        📦 No packages available<br>
+                        <small>Create packages in admin panel first</small>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = packages.map(pkg => {
+                const typeColor = '#00F5A0';
+                const typeLabel = pkg.type || pkg.name;
+                
+                return `
+                    <div class="package-card">
+                        <div class="package-name" style="color: ${typeColor}">
+                            ${pkg.name}
+                        </div>
+                        <div class="package-price" style="color: ${typeColor}">
+                            $${parseFloat(pkg.price || 0).toFixed(2)}/month
+                        </div>
+                        <div class="package-features">
+                            ${pkg.features || 'Standard package features'}
+                        </div>
+                        <div style="font-size: 12px; color: #8B8F93; margin-top: 10px;">
+                            Duration: ${pkg.duration || '1 Month'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        
+        async function loadCustomers() {
+            try {
+                const customersData = JSON.parse(localStorage.getItem(`resellerCustomers_${RESELLER_ID}`)) || [];
+                customers = customersData;
+                console.log('👥 Loaded customers:', customers.length);
+                displayCustomers();
+                updateStats();
+            } catch (error) {
+                console.error('❌ Failed to load customers:', error);
+            }
+        }
+        
+        function displayCustomers() {
+            const tbody = document.getElementById('customersTableBody');
+            
+            if (customers.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #8B8F93; padding: 20px;">
+                            No customers yet
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = customers.map(customer => `
+                <tr>
+                    <td>${customer.name}</td>
+                    <td>${customer.username}</td>
+                    <td>
+                        <div style="font-size: 12px;">
+                            <div style="color: #00F5A0;">${customer.plan || 'N/A'}</div>
+                            ${customer.addons ? `<div style="color: #ccc; margin-top: 2px;">+ ${customer.addons}</div>` : ''}
+                        </div>
+                    </td>
+                    <td>$${parseFloat(customer.totalPrice || customer.price || 0).toFixed(2)}</td>
+                    <td>${customer.expiryDate ? new Date(customer.expiryDate).toLocaleDateString() : 'N/A'}</td>
+                </tr>
+            `).join('');
+        }
+        
+        async function loadWalletBalance() {
+            try {
+                const balance = parseFloat(localStorage.getItem(`resellerWallet_${RESELLER_ID}`)) || 0;
+                console.log('💰 Loaded wallet balance:', balance);
+                updateWalletDisplay(balance);
+            } catch (error) {
+                console.error('❌ Failed to load wallet balance:', error);
+            }
+        }
+        
+        function updateWalletDisplay(balance) {
+            document.getElementById('walletBalance').textContent = `$${parseFloat(balance).toFixed(2)}`;
+        }
+        
+        function updateStats() {
+            document.getElementById('totalCustomers').textContent = customers.length;
+            document.getElementById('totalPackages').textContent = packages.length;
+        }
+        
+        function showAddCustomerModal() {
+            if (packages.length === 0) {
+                alert('❌ No packages available. Please create packages in admin panel first.');
+                return;
+            }
+            
+            document.getElementById('addCustomerModal').style.display = 'block';
+        }
+        
+        function closeModal() {
+            document.getElementById('addCustomerModal').style.display = 'none';
+            document.getElementById('addCustomerForm').reset();
+            document.getElementById('packageCost').textContent = 'Select a package to see cost';
+            
+            // Reset expiry date
+            const defaultExpiry = new Date();
+            defaultExpiry.setMonth(defaultExpiry.getMonth() + 1);
+            document.getElementById('customerExpiry').value = defaultExpiry.toISOString().split('T')[0];
+        }
+        
+        function updatePriceDisplay() {
+            const select = document.getElementById('customerPackage');
+            const costDiv = document.getElementById('packageCost');
+            
+            const selectedOption = select.options[select.selectedIndex];
+            if (!selectedOption || selectedOption.value === '') {
+                costDiv.textContent = 'Select a package to see cost';
+                return;
+            }
+            
+            const price = parseFloat(selectedOption.dataset.price || 0);
+            costDiv.textContent = `$${price.toFixed(2)}`;
+        }
+        
+        // Device Selection Logic (like admin panel)
+        function updateDeviceSelection() {
+            const basicTV = document.getElementById('basicTVCheckbox');
+            const secondTV = document.getElementById('secondTVCheckbox');
+            const thirdTV = document.getElementById('thirdTVCheckbox');
+            
+            // Validate device hierarchy: cannot select 2nd TV without Basic TV
+            if (secondTV.checked && !basicTV.checked) {
+                secondTV.checked = false;
+                alert('❌ Cannot select 2nd TV without Basic TV!');
+                return;
+            }
+            
+            // Validate device hierarchy: cannot select 3rd TV without 2nd TV
+            if (thirdTV.checked && !secondTV.checked) {
+                thirdTV.checked = false;
+                alert('❌ Cannot select 3rd TV without selecting 2nd TV first!');
+                return;
+            }
+            
+            updateTotalPrice();
+        }
+        
+        // Calculate total price based on selected packages (like admin panel)
+        function updateTotalPrice() {
+            let monthlyPrice = 0;
+            
+            // Device packages
+            if (document.getElementById('basicTVCheckbox').checked) {
+                monthlyPrice += 25.00; // Basic TV
+            }
+            if (document.getElementById('secondTVCheckbox').checked) {
+                monthlyPrice += 15.00; // 2nd TV
+            }
+            if (document.getElementById('thirdTVCheckbox').checked) {
+                monthlyPrice += 10.00; // 3rd TV - FIXED: Was $15, now $10
+            }
+            
+            // Addons
+            if (document.getElementById('sportsAddon').checked) {
+                monthlyPrice += 8.00; // Sports - FIXED: Was $10, now $8
+            }
+            if (document.getElementById('moviesAddon').checked) {
+                monthlyPrice += 8.00; // Movies - FIXED: Was $12, now $8
+            }
+            if (document.getElementById('premiumAddon').checked) {
+                monthlyPrice += 5.00; // Premium - FIXED: Was $15, now $5
+            }
+            if (document.getElementById('internationalAddon').checked) {
+                monthlyPrice += 10.00; // International - FIXED: Was $20, now $10
+            }
+            if (document.getElementById('adultAddon').checked) {
+                monthlyPrice += 8.00; // Adult
+            }
+            
+            // Get expiry date to calculate duration
+            const expiryDate = document.getElementById('customerExpiry').value;
+            if (expiryDate) {
+                const now = new Date();
+                const expiry = new Date(expiryDate);
+                // Accurate calendar-based month calculation
+                const monthsDiff = (expiry.getFullYear() - now.getFullYear()) * 12 + 
+                                 (expiry.getMonth() - now.getMonth());
+
+                let diffMonths;
+                if (monthsDiff === 0 && expiry.getDate() > now.getDate()) {
+                    diffMonths = 1;
+                } else if (monthsDiff === 0) {
+                    diffMonths = 1;
+                } else {
+                    diffMonths = Math.max(1, monthsDiff);
+                }
+                const totalPrice = monthlyPrice * diffMonths;
+                
+                // Update display
+                document.getElementById('packageCost').textContent = `$${monthlyPrice.toFixed(2)}/month`;
+                document.getElementById('durationDisplay').textContent = diffMonths === 1 ? '1 month' : `${diffMonths} months`;
+                document.getElementById('finalPrice').textContent = `$${totalPrice.toFixed(2)}`;
+            } else {
+                document.getElementById('packageCost').textContent = `$${monthlyPrice.toFixed(2)}/month`;
+                document.getElementById('durationDisplay').textContent = 'Select expiry date';
+                document.getElementById('finalPrice').textContent = '$0.00';
+            }
+        }
+        
+        async function createCustomer(e) {
+            e.preventDefault();
+            
+            try {
+                console.log('👤 Creating new customer...');
+                
+                // Collect selected devices (like admin panel)
+                const selectedDevices = [];
+                if (document.getElementById('basicTVCheckbox').checked) {
+                    selectedDevices.push('Basic TV Package');
+                }
+                if (document.getElementById('secondTVCheckbox').checked) {
+                    selectedDevices.push('2nd TV');
+                }
+                if (document.getElementById('thirdTVCheckbox').checked) {
+                    selectedDevices.push('3rd TV');
+                }
+                
+                // Collect selected addons
+                const selectedAddons = [];
+                if (document.getElementById('sportsAddon').checked) {
+                    selectedAddons.push('Sports Package');
+                }
+                if (document.getElementById('moviesAddon').checked) {
+                    selectedAddons.push('Movies Package');
+                }
+                if (document.getElementById('premiumAddon').checked) {
+                    selectedAddons.push('Premium Channels');
+                }
+                if (document.getElementById('internationalAddon').checked) {
+                    selectedAddons.push('International Channels');
+                }
+                if (document.getElementById('adultAddon').checked) {
+                    selectedAddons.push('Adult Content Package');
+                }
+                
+                // Calculate price
+                let monthlyPrice = 0;
+                if (document.getElementById('basicTVCheckbox').checked) monthlyPrice += 25.00;
+                if (document.getElementById('secondTVCheckbox').checked) monthlyPrice += 15.00;
+                if (document.getElementById('thirdTVCheckbox').checked) monthlyPrice += 15.00;
+                if (document.getElementById('sportsAddon').checked) monthlyPrice += 10.00;
+                if (document.getElementById('moviesAddon').checked) monthlyPrice += 12.00;
+                if (document.getElementById('premiumAddon').checked) monthlyPrice += 15.00;
+                if (document.getElementById('internationalAddon').checked) monthlyPrice += 20.00;
+                if (document.getElementById('adultAddon').checked) monthlyPrice += 8.00;
+                
+                // Calculate duration and total price
+                const expiryDate = document.getElementById('customerExpiry').value;
+                const now = new Date();
+                const expiry = new Date(expiryDate);
+                // Accurate calendar-based month calculation
+                const monthsDiff = (expiry.getFullYear() - now.getFullYear()) * 12 + 
+                                 (expiry.getMonth() - now.getMonth());
+
+                let diffMonths;
+                if (monthsDiff === 0 && expiry.getDate() > now.getDate()) {
+                    diffMonths = 1;
+                } else if (monthsDiff === 0) {
+                    diffMonths = 1;
+                } else {
+                    diffMonths = Math.max(1, monthsDiff);
+                }
+                const totalPrice = monthlyPrice * diffMonths;
+                
+                const customerData = {
+                    id: 'CUST_' + Date.now(),
+                    name: document.getElementById('customerName').value,
+                    username: document.getElementById('customerUsername').value,
+                    password: document.getElementById('customerPassword').value,
+                    phone: document.getElementById('customerPhone').value,
+                    email: document.getElementById('customerEmail').value,
+                    plan: selectedDevices.join(', '),  // Multiple devices like admin panel
+                    addons: selectedAddons.join(', '),  // Multiple addons like admin panel
+                    monthlyPrice: monthlyPrice,
+                    totalPrice: totalPrice,
+                    expiryDate: expiryDate,
+                    createdAt: new Date().toISOString(),
+                    resellerId: RESELLER_ID,
+                    status: 'active'
+                };
+                
+                // Validate required fields
+                if (!customerData.name || !customerData.username || !customerData.password || 
+                    !customerData.plan || !customerData.expiryDate) {
+                    alert('❌ Please fill in all required fields');
+                    return;
+                }
+                
+                // Check wallet balance
+                const walletBalance = parseFloat(localStorage.getItem(`resellerWallet_${RESELLER_ID}`)) || 0;
+                if (walletBalance < totalPrice) {
+                    alert(`❌ Insufficient wallet balance. Need $${totalPrice.toFixed(2)}, have $${walletBalance.toFixed(2)}`);
+                    return;
+                }
+                
+                // Create customer
+                customers.push(customerData);
+                localStorage.setItem(`resellerCustomers_${RESELLER_ID}`, JSON.stringify(customers));
+                
+                // CRITICAL: Sync customer to adminCustomers for client authentication
+                try {
+                    let adminCustomers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
+                    // Check if customer already exists (by username)
+                    const existingIndex = adminCustomers.findIndex(c => c.username === customerData.username);
+                    if (existingIndex >= 0) {
+                        adminCustomers[existingIndex] = customerData; // Update existing
+                    } else {
+                        adminCustomers.push(customerData); // Add new
+                    }
+                    localStorage.setItem('adminCustomers', JSON.stringify(adminCustomers));
+                    console.log('✅ Customer synced to adminCustomers for client login');
+                } catch (syncError) {
+                    console.error('⚠️ Failed to sync customer to adminCustomers:', syncError);
+                }
+                
+                // Deduct wallet balance
+                const newBalance = walletBalance - totalPrice;
+                localStorage.setItem(`resellerWallet_${RESELLER_ID}`, newBalance.toString());
+                
+                // Update display
+                displayCustomers();
+                updateWalletDisplay(newBalance);
+                updateStats();
+                
+                alert(`✅ Customer "${customerData.name}" created successfully!\n\nPlan: ${customerData.plan}\nAddons: ${customerData.addons || 'None'}\nCost: $${totalPrice.toFixed(2)} (${diffMonths} month${diffMonths > 1 ? 's' : ''})\nNew balance: $${newBalance.toFixed(2)}`);
+                
+                closeModal();
+                
+                console.log('✅ Customer created successfully:', customerData);
+                
+            } catch (error) {
+                console.error('❌ Failed to create customer:', error);
+                alert('❌ Failed to create customer. Please try again.');
+            }
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('addCustomerModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        };
+    </script>
+</body>
+</html>
