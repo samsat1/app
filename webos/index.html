@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>iWatch TV</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { 
+            width: 100%; 
+            height: 100%; 
+            overflow: hidden;
+            background: #1a1a2e;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1a2e;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .loading img {
+            width: 200px;
+            height: 200px;
+            animation: pulse 2s infinite;
+        }
+        .loading-text {
+            color: #ff6b35;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            margin-top: 20px;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(0.95); }
+        }
+    </style>
+    <script src="webOSTV.js"></script>
+</head>
+<body>
+    <div class="loading" id="loadingScreen">
+        <img src="icon.png" alt="iWatch TV">
+        <div class="loading-text">Loading...</div>
+    </div>
+    
+    <iframe id="appFrame" style="display:none;"></iframe>
+    
+    <script>
+        // LG webOS initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if webOS is available
+            if (typeof webOS !== 'undefined') {
+                console.log('Running on LG webOS');
+                
+                // Register back button handler
+                document.addEventListener('keydown', function(e) {
+                    if (e.keyCode === 461) { // Back button
+                        e.preventDefault();
+                        // Send back event to iframe
+                        var frame = document.getElementById('appFrame');
+                        if (frame && frame.contentWindow) {
+                            frame.contentWindow.postMessage({ type: 'back' }, '*');
+                        }
+                    }
+                });
+            }
+            
+            // Load the main application
+            loadApp();
+        });
+        
+        function loadApp() {
+            var frame = document.getElementById('appFrame');
+            var loading = document.getElementById('loadingScreen');
+            
+            // Use local client.html (self-contained app)
+            var appUrl = 'client.html';
+            
+            // Alternative: Use hosted URL (uncomment below and comment above)
+            // var appUrl = 'https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO_NAME/client.html';
+            
+            frame.onload = function() {
+                loading.style.display = 'none';
+                frame.style.display = 'block';
+            };
+            
+            frame.onerror = function() {
+                loading.querySelector('.loading-text').textContent = 'Connection Error. Check Internet.';
+            };
+            
+            frame.src = appUrl;
+        }
+        
+        // Handle messages from iframe
+        window.addEventListener('message', function(e) {
+            if (e.data.type === 'exit') {
+                // Close the app
+                if (typeof webOS !== 'undefined' && webOS.platformBack) {
+                    webOS.platformBack();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
