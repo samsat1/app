@@ -3203,10 +3203,99 @@
         }
 
         function backupData() {
-            showNotification('💾 Starting data backup...', 'info');
-            setTimeout(() => {
-                showNotification('✅ Data backup completed successfully', 'success');
-            }, 3000);
+            // Export all data to a JSON file
+            try {
+                const exportData = {
+                    version: '1.0',
+                    exportDate: new Date().toISOString(),
+                    customers: JSON.parse(localStorage.getItem('adminCustomers') || '[]'),
+                    packages: JSON.parse(localStorage.getItem('adminPackages') || '[]'),
+                    resellers: JSON.parse(localStorage.getItem('RESELLER_ACCOUNTS') || '{}'),
+                    plexConfig: {
+                        serverUrl: localStorage.getItem('plexServerUrl') || '',
+                        token: localStorage.getItem('plexToken') || '',
+                        moviesSection: localStorage.getItem('plexMoviesSection') || '',
+                        adultSection: localStorage.getItem('plexAdultSection') || ''
+                    },
+                    contentMappings: JSON.parse(localStorage.getItem('packageContentMappings') || '{}'),
+                    adminCredentials: JSON.parse(localStorage.getItem('adminPasswords') || '{}')
+                };
+                
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `iwatch_backup_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showNotification('✅ Data exported successfully! Check your downloads.', 'success');
+            } catch (e) {
+                console.error('Export failed:', e);
+                showNotification('❌ Export failed: ' + e.message, 'error');
+            }
+        }
+        
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                try {
+                    const text = await file.text();
+                    const data = JSON.parse(text);
+                    
+                    if (!data.version || !data.customers) {
+                        throw new Error('Invalid backup file format');
+                    }
+                    
+                    // Confirm before importing
+                    if (!confirm(`Import backup from ${data.exportDate}?\n\nThis will replace:\n- ${data.customers?.length || 0} customers\n- ${data.packages?.length || 0} packages\n- Plex configuration\n\nContinue?`)) {
+                        return;
+                    }
+                    
+                    // Import all data
+                    if (data.customers) {
+                        localStorage.setItem('adminCustomers', JSON.stringify(data.customers));
+                        localStorage.setItem('customers', JSON.stringify(data.customers));
+                        window.customers = data.customers;
+                    }
+                    if (data.packages) {
+                        localStorage.setItem('adminPackages', JSON.stringify(data.packages));
+                        localStorage.setItem('packages', JSON.stringify(data.packages));
+                    }
+                    if (data.resellers) {
+                        localStorage.setItem('RESELLER_ACCOUNTS', JSON.stringify(data.resellers));
+                    }
+                    if (data.plexConfig) {
+                        if (data.plexConfig.serverUrl) localStorage.setItem('plexServerUrl', data.plexConfig.serverUrl);
+                        if (data.plexConfig.token) localStorage.setItem('plexToken', data.plexConfig.token);
+                        if (data.plexConfig.moviesSection) localStorage.setItem('plexMoviesSection', data.plexConfig.moviesSection);
+                        if (data.plexConfig.adultSection) localStorage.setItem('plexAdultSection', data.plexConfig.adultSection);
+                    }
+                    if (data.contentMappings) {
+                        localStorage.setItem('packageContentMappings', JSON.stringify(data.contentMappings));
+                    }
+                    if (data.adminCredentials) {
+                        localStorage.setItem('adminPasswords', JSON.stringify(data.adminCredentials));
+                    }
+                    
+                    showNotification('✅ Data imported successfully! Refreshing...', 'success');
+                    
+                    // Refresh the page to load new data
+                    setTimeout(() => location.reload(), 1500);
+                    
+                } catch (e) {
+                    console.error('Import failed:', e);
+                    showNotification('❌ Import failed: ' + e.message, 'error');
+                }
+            };
+            input.click();
         }
 
         function clearCache() {
@@ -4057,7 +4146,7 @@
         const PLEX_CONFIG = {
             serverUrl: 'http://192.168.1.100:32400',
             localUrl: 'http://127.0.0.1:32400',
-            token: '3exQDycx7bxQEL7966yR',
+            token: '8ZG__GsXB4YJ5wrn7rRV',
             sections: {
                 movies: 26,
                 adult: 21
@@ -6868,9 +6957,19 @@ Network: Always Streaming → Optimized for instant access`;
                 </div>
                 
                 <div class="section-card" style="margin-top: 25px;">
+                    <h3 class="section-title">📦 Data Sync (Export/Import)</h3>
+                    <p style="color: rgba(255,255,255,0.7); margin-bottom: 15px; font-size: 14px;">
+                        Export data from one device and import on another to sync customers, packages, and settings.
+                    </p>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;">
+                        <button onclick="backupData()" class="btn btn-success" style="padding: 15px 25px; font-size: 16px;">📤 Export All Data</button>
+                        <button onclick="importData()" class="btn btn-warning" style="padding: 15px 25px; font-size: 16px;">📥 Import Data</button>
+                    </div>
+                </div>
+                
+                <div class="section-card" style="margin-top: 25px;">
                     <h3 class="section-title">🔄 System Maintenance</h3>
                     <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                        <button onclick="backupData()" class="btn btn-warning">💾 Backup Data</button>
                         <button onclick="clearCache()" class="btn btn-info">🗑️ Clear Cache</button>
                         <button onclick="restartServices()" class="btn btn-primary">🔄 Restart Services</button>
                         <button onclick="updateSystem()" class="btn btn-success">⬆️ Update System</button>

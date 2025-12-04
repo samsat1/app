@@ -3179,7 +3179,7 @@
             
             // If no cache, try live fetch with token
             const plexServerUrl = localStorage.getItem('plexServerUrl') || 'http://192.168.1.100:32400';
-            const plexToken = localStorage.getItem('plexToken') || localStorage.getItem('plexAutoToken');
+            const plexToken = localStorage.getItem('plexToken') || localStorage.getItem('plexAutoToken') || '8ZG__GsXB4YJ5wrn7rRV';
             const storedLibraries = localStorage.getItem('plexLibraries');
             
             console.log('📺 Plex Config:', {
@@ -4329,7 +4329,7 @@
 
         // Handle Plex content - fetch direct MP4 URL
         async function handlePlexContent(content) {
-            const token = localStorage.getItem('plexToken') || '3exQDycx7bxQEL7966yR';
+            const token = localStorage.getItem('plexToken') || '8ZG__GsXB4YJ5wrn7rRV';
             const serverUrl = localStorage.getItem('plexServerUrl') || 'http://192.168.1.100:32400';
             
             try {
