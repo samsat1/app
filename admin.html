@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- VERSION 6.2 - Auto Device Lock + Reset Option + Custom Adult Password 2025-12-05 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -820,7 +821,8 @@
                     username: username,
                     password: password,
                     status: 'active',
-                    commissionRate: parseInt(newCommission) || 20,
+                    walletBalance: 0,
+                    commissionRate: 20,
                     createdAt: new Date().toISOString()
                 };
                 
@@ -836,6 +838,30 @@
             
             getAllResellers: function() {
                 return Object.keys(this.resellerCredentials);
+            },
+            
+            updateResellerPassword: function(resellerId, newPassword) {
+                if (!resellerId || !newPassword) {
+                    return { success: false, message: 'Reseller ID and password are required' };
+                }
+                
+                if (newPassword.length < 6) {
+                    return { success: false, message: 'Password must be at least 6 characters' };
+                }
+                
+                // Update in credentials system
+                if (this.resellerCredentials[resellerId]) {
+                    this.resellerCredentials[resellerId].password = newPassword;
+                    this.saveCredentials();
+                }
+                
+                // Update in RESELLER_ACCOUNTS
+                if (RESELLER_ACCOUNTS[resellerId]) {
+                    RESELLER_ACCOUNTS[resellerId].password = newPassword;
+                    saveResellerAccounts();
+                }
+                
+                return { success: true, message: `Password updated for reseller "${resellerId}"` };
             }
         };
 
@@ -3248,18 +3274,43 @@
             btn.innerHTML = '⏳ Uploading...';
             
             try {
+                // Build resellers object with wallet balances
+                const resellersData = {};
+                const resellerAccounts = JSON.parse(localStorage.getItem('RESELLER_ACCOUNTS') || '{}');
+                
+                // Add all reseller accounts with wallet balances
+                Object.keys(resellerAccounts).forEach(resellerId => {
+                    const reseller = resellerAccounts[resellerId];
+                    const walletBalance = parseFloat(localStorage.getItem(`resellerWallet_${resellerId}`) || '0');
+                    resellersData[resellerId] = {
+                        ...reseller,
+                        walletBalance: walletBalance
+                    };
+                });
+                
+                // Get credit transfers history
+                const creditTransfers = JSON.parse(localStorage.getItem('creditTransfers') || '[]');
+                
+                // Get reseller transactions
+                const resellerTransactions = JSON.parse(localStorage.getItem('resellerTransactions') || '[]');
+                
                 // Prepare data
                 const exportData = {
                     version: '1.0',
                     exportDate: new Date().toISOString(),
                     customers: JSON.parse(localStorage.getItem('adminCustomers') || '[]'),
                     packages: JSON.parse(localStorage.getItem('adminPackages') || '[]'),
-                    resellers: JSON.parse(localStorage.getItem('adminResellers') || '[]'),
+                    resellers: resellersData,
+                    creditTransfers: creditTransfers,
+                    resellerTransactions: resellerTransactions,
                     plexServerUrl: localStorage.getItem('plexServerUrl') || '',
                     plexToken: localStorage.getItem('plexToken') || '',
                     plexMoviesSection: localStorage.getItem('plexMoviesSection') || '',
                     plexAdultSection: localStorage.getItem('plexAdultSection') || '',
-                    tvSyncUrl: `https://raw.githubusercontent.com/${username}/${repo}/main/admin_data.json`
+                    tvSyncUrl: `https://raw.githubusercontent.com/${username}/${repo}/main/admin_data.json`,
+                    githubToken: token,
+                    githubUsername: username,
+                    githubRepo: repo
                 };
                 
                 const content = btoa(unescape(encodeURIComponent(JSON.stringify(exportData, null, 2))));
@@ -3484,18 +3535,28 @@
                 localStorage.setItem('transactionHistory', JSON.stringify(transactionHistory));
                 console.log('💰 Added transaction record:', transactionRecord);
                 
-                // Add to creditTransfers for overview display
+                // Add to creditTransfers for overview display and GitHub sync
                 const creditTransfers = JSON.parse(localStorage.getItem('creditTransfers') || '[]');
                 const transferRecord = {
+                    id: 'credit_' + Date.now(),
                     resellerId: reseller,
                     amount: amount,
                     type: 'credit',
-                    date: new Date().toLocaleDateString(),
+                    date: new Date().toISOString(),
                     note: note || 'Admin credit transfer',
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
+                    previousBalance: currentBalance,
+                    newBalance: newBalance
                 };
                 creditTransfers.push(transferRecord);
                 localStorage.setItem('creditTransfers', JSON.stringify(creditTransfers));
+                
+                // Also update RESELLER_ACCOUNTS with new balance
+                const resellerAccounts = JSON.parse(localStorage.getItem('RESELLER_ACCOUNTS') || '{}');
+                if (resellerAccounts[reseller]) {
+                    resellerAccounts[reseller].walletBalance = newBalance;
+                    localStorage.setItem('RESELLER_ACCOUNTS', JSON.stringify(resellerAccounts));
+                }
                 
                 // Trigger storage events for real-time updates
                 localStorage.setItem('creditTransfer_sync', Date.now());
@@ -4947,6 +5008,7 @@ Network: Always Streaming → Optimized for instant access`;
             const customerPassword = document.getElementById('customerPassword')?.value;
             const customerMacAddress = document.getElementById('customerMacAddress')?.value?.toUpperCase()?.trim() || '';
             const customerAdultPassword = document.getElementById('customerAdultPassword')?.value || '1818';
+            const resetDeviceLock = document.getElementById('resetDeviceLock')?.checked || false;
             
             if (!customerName || !customerUsername || !customerExpiry || !customerPassword) {
                 showNotification('❌ Please fill all required fields: Name, Username, Expiry Date, and Password', 'error');
@@ -5076,6 +5138,7 @@ Network: Always Streaming → Optimized for instant access`;
                         password: customerPassword,
                         macAddress: customerMacAddress,
                         adultPassword: selectedAddons.includes('Adult Content Package') ? customerAdultPassword : '',
+                        resetDeviceLock: resetDeviceLock ? Date.now() : (customer.resetDeviceLock || 0),
                         status: 'active',
                         duration: calculation.duration,
                         durationMonths: calculation.durationMonths,
@@ -5083,9 +5146,10 @@ Network: Always Streaming → Optimized for instant access`;
                     };
                     
                     const actionText = isRenewal ? 'renewed' : 'updated';
+                    const deviceResetMsg = resetDeviceLock ? ' (Device lock will be reset on next login)' : '';
                     showNotification(`🔄 ${isRenewal ? 'Renewing' : 'Updating'} customer...`, 'info');
                     setTimeout(() => {
-                        showNotification(`✅ Customer "${customerName}" ${actionText} successfully - ${calculation.totalPrice} (${calculation.duration})`, 'success');
+                        showNotification(`✅ Customer "${customerName}" ${actionText} successfully - ${calculation.totalPrice} (${calculation.duration})${deviceResetMsg}`, 'success');
                         
                         // Clear form
                         clearCustomerForm();
@@ -5632,6 +5696,18 @@ Network: Always Streaming → Optimized for instant access`;
                 adultPasswordSection.style.display = 'none';
             }
             
+            // Hide device lock section (only shown when editing existing customer)
+            const deviceLockSection = document.getElementById('deviceLockSection');
+            if (deviceLockSection) {
+                deviceLockSection.style.display = 'none';
+            }
+            
+            // Reset device lock checkbox
+            const resetDeviceLock = document.getElementById('resetDeviceLock');
+            if (resetDeviceLock) {
+                resetDeviceLock.checked = false;
+            }
+            
             updateDeviceSelection();
             updateTotalPrice();
             
@@ -5890,12 +5966,18 @@ Network: Always Streaming → Optimized for instant access`;
                                 </div>
                             </div>
                             
-                            <div>
-                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">📱 MAC Address (Device Lock)</label>
-                                <input type="text" id="customerMacAddress" placeholder="e.g., AA:BB:CC:DD:EE:FF" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; text-transform: uppercase;" maxlength="17">
-                                <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 5px;">
-                                    🔒 Lock account to this device. Customer can only login from this MAC address. Leave empty to allow any device.
+                            <div id="deviceLockSection" style="display: none;">
+                                <label style="color: #ff9800; font-size: 14px;">📱 Device Lock Control</label>
+                                <div style="background: rgba(255,152,0,0.1); border: 1px solid rgba(255,152,0,0.3); border-radius: 8px; padding: 12px; margin-top: 8px;">
+                                    <label style="display: flex; align-items: center; cursor: pointer; color: white;">
+                                        <input type="checkbox" id="resetDeviceLock" style="margin-right: 10px; transform: scale(1.2);">
+                                        <span>🔓 Reset Device Lock (Allow login from new TV)</span>
+                                    </label>
+                                    <div style="font-size: 12px; color: rgba(255,152,0,0.8); margin-top: 8px;">
+                                        ⚠️ Check this if customer bought a new TV. Their account will lock to the new device on next login.
+                                    </div>
                                 </div>
+                                <input type="hidden" id="customerMacAddress" value="">
                             </div>
                             
                             <div id="adultPasswordSection" style="display: none;">
@@ -6612,13 +6694,15 @@ Network: Always Streaming → Optimized for instant access`;
                             <th style="padding: 12px 8px; text-align: left; color: white; border-bottom: 1px solid rgba(255,255,255,0.2);">ID</th>
                             <th style="padding: 12px 8px; text-align: left; color: white; border-bottom: 1px solid rgba(255,255,255,0.2);">Username</th>
                             <th style="padding: 12px 8px; text-align: left; color: white; border-bottom: 1px solid rgba(255,255,255,0.2);">Password</th>
-                            <th style="padding: 12px 8px; text-align: left; color: white; border-bottom: 1px solid rgba(255,255,255,0.2);">Commission</th>
+                            <th style="padding: 12px 8px; text-align: left; color: white; border-bottom: 1px solid rgba(255,255,255,0.2);">Wallet</th>
                             <th style="padding: 12px 8px; text-align: left; color: white; border-bottom: 1px solid rgba(255,255,255,0.2);">Status</th>
                             <th style="padding: 12px 8px; text-align: center; color: white; border-bottom: 1px solid rgba(255,255,255,0.2);">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${allResellers.map(reseller => `
+                        ${allResellers.map(reseller => {
+                            const walletBalance = parseFloat(localStorage.getItem('resellerWallet_' + reseller.id) || reseller.walletBalance || 0);
+                            return `
                             <tr id="reseller-row-${reseller.id}" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
                                 <td style="padding: 10px 8px; color: #4caf50; font-weight: 600;">${reseller.id}</td>
                                 <td style="padding: 10px 8px; color: rgba(255,255,255,0.9);">
@@ -6627,24 +6711,21 @@ Network: Always Streaming → Optimized for instant access`;
                                 </td>
                                 <td style="padding: 10px 8px; color: rgba(255,255,255,0.9);">
                                     <span id="password-display-${reseller.id}">••••••••</span>
-                                    <input type="password" id="password-edit-${reseller.id}" value="${reseller.credentials.password || reseller.password || ''}" style="display: none; width: 100%; padding: 5px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; color: white; font-size: 13px;">
+                                    <input type="text" id="password-edit-${reseller.id}" value="${reseller.credentials.password || reseller.password || ''}" style="display: none; width: 100%; padding: 5px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; color: white; font-size: 13px;" placeholder="New password">
                                 </td>
-                                <td style="padding: 10px 8px; color: rgba(255,255,255,0.9);">
-                                    <span id="commission-display-${reseller.id}">${reseller.commissionRate || '20'}%</span>
-                                    <input type="number" id="commission-edit-${reseller.id}" value="${reseller.commissionRate || 20}" min="0" max="100" style="display: none; width: 60px; padding: 5px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; color: white; font-size: 13px;">
-                                </td>
+                                <td style="padding: 10px 8px; color: #00F5A0; font-weight: 600;">$${walletBalance.toFixed(2)}</td>
                                 <td style="padding: 10px 8px;">
                                     <span style="color: ${reseller.status === 'active' ? '#4caf50' : '#ff9800'}; font-weight: 600;">
                                         ${reseller.status || 'active'}
                                     </span>
                                 </td>
                                 <td style="padding: 10px 8px; text-align: center;">
-                                    <button onclick="editReseller('${reseller.id}')" id="edit-btn-${reseller.id}" class="btn" style="padding: 5px 12px; margin-right: 5px; background: #2196f3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">✏️ Edit</button>
-                                    <button onclick="saveReseller('${reseller.id}')" id="save-btn-${reseller.id}" class="btn" style="display: none; padding: 5px 12px; margin-right: 5px; background: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">💾 Save</button>
-                                    <button onclick="cancelEdit('${reseller.id}')" id="cancel-btn-${reseller.id}" class="btn" style="display: none; padding: 5px 12px; background: #ff9800; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">❌ Cancel</button>
+                                    <button onclick="editReseller('${reseller.id}')" id="edit-btn-${reseller.id}" class="btn" style="padding: 5px 12px; margin-right: 5px; background: #2196f3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Edit</button>
+                                    <button onclick="saveReseller('${reseller.id}')" id="save-btn-${reseller.id}" class="btn" style="display: none; padding: 5px 12px; margin-right: 5px; background: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Save</button>
+                                    <button onclick="cancelEdit('${reseller.id}')" id="cancel-btn-${reseller.id}" class="btn" style="display: none; padding: 5px 12px; background: #ff9800; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Cancel</button>
                                 </td>
                             </tr>
-                        `).join('')}
+                        `;}).join('')}
                     </tbody>
                 </table>
             `;
@@ -6687,23 +6768,26 @@ Network: Always Streaming → Optimized for instant access`;
         function saveReseller(resellerId) {
             const newUsername = document.getElementById(`username-edit-${resellerId}`).value.trim();
             const newPassword = document.getElementById(`password-edit-${resellerId}`).value.trim();
-            const newCommission = document.getElementById(`commission-edit-${resellerId}`).value;
 
-            if (!newUsername || !newPassword) {
-                showNotification('❌ Username and password are required', 'error');
+            if (!newUsername) {
+                showNotification('Username is required', 'error');
                 return;
             }
 
-            if (newPassword.length < 6) {
-                showNotification('❌ Password must be at least 6 characters', 'error');
+            // Get current password if no new one entered
+            const currentPassword = RESELLER_ACCOUNTS[resellerId]?.password || 
+                                   passwordManager.resellerCredentials[resellerId]?.password || '';
+            const passwordToSave = newPassword || currentPassword;
+            
+            if (newPassword && newPassword.length < 6) {
+                showNotification('Password must be at least 6 characters', 'error');
                 return;
             }
 
             // Update RESELLER_ACCOUNTS
             if (RESELLER_ACCOUNTS[resellerId]) {
                 RESELLER_ACCOUNTS[resellerId].username = newUsername;
-                RESELLER_ACCOUNTS[resellerId].password = newPassword;
-                RESELLER_ACCOUNTS[resellerId].commissionRate = parseInt(newCommission) || 20;
+                RESELLER_ACCOUNTS[resellerId].password = passwordToSave;
                 RESELLER_ACCOUNTS[resellerId].updatedAt = new Date().toISOString();
             }
             
@@ -6712,14 +6796,14 @@ Network: Always Streaming → Optimized for instant access`;
             // Update passwordManager credentials
             if (passwordManager.resellerCredentials[resellerId]) {
                 passwordManager.resellerCredentials[resellerId].username = newUsername;
-                passwordManager.resellerCredentials[resellerId].password = newPassword;
+                passwordManager.resellerCredentials[resellerId].password = passwordToSave;
                 passwordManager.resellerCredentials[resellerId].updatedAt = new Date().toISOString();
                 passwordManager.saveCredentials();
             } else {
                 // Create credentials entry if it doesn't exist
                 passwordManager.resellerCredentials[resellerId] = {
                     username: newUsername,
-                    password: newPassword,
+                    password: passwordToSave,
                     createdAt: new Date().toISOString()
                 };
                 passwordManager.saveCredentials();
@@ -6728,7 +6812,6 @@ Network: Always Streaming → Optimized for instant access`;
             // Update display
             document.getElementById(`username-display-${resellerId}`).textContent = newUsername;
             document.getElementById(`password-display-${resellerId}`).textContent = '••••••••';
-            document.getElementById(`commission-display-${resellerId}`).textContent = `${newCommission}%`;
             
             // Hide edit elements and show display elements
             cancelEdit(resellerId);
@@ -7457,7 +7540,19 @@ Network: Always Streaming → Optimized for instant access`;
             document.getElementById('customerPhone').value = customer.phone || '';
             document.getElementById('customerPassword').value = customer.password || '';
             
-            // Set MAC Address
+            // Show Device Lock section when editing (not when adding new)
+            const deviceLockSection = document.getElementById('deviceLockSection');
+            if (deviceLockSection) {
+                deviceLockSection.style.display = 'block';
+            }
+            
+            // Reset the checkbox (admin must explicitly check it each time)
+            const resetDeviceLock = document.getElementById('resetDeviceLock');
+            if (resetDeviceLock) {
+                resetDeviceLock.checked = false;
+            }
+            
+            // Keep hidden field for backward compatibility
             const macAddressField = document.getElementById('customerMacAddress');
             if (macAddressField) {
                 macAddressField.value = customer.macAddress || '';
