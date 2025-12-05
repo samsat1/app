@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.7 - Improved XML Parser 2025-12-06 -->
+<!-- VERSION 7.8 - Use Localhost for Plex URLs 2025-12-06 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -4555,8 +4555,8 @@
         
         window.copyPlexUrl = function(type) {
             const section = type === 'movies' ? PLEX_CONFIG.sections.movies : PLEX_CONFIG.sections.adult;
-            // Use external server URL (not localhost) so it works from any browser
-            const url = `${PLEX_CONFIG.serverUrl}/library/sections/${section}/all?X-Plex-Token=${PLEX_CONFIG.token}`;
+            // Use localhost since Plex is running locally
+            const url = `${PLEX_CONFIG.localUrl}/library/sections/${section}/all?X-Plex-Token=${PLEX_CONFIG.token}`;
             
             navigator.clipboard.writeText(url).then(() => {
                 showNotification(`✅ ${type} URL copied! Open in new tab, wait for XML to load, then Ctrl+A → Ctrl+C → Paste below`, 'success');
