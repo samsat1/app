@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.6 - Updated Plex Token 2025-12-06 -->
+<!-- VERSION 7.7 - Improved XML Parser 2025-12-06 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -4483,37 +4483,51 @@
             const sectionId = libraryType === 'movies' ? PLEX_CONFIG.sections.movies : PLEX_CONFIG.sections.adult;
             
             try {
-                // Parse XML using regex (works in browser)
-                const videoMatches = xmlString.matchAll(/<Video[^>]*ratingKey="(\d+)"[^>]*title="([^"]+)"[^>]*>/g);
+                console.log('🔍 Parsing XML, length:', xmlString.length);
                 
-                for (const match of videoMatches) {
-                    const videoId = match[1];
-                    const title = match[2];
+                // Find all Video tags (handles any attribute order)
+                const videoTagMatches = xmlString.match(/<Video[^>]+>/g) || [];
+                console.log('📺 Found Video tags:', videoTagMatches.length);
+                
+                for (const tag of videoTagMatches) {
+                    // Extract ratingKey
+                    const keyMatch = tag.match(/ratingKey="(\d+)"/);
+                    // Extract title
+                    const titleMatch = tag.match(/title="([^"]+)"/);
                     
-                    // Build stream URL
-                    const streamUrl = `${PLEX_CONFIG.serverUrl}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${videoId}&mediaIndex=0&partIndex=0&protocol=hls&X-Plex-Token=${PLEX_CONFIG.token}`;
-                    
-                    // Build thumbnail URL
-                    const thumbUrl = `${PLEX_CONFIG.serverUrl}/library/metadata/${videoId}/thumb?X-Plex-Token=${PLEX_CONFIG.token}`;
-                    
-                    videos.push({
-                        id: videoId,
-                        name: title,
-                        title: title,
-                        url: streamUrl,
-                        thumb: thumbUrl,
-                        type: libraryType,
-                        sectionId: sectionId,
-                        addedAt: Date.now()
-                    });
+                    if (keyMatch && titleMatch) {
+                        const videoId = keyMatch[1];
+                        const title = titleMatch[1];
+                        
+                        // Build stream URL
+                        const streamUrl = `${PLEX_CONFIG.serverUrl}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${videoId}&mediaIndex=0&partIndex=0&protocol=hls&X-Plex-Token=${PLEX_CONFIG.token}`;
+                        
+                        // Build thumbnail URL
+                        const thumbUrl = `${PLEX_CONFIG.serverUrl}/library/metadata/${videoId}/thumb?X-Plex-Token=${PLEX_CONFIG.token}`;
+                        
+                        videos.push({
+                            id: videoId,
+                            name: title,
+                            title: title,
+                            url: streamUrl,
+                            thumb: thumbUrl,
+                            type: libraryType,
+                            sectionId: sectionId,
+                            addedAt: Date.now()
+                        });
+                    }
                 }
                 
-                // Also try alternative regex for different XML formats
+                // Fallback: try to find any ratingKey/title pairs
                 if (videos.length === 0) {
-                    const altMatches = xmlString.matchAll(/ratingKey="(\d+)".*?title="([^"]+)"/g);
-                    for (const match of altMatches) {
-                        const videoId = match[1];
-                        const title = match[2];
+                    console.log('⚠️ No Video tags found, trying fallback...');
+                    const allKeys = xmlString.match(/ratingKey="(\d+)"/g) || [];
+                    const allTitles = xmlString.match(/title="([^"]+)"/g) || [];
+                    console.log('Found keys:', allKeys.length, 'titles:', allTitles.length);
+                    
+                    for (let i = 0; i < Math.min(allKeys.length, allTitles.length); i++) {
+                        const videoId = allKeys[i].match(/\d+/)[0];
+                        const title = allTitles[i].match(/title="([^"]+)"/)[1];
                         
                         const streamUrl = `${PLEX_CONFIG.serverUrl}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${videoId}&mediaIndex=0&partIndex=0&protocol=hls&X-Plex-Token=${PLEX_CONFIG.token}`;
                         const thumbUrl = `${PLEX_CONFIG.serverUrl}/library/metadata/${videoId}/thumb?X-Plex-Token=${PLEX_CONFIG.token}`;
