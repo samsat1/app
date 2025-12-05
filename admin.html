@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 6.4 - Fix GitHub 409 conflict + Plex external IP 2025-12-05 -->
+<!-- VERSION 6.5 - Fix GitHub 422/409 errors + Mobile compatibility 2025-12-05 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -3258,6 +3258,26 @@
             if (tokenInput) tokenInput.value = localStorage.getItem('githubToken') || '';
         };
         
+        // Mobile-compatible base64 encoding
+        function safeBase64Encode(str) {
+            try {
+                // Method 1: Standard approach
+                return btoa(unescape(encodeURIComponent(str)));
+            } catch (e1) {
+                try {
+                    // Method 2: TextEncoder approach (mobile-friendly)
+                    const bytes = new TextEncoder().encode(str);
+                    let binary = '';
+                    bytes.forEach(b => binary += String.fromCharCode(b));
+                    return btoa(binary);
+                } catch (e2) {
+                    // Method 3: Manual UTF-8 encoding
+                    const utf8 = unescape(encodeURIComponent(str));
+                    return btoa(utf8);
+                }
+            }
+        }
+        
         // Upload to GitHub with one click
         window.uploadToGithub = async function() {
             const username = localStorage.getItem('githubUsername');
@@ -3266,6 +3286,12 @@
             
             if (!username || !repo || !token) {
                 showNotification('⚠️ Please configure GitHub settings first!', 'error');
+                return;
+            }
+            
+            // Validate token format
+            if (token.length < 30 || token.includes(' ')) {
+                showNotification('⚠️ Invalid GitHub token format!', 'error');
                 return;
             }
             
@@ -3294,7 +3320,7 @@
                 // Get reseller transactions
                 const resellerTransactions = JSON.parse(localStorage.getItem('resellerTransactions') || '[]');
                 
-                // Prepare data
+                // Prepare data (clean JSON without special characters)
                 const exportData = {
                     version: '1.0',
                     exportDate: new Date().toISOString(),
@@ -3313,62 +3339,100 @@
                     githubRepo: repo
                 };
                 
-                const content = btoa(unescape(encodeURIComponent(JSON.stringify(exportData, null, 2))));
+                // Use mobile-compatible base64 encoding
+                const jsonString = JSON.stringify(exportData, null, 2);
+                const content = safeBase64Encode(jsonString);
                 const apiUrl = `https://api.github.com/repos/${username}/${repo}/contents/admin_data.json`;
                 
-                // Function to get fresh SHA (with cache-busting)
+                // Function to get fresh SHA with aggressive cache-busting
                 const getFreshSHA = async () => {
                     try {
-                        const checkRes = await fetch(apiUrl + '?t=' + Date.now(), {
+                        // Use unique timestamp to prevent any caching
+                        const noCacheUrl = apiUrl + '?_=' + Date.now() + Math.random();
+                        const checkRes = await fetch(noCacheUrl, {
+                            method: 'GET',
                             headers: { 
                                 'Authorization': `token ${token}`,
-                                'Cache-Control': 'no-cache',
-                                'Pragma': 'no-cache'
+                                'Accept': 'application/vnd.github.v3+json',
+                                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                                'Pragma': 'no-cache',
+                                'Expires': '0'
                             },
                             cache: 'no-store'
                         });
                         if (checkRes.ok) {
                             const fileData = await checkRes.json();
+                            console.log('Got SHA:', fileData.sha);
                             return fileData.sha;
+                        } else if (checkRes.status === 404) {
+                            console.log('File does not exist, will create new');
+                            return null;
                         }
                     } catch (e) {
-                        console.log('File does not exist yet, will create new');
+                        console.log('Error getting SHA:', e);
                     }
                     return null;
                 };
                 
-                // Upload with retry logic for 409 conflicts
-                const uploadWithRetry = async (retries = 3) => {
+                // Upload with retry logic for 409/422 errors
+                const uploadWithRetry = async (retries = 5) => {
+                    let lastError = null;
+                    
                     for (let attempt = 1; attempt <= retries; attempt++) {
+                        console.log(`Upload attempt ${attempt}/${retries}`);
+                        btn.innerHTML = `⏳ Uploading... (${attempt}/${retries})`;
+                        
+                        // Get fresh SHA for each attempt
                         const sha = await getFreshSHA();
                         
                         const body = {
-                            message: `Update admin_data.json - ${new Date().toLocaleString()}`,
+                            message: `Update admin_data.json - ${new Date().toISOString()}`,
                             content: content
                         };
-                        if (sha) body.sha = sha;
                         
-                        const response = await fetch(apiUrl, {
-                            method: 'PUT',
-                            headers: {
-                                'Authorization': `token ${token}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(body)
-                        });
-                        
-                        if (response.ok) {
-                            return response;
+                        // Only include SHA if file exists
+                        if (sha) {
+                            body.sha = sha;
                         }
                         
-                        if (response.status === 409 && attempt < retries) {
-                            console.log(`Conflict detected, retrying... (attempt ${attempt + 1})`);
-                            await new Promise(r => setTimeout(r, 1000)); // Wait 1 second before retry
-                            continue;
+                        try {
+                            const response = await fetch(apiUrl, {
+                                method: 'PUT',
+                                headers: {
+                                    'Authorization': `token ${token}`,
+                                    'Accept': 'application/vnd.github.v3+json',
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(body)
+                            });
+                            
+                            if (response.ok) {
+                                console.log('Upload successful!');
+                                return response;
+                            }
+                            
+                            const errorData = await response.json().catch(() => ({}));
+                            console.log('Error response:', response.status, errorData);
+                            
+                            // Retry on 409 (conflict) or 422 (validation error)
+                            if ((response.status === 409 || response.status === 422) && attempt < retries) {
+                                console.log(`Error ${response.status}, waiting and retrying...`);
+                                await new Promise(r => setTimeout(r, 1500 * attempt)); // Increasing delay
+                                continue;
+                            }
+                            
+                            lastError = `Error ${response.status}: ${errorData.message || 'Unknown error'}`;
+                        } catch (fetchError) {
+                            console.log('Fetch error:', fetchError);
+                            lastError = fetchError.message;
+                            if (attempt < retries) {
+                                await new Promise(r => setTimeout(r, 1000));
+                                continue;
+                            }
                         }
-                        
-                        throw new Error('Upload failed: ' + response.status);
                     }
+                    
+                    throw new Error(lastError || 'Upload failed after all retries');
                 };
                 
                 await uploadWithRetry();
