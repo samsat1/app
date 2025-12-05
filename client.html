@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 6.3 - Added Local Cache Import for Plex Playback 2025-12-06 -->
+<!-- VERSION 6.4 - Direct Plex Playback Without Fetch 2025-12-06 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -4482,34 +4482,56 @@
 
         // Handle Plex content - fetch direct MP4 URL
         async function handlePlexContent(content) {
-            const token = localStorage.getItem('plexToken') || '8ZG__GsXB4YJ5wrn7rRV';
-            const serverUrl = localStorage.getItem('plexServerUrl') || 'http://185.187.94.41:32400';
+            // Use stored server/token from content (new format) or fallback to localStorage
+            const token = content.plexToken || localStorage.getItem('plexToken') || 'Lptv6JHyM841mHrYs21y';
+            const serverUrl = content.plexServer || localStorage.getItem('plexServerUrl') || 'http://127.0.0.1:32400';
+            
+            console.log('📺 Playing Plex content:', content.name);
+            console.log('📺 Server:', serverUrl, 'Token:', token.substring(0, 8) + '...');
             
             try {
-                console.log('📺 Fetching Plex direct URL for:', content.name);
-                const metadataUrl = `${serverUrl}/library/metadata/${content.id}?X-Plex-Token=${token}`;
-                const response = await fetch(metadataUrl);
-                const xml = await response.text();
-                
-                // Extract the Part key for direct playback
-                const partMatch = xml.match(/Part id="(\d+)"[^>]*key="([^"]+)"/);
-                if (partMatch) {
-                    const directUrl = serverUrl + partMatch[2] + '?X-Plex-Token=' + token;
-                    console.log('✅ Playing direct URL:', directUrl);
-                    
-                    // Play as MP4
-                    const video = player.el().querySelector('video');
-                    video.src = directUrl;
-                    video.load();
-                    video.play().catch(e => {
-                        console.log('Autoplay failed, user interaction required');
-                    });
-                } else {
-                    showError('Could not find playable file in Plex');
+                // Method 1: Try the stored HLS transcode URL directly (no fetch needed)
+                if (content.url && content.url.includes('transcode')) {
+                    console.log('✅ Using stored transcode URL');
+                    handleHLSStream(content.url);
+                    return;
                 }
+                
+                // Method 2: Construct direct playback URL (no fetch needed)
+                // Plex supports direct file access via this endpoint
+                const directStreamUrl = `${serverUrl}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${content.id}&mediaIndex=0&partIndex=0&protocol=hls&fastSeek=1&directPlay=0&directStream=1&X-Plex-Token=${token}`;
+                
+                console.log('✅ Playing via transcode URL:', directStreamUrl);
+                handleHLSStream(directStreamUrl);
+                
             } catch (error) {
                 console.error('Plex playback error:', error);
                 showError('Failed to load Plex content: ' + error.message);
+            }
+        }
+        
+        // Play HLS stream
+        function handleHLSStream(url) {
+            if (Hls.isSupported()) {
+                if (hls) hls.destroy();
+                hls = new Hls();
+                hls.loadSource(url);
+                hls.attachMedia(player.el().querySelector('video'));
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    player.play().catch(e => console.log('Autoplay blocked'));
+                });
+                hls.on(Hls.Events.ERROR, (event, data) => {
+                    if (data.fatal) {
+                        console.error('HLS Error:', data);
+                        showError('Streaming error - try refreshing');
+                    }
+                });
+            } else {
+                // Fallback for Safari
+                const video = player.el().querySelector('video');
+                video.src = url;
+                video.load();
+                video.play().catch(e => console.log('Autoplay blocked'));
             }
         }
         
