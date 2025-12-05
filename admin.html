@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.1 - CorsProxy.org (handles special chars) 2025-12-05 -->
+<!-- VERSION 7.2 - CodeTabs Proxy (reliable API proxy) 2025-12-05 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -3962,9 +3962,9 @@
         }
         
         // CORS Proxy for Plex API calls (GitHub Pages cannot directly access Plex server)
-        // Using corsproxy.org - handles special characters in URLs properly
+        // Using codetabs.com - reliable API proxy service
         function getProxiedUrl(url) {
-            return 'https://corsproxy.org/?' + encodeURIComponent(url);
+            return 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url);
         }
         
         function testPlexConnection() {
