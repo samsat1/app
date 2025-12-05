@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 6.2 - Auto Device Lock + Reset Option + Custom Adult Password 2025-12-05 -->
+<!-- VERSION 6.4 - Fix GitHub 409 conflict + Plex external IP 2025-12-05 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -3316,37 +3316,62 @@
                 const content = btoa(unescape(encodeURIComponent(JSON.stringify(exportData, null, 2))));
                 const apiUrl = `https://api.github.com/repos/${username}/${repo}/contents/admin_data.json`;
                 
-                // Check if file exists (to get SHA for update)
-                let sha = null;
-                try {
-                    const checkRes = await fetch(apiUrl, {
-                        headers: { 'Authorization': `token ${token}` }
-                    });
-                    if (checkRes.ok) {
-                        const fileData = await checkRes.json();
-                        sha = fileData.sha;
+                // Function to get fresh SHA (with cache-busting)
+                const getFreshSHA = async () => {
+                    try {
+                        const checkRes = await fetch(apiUrl + '?t=' + Date.now(), {
+                            headers: { 
+                                'Authorization': `token ${token}`,
+                                'Cache-Control': 'no-cache',
+                                'Pragma': 'no-cache'
+                            },
+                            cache: 'no-store'
+                        });
+                        if (checkRes.ok) {
+                            const fileData = await checkRes.json();
+                            return fileData.sha;
+                        }
+                    } catch (e) {
+                        console.log('File does not exist yet, will create new');
                     }
-                } catch (e) {}
-                
-                // Upload/Update file
-                const body = {
-                    message: `Update admin_data.json - ${new Date().toLocaleString()}`,
-                    content: content
+                    return null;
                 };
-                if (sha) body.sha = sha;
                 
-                const response = await fetch(apiUrl, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `token ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(body)
-                });
+                // Upload with retry logic for 409 conflicts
+                const uploadWithRetry = async (retries = 3) => {
+                    for (let attempt = 1; attempt <= retries; attempt++) {
+                        const sha = await getFreshSHA();
+                        
+                        const body = {
+                            message: `Update admin_data.json - ${new Date().toLocaleString()}`,
+                            content: content
+                        };
+                        if (sha) body.sha = sha;
+                        
+                        const response = await fetch(apiUrl, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `token ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(body)
+                        });
+                        
+                        if (response.ok) {
+                            return response;
+                        }
+                        
+                        if (response.status === 409 && attempt < retries) {
+                            console.log(`Conflict detected, retrying... (attempt ${attempt + 1})`);
+                            await new Promise(r => setTimeout(r, 1000)); // Wait 1 second before retry
+                            continue;
+                        }
+                        
+                        throw new Error('Upload failed: ' + response.status);
+                    }
+                };
                 
-                if (!response.ok) {
-                    throw new Error('Upload failed: ' + response.status);
-                }
+                await uploadWithRetry();
                 
                 showNotification('✅ Uploaded to GitHub! TVs will auto-sync.', 'success');
                 btn.innerHTML = '✅ Uploaded!';
