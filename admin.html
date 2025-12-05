@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.2 - CodeTabs Proxy (reliable API proxy) 2025-12-05 -->
+<!-- VERSION 7.3 - Direct Connection (CORS Extension Required) 2025-12-05 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -3961,10 +3961,11 @@
             return prefix + suffix;
         }
         
-        // CORS Proxy for Plex API calls (GitHub Pages cannot directly access Plex server)
-        // Using codetabs.com - reliable API proxy service
+        // Direct Plex API calls - requires CORS browser extension enabled
+        // Extension adds 'Access-Control-Allow-Origin: *' header automatically
         function getProxiedUrl(url) {
-            return 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url);
+            // Direct connection - no proxy needed with CORS extension
+            return url;
         }
         
         function testPlexConnection() {
