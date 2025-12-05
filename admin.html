@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.3 - Direct Connection (CORS Extension Required) 2025-12-05 -->
+<!-- VERSION 7.4 - Fixed Manual Import with Auto-Open URL 2025-12-06 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -4541,13 +4541,16 @@
         
         window.copyPlexUrl = function(type) {
             const section = type === 'movies' ? PLEX_CONFIG.sections.movies : PLEX_CONFIG.sections.adult;
-            const url = `${PLEX_CONFIG.localUrl}/library/sections/${section}/all?X-Plex-Token=${PLEX_CONFIG.token}`;
+            // Use external server URL (not localhost) so it works from any browser
+            const url = `${PLEX_CONFIG.serverUrl}/library/sections/${section}/all?X-Plex-Token=${PLEX_CONFIG.token}`;
             
             navigator.clipboard.writeText(url).then(() => {
-                showNotification(`✅ ${type} URL copied! Open it in browser, then copy ALL the XML content.`, 'success');
+                showNotification(`✅ ${type} URL copied! Open in new tab, wait for XML to load, then Ctrl+A → Ctrl+C → Paste below`, 'success');
+                // Also open in new tab for convenience
+                window.open(url, '_blank');
             }).catch(() => {
                 // Fallback for older browsers
-                prompt('Copy this URL:', url);
+                prompt('Copy this URL and open in new tab:', url);
             });
         };
         
@@ -6310,52 +6313,11 @@ Network: Always Streaming → Optimized for instant access`;
                         </div>
                     </div>
                     
-                    <!-- MANUAL VIDEO ENTRY SECTION -->
-                    <div class="section-card" style="border: 2px solid #4caf50;">
-                        <h3 class="section-title">📥 Import Videos from Plex (Easy Method)</h3>
-                        <p style="color: #4caf50; margin-bottom: 15px; font-weight: bold;">✅ Your Plex: 185.187.94.41:32400 | Token: 3exQDyc... | Movies: Section 26 | Adult: Section 21</p>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                            <!-- Movies Import -->
-                            <div style="background: rgba(33, 150, 243, 0.1); padding: 15px; border-radius: 8px; border: 1px solid #2196f3;">
-                                <h4 style="color: #2196f3; margin-bottom: 10px;">🎬 Movies Library (Section 26)</h4>
-                                <div style="margin-bottom: 10px;">
-                                    <button onclick="copyPlexUrl('movies')" class="btn btn-info" style="width: 100%; margin-bottom: 8px;">📋 Copy Movies URL</button>
-                                    <p style="color: #888; font-size: 11px;">1. Click button above → 2. Open URL in browser → 3. Select All (Ctrl+A) → 4. Copy (Ctrl+C) → 5. Paste below</p>
-                                </div>
-                                <div style="margin-bottom: 10px;">
-                                    <label style="color: #ccc; font-size: 12px;">Paste Movies XML here:</label>
-                                    <textarea id="moviesXmlInput" placeholder="Paste the entire XML content here..." style="width: 100%; height: 100px; padding: 8px; border-radius: 4px; border: 1px solid #444; background: #1a1a2e; color: white; font-size: 11px;"></textarea>
-                                </div>
-                                <button onclick="importMoviesXML()" class="btn btn-primary" style="width: 100%;">📥 Import Movies</button>
-                                <div id="moviesCount" style="margin-top: 10px; color: #4caf50; font-size: 12px; font-weight: bold;">Movies cached: 0</div>
-                            </div>
-                            
-                            <!-- Adult Import -->
-                            <div style="background: rgba(255, 71, 87, 0.1); padding: 15px; border-radius: 8px; border: 1px solid #ff4757;">
-                                <h4 style="color: #ff4757; margin-bottom: 10px;">🔞 Adult Library (Section 21)</h4>
-                                <div style="margin-bottom: 10px;">
-                                    <button onclick="copyPlexUrl('adult')" class="btn btn-danger" style="width: 100%; margin-bottom: 8px;">📋 Copy Adult URL</button>
-                                    <p style="color: #888; font-size: 11px;">1. Click button above → 2. Open URL in browser → 3. Select All (Ctrl+A) → 4. Copy (Ctrl+C) → 5. Paste below</p>
-                                </div>
-                                <div style="margin-bottom: 10px;">
-                                    <label style="color: #ccc; font-size: 12px;">Paste Adult XML here:</label>
-                                    <textarea id="adultXmlInput" placeholder="Paste the entire XML content here..." style="width: 100%; height: 100px; padding: 8px; border-radius: 4px; border: 1px solid #444; background: #1a1a2e; color: white; font-size: 11px;"></textarea>
-                                </div>
-                                <button onclick="importAdultXML()" class="btn btn-danger" style="width: 100%;">📥 Import Adult Videos</button>
-                                <div id="adultCount" style="margin-top: 10px; color: #4caf50; font-size: 12px; font-weight: bold;">Adult videos cached: 0</div>
-                            </div>
-                        </div>
-                        
-                        <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button onclick="viewCachedContent()" class="btn btn-info">👁️ View Cached Content</button>
-                            <button onclick="clearCachedContent()" class="btn btn-secondary">🗑️ Clear All Cached</button>
-                        </div>
-                        
-                        <div id="cachedContentPreview" style="margin-top: 15px; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; display: none;">
-                            <h4 style="color: white; margin-bottom: 10px;">📋 Cached Content:</h4>
-                            <div id="cachedContentList" style="color: #ccc; font-size: 12px; max-height: 200px; overflow-y: auto;"></div>
-                        </div>
+                    <!-- Plex Import Note -->
+                    <div class="section-card" style="border: 1px solid #4caf50;">
+                        <h3 class="section-title">📥 Import Plex Videos</h3>
+                        <p style="color: rgba(255,255,255,0.8); margin-bottom: 15px;">To import videos from Plex, go to the dedicated <strong>Plex Management</strong> section.</p>
+                        <button onclick="showPlexSection()" class="btn btn-success" style="padding: 12px 25px;">📺 Go to Plex Management</button>
                     </div>
                     
                     <div class="section-card">
