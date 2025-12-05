@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 6.8 - CORS Proxy for Plex API (fixes loading from GitHub Pages) 2025-12-05 -->
+<!-- VERSION 6.9 - Better CORS Proxy (allorigins.win) 2025-12-05 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -3962,10 +3962,9 @@
         }
         
         // CORS Proxy for Plex API calls (GitHub Pages cannot directly access Plex server)
-        const CORS_PROXY = 'https://corsproxy.io/?';
-        
+        // Using allorigins.win which is more reliable
         function getProxiedUrl(url) {
-            return CORS_PROXY + encodeURIComponent(url);
+            return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
         }
         
         function testPlexConnection() {
