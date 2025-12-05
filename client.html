@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 6.2 - Auto Device Lock + Custom Adult Password 2025-12-05 -->
+<!-- VERSION 6.3 - Added Local Cache Import for Plex Playback 2025-12-06 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -4932,8 +4932,68 @@
             }
         };
 
+        // Import Plex cache from JSON file (for local/file:// mode)
+        window.importPlexCache = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    // Import all cache keys
+                    if (data.plexMoviesCache) {
+                        localStorage.setItem('plexMoviesCache', JSON.stringify(data.plexMoviesCache));
+                        localStorage.setItem('plexCachedMovies', JSON.stringify(data.plexMoviesCache));
+                    }
+                    if (data.plexAdultCache) {
+                        localStorage.setItem('plexAdultCache', JSON.stringify(data.plexAdultCache));
+                        localStorage.setItem('plexCachedAdult', JSON.stringify(data.plexAdultCache));
+                    }
+                    if (data.plexConfig) {
+                        localStorage.setItem('plexConfig', JSON.stringify(data.plexConfig));
+                        localStorage.setItem('plexServerUrl', data.plexConfig.localUrl || data.plexConfig.serverUrl);
+                        localStorage.setItem('plexToken', data.plexConfig.token);
+                    }
+                    
+                    const movies = data.plexMoviesCache?.length || 0;
+                    const adult = data.plexAdultCache?.length || 0;
+                    
+                    alert(`✅ Imported ${movies} movies + ${adult} adult videos!\n\nRefreshing page...`);
+                    window.location.reload();
+                } catch (err) {
+                    alert('❌ Failed to import: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        };
+        
+        // Show import banner if running locally (file://)
+        function showLocalModeImportBanner() {
+            if (window.location.protocol === 'file:') {
+                const banner = document.createElement('div');
+                banner.id = 'localImportBanner';
+                banner.innerHTML = `
+                    <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; border-bottom: 2px solid #e94560;">
+                        <div style="color: #fff;">
+                            <strong>💻 Local Mode</strong> - Import your Plex cache from admin panel to enable playback
+                        </div>
+                        <label style="background: #4CAF50; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                            📥 Import Cache JSON
+                            <input type="file" accept=".json" onchange="importPlexCache(event)" style="display: none;">
+                        </label>
+                    </div>
+                `;
+                document.body.insertBefore(banner, document.body.firstChild);
+            }
+        }
+
         // Global function for app initialization - defined early for onload access
         window.initApp = async function() {
+            // Show import banner for local mode
+            showLocalModeImportBanner();
+            
             // Auto-sync on startup (silent, non-blocking)
             autoSyncData();
             
