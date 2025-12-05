@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.8 - Use Localhost for Plex URLs 2025-12-06 -->
+<!-- VERSION 7.9 - Fixed localStorage Keys 2025-12-06 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -4451,7 +4451,9 @@
             
             const videos = parseVideoXML(xml, 'movies');
             if (videos.length > 0) {
+                // Save to both keys for compatibility
                 localStorage.setItem('plexMoviesCache', JSON.stringify(videos));
+                localStorage.setItem('plexCachedMovies', JSON.stringify(videos));
                 updateCacheCounts();
                 showNotification(`✅ Imported ${videos.length} movies successfully!`, 'success');
                 document.getElementById('moviesXmlInput').value = '';
@@ -4469,7 +4471,9 @@
             
             const videos = parseVideoXML(xml, 'adult');
             if (videos.length > 0) {
+                // Save to both keys for compatibility
                 localStorage.setItem('plexAdultCache', JSON.stringify(videos));
+                localStorage.setItem('plexCachedAdult', JSON.stringify(videos));
                 updateCacheCounts();
                 showNotification(`✅ Imported ${videos.length} adult videos successfully!`, 'success');
                 document.getElementById('adultXmlInput').value = '';
