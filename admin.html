@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.9 - Fixed localStorage Keys 2025-12-06 -->
+<!-- VERSION 8.0 - Added Cache Export for Local Client 2025-12-06 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -4426,6 +4426,38 @@
             }
         }
         
+        // Export cache data for local client use
+        function exportCacheData() {
+            const movies = JSON.parse(localStorage.getItem('plexMoviesCache') || '[]');
+            const adult = JSON.parse(localStorage.getItem('plexAdultCache') || '[]');
+            const plexConfig = JSON.parse(localStorage.getItem('plexConfig') || '{}');
+            
+            if (movies.length === 0 && adult.length === 0) {
+                showNotification('❌ No cached content to export', 'error');
+                return;
+            }
+            
+            const exportData = {
+                version: '8.0',
+                exportDate: new Date().toISOString(),
+                plexConfig: plexConfig,
+                plexMoviesCache: movies,
+                plexAdultCache: adult,
+                plexCachedMovies: movies,
+                plexCachedAdult: adult
+            };
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `plex-cache-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showNotification(`📤 Exported ${movies.length} movies + ${adult.length} adult videos`, 'success');
+        }
+        
         // ========== IMPORT FROM PLEX XML ==========
         
         // Your Plex Configuration (auto-detected)
@@ -6485,7 +6517,9 @@ Network: Always Streaming → Optimized for instant access`;
                     <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
                         <button onclick="viewCachedContent()" class="btn btn-info" style="padding: 12px 25px;">👁️ View Cached Content</button>
                         <button onclick="clearCachedContent()" class="btn btn-secondary" style="padding: 12px 25px;">🗑️ Clear All Cached</button>
+                        <button onclick="exportCacheData()" class="btn btn-success" style="padding: 12px 25px;">📤 Export for Local Client</button>
                     </div>
+                    <p style="margin-top: 10px; color: #aaa; font-size: 11px;">💡 Export the cache, then open client.html locally and import the JSON file to play videos without HTTPS restrictions.</p>
                     
                     <div id="cachedContentPreview" style="margin-top: 20px; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; display: none;">
                         <h4 style="color: white; margin-bottom: 10px;">📋 Cached Content:</h4>
