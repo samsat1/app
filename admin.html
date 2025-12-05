@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 6.9 - Better CORS Proxy (allorigins.win) 2025-12-05 -->
+<!-- VERSION 7.0 - ThingProxy CORS (faster, no timeout) 2025-12-05 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -3962,9 +3962,9 @@
         }
         
         // CORS Proxy for Plex API calls (GitHub Pages cannot directly access Plex server)
-        // Using allorigins.win which is more reliable
+        // Using thingproxy.freeboard.io - fast, reliable, no timeout issues
         function getProxiedUrl(url) {
-            return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+            return 'https://thingproxy.freeboard.io/fetch/' + url;
         }
         
         function testPlexConnection() {
