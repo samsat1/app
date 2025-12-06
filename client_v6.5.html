@@ -4456,7 +4456,7 @@
             if (streamingMode === 'always-streaming') {
                 // Always-streaming content: start immediately without delay
                 console.log('🔴 Playing always-streaming content:', content.name);
-                if (content.type === 'hls' || content.type === 'movies' || content.url?.includes('.m3u8')) {
+                if (content.type === 'hls' || content.type === 'movies' || content.type === 'adult' || content.url?.includes('.m3u8')) {
                     handleHLSContent(content);
                 } else if (content.type === 'mp4') {
                     handleMP4Content(content);
@@ -4469,7 +4469,7 @@
                 showLoadingIndicator(content.name, streamingMode);
                 
                 setTimeout(() => {
-                    if (content.type === 'hls' || content.type === 'movies' || content.url?.includes('.m3u8')) {
+                    if (content.type === 'hls' || content.type === 'movies' || content.type === 'adult' || content.url?.includes('.m3u8')) {
                         handleHLSContent(content);
                     } else if (content.type === 'mp4') {
                         handleMP4Content(content);
