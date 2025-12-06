@@ -3701,37 +3701,43 @@
             return currentUser.permissions.includes(addonName) || currentUser.permissions.includes('full_access');
         }
 
-        function loginUser(username, password) {
-            const user = passwordManager.authenticateUser(username, password);
+        async function loginUser(username, password) {
+            // Direct Firebase login - bypass passwordManager
+            try {
+                const doc = await firebase.firestore().collection('customers').doc('main').get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    const customers = data.list || [];
+                    const user = customers.find(c => c.username === username && c.password === password);
+                    
+                    if (user) {
+                        isLoggedIn = true;
+                        currentUser = user;
+                        adminCustomers = customers;
+                        localStorage.setItem('adminCustomers', JSON.stringify(customers));
+                        
+                        console.log('✅ Login successful:', user.username);
+                        updateUserInterface();
+                        hideLoginModal();
+                        showSuccess(`Welcome back, ${user.username}!`);
+                        return true;
+                    }
+                }
+            } catch(e) {
+                console.error('Firebase login error:', e);
+            }
             
+            // Fallback to old method
+            const user = passwordManager.authenticateUser(username, password);
             if (user) {
                 isLoggedIn = true;
                 currentUser = user;
-                
-                // Reload customer data to ensure latest info
                 adminCustomers = loadCustomersFromAdmin();
-                
-                // Log login success with customer details
-                const customerData = adminCustomers.find(c => c.username === user.username);
-                console.log('✅ Login successful:', {
-                    username: user.username,
-                    status: customerData?.status,
-                    plan: customerData?.plan,
-                    addons: customerData?.addons,
-                    expiry: customerData?.expiryDate
-                });
-                
                 updateUserInterface();
                 hideLoginModal();
                 showSuccess(`Welcome back, ${user.username}!`);
-                
-                // Test package authentication
-                setTimeout(() => {
-                    console.log('🔐 Testing package authentication for new user...');
-                    if (typeof debugPackageAuth === 'function') {
-                        debugPackageAuth();
-                    }
-                }, 1000);
+                return true;
+            }
                 
                 // TV Platform: Always store credentials for persistent login
                 // User logs in once and stays logged in until subscription expires
