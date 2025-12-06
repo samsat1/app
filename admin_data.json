@@ -3,50 +3,120 @@
   "exportDate": "2025-12-06",
   "customers": [
     {
+      "id": "CUST_1764860761457",
       "username": "sam6",
+      "name": "sam6",
       "password": "123456",
+      "phone": "555-1234",
+      "plan": "Basic Package",
       "package": "Basic Package",
+      "addons": "Movies Package, Adult Package",
+      "monthlyPrice": 18.5,
+      "totalPrice": 18.5,
       "expiryDate": "2025-12-15",
-      "maxDevices": 1
+      "maxDevices": 1,
+      "status": "active",
+      "duration": "1 Month",
+      "durationMonths": 1,
+      "createdAt": "2025-12-04T15:06:01.457Z"
     },
     {
+      "id": "CUST_1764874326050",
       "username": "anthony",
+      "name": "anthony",
       "password": "123456",
+      "phone": "555-1234",
+      "plan": "Movies Package",
       "package": "Movies Package",
+      "addons": "",
+      "monthlyPrice": 8.5,
+      "totalPrice": 8.5,
       "expiryDate": "2026-01-01",
-      "maxDevices": 2
+      "maxDevices": 2,
+      "status": "active",
+      "duration": "1 Month",
+      "durationMonths": 1,
+      "createdAt": "2025-12-04T18:52:06.050Z"
     },
     {
+      "id": "CUST_1764888389419",
       "username": "sam111",
+      "name": "sam111",
       "password": "123456",
+      "phone": "123456",
+      "plan": "Adult Package",
       "package": "Adult Package",
+      "addons": "",
+      "monthlyPrice": 3.5,
+      "totalPrice": 3.5,
       "expiryDate": "2025-12-31",
-      "maxDevices": 1
+      "maxDevices": 1,
+      "status": "active",
+      "duration": "1 Month",
+      "durationMonths": 1,
+      "createdAt": "2025-12-04T22:46:29.419Z"
     }
   ],
   "packages": [
     {
+      "id": "PKG_1764860783572",
       "name": "Basic Package",
-      "price": "7",
-      "duration": "30",
+      "price": 7,
+      "duration": "1 Month",
       "channels": "100",
-      "description": "Basic channels"
+      "description": "Basic channels",
+      "features": "",
+      "secondTVPrice": 2,
+      "thirdTVPrice": 3,
+      "sportsPrice": 0,
+      "moviesPrice": 0,
+      "isAdult": false,
+      "adultPackagePrice": 0,
+      "approved": true,
+      "approvedDate": "2025-12-04T15:06:23.572Z",
+      "approvedBy": "admin",
+      "createdAt": "2025-12-04T15:06:23.572Z"
     },
     {
+      "id": "PKG_1764860815473",
       "name": "Movies Package",
-      "price": "8.5",
-      "duration": "30",
+      "price": 8.5,
+      "duration": "1 Month",
       "channels": "150",
-      "description": "Movies + Basic"
+      "description": "Movies + Basic",
+      "features": "",
+      "secondTVPrice": 0,
+      "thirdTVPrice": 0,
+      "sportsPrice": 8.5,
+      "moviesPrice": 0,
+      "isAdult": false,
+      "adultPackagePrice": 0,
+      "approved": true,
+      "approvedDate": "2025-12-04T15:06:55.473Z",
+      "approvedBy": "admin",
+      "createdAt": "2025-12-04T15:06:55.473Z"
     },
     {
+      "id": "PKG_1764860844049",
       "name": "Adult Package",
-      "price": "3.5",
-      "duration": "30",
+      "price": 3.5,
+      "duration": "1 Month",
       "channels": "50",
-      "description": "Adult content"
+      "description": "Adult content",
+      "features": "+18",
+      "secondTVPrice": 0,
+      "thirdTVPrice": 0,
+      "sportsPrice": 0,
+      "moviesPrice": 0,
+      "isAdult": true,
+      "adultPackagePrice": 3.5,
+      "approved": true,
+      "approvedDate": "2025-12-04T15:07:24.049Z",
+      "approvedBy": "admin",
+      "createdAt": "2025-12-04T15:07:24.049Z"
     }
   ],
+  "resellers": [],
   "plexConfig": {
     "serverUrl": "http://192.168.1.100:32400",
     "localUrl": "http://127.0.0.1:32400",
@@ -54,6 +124,10 @@
     "moviesSection": "26",
     "adultSection": "21"
   },
+  "plexServerUrl": "http://127.0.0.1:32400",
+  "plexToken": "xcak2s6WSj7hzAinAigm",
+  "plexMoviesSection": "26",
+  "plexAdultSection": "21",
   "githubConfig": {
     "username": "samsat1",
     "repo": "app"
