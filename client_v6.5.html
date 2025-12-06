@@ -4932,32 +4932,37 @@
         }
 
         // Auto-sync function - runs on startup
-        // HARDCODED SYNC URL - No customer setup required
+        // HARDCODED SYNC URLs - No customer setup required
         const SYNC_URL = 'https://raw.githubusercontent.com/samsat1/app/main/admin_data.json';
+        const CONTENT_URL = 'https://raw.githubusercontent.com/samsat1/app/main/content_cache.json';
         
         window.autoSyncData = async function() {
-            const syncUrl = SYNC_URL; // Use hardcoded URL
-            
             try {
-                console.log('📡 Auto-syncing data from:', syncUrl);
-                const response = await fetch(syncUrl + '?t=' + Date.now()); // Cache bust
-                if (!response.ok) throw new Error('Fetch failed');
-                
-                const data = await response.json();
-                
-                // Import customers
-                if (data.customers && Array.isArray(data.customers)) {
-                    localStorage.setItem('adminCustomers', JSON.stringify(data.customers));
+                // Sync admin data (customers, packages)
+                console.log('📡 Auto-syncing admin data...');
+                const adminResp = await fetch(SYNC_URL + '?t=' + Date.now());
+                if (adminResp.ok) {
+                    const data = await adminResp.json();
+                    if (data.customers) localStorage.setItem('adminCustomers', JSON.stringify(data.customers));
+                    if (data.packages) localStorage.setItem('adminPackages', JSON.stringify(data.packages));
+                    if (data.plexServerUrl) localStorage.setItem('plexServerUrl', data.plexServerUrl);
+                    if (data.plexToken) localStorage.setItem('plexToken', data.plexToken);
                 }
-                // Import packages
-                if (data.packages && Array.isArray(data.packages)) {
-                    localStorage.setItem('adminPackages', JSON.stringify(data.packages));
+                
+                // Sync Plex content (movies, adult)
+                console.log('📡 Auto-syncing Plex content...');
+                const contentResp = await fetch(CONTENT_URL + '?t=' + Date.now());
+                if (contentResp.ok) {
+                    const content = await contentResp.json();
+                    if (content.plexMoviesCache && content.plexMoviesCache.length > 0) {
+                        localStorage.setItem('plexMoviesCache', JSON.stringify(content.plexMoviesCache));
+                        console.log(`📦 Synced ${content.plexMoviesCache.length} movies`);
+                    }
+                    if (content.plexAdultCache && content.plexAdultCache.length > 0) {
+                        localStorage.setItem('plexAdultCache', JSON.stringify(content.plexAdultCache));
+                        console.log(`📦 Synced ${content.plexAdultCache.length} adult videos`);
+                    }
                 }
-                // Import Plex settings
-                if (data.plexServerUrl) localStorage.setItem('plexServerUrl', data.plexServerUrl);
-                if (data.plexToken) localStorage.setItem('plexToken', data.plexToken);
-                if (data.plexMoviesSection) localStorage.setItem('plexMoviesSection', data.plexMoviesSection);
-                if (data.plexAdultSection) localStorage.setItem('plexAdultSection', data.plexAdultSection);
                 
                 localStorage.setItem('lastAutoSync', new Date().toISOString());
                 console.log('✅ Auto-sync completed successfully');
