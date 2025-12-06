@@ -5005,8 +5005,9 @@
             reader.readAsText(file);
         };
         
-        // Show import banner if running locally (file://)
+        // Import banner disabled - content syncs automatically via GitHub
         function showLocalModeImportBanner() {
+            return; // Disabled - no manual import needed
             if (window.location.protocol === 'file:') {
                 const banner = document.createElement('div');
                 banner.id = 'localImportBanner';
@@ -5124,9 +5125,8 @@
         // Global function for refreshing addon packages - defined early for onclick access
         window.refreshAddonPackages = function() {
             contentData.addon.content = loadPackagesFromAdmin();
-            contentData.adult.content = loadAdultPackagesFromAdmin(); // Also refresh adult packages
+            // Note: Adult videos are loaded from plexAdultCache, not from admin packages
             console.log(`📦 Loaded ${contentData.addon.content.length} add-on packages from admin panel`);
-            console.log(`🔞 Loaded ${contentData.adult.content.length} adult packages from admin panel`);
             
             // Refresh the display if addon tab is currently active
             if (currentSource === 'addon') {
