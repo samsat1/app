@@ -3352,14 +3352,24 @@
             }
             
             // Find Movies and Adult libraries from stored data
-            const moviesLib = libraries.find(l => {
+            let moviesLib = libraries.find(l => {
                 const title = (l.title || l.name || '').toLowerCase();
                 return title.includes('movies') || title.includes('movie');
             });
-            const adultLib = libraries.find(l => {
+            let adultLib = libraries.find(l => {
                 const title = (l.title || l.name || '').toLowerCase();
                 return title.includes('adult');
             });
+            
+            // Fallback to stored section IDs from Firebase
+            const moviesSection = localStorage.getItem('plexMoviesSection');
+            const adultSection = localStorage.getItem('plexAdultSection');
+            if (!moviesLib && moviesSection) {
+                moviesLib = { title: 'Movies', key: moviesSection };
+            }
+            if (!adultLib && adultSection) {
+                adultLib = { title: 'Adult', key: adultSection };
+            }
             
             console.log('📺 Library detection:', {
                 moviesLib: moviesLib ? `${moviesLib.title || moviesLib.name} (ID: ${moviesLib.key || moviesLib.id})` : 'NOT FOUND',
