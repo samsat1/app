@@ -699,14 +699,23 @@
         // Enhanced Password Management System
         const passwordManager = {
             passwords: {
-                'adminLogin': 'admin123',
-                'masterPassword': 'master2025'
+                'adminLogin': '',
+                'masterPassword': ''
             },
             resellerCredentials: {},
             currentSession: null,
             
             initialize: function() {
                 console.log('🔧 PasswordManager initializing...');
+                // Load passwords from localStorage
+                const savedPasswords = localStorage.getItem('adminPasswords');
+                if (savedPasswords) {
+                    try {
+                        this.passwords = JSON.parse(savedPasswords);
+                    } catch (e) {
+                        console.error('Error loading admin passwords:', e);
+                    }
+                }
                 this.initializeCredentials();
                 console.log('✅ PasswordManager initialized');
             },
@@ -721,12 +730,7 @@
                         this.resellerCredentials = {};
                     }
                 } else {
-                    this.resellerCredentials['reseller'] = {
-                        username: 'reseller',
-                        password: 'reseller123',
-                        createdAt: new Date().toISOString()
-                    };
-                    this.saveCredentials();
+                    this.resellerCredentials = {};
                 }
             },
             
@@ -745,6 +749,25 @@
             },
             
             authenticateUser: function(username, password) {
+                // First-time setup: if no admin password set, allow setting it
+                if (username === 'admin' && !this.passwords.adminLogin) {
+                    if (password && password.length >= 4) {
+                        this.passwords.adminLogin = password;
+                        this.saveCredentials();
+                        this.currentSession = {
+                            id: 'admin_' + Date.now(),
+                            username: 'admin',
+                            role: 'admin',
+                            plan: 'Admin Access',
+                            expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+                            status: 'active',
+                            permissions: ['admin', 'full_control']
+                        };
+                        return this.currentSession;
+                    }
+                    return { error: 'first_time_setup', message: 'Enter a password (min 4 characters) to set as your admin password' };
+                }
+                
                 if (username === 'admin' && password === this.passwords.adminLogin) {
                     this.currentSession = {
                         id: 'admin_' + Date.now(),
@@ -8066,6 +8089,57 @@ Network: Always Streaming → Optimized for instant access`;
         }
 
         // Initialize statistics on load
+        // Auto-load data from GitHub on startup
+        async function autoLoadFromGitHub() {
+            const githubConfig = JSON.parse(localStorage.getItem('githubConfig') || '{}');
+            const username = githubConfig.username || 'samsat1';
+            const repo = githubConfig.repo || 'app';
+            const syncUrl = `https://raw.githubusercontent.com/${username}/${repo}/main/admin_data.json`;
+            
+            try {
+                console.log('📡 Auto-loading data from GitHub...');
+                const response = await fetch(syncUrl + '?t=' + Date.now());
+                if (!response.ok) throw new Error('Fetch failed');
+                
+                const data = await response.json();
+                
+                // Load customers
+                if (data.customers && Array.isArray(data.customers)) {
+                    localStorage.setItem('adminCustomers', JSON.stringify(data.customers));
+                    window.customers = data.customers;
+                }
+                // Load packages
+                if (data.packages && Array.isArray(data.packages)) {
+                    localStorage.setItem('adminPackages', JSON.stringify(data.packages));
+                }
+                // Load Plex settings
+                if (data.plexServerUrl) localStorage.setItem('plexServerUrl', data.plexServerUrl);
+                if (data.plexToken) localStorage.setItem('plexToken', data.plexToken);
+                if (data.plexMoviesSection) localStorage.setItem('plexMoviesSection', data.plexMoviesSection);
+                if (data.plexAdultSection) localStorage.setItem('plexAdultSection', data.plexAdultSection);
+                if (data.plexConfig) {
+                    localStorage.setItem('plexConfig', JSON.stringify(data.plexConfig));
+                    if (data.plexConfig.serverUrl) localStorage.setItem('plexServerUrl', data.plexConfig.serverUrl);
+                    if (data.plexConfig.localUrl) localStorage.setItem('plexLocalUrl', data.plexConfig.localUrl);
+                    if (data.plexConfig.token) localStorage.setItem('plexToken', data.plexConfig.token);
+                }
+                // Load admin passwords
+                if (data.adminPasswords) {
+                    localStorage.setItem('adminPasswords', JSON.stringify(data.adminPasswords));
+                    passwordManager.passwords = data.adminPasswords;
+                }
+                
+                console.log('✅ Auto-load from GitHub completed');
+                
+                // Refresh UI
+                if (typeof loadCustomers === 'function') loadCustomers();
+                if (typeof loadPackages === 'function') loadPackages();
+                
+            } catch (error) {
+                console.log('⚠️ Auto-load from GitHub failed:', error.message);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize Password Manager
             passwordManager.initialize();
@@ -8074,6 +8148,9 @@ Network: Always Streaming → Optimized for instant access`;
             window.customers = JSON.parse(localStorage.getItem('adminCustomers')) || JSON.parse(localStorage.getItem('customers')) || [];
             window.editingCustomerId = null;
             window.renewalMode = false;
+            
+            // Auto-load data from GitHub
+            autoLoadFromGitHub();
             
             setTimeout(() => {
                 updateResellerStatistics();
