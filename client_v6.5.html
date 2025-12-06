@@ -3287,7 +3287,8 @@
                 try {
                     const adult = JSON.parse(cachedAdult);
                     if (adult && adult.length > 0) {
-                        contentData.adult.content = adult;
+                        // Add type field for playback routing
+                        contentData.adult.content = adult.map(item => ({...item, type: 'adult'}));
                         console.log(`📦 Loaded ${adult.length} cached adult videos`);
                         adultLoaded = true;
                     }
