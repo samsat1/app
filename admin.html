@@ -3528,6 +3528,7 @@
                     }
                     if (data.plexConfig) {
                         if (data.plexConfig.serverUrl) localStorage.setItem('plexServerUrl', data.plexConfig.serverUrl);
+                        if (data.plexConfig.localUrl) localStorage.setItem('plexLocalUrl', data.plexConfig.localUrl);
                         if (data.plexConfig.token) localStorage.setItem('plexToken', data.plexConfig.token);
                         if (data.plexConfig.moviesSection) localStorage.setItem('plexMoviesSection', data.plexConfig.moviesSection);
                         if (data.plexConfig.adultSection) localStorage.setItem('plexAdultSection', data.plexConfig.adultSection);
@@ -3537,6 +3538,11 @@
                     }
                     if (data.adminCredentials) {
                         localStorage.setItem('adminPasswords', JSON.stringify(data.adminCredentials));
+                    }
+                    if (data.githubConfig) {
+                        if (data.githubConfig.username) localStorage.setItem('githubUsername', data.githubConfig.username);
+                        if (data.githubConfig.repo) localStorage.setItem('githubRepo', data.githubConfig.repo);
+                        if (data.githubConfig.token) localStorage.setItem('githubToken', data.githubConfig.token);
                     }
                     
                     showNotification('✅ Data imported successfully! Refreshing...', 'success');
