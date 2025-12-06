@@ -1,5 +1,5 @@
-// iWatch TV Service Worker v2.0
-const CACHE_NAME = 'iwatch-tv-v2';
+// iWatch TV Service Worker v3.0
+const CACHE_NAME = 'iwatch-tv-v3';
 const urlsToCache = [
   '/',
   '/client.html',
