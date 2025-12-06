@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 8.1 - Fixed Plex URLs to Use Localhost 2025-12-06 -->
+<!-- VERSION 8.3 - Direct MP4 Playback (No HLS Transcode) 2025-12-06 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -4460,16 +4460,19 @@
         
         // ========== IMPORT FROM PLEX XML ==========
         
-        // Your Plex Configuration (auto-detected)
+        // Your Plex Configuration (loaded from localStorage)
         const PLEX_CONFIG = {
-            serverUrl: 'http://185.187.94.41:32400',
-            localUrl: 'http://127.0.0.1:32400',
-            token: 'Lptv6JHyM841mHrYs21y',
+            serverUrl: localStorage.getItem('plexServerUrl') || 'http://127.0.0.1:32400',
+            localUrl: localStorage.getItem('plexLocalUrl') || 'http://127.0.0.1:32400',
+            token: localStorage.getItem('plexToken') || '',
             sections: {
-                movies: 26,
-                adult: 21
+                movies: parseInt(localStorage.getItem('plexMoviesSection')) || 26,
+                adult: parseInt(localStorage.getItem('plexAdultSection')) || 21
             }
         };
+        
+        // Make PLEX_CONFIG accessible globally
+        window.PLEX_CONFIG = PLEX_CONFIG;
         
         // Save Plex config to localStorage for client
         localStorage.setItem('plexConfig', JSON.stringify(PLEX_CONFIG));
@@ -4521,75 +4524,59 @@
             try {
                 console.log('🔍 Parsing XML, length:', xmlString.length);
                 
-                // Find all Video tags (handles any attribute order)
-                const videoTagMatches = xmlString.match(/<Video[^>]+>/g) || [];
-                console.log('📺 Found Video tags:', videoTagMatches.length);
+                // Use LOCAL URL for playback
+                const localUrl = PLEX_CONFIG.localUrl || 'http://127.0.0.1:32400';
                 
-                for (const tag of videoTagMatches) {
-                    // Extract ratingKey
-                    const keyMatch = tag.match(/ratingKey="(\d+)"/);
-                    // Extract title
-                    const titleMatch = tag.match(/title="([^"]+)"/);
+                // Parse XML properly to get Video elements with their Part children
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
+                const videoElements = xmlDoc.querySelectorAll('Video');
+                
+                console.log('📺 Found Video elements:', videoElements.length);
+                
+                for (const video of videoElements) {
+                    const videoId = video.getAttribute('ratingKey');
+                    const title = video.getAttribute('title');
                     
-                    if (keyMatch && titleMatch) {
-                        const videoId = keyMatch[1];
-                        const title = titleMatch[1];
-                        
-                        // Build stream URL using LOCAL URL for playback
-                        const streamUrl = `${PLEX_CONFIG.localUrl}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${videoId}&mediaIndex=0&partIndex=0&protocol=hls&X-Plex-Token=${PLEX_CONFIG.token}`;
-                        
-                        // Build direct MP4 URL (no transcoding needed for most files)
-                        const directUrl = `${PLEX_CONFIG.localUrl}/library/metadata/${videoId}?X-Plex-Token=${PLEX_CONFIG.token}`;
+                    // Get the Part element to extract direct file path
+                    const part = video.querySelector('Part');
+                    const partKey = part ? part.getAttribute('key') : null;
+                    
+                    if (videoId && title) {
+                        // Build DIRECT MP4 URL (no transcoding needed!)
+                        let directUrl;
+                        if (partKey) {
+                            // Direct file access - most reliable
+                            directUrl = `${localUrl}${partKey}?X-Plex-Token=${PLEX_CONFIG.token}`;
+                        } else {
+                            // Fallback to transcode if no part key
+                            directUrl = `${localUrl}/video/:/transcode/universal/start.mp4?path=/library/metadata/${videoId}&mediaIndex=0&partIndex=0&protocol=http&X-Plex-Token=${PLEX_CONFIG.token}`;
+                        }
                         
                         // Build thumbnail URL
-                        const thumbUrl = `${PLEX_CONFIG.localUrl}/library/metadata/${videoId}/thumb?X-Plex-Token=${PLEX_CONFIG.token}`;
+                        const thumbUrl = `${localUrl}/library/metadata/${videoId}/thumb?X-Plex-Token=${PLEX_CONFIG.token}`;
                         
                         videos.push({
                             id: videoId,
                             name: title,
                             title: title,
-                            url: streamUrl,
-                            directUrl: directUrl,
+                            url: directUrl,
                             thumb: thumbUrl,
+                            directUrl: directUrl,
+                            partKey: partKey,
+                            plexServer: localUrl,
+                            plexToken: PLEX_CONFIG.token,
                             type: libraryType,
                             sectionId: sectionId,
-                            plexServer: PLEX_CONFIG.localUrl,
-                            plexToken: PLEX_CONFIG.token,
+                            isDirectMP4: !!partKey,
                             addedAt: Date.now()
                         });
+                        
+                        console.log(`  ✅ ${title}: ${partKey ? 'Direct MP4' : 'Transcode'}`);
                     }
                 }
                 
-                // Fallback: try to find any ratingKey/title pairs
-                if (videos.length === 0) {
-                    console.log('⚠️ No Video tags found, trying fallback...');
-                    const allKeys = xmlString.match(/ratingKey="(\d+)"/g) || [];
-                    const allTitles = xmlString.match(/title="([^"]+)"/g) || [];
-                    console.log('Found keys:', allKeys.length, 'titles:', allTitles.length);
-                    
-                    for (let i = 0; i < Math.min(allKeys.length, allTitles.length); i++) {
-                        const videoId = allKeys[i].match(/\d+/)[0];
-                        const title = allTitles[i].match(/title="([^"]+)"/)[1];
-                        
-                        const streamUrl = `${PLEX_CONFIG.localUrl}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${videoId}&mediaIndex=0&partIndex=0&protocol=hls&X-Plex-Token=${PLEX_CONFIG.token}`;
-                        const directUrl = `${PLEX_CONFIG.localUrl}/library/metadata/${videoId}?X-Plex-Token=${PLEX_CONFIG.token}`;
-                        const thumbUrl = `${PLEX_CONFIG.localUrl}/library/metadata/${videoId}/thumb?X-Plex-Token=${PLEX_CONFIG.token}`;
-                        
-                        videos.push({
-                            id: videoId,
-                            name: title,
-                            title: title,
-                            url: streamUrl,
-                            directUrl: directUrl,
-                            thumb: thumbUrl,
-                            type: libraryType,
-                            sectionId: sectionId,
-                            plexServer: PLEX_CONFIG.localUrl,
-                            plexToken: PLEX_CONFIG.token,
-                            addedAt: Date.now()
-                        });
-                    }
-                }
+                // Fallback removed - DOMParser handles all cases
                 
                 console.log(`📺 Parsed ${videos.length} videos from ${libraryType} XML`);
             } catch (error) {
@@ -6414,6 +6401,7 @@ Network: Always Streaming → Optimized for instant access`;
             
             // Load saved Plex settings
             const plexServerUrl = localStorage.getItem('plexServerUrl') || '';
+            const plexLocalUrl = localStorage.getItem('plexLocalUrl') || 'http://127.0.0.1:32400';
             const plexToken = localStorage.getItem('plexToken') || '';
             const plexMoviesSection = localStorage.getItem('plexMoviesSection') || '26';
             const plexAdultSection = localStorage.getItem('plexAdultSection') || '21';
@@ -6432,8 +6420,13 @@ Network: Always Streaming → Optimized for instant access`;
                         <h3 class="section-title">🔧 Plex Server Configuration</h3>
                         <div style="display: grid; gap: 15px;">
                             <div>
-                                <label style="color: rgba(255,255,255,0.8); font-size: 14px; display: block; margin-bottom: 5px;">Plex Server URL:</label>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px; display: block; margin-bottom: 5px;">Plex Server URL (for fetching):</label>
                                 <input type="text" id="plexServerUrl" value="${plexServerUrl}" placeholder="http://185.187.94.41:32400" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
+                            </div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px; display: block; margin-bottom: 5px;">📍 Local URL (for playback) - IMPORTANT:</label>
+                                <input type="text" id="plexLocalUrl" value="${plexLocalUrl}" placeholder="http://127.0.0.1:32400" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(139,195,74,0.3); border-radius: 6px; color: #8bc34a; font-size: 14px; font-weight: bold;">
+                                <small style="color: rgba(139,195,74,0.8); display: block; margin-top: 5px;">⚠️ Use localhost (127.0.0.1) or your local network IP for playback to work!</small>
                             </div>
                             <div>
                                 <label style="color: rgba(255,255,255,0.8); font-size: 14px; display: block; margin-bottom: 5px;">Plex Token:</label>
@@ -6545,16 +6538,25 @@ Network: Always Streaming → Optimized for instant access`;
         // Save Plex Settings function
         window.savePlexSettings = function() {
             const serverUrl = document.getElementById('plexServerUrl')?.value || '';
+            const localUrl = document.getElementById('plexLocalUrl')?.value || 'http://127.0.0.1:32400';
             const token = document.getElementById('plexToken')?.value || '';
             const moviesSection = document.getElementById('plexMoviesSection')?.value || '26';
             const adultSection = document.getElementById('plexAdultSection')?.value || '21';
             
             localStorage.setItem('plexServerUrl', serverUrl);
+            localStorage.setItem('plexLocalUrl', localUrl);
             localStorage.setItem('plexToken', token);
             localStorage.setItem('plexMoviesSection', moviesSection);
             localStorage.setItem('plexAdultSection', adultSection);
             
-            showNotification('✅ Plex settings saved successfully!', 'success');
+            // Update the PLEX_CONFIG object
+            if (window.PLEX_CONFIG) {
+                window.PLEX_CONFIG.serverUrl = serverUrl;
+                window.PLEX_CONFIG.localUrl = localUrl;
+                window.PLEX_CONFIG.token = token;
+            }
+            
+            showNotification('✅ Plex settings saved! Local URL: ' + localUrl, 'success');
         };
         
         // Update cached content counts
