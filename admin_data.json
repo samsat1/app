@@ -119,8 +119,8 @@
   ],
   "resellers": [],
   "plexServerUrl": "http://192.168.1.100:32400",
-  "plexToken": "AbC12DeF34GhI567890ztmd2y",
-  "plexMoviesSection": "",
-  "plexAdultSection": "",
+  "plexToken": "xcak2s6WSj7hzAinAigm",
+  "plexMoviesSection": "26",
+  "plexAdultSection": "21",
   "tvSyncUrl": "https://raw.githubusercontent.com/samsat1/app/main/admin_data.json"
 }
