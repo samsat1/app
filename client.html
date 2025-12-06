@@ -1974,7 +1974,7 @@
             try {
                 const doc = await fireDb.collection('customers').doc('main').get();
                 if (doc.exists && doc.data().list) {
-                    localStorage.setItem('customers', JSON.stringify(doc.data().list));
+                    localStorage.setItem('adminCustomers', JSON.stringify(doc.data().list));
                     console.log('✅ Loaded ' + doc.data().list.length + ' customers from Firebase');
                 }
             } catch(e) { console.log('Firebase customers load error:', e); }
