@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<!-- VERSION 6.4 - Direct Plex Playback Without Fetch 2025-12-06 -->
+<!-- VERSION 6.5 - iWATCH TV Client 2025-12-07 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iWATCH TV - Professional Streaming</title>
     <meta name="description" content="Professional IPTV streaming service with live TV, movies, and sports content">
-    <meta name="author" content="MiniMax Agent">
+    <meta name="author" content="iWATCH TV">
     <meta name="keywords" content="IPTV, streaming, live TV, movies, sports, entertainment">
     
     <!-- PWA Manifest for TV -->
@@ -247,23 +247,7 @@
                 return this.passwords[key] === input;
             },
             authenticateUser: function(username, password) {
-                // ADMIN AUTHENTICATION - Full access to all content
-                if (username === 'admin' && password === 'admin123') {
-                    return {
-                        username: 'admin',
-                        fullName: 'Administrator',
-                        role: 'admin',
-                        adminId: 'ADMIN_' + Date.now(),
-                        subscribedPackages: ['all_packages'], // Admin has access to everything
-                        subscriptionExpiry: '2099-12-31', // Admin has permanent access
-                        permissions: ['admin_access', 'full_access', 'vod_access', 'live_access', 'udp_access', 'adult_access', 'all_channels', 'all_libraries'],
-                        plan: 'Administrator',
-                        addons: 'All Addons',
-                        adultPassword: '1818'
-                    };
-                }
-
-                // Load customer data
+                // Load customer data from GitHub sync
                 const customers = loadCustomersFromAdmin();
                 
                 // Find customer by username
@@ -3233,17 +3217,7 @@
             getDefaultContent() {
                 // Fallback content when no media libraries are assigned
                 return {
-                    movies: [
-                        {
-                            id: 'demo_movie_1',
-                            name: 'Welcome to iWATCH TV',
-                            description: 'Enjoy your streaming experience! Contact support for premium content.',
-                            category: 'movie',
-                            type: 'mp4',
-                            url: '#',
-                            streamingMode: 'on-demand'
-                        }
-                    ],
+                    movies: [],
                     series: [],
                     vod: [],
                     live: [],
@@ -3312,8 +3286,8 @@
             }
             
             // If no cache, try live fetch with token
-            const plexServerUrl = localStorage.getItem('plexServerUrl') || 'http://185.187.94.41:32400';
-            const plexToken = localStorage.getItem('plexToken') || localStorage.getItem('plexAutoToken') || '8ZG__GsXB4YJ5wrn7rRV';
+            const plexServerUrl = localStorage.getItem('plexServerUrl') || '';
+            const plexToken = localStorage.getItem('plexToken') || localStorage.getItem('plexAutoToken') || '';
             const storedLibraries = localStorage.getItem('plexLibraries');
             
             console.log('📺 Plex Config:', {
@@ -4483,7 +4457,7 @@
         // Handle Plex content - fetch direct MP4 URL
         async function handlePlexContent(content) {
             // Use stored server/token from content (new format) or fallback to localStorage
-            const token = content.plexToken || localStorage.getItem('plexToken') || 'Lptv6JHyM841mHrYs21y';
+            const token = content.plexToken || localStorage.getItem('plexToken') || '';
             const serverUrl = content.plexServer || localStorage.getItem('plexServerUrl') || 'http://127.0.0.1:32400';
             
             console.log('📺 Playing Plex content:', content.name);
@@ -4506,7 +4480,7 @@
                 
             } catch (error) {
                 console.error('Plex playback error:', error);
-                showError('Failed to load Plex content: ' + error.message);
+                showError('Failed to load content: ' + error.message);
             }
         }
         
@@ -4722,7 +4696,7 @@
             if (content) {
                 playContent(content.id);
             } else {
-                showError('No videos available. Please load content from Plex.');
+                showError('No videos available. Please contact your provider.');
             }
         }
 
@@ -4999,7 +4973,7 @@
                 banner.innerHTML = `
                     <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; border-bottom: 2px solid #e94560;">
                         <div style="color: #fff;">
-                            <strong>💻 Local Mode</strong> - Import your Plex cache from admin panel to enable playback
+                            <strong>💻 Local Mode</strong> - Import your content cache from admin panel to enable playback
                         </div>
                         <label style="background: #4CAF50; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">
                             📥 Import Cache JSON
