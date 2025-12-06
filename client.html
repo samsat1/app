@@ -4871,7 +4871,7 @@
         function setupEventListeners() {
             // Login form
             if (document.getElementById('loginForm')) {
-                document.getElementById('loginForm').addEventListener('submit', function(e) {
+                document.getElementById('loginForm').addEventListener('submit', async function(e) {
                     e.preventDefault();
                     
                     const username = document.getElementById('username').value.trim();
@@ -4891,7 +4891,7 @@
                     loginBtn.blur();
                     
                     // Immediate login attempt (removed 1-second delay)
-                    const loginSuccess = loginUser(username, password);
+                    const loginSuccess = await loginUser(username, password);
                     console.log('Login attempt result:', loginSuccess);
                     
                     if (loginSuccess) {
