@@ -2,14 +2,50 @@
   "version": "8.3",
   "exportDate": "2025-12-06",
   "customers": [
-    {"username": "sam6", "password": "123456", "package": "Basic Package", "expiryDate": "2025-12-15", "maxDevices": 1},
-    {"username": "anthony", "password": "123456", "package": "Movies Package", "expiryDate": "2026-01-01", "maxDevices": 2},
-    {"username": "sam111", "password": "123456", "package": "Adult Package", "expiryDate": "2025-12-31", "maxDevices": 1}
+    {
+      "username": "sam6",
+      "password": "123456",
+      "package": "Basic Package",
+      "expiryDate": "2025-12-15",
+      "maxDevices": 1
+    },
+    {
+      "username": "anthony",
+      "password": "123456",
+      "package": "Movies Package",
+      "expiryDate": "2026-01-01",
+      "maxDevices": 2
+    },
+    {
+      "username": "sam111",
+      "password": "123456",
+      "package": "Adult Package",
+      "expiryDate": "2025-12-31",
+      "maxDevices": 1
+    }
   ],
   "packages": [
-    {"name": "Basic Package", "price": "7", "duration": "30", "channels": "100", "description": "Basic channels"},
-    {"name": "Movies Package", "price": "8.5", "duration": "30", "channels": "150", "description": "Movies + Basic"},
-    {"name": "Adult Package", "price": "3.5", "duration": "30", "channels": "50", "description": "Adult content"}
+    {
+      "name": "Basic Package",
+      "price": "7",
+      "duration": "30",
+      "channels": "100",
+      "description": "Basic channels"
+    },
+    {
+      "name": "Movies Package",
+      "price": "8.5",
+      "duration": "30",
+      "channels": "150",
+      "description": "Movies + Basic"
+    },
+    {
+      "name": "Adult Package",
+      "price": "3.5",
+      "duration": "30",
+      "channels": "50",
+      "description": "Adult content"
+    }
   ],
   "plexConfig": {
     "serverUrl": "http://192.168.1.100:32400",
@@ -17,5 +53,9 @@
     "token": "xcak2s6WSj7hzAinAigm",
     "moviesSection": "26",
     "adultSection": "21"
+  },
+  "githubConfig": {
+    "username": "samsat1",
+    "repo": "app"
   }
 }
