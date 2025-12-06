@@ -3738,21 +3738,6 @@
                 showSuccess(`Welcome back, ${user.username}!`);
                 return true;
             }
-                
-                // TV Platform: Always store credentials for persistent login
-                // User logs in once and stays logged in until subscription expires
-                const customer = adminCustomers.find(c => c.username === username);
-                const expiryDate = customer?.expiry || customer?.expiryDate || '2025-12-31';
-                
-                // Always store credentials for TV (no "Remember Me" checkbox needed)
-                storeCredentials(username, password, expiryDate, true);
-                console.log('📺 TV Login: Credentials stored until', expiryDate);
-                
-                // Initialize content preloading for better UX
-                initializeContentPreloading();
-                
-                return true;
-            }
             
             return false;
         }
