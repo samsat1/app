@@ -3271,6 +3271,24 @@
         async function loadPlexLibraryContent() {
             console.log('📺 ====== PLEX LIBRARY LOADING STARTED ======');
             
+            // Try Firebase cache first (for mobile devices)
+            try {
+                const moviesDoc = await fireDb.collection('plexCache').doc('movies').get();
+                const adultDoc = await fireDb.collection('plexCache').doc('adult').get();
+                if (moviesDoc.exists && moviesDoc.data().content) {
+                    const movies = moviesDoc.data().content;
+                    contentData.movies.content = movies;
+                    localStorage.setItem('plexMoviesCache', JSON.stringify(movies));
+                    console.log(`☁️ Loaded ${movies.length} movies from Firebase cache`);
+                }
+                if (adultDoc.exists && adultDoc.data().content) {
+                    const adult = adultDoc.data().content;
+                    contentData.adult.content = adult;
+                    localStorage.setItem('plexAdultCache', JSON.stringify(adult));
+                    console.log(`☁️ Loaded ${adult.length} adult videos from Firebase cache`);
+                }
+            } catch(e) { console.log('Firebase cache not available:', e.message); }
+            
             // Check for cached content FIRST (from PowerShell script)
             const cachedMovies = localStorage.getItem('plexMoviesCache');
             const cachedAdult = localStorage.getItem('plexAdultCache');
@@ -3389,7 +3407,12 @@
                         contentData.movies.content = moviesContent;
                         console.log(`✅ Loaded ${moviesContent.length} movies from Plex`);
                         // Cache for future use
-                        try { localStorage.setItem('plexMoviesCache', JSON.stringify(moviesContent)); } catch(e) {}
+                        try { 
+                            localStorage.setItem('plexMoviesCache', JSON.stringify(moviesContent));
+                            // Also save to Firebase for mobile access
+                            fireDb.collection('plexCache').doc('movies').set({content: moviesContent, updated: Date.now()});
+                            console.log('☁️ Synced movies to Firebase');
+                        } catch(e) {}
                         moviesLoadedLive = true;
                     } else {
                         console.log('⚠️ No movies loaded from direct Plex fetch');
@@ -3406,7 +3429,12 @@
                         contentData.adult.content = adultContent;
                         console.log(`✅ Loaded ${adultContent.length} adult videos from Plex - REPLACING PACKAGES`);
                         // Cache for future use
-                        try { localStorage.setItem('plexAdultCache', JSON.stringify(adultContent)); } catch(e) {}
+                        try { 
+                            localStorage.setItem('plexAdultCache', JSON.stringify(adultContent));
+                            // Also save to Firebase for mobile access
+                            fireDb.collection('plexCache').doc('adult').set({content: adultContent, updated: Date.now()});
+                            console.log('☁️ Synced adult content to Firebase');
+                        } catch(e) {}
                         adultLoadedLive = true;
                     } else {
                         console.log('⚠️ No adult content loaded from direct Plex fetch');
