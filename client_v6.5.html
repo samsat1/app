@@ -861,17 +861,9 @@
             border-left: 4px solid var(--accent-blue);
         }
 
-        /* Color-coded badges */
+        /* Color-coded badges - HIDDEN */
         .content-type-badge {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 10px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            display: none;
         }
 
         .badge-live {
@@ -5013,25 +5005,9 @@
             reader.readAsText(file);
         };
         
-        // Import banner disabled - content syncs automatically via GitHub
+        // Import banner removed
         function showLocalModeImportBanner() {
-            return; // Disabled - no manual import needed
-            if (window.location.protocol === 'file:') {
-                const banner = document.createElement('div');
-                banner.id = 'localImportBanner';
-                banner.innerHTML = `
-                    <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; border-bottom: 2px solid #e94560;">
-                        <div style="color: #fff;">
-                            <strong>💻 Local Mode</strong> - Import your Plex cache from admin panel to enable playback
-                        </div>
-                        <label style="background: #4CAF50; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">
-                            📥 Import Cache JSON
-                            <input type="file" accept=".json" onchange="importPlexCache(event)" style="display: none;">
-                        </label>
-                    </div>
-                `;
-                document.body.insertBefore(banner, document.body.firstChild);
-            }
+            return;
         }
 
         // Global function for app initialization - defined early for onload access
