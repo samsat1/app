@@ -1937,6 +1937,44 @@
             font-size: 14px;
         }
     </style>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDmuXoHSGbJovbVz7wjqYSHITPjfolIHqw",
+            authDomain: "iwatch-tv.firebaseapp.com",
+            projectId: "iwatch-tv",
+            storageBucket: "iwatch-tv.firebasestorage.app",
+            messagingSenderId: "48651410266",
+            appId: "1:48651410266:web:46f0c8d76a31e0e0c67163"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const fireDb = firebase.firestore();
+        
+        async function loadPlexFromFirebase() {
+            try {
+                const doc = await fireDb.collection('settings').doc('plex').get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    if (data.serverUrl) localStorage.setItem('plexServerUrl', data.serverUrl);
+                    if (data.token) localStorage.setItem('plexToken', data.token);
+                    if (data.moviesSection) localStorage.setItem('plexMoviesSection', data.moviesSection);
+                    if (data.adultSection) localStorage.setItem('plexAdultSection', data.adultSection);
+                    console.log('✅ Loaded Plex settings from Firebase');
+                    return true;
+                }
+            } catch(e) { console.log('Firebase load error:', e); }
+            return false;
+        }
+        
+        // Auto-load on page start
+        loadPlexFromFirebase().then(() => {
+            if (typeof loadPlexContent === 'function') loadPlexContent();
+        });
+    </script>
+
 </head>
 <body onload="initApp()">
     <!-- Header -->
