@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 9.0 - Firebase Cloud Database Integration 2025-12-07 -->
+<!-- VERSION 10.0 - Firebase Auth + Cloud Database 2025-12-07 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -467,7 +467,20 @@
     <!-- Mobile Menu Toggle -->
     <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
 
-    <div class="admin-container">
+    
+    <!-- Login Overlay -->
+    <div id="loginOverlay" style="display:flex;position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1a1a2e,#16213e);z-index:9999;align-items:center;justify-content:center;">
+        <div style="background:rgba(255,255,255,0.1);padding:40px;border-radius:20px;text-align:center;backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.2);max-width:400px;width:90%;">
+            <div style="font-size:60px;margin-bottom:20px;">🔐</div>
+            <h2 style="color:white;margin-bottom:30px;">Admin Login</h2>
+            <input type="email" id="loginEmail" placeholder="Email" style="width:100%;padding:15px;margin-bottom:15px;border-radius:10px;border:none;font-size:16px;">
+            <input type="password" id="loginPassword" placeholder="Password" style="width:100%;padding:15px;margin-bottom:15px;border-radius:10px;border:none;font-size:16px;">
+            <div id="loginError" style="color:#f44336;margin-bottom:15px;"></div>
+            <button onclick="adminLogin()" style="width:100%;padding:15px;background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:10px;color:white;font-size:16px;cursor:pointer;">Login</button>
+        </div>
+    </div>
+
+    <div class="admin-container" style="display:none;">
         <!-- Sidebar Navigation -->
         <aside class="admin-sidebar" id="sidebar">
             <div class="admin-header">
@@ -649,6 +662,7 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     
     <script>
         // Firebase Configuration
@@ -667,6 +681,33 @@
         const db = firebase.firestore();
         
         console.log('🔥 Firebase initialized successfully');
+
+        const auth = firebase.auth();
+        
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                console.log('✅ Logged in as:', user.email);
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.querySelector('.admin-container').style.display = 'flex';
+            } else {
+                document.getElementById('loginOverlay').style.display = 'flex';
+                document.querySelector('.admin-container').style.display = 'none';
+            }
+        });
+        
+        async function adminLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+            } catch (error) {
+                document.getElementById('loginError').textContent = 'Invalid email or password';
+            }
+        }
+        
+        function adminLogout() { auth.signOut(); }
+
+
         
         // Firebase Sync Functions
         async function saveToFirebase(collection, data) {
