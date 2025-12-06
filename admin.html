@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 8.3 - Direct MP4 Playback (No HLS Transcode) 2025-12-06 -->
+<!-- VERSION 9.0 - Firebase Cloud Database Integration 2025-12-07 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -613,6 +613,7 @@
                         <button onclick="showSection('packages')" class="btn btn-warning">Manage Packages</button>
                         <button onclick="showSection('resellers')" class="btn btn-info">Manage Resellers</button>
                         <button onclick="showSection('satellite')" class="btn btn-success">🛰️ Satellite Config</button>
+                        <button onclick="syncToFirebase()" class="btn" style="background: linear-gradient(135deg, #ff6b35, #f7931e);">🔥 Sync to Cloud</button>
                     </div>
                 </div>
                 
@@ -645,7 +646,127 @@
         </main>
     </div>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
     <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDmuXoHSGbJovbVz7wjqYSHITPjfolIHqw",
+            authDomain: "iwatch-tv.firebaseapp.com",
+            projectId: "iwatch-tv",
+            storageBucket: "iwatch-tv.firebasestorage.app",
+            messagingSenderId: "48651410266",
+            appId: "1:48651410266:web:46f0c8d76a31e0e0c67163",
+            measurementId: "G-EWBT98VDXY"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        console.log('🔥 Firebase initialized successfully');
+        
+        // Firebase Sync Functions
+        async function saveToFirebase(collection, data) {
+            try {
+                await db.collection(collection).doc('main').set(data);
+                console.log(`✅ Saved ${collection} to Firebase`);
+                return true;
+            } catch (error) {
+                console.error(`❌ Firebase save error (${collection}):`, error);
+                return false;
+            }
+        }
+        
+        async function loadFromFirebase(collection) {
+            try {
+                const doc = await db.collection(collection).doc('main').get();
+                if (doc.exists) {
+                    console.log(`✅ Loaded ${collection} from Firebase`);
+                    return doc.data();
+                }
+                return null;
+            } catch (error) {
+                console.error(`❌ Firebase load error (${collection}):`, error);
+                return null;
+            }
+        }
+        
+        // Save all data to Firebase
+        async function syncToFirebase() {
+            const customers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
+            const packages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+            const resellers = JSON.parse(localStorage.getItem('resellerCredentials') || '{}');
+            const plexConfig = {
+                serverUrl: localStorage.getItem('plexServerUrl') || '',
+                localUrl: localStorage.getItem('plexLocalUrl') || '',
+                token: localStorage.getItem('plexToken') || '',
+                moviesSection: localStorage.getItem('plexMoviesSection') || '',
+                adultSection: localStorage.getItem('plexAdultSection') || ''
+            };
+            
+            await saveToFirebase('customers', { list: customers, updated: Date.now() });
+            await saveToFirebase('packages', { list: packages, updated: Date.now() });
+            await saveToFirebase('resellers', { list: resellers, updated: Date.now() });
+            await saveToFirebase('settings', { plex: plexConfig, updated: Date.now() });
+            
+            console.log('🔥 All data synced to Firebase');
+            showNotification('Data synced to cloud!', 'success');
+        }
+        
+        // Load all data from Firebase
+        async function syncFromFirebase() {
+            try {
+                console.log('🔥 Loading data from Firebase...');
+                
+                const customersData = await loadFromFirebase('customers');
+                if (customersData && customersData.list) {
+                    localStorage.setItem('adminCustomers', JSON.stringify(customersData.list));
+                    window.customers = customersData.list;
+                }
+                
+                const packagesData = await loadFromFirebase('packages');
+                if (packagesData && packagesData.list) {
+                    localStorage.setItem('adminPackages', JSON.stringify(packagesData.list));
+                    localStorage.setItem('packages', JSON.stringify(packagesData.list));
+                }
+                
+                const resellersData = await loadFromFirebase('resellers');
+                if (resellersData && resellersData.list) {
+                    localStorage.setItem('resellerCredentials', JSON.stringify(resellersData.list));
+                }
+                
+                const settingsData = await loadFromFirebase('settings');
+                if (settingsData && settingsData.plex) {
+                    const plex = settingsData.plex;
+                    if (plex.serverUrl) localStorage.setItem('plexServerUrl', plex.serverUrl);
+                    if (plex.localUrl) localStorage.setItem('plexLocalUrl', plex.localUrl);
+                    if (plex.token) localStorage.setItem('plexToken', plex.token);
+                    if (plex.moviesSection) localStorage.setItem('plexMoviesSection', plex.moviesSection);
+                    if (plex.adultSection) localStorage.setItem('plexAdultSection', plex.adultSection);
+                }
+                
+                console.log('✅ Firebase sync complete');
+                
+                // Refresh UI
+                if (typeof loadCustomers === 'function') loadCustomers();
+                if (typeof loadPackages === 'function') loadPackages();
+                
+                return true;
+            } catch (error) {
+                console.error('❌ Firebase sync failed:', error);
+                return false;
+            }
+        }
+        
+        // Auto-save to Firebase when data changes
+        function triggerFirebaseSync() {
+            clearTimeout(window.firebaseSyncTimeout);
+            window.firebaseSyncTimeout = setTimeout(syncToFirebase, 2000);
+        }
+        
         // Global Reseller Accounts Data
         // Load RESELLER_ACCOUNTS from localStorage or use defaults
         let RESELLER_ACCOUNTS = {};
@@ -1414,6 +1535,9 @@
             // Save to localStorage for consistency (both adminPackages and packages keys)
             localStorage.setItem('adminPackages', JSON.stringify(packages));
             localStorage.setItem('packages', JSON.stringify(packages));
+            
+            // Sync to Firebase
+            triggerFirebaseSync();
             
             // Trigger real-time notification to clients for package updates
             const notificationData = {
@@ -5404,6 +5528,9 @@ Network: Always Streaming → Optimized for instant access`;
             // Save to localStorage
             localStorage.setItem('adminCustomers', JSON.stringify(window.customers));
             
+            // Sync to Firebase
+            triggerFirebaseSync();
+            
             // ALSO save to global customer storage for client access
             const globalCustomers = JSON.parse(localStorage.getItem('iptvCustomers')) || [];
             // Merge customers (avoid duplicates by ID)
@@ -8090,54 +8217,9 @@ Network: Always Streaming → Optimized for instant access`;
 
         // Initialize statistics on load
         // Auto-load data from GitHub on startup
-        async function autoLoadFromGitHub() {
-            const githubConfig = JSON.parse(localStorage.getItem('githubConfig') || '{}');
-            const username = githubConfig.username || 'samsat1';
-            const repo = githubConfig.repo || 'app';
-            const syncUrl = `https://raw.githubusercontent.com/${username}/${repo}/main/admin_data.json`;
-            
-            try {
-                console.log('📡 Auto-loading data from GitHub...');
-                const response = await fetch(syncUrl + '?t=' + Date.now());
-                if (!response.ok) throw new Error('Fetch failed');
-                
-                const data = await response.json();
-                
-                // Load customers
-                if (data.customers && Array.isArray(data.customers)) {
-                    localStorage.setItem('adminCustomers', JSON.stringify(data.customers));
-                    window.customers = data.customers;
-                }
-                // Load packages
-                if (data.packages && Array.isArray(data.packages)) {
-                    localStorage.setItem('adminPackages', JSON.stringify(data.packages));
-                }
-                // Load Plex settings
-                if (data.plexServerUrl) localStorage.setItem('plexServerUrl', data.plexServerUrl);
-                if (data.plexToken) localStorage.setItem('plexToken', data.plexToken);
-                if (data.plexMoviesSection) localStorage.setItem('plexMoviesSection', data.plexMoviesSection);
-                if (data.plexAdultSection) localStorage.setItem('plexAdultSection', data.plexAdultSection);
-                if (data.plexConfig) {
-                    localStorage.setItem('plexConfig', JSON.stringify(data.plexConfig));
-                    if (data.plexConfig.serverUrl) localStorage.setItem('plexServerUrl', data.plexConfig.serverUrl);
-                    if (data.plexConfig.localUrl) localStorage.setItem('plexLocalUrl', data.plexConfig.localUrl);
-                    if (data.plexConfig.token) localStorage.setItem('plexToken', data.plexConfig.token);
-                }
-                // Load admin passwords
-                if (data.adminPasswords) {
-                    localStorage.setItem('adminPasswords', JSON.stringify(data.adminPasswords));
-                    passwordManager.passwords = data.adminPasswords;
-                }
-                
-                console.log('✅ Auto-load from GitHub completed');
-                
-                // Refresh UI
-                if (typeof loadCustomers === 'function') loadCustomers();
-                if (typeof loadPackages === 'function') loadPackages();
-                
-            } catch (error) {
-                console.log('⚠️ Auto-load from GitHub failed:', error.message);
-            }
+        // Auto-load from Firebase (replaces GitHub)
+        async function autoLoadFromFirebase() {
+            await syncFromFirebase();
         }
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -8149,8 +8231,8 @@ Network: Always Streaming → Optimized for instant access`;
             window.editingCustomerId = null;
             window.renewalMode = false;
             
-            // Auto-load data from GitHub
-            autoLoadFromGitHub();
+            // Auto-load data from Firebase
+            autoLoadFromFirebase();
             
             setTimeout(() => {
                 updateResellerStatistics();
