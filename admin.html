@@ -5496,7 +5496,7 @@ Network: Always Streaming → Optimized for instant access`;
                         password: customerPassword,
                         macAddress: customerMacAddress,
                         adultPassword: selectedAddons.includes('Adult Content Package') ? customerAdultPassword : '',
-                        resetDeviceLock: resetDeviceLock ? Date.now() : (customer.resetDeviceLock || 0),
+                        resetDeviceLock: resetDeviceLock ? Date.now() : (existingCustomer.resetDeviceLock || 0),
                         status: 'active',
                         duration: calculation.duration,
                         durationMonths: calculation.durationMonths,
@@ -5511,6 +5511,9 @@ Network: Always Streaming → Optimized for instant access`;
                         
                         // Clear form
                         clearCustomerForm();
+                        
+                        // Save to localStorage and Firebase
+                        saveCustomersToAdmin();
                         
                         // Update statistics and customer list
                         updateCustomerStats();
