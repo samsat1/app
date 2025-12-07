@@ -3352,8 +3352,12 @@
             }
             
             // If no cache, try live fetch with token
-            const plexServerUrl = localStorage.getItem('plexServerUrl') || '';
-            const plexToken = localStorage.getItem('plexToken') || localStorage.getItem('plexAutoToken') || '';
+            // Clear any old wrong URLs and set correct default
+            if (localStorage.getItem('plexServerUrl') === 'http://127.0.0.1:32400') {
+                localStorage.removeItem('plexServerUrl');
+            }
+            const plexServerUrl = localStorage.getItem('plexServerUrl') || 'http://192.168.1.100:32400';
+            const plexToken = localStorage.getItem('plexToken') || localStorage.getItem('plexAutoToken') || 'xcak2s6WSj7hzAinAigm';
             const storedLibraries = localStorage.getItem('plexLibraries');
             
             console.log('📺 Plex Config:', {
@@ -3486,8 +3490,21 @@
                     return [];
                 }
                 
-                const data = await response.json();
-                const items = data.MediaContainer?.Metadata || [];
+                // Plex returns XML, parse it
+                const text = await response.text();
+                const parser = new DOMParser();
+                const xml = parser.parseFromString(text, 'text/xml');
+                const videoElements = xml.querySelectorAll('Video');
+                const items = Array.from(videoElements).map(v => ({
+                    ratingKey: v.getAttribute('ratingKey'),
+                    title: v.getAttribute('title'),
+                    summary: v.getAttribute('summary'),
+                    thumb: v.getAttribute('thumb'),
+                    art: v.getAttribute('art'),
+                    year: v.getAttribute('year'),
+                    duration: v.getAttribute('duration'),
+                    Media: [{ Part: [{ key: v.querySelector('Part')?.getAttribute('key') }] }]
+                }));
                 console.log(`📡 Plex returned ${items.length} items for library ${libraryKey}`);
                 
                 return items.map((item, index) => ({
