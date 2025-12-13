@@ -753,6 +753,16 @@
             await saveToFirebase('resellers', { list: resellers, updated: Date.now() });
             await saveToFirebase('settings', { plex: plexConfig, updated: Date.now() });
             
+            // Sync Plex content to Firebase
+            const plexMoviesCache = JSON.parse(localStorage.getItem('plexMoviesCache') || '[]');
+            const plexAdultCache = JSON.parse(localStorage.getItem('plexAdultCache') || '[]');
+            if (plexMoviesCache.length > 0) {
+                await saveToFirebase('plexMovies', { list: plexMoviesCache, updated: Date.now() });
+            }
+            if (plexAdultCache.length > 0) {
+                await saveToFirebase('plexAdult', { list: plexAdultCache, updated: Date.now() });
+            }
+            
             console.log('🔥 All data synced to Firebase');
             showNotification('Data synced to cloud!', 'success');
         }
@@ -3377,9 +3387,9 @@
 
         // Content management functions
         function addContentSource() {
-            const name = document.getElementById('contentName')?.value;
+            const name = document.getElementById('contentName')?.value?.trim();
             const type = document.getElementById('contentType')?.value;
-            const url = document.getElementById('contentURL')?.value;
+            const url = document.getElementById('contentURL')?.value?.trim();
             const quality = document.getElementById('contentQuality')?.value;
             
             if (!name || !url) {
@@ -3387,13 +3397,37 @@
                 return;
             }
             
-            showNotification('📺 Adding content source...', 'info');
-            setTimeout(() => {
-                showNotification(`✅ "${name}" (${type}) added successfully - ${quality}`, 'success');
-                // Clear form
-                if (document.getElementById('contentName')) document.getElementById('contentName').value = '';
-                if (document.getElementById('contentURL')) document.getElementById('contentURL').value = '';
-            }, 2000);
+            // Get existing channels
+            let liveChannels = JSON.parse(localStorage.getItem('liveChannelsCache') || '[]');
+            
+            // Add new channel
+            const newChannel = {
+                id: 'live_' + Date.now(),
+                name: name,
+                category: 'live',
+                type: 'hls',
+                url: url,
+                quality: quality,
+                package: type.toLowerCase().includes('sport') ? 'sports' : 'basic',
+                logo: '',
+                addedAt: new Date().toISOString()
+            };
+            
+            liveChannels.push(newChannel);
+            
+            // Save to localStorage
+            localStorage.setItem('liveChannelsCache', JSON.stringify(liveChannels));
+            
+            // Sync to Firebase
+            saveToFirebase('liveChannels', { list: liveChannels, updated: Date.now() });
+            
+            showNotification(`✅ "${name}" added! Total: ${liveChannels.length} channels`, 'success');
+            console.log('📺 Channel added:', newChannel);
+            console.log('☁️ Auto-synced to Firebase liveChannels');
+            
+            // Clear form
+            if (document.getElementById('contentName')) document.getElementById('contentName').value = '';
+            if (document.getElementById('contentURL')) document.getElementById('contentURL').value = '';
         }
 
         // Settings management functions
@@ -4418,9 +4452,14 @@
                 
                 // Store in localStorage for client to use
                 const cacheKey = isAdult ? 'plexAdultCache' : 'plexMoviesCache';
+                const firebaseKey = isAdult ? 'plexAdult' : 'plexMovies';
                 try {
                     localStorage.setItem(cacheKey, JSON.stringify(content));
                     console.log(`✅ Cached ${content.length} items to ${cacheKey}`);
+                    
+                    // Auto-sync to Firebase for TV/mobile access
+                    saveToFirebase(firebaseKey, { list: content, updated: Date.now() });
+                    console.log(`☁️ Auto-synced ${content.length} items to Firebase ${firebaseKey}`);
                 } catch(e) {
                     console.warn('⚠️ Could not cache to localStorage (might be too large)');
                 }

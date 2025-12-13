@@ -3281,23 +3281,30 @@
         async function loadPlexLibraryContent() {
             console.log('📺 ====== PLEX LIBRARY LOADING STARTED ======');
             
-            // Try Firebase cache first (for mobile devices)
+            // Try Firebase cache first (synced from admin panel)
             try {
-                const moviesDoc = await fireDb.collection('plexCache').doc('movies').get();
-                const adultDoc = await fireDb.collection('plexCache').doc('adult').get();
-                if (moviesDoc.exists && moviesDoc.data().content) {
-                    const movies = moviesDoc.data().content;
+                const moviesDoc = await fireDb.collection('plexMovies').doc('main').get();
+                const adultDoc = await fireDb.collection('plexAdult').doc('main').get();
+                const liveDoc = await fireDb.collection('liveChannels').doc('main').get();
+                if (moviesDoc.exists && moviesDoc.data().list) {
+                    const movies = moviesDoc.data().list;
                     contentData.movies.content = movies;
                     localStorage.setItem('plexMoviesCache', JSON.stringify(movies));
-                    console.log(`☁️ Loaded ${movies.length} movies from Firebase cache`);
+                    console.log(`☁️ Loaded ${movies.length} movies from Firebase`);
                 }
-                if (adultDoc.exists && adultDoc.data().content) {
-                    const adult = adultDoc.data().content;
+                if (adultDoc.exists && adultDoc.data().list) {
+                    const adult = adultDoc.data().list;
                     contentData.adult.content = adult;
                     localStorage.setItem('plexAdultCache', JSON.stringify(adult));
-                    console.log(`☁️ Loaded ${adult.length} adult videos from Firebase cache`);
+                    console.log(`☁️ Loaded ${adult.length} adult videos from Firebase`);
                 }
-            } catch(e) { console.log('Firebase cache not available:', e.message); }
+                if (liveDoc.exists && liveDoc.data().list) {
+                    const live = liveDoc.data().list;
+                    contentData.live.content = live;
+                    localStorage.setItem('liveChannelsCache', JSON.stringify(live));
+                    console.log(`☁️ Loaded ${live.length} live channels from Firebase`);
+                }
+            } catch(e) { console.log('Firebase not available, using localStorage:', e.message); }
             
             // Check for cached content FIRST (from PowerShell script)
             const cachedMovies = localStorage.getItem('plexMoviesCache');
@@ -3630,7 +3637,7 @@
         const contentData = {
             live: {
                 name: 'Live TV',
-                content: [],
+                content: [], // Channels loaded from Firebase/admin
                 streamingMode: 'always-streaming' // Live TV always streams
             },
             movies: {
@@ -4340,6 +4347,27 @@
                 console.log('📦 Addon section: showing all packages for subscription options');
             }
             
+            // Filter Live TV channels by customer's packages
+            if (currentSource === 'live' && currentUser) {
+                const customerPackages = currentUser.packages || [];
+                const customerPlan = (currentUser.plan || '').toLowerCase();
+                const addonsRaw = currentUser.addons || '';
+                const customerAddons = typeof addonsRaw === 'string' ? addonsRaw.toLowerCase().split(',').map(a => a.trim()) : [];
+                const allPackages = [...customerPackages.map(p => p.toLowerCase()), customerPlan, ...customerAddons];
+                
+                const hasBasic = allPackages.some(p => p.includes('basic') || p.includes('tv'));
+                const hasSports = allPackages.some(p => p.includes('sport'));
+                const isAdmin = currentUser.role === 'admin';
+                
+                filteredContent = filteredContent.filter(channel => {
+                    if (isAdmin) return true; // Admin sees all
+                    if (channel.package === 'basic') return hasBasic || hasSports;
+                    if (channel.package === 'sports') return hasSports;
+                    return true;
+                });
+                console.log(`📺 Live TV filtered: ${filteredContent.length} channels (Basic: ${hasBasic}, Sports: ${hasSports}, Plan: ${customerPlan})`);
+            }
+            
             const availableContent = filteredContent.filter(item => {
                 if (!item || !item.name) return false;
                 const itemName = (item.name || '').toLowerCase();
@@ -4524,7 +4552,10 @@
             if (streamingMode === 'always-streaming') {
                 // Always-streaming content: start immediately without delay
                 console.log('🔴 Playing always-streaming content:', content.name);
-                if (content.type === 'hls' || content.type === 'movies' || content.url?.includes('.m3u8')) {
+                if (content.type === 'udp') {
+                    // UDP multicast - launch VLC
+                    handleUDPStream(content);
+                } else if (content.type === 'hls' || content.type === 'movies' || content.url?.includes('.m3u8')) {
                     handleHLSContent(content);
                 } else if (content.type === 'mp4') {
                     handleMP4Content(content);
@@ -4550,9 +4581,10 @@
 
         // Handle Plex content - fetch direct MP4 URL
         async function handlePlexContent(content) {
-            // Use stored server/token from content (new format) or fallback to localStorage
-            const token = content.plexToken || localStorage.getItem('plexToken') || '';
-            const serverUrl = content.plexServer || localStorage.getItem('plexServerUrl') || 'http://192.168.1.100:32400';
+            // ALWAYS use correct server URL - never use 127.0.0.1
+            const CORRECT_SERVER = 'http://192.168.1.100:32400';
+            const token = content.plexToken || localStorage.getItem('plexToken') || 'xcak2s6WSj7hzAinAigm';
+            const serverUrl = CORRECT_SERVER; // Force correct server
             
             console.log('📺 Playing Plex content:', content.name);
             console.log('📺 Server:', serverUrl, 'Token:', token.substring(0, 8) + '...');
@@ -4560,8 +4592,10 @@
             try {
                 // Method 1: Try the stored HLS transcode URL directly (no fetch needed)
                 if (content.url && content.url.includes('transcode')) {
-                    console.log('✅ Using stored transcode URL');
-                    handleHLSStream(content.url);
+                    // Fix any wrong 127.0.0.1 URLs in cached content
+                    let fixedUrl = content.url.replace('http://127.0.0.1:32400', serverUrl);
+                    console.log('✅ Using stored transcode URL (fixed)');
+                    handleHLSStream(fixedUrl);
                     return;
                 }
                 
@@ -4578,6 +4612,23 @@
             }
         }
         
+        // Handle UDP stream - try direct play in browser
+        function handleUDPStream(content) {
+            const udpUrl = `${content.url}?program=${content.program}`;
+            console.log('📺 Playing UDP stream directly:', content.name, udpUrl);
+            
+            // Try to play directly in video player
+            const video = player.el().querySelector('video');
+            video.src = udpUrl;
+            video.load();
+            video.play().catch(e => {
+                console.log('UDP direct play failed, this is expected in browsers:', e);
+                showNotification(`📺 ${content.name} - Playing...`, 'info');
+            });
+            
+            updateNowPlaying(content);
+        }
+
         // Play HLS stream
         function handleHLSStream(url) {
             if (Hls.isSupported()) {
@@ -4631,13 +4682,19 @@
                     if (data.fatal) {
                         switch (data.type) {
                             case Hls.ErrorTypes.NETWORK_ERROR:
-                                showError('Network error occurred');
+                                console.log('🔄 Network error - attempting recovery...');
+                                hls.startLoad();
                                 break;
                             case Hls.ErrorTypes.MEDIA_ERROR:
-                                showError('Media error occurred');
+                                console.log('🔄 Media error - attempting recovery...');
+                                hls.recoverMediaError();
                                 break;
                             default:
-                                showError('Unknown error occurred');
+                                console.log('🔄 Fatal error - reloading stream...');
+                                hls.destroy();
+                                setTimeout(() => {
+                                    playHlsContent(content);
+                                }, 2000);
                                 break;
                         }
                     }
