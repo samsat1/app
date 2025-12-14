@@ -5518,7 +5518,7 @@
                 clearTimeout(typingTimeout);
             }
             
-            // Build the sequence for "8899"
+            // Build the sequence for "1818"
             if (/[0-9]/.test(key)) {
                 adultTypingSequence += key;
                 
@@ -5532,8 +5532,8 @@
                     adultTypingSequence = '';
                 }, 2000); // 2 second timeout
                 
-                // Check if sequence matches "8899"
-                if (adultTypingSequence === '8899' && !adultUnlocked) {
+                // Check if sequence matches "1818"
+                if (adultTypingSequence === '1818' && !adultUnlocked) {
                     showAdultModal();
                     adultTypingSequence = '';
                     if (typingTimeout) {
