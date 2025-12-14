@@ -241,7 +241,7 @@
                 'resellerLogin': '',  // REMOVED: 'reseller123'
                 'clientAdult': '8899',
                 'panelAccess': '000000',
-                'masterAdult': '000000' // Master password for admin emergency access to adult content
+                'masterAdult': '273972' // Master password for admin emergency access to adult content
             },
             verifyPassword: function(key, input) {
                 return this.passwords[key] === input;
@@ -2209,6 +2209,35 @@
             <div class="adult-buttons">
                 <button class="adult-btn confirm" onclick="verifyAdultPassword()">✅ Verify</button>
                 <button class="adult-btn cancel" onclick="hideAdultModal()">❌ Cancel</button>
+            </div>
+            <div style="margin-top: 15px; text-align: center;">
+                <button onclick="showChangeAdultPassword()" style="background: transparent; border: none; color: #888; font-size: 12px; cursor: pointer; text-decoration: underline;">Change Password</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Change Adult Password Modal -->
+    <div class="adult-modal" id="changeAdultPasswordModal">
+        <div class="adult-content">
+            <div class="adult-header">
+                <h2 class="adult-title">🔐</h2>
+                <p class="adult-warning">Change Adult Password</p>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: var(--text-primary); font-size: 13px;">Current Password:</label>
+                <input type="password" class="adult-input" id="currentAdultPass" maxlength="6" placeholder="••••••">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: var(--text-primary); font-size: 13px;">New Password:</label>
+                <input type="password" class="adult-input" id="newAdultPass" maxlength="6" placeholder="••••••">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: var(--text-primary); font-size: 13px;">Confirm New Password:</label>
+                <input type="password" class="adult-input" id="confirmAdultPass" maxlength="6" placeholder="••••••">
+            </div>
+            <div class="adult-buttons">
+                <button class="adult-btn confirm" onclick="changeAdultPassword()">✅ Save</button>
+                <button class="adult-btn cancel" onclick="hideChangeAdultPassword()">❌ Cancel</button>
             </div>
         </div>
     </div>
@@ -4186,7 +4215,10 @@
             
             // Get customer's adult password (if logged in) or use default
             let correctPassword = '8899'; // Default password
-            if (currentUser && currentUser.adultPassword) {
+            const customPassword = localStorage.getItem('customAdultPassword');
+            if (customPassword) {
+                correctPassword = customPassword;
+            } else if (currentUser && currentUser.adultPassword) {
                 correctPassword = currentUser.adultPassword;
             }
             
@@ -4204,6 +4236,58 @@
             } else {
                 showError('Invalid password. Please try again.');
             }
+        }
+        
+        function showChangeAdultPassword() {
+            document.getElementById('adultModal').classList.remove('show');
+            document.getElementById('changeAdultPasswordModal').classList.add('show');
+        }
+        
+        function hideChangeAdultPassword() {
+            document.getElementById('changeAdultPasswordModal').classList.remove('show');
+            document.getElementById('currentAdultPass').value = '';
+            document.getElementById('newAdultPass').value = '';
+            document.getElementById('confirmAdultPass').value = '';
+        }
+        
+        function changeAdultPassword() {
+            const current = document.getElementById('currentAdultPass').value;
+            const newPass = document.getElementById('newAdultPass').value;
+            const confirm = document.getElementById('confirmAdultPass').value;
+            
+            // Get current password
+            let correctPassword = '8899';
+            if (currentUser && currentUser.adultPassword) {
+                correctPassword = currentUser.adultPassword;
+            }
+            const masterPassword = passwordManager.passwords.masterAdult;
+            
+            // Verify current password
+            if (current !== correctPassword && current !== masterPassword) {
+                showError('Current password is incorrect');
+                return;
+            }
+            
+            // Validate new password
+            if (newPass.length < 4) {
+                showError('Password must be at least 4 digits');
+                return;
+            }
+            
+            if (newPass !== confirm) {
+                showError('New passwords do not match');
+                return;
+            }
+            
+            // Save new password
+            if (currentUser) {
+                currentUser.adultPassword = newPass;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            }
+            localStorage.setItem('customAdultPassword', newPass);
+            
+            hideChangeAdultPassword();
+            showSuccess('Adult password changed successfully');
         }
 
         function updateAdultIndicator() {
