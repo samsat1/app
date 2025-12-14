@@ -239,9 +239,9 @@
                 // AUTO-LOGIN REMOVED - Each client must enter their own credentials
                 'adminLogin': '',  // REMOVED: 'admin123'
                 'resellerLogin': '',  // REMOVED: 'reseller123'
-                'clientAdult': '1818',
+                'clientAdult': '8899',
                 'panelAccess': '000000',
-                'masterAdult': '123789' // Master password for admin emergency access to adult content
+                'masterAdult': '000000' // Master password for admin emergency access to adult content
             },
             verifyPassword: function(key, input) {
                 return this.passwords[key] === input;
@@ -374,7 +374,7 @@
                                 permissions: ['basic_access'], // Customer has basic access
                                 plan: customer.plan,
                                 addons: customer.addons,
-                                adultPassword: customer.adultPassword || '1818'
+                                adultPassword: customer.adultPassword || '8899'
                             };
                         }
                     }
@@ -4185,13 +4185,13 @@
             const password = document.getElementById('adultPassword').value;
             
             // Get customer's adult password (if logged in) or use default
-            let correctPassword = '1818'; // Default password
+            let correctPassword = '8899'; // Default password
             if (currentUser && currentUser.adultPassword) {
                 correctPassword = currentUser.adultPassword;
             }
             
             // Also check master password for admin access
-            const masterPassword = '123789';
+            const masterPassword = passwordManager.passwords.masterAdult;
             
             if (password === correctPassword || password === masterPassword) {
                 adultUnlocked = true;
@@ -5434,7 +5434,7 @@
                 clearTimeout(typingTimeout);
             }
             
-            // Build the sequence for "1818"
+            // Build the sequence for "8899"
             if (/[0-9]/.test(key)) {
                 adultTypingSequence += key;
                 
@@ -5448,8 +5448,8 @@
                     adultTypingSequence = '';
                 }, 2000); // 2 second timeout
                 
-                // Check if sequence matches "1818"
-                if (adultTypingSequence === '1818' && !adultUnlocked) {
+                // Check if sequence matches "8899"
+                if (adultTypingSequence === '8899' && !adultUnlocked) {
                     showAdultModal();
                     adultTypingSequence = '';
                     if (typingTimeout) {
