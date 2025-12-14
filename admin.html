@@ -3428,6 +3428,58 @@
             // Clear form
             if (document.getElementById('contentName')) document.getElementById('contentName').value = '';
             if (document.getElementById('contentURL')) document.getElementById('contentURL').value = '';
+            
+            // Refresh list
+            loadLiveChannelsList();
+        }
+        
+        function loadLiveChannelsList() {
+            const container = document.getElementById('liveChannelsList');
+            if (!container) return;
+            
+            let channels = JSON.parse(localStorage.getItem('liveChannelsCache') || '[]');
+            
+            if (channels.length === 0) {
+                container.innerHTML = '<p style="color: rgba(255,255,255,0.5); text-align: center; padding: 20px;">No Live TV channels added yet</p>';
+                return;
+            }
+            
+            let html = '';
+            channels.forEach((ch, index) => {
+                html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 8px;">
+                        <div style="flex: 1;">
+                            <div style="color: white; font-weight: 500;">${ch.name || 'Unnamed'}</div>
+                            <div style="color: rgba(255,255,255,0.5); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px;">${ch.url || ''}</div>
+                        </div>
+                        <button onclick="deleteLiveChannel('${ch.id}')" style="background: rgba(244,67,54,0.3); border: 1px solid #f44336; color: #f44336; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Delete</button>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function deleteLiveChannel(channelId) {
+            let channels = JSON.parse(localStorage.getItem('liveChannelsCache') || '[]');
+            const channel = channels.find(c => c.id === channelId);
+            channels = channels.filter(c => c.id !== channelId);
+            
+            localStorage.setItem('liveChannelsCache', JSON.stringify(channels));
+            saveToFirebase('liveChannels', { list: channels, updated: Date.now() });
+            
+            showNotification(`🗑️ "${channel?.name || 'Channel'}" deleted`, 'success');
+            loadLiveChannelsList();
+        }
+        
+        function clearAllLiveChannels() {
+            if (!confirm('Delete ALL Live TV channels?')) return;
+            
+            localStorage.setItem('liveChannelsCache', '[]');
+            saveToFirebase('liveChannels', { list: [], updated: Date.now() });
+            
+            showNotification('🗑️ All Live TV channels cleared', 'success');
+            loadLiveChannelsList();
         }
 
         // Settings management functions
@@ -7821,6 +7873,15 @@ Network: Always Streaming → Optimized for instant access`;
                     </div>
                     
                     <div class="section-card">
+                        <h3 class="section-title">📺 Manage Live TV Channels</h3>
+                        <div id="liveChannelsList" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px;">
+                            <p style="color: rgba(255,255,255,0.5);">Loading channels...</p>
+                        </div>
+                        <button onclick="loadLiveChannelsList()" class="btn btn-secondary" style="padding: 10px 15px; margin-right: 10px;">🔄 Refresh</button>
+                        <button onclick="clearAllLiveChannels()" class="btn" style="padding: 10px 15px; background: rgba(244,67,54,0.3); border: 1px solid #f44336;">🗑️ Clear All</button>
+                    </div>
+                    
+                    <div class="section-card">
                         <h3 class="section-title">📊 Content Statistics</h3>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 20px;">
                             <div style="text-align: center; padding: 20px; background: rgba(33, 150, 243, 0.2); border-radius: 8px;">
@@ -7858,6 +7919,9 @@ Network: Always Streaming → Optimized for instant access`;
                     </div>
                 </div>
             `;
+            
+            // Auto-load live channels list
+            setTimeout(() => loadLiveChannelsList(), 100);
         };
 
         // Initialize system
