@@ -3400,6 +3400,9 @@
             // Get existing channels
             let liveChannels = JSON.parse(localStorage.getItem('liveChannelsCache') || '[]');
             
+            // Get selected package
+            const packageType = document.getElementById('contentPackage')?.value || 'basic';
+            
             // Add new channel
             const newChannel = {
                 id: 'live_' + Date.now(),
@@ -3408,7 +3411,7 @@
                 type: 'hls',
                 url: url,
                 quality: quality,
-                package: type.toLowerCase().includes('sport') ? 'sports' : 'basic',
+                package: packageType,
                 logo: '',
                 addedAt: new Date().toISOString()
             };
