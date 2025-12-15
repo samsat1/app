@@ -3773,6 +3773,8 @@
                         updateUserInterface();
                         hideLoginModal();
                         showSuccess(`Welcome back, ${user.username}!`);
+                        // Refresh content from Firebase on login
+                        loadPlexLibraryContent();
                         return true;
                     }
                 }
@@ -3789,6 +3791,8 @@
                 updateUserInterface();
                 hideLoginModal();
                 showSuccess(`Welcome back, ${user.username}!`);
+                // Refresh content from Firebase on login
+                loadPlexLibraryContent();
                 return true;
             }
             
