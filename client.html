@@ -2045,6 +2045,12 @@
                     <button class="source-tab active" onclick="switchSource('live')" data-source="live">
                         📺 Live TV
                     </button>
+                    <button class="source-tab" onclick="switchSource('sports-live')" data-source="sports-live" id="sportsLiveTab" style="display: none;">
+                        ⚽ Sports TV
+                    </button>
+                    <button class="source-tab" onclick="switchSource('livetv-addon')" data-source="livetv-addon" id="liveTvAddonTab" style="display: none;">
+                        📡 TV Addon
+                    </button>
                     <button class="source-tab" onclick="switchSource('movies')" data-source="movies">
                         🎬 Movies
                     </button>
@@ -3329,9 +3335,14 @@
                 }
                 if (liveDoc.exists && liveDoc.data().list) {
                     const live = liveDoc.data().list;
-                    contentData.live.content = live;
+                    // Filter channels by package
+                    contentData.live.content = live.filter(ch => !ch.package || ch.package === 'basic');
+                    contentData['sports-live'].content = live.filter(ch => ch.package === 'sports');
+                    contentData['livetv-addon'].content = live.filter(ch => ch.package === 'livetv-addon');
                     localStorage.setItem('liveChannelsCache', JSON.stringify(live));
-                    console.log(`☁️ Loaded ${live.length} live channels from Firebase`);
+                    console.log(`☁️ Loaded ${live.length} live channels from Firebase (Basic: ${contentData.live.content.length}, Sports: ${contentData['sports-live'].content.length}, Addon: ${contentData['livetv-addon'].content.length})`);
+                    // Show/hide tabs based on content
+                    updateLiveTabs();
                 }
             } catch(e) { console.log('Firebase not available, using localStorage:', e.message); }
             
@@ -3666,8 +3677,18 @@
         const contentData = {
             live: {
                 name: 'Live TV',
-                content: [], // Channels loaded from Firebase/admin
+                content: [], // Channels loaded from Firebase/admin (basic package)
                 streamingMode: 'always-streaming' // Live TV always streams
+            },
+            'sports-live': {
+                name: 'Sports TV',
+                content: [], // Sports channels (sports addon)
+                streamingMode: 'always-streaming'
+            },
+            'livetv-addon': {
+                name: 'TV Addon',
+                content: [], // TV Addon channels
+                streamingMode: 'always-streaming'
             },
             movies: {
                 name: 'Movies',
@@ -4404,6 +4425,28 @@
         window.selectCategory = function(category) {
             currentCategory = category;
             renderContent();
+        }
+        
+        // Show/hide Live TV tabs based on content and user access
+        function updateLiveTabs() {
+            const sportsTab = document.getElementById('sportsLiveTab');
+            const tvAddonTab = document.getElementById('liveTvAddonTab');
+            
+            // Check if user has access to these packages
+            const hasSportsAccess = currentUser && (currentUser.role === 'admin' || 
+                (currentUser.addons && currentUser.addons.includes('Sports')) ||
+                (currentUser.packages && currentUser.packages.includes('sports')));
+            const hasTvAddonAccess = currentUser && (currentUser.role === 'admin' || 
+                (currentUser.addons && currentUser.addons.includes('TV Addon')) ||
+                (currentUser.packages && currentUser.packages.includes('livetv-addon')));
+            
+            // Show tabs if user has access AND there's content
+            if (sportsTab) {
+                sportsTab.style.display = (hasSportsAccess && contentData['sports-live'].content.length > 0) ? 'block' : 'none';
+            }
+            if (tvAddonTab) {
+                tvAddonTab.style.display = (hasTvAddonAccess && contentData['livetv-addon'].content.length > 0) ? 'block' : 'none';
+            }
         }
 
         function renderContent() {
