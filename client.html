@@ -6425,105 +6425,77 @@
         // TV Remote Navigation System
         const TVNav = {
             focusableSelectors: [
-                '.source-tab',
-                '.category-btn',
                 '.content-card',
                 '.video-card', 
                 '.package-card',
+                '.category-btn',
                 'button:not([disabled])',
                 'a[href]',
                 'input:not([disabled])',
-                '[onclick]',
-                '.user-status',
-                '.logout-btn',
-                '.control-btn',
-                '.btn-update',
-                '.btn-dismiss'
+                '.source-tab'
             ],
             currentIndex: 0,
             focusableElements: [],
             
             init: function() {
                 this.updateFocusableElements();
-                this.addTabIndex();
                 this.attachKeyboardListeners();
-                // Focus first element
-                if (this.focusableElements.length > 0) {
-                    this.focusElement(this.focusableElements[0]);
-                }
-                console.log('📺 TV Remote Navigation initialized - ' + this.focusableElements.length + ' elements');
-            },
-            
-            addTabIndex: function() {
-                this.focusableElements.forEach((el, i) => {
-                    if (!el.hasAttribute('tabindex')) {
-                        el.setAttribute('tabindex', '0');
-                    }
-                });
+                console.log('📺 TV Remote Navigation initialized');
             },
             
             updateFocusableElements: function() {
                 const selector = this.focusableSelectors.join(', ');
                 this.focusableElements = Array.from(document.querySelectorAll(selector))
-                    .filter(el => {
-                        const style = window.getComputedStyle(el);
-                        return el.offsetParent !== null && 
-                               style.display !== 'none' && 
-                               style.visibility !== 'hidden';
-                    });
-                this.addTabIndex();
+                    .filter(el => el.offsetParent !== null); // Only visible elements
             },
             
             attachKeyboardListeners: function() {
                 document.addEventListener('keydown', (e) => {
-                    const key = e.key;
-                    const keyCode = e.keyCode || e.which;
-                    
-                    // Debug - show key pressed
-                    console.log('📺 Key pressed:', key, 'Code:', keyCode);
-                    
-                    // Skip if typing in input (except Enter)
-                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-                        if (keyCode !== 13) return;
-                    }
-                    
                     this.updateFocusableElements();
                     
-                    // Handle by keyCode for TV compatibility
-                    // 37=Left, 38=Up, 39=Right, 40=Down, 13=Enter, 32=Space
-                    if (keyCode === 38 || key === 'ArrowUp') {
-                        e.preventDefault();
-                        this.navigate(-1);
-                    } else if (keyCode === 40 || key === 'ArrowDown') {
-                        e.preventDefault();
-                        this.navigate(1);
-                    } else if (keyCode === 37 || key === 'ArrowLeft') {
-                        e.preventDefault();
-                        this.navigate(-1);
-                    } else if (keyCode === 39 || key === 'ArrowRight') {
-                        e.preventDefault();
-                        this.navigate(1);
-                    } else if (keyCode === 13 || keyCode === 32 || key === 'Enter' || key === 'OK' || key === ' ') {
-                        const focused = this.focusableElements[this.currentIndex];
-                        if (focused && focused.tagName !== 'INPUT') {
+                    switch(e.key) {
+                        case 'ArrowUp':
                             e.preventDefault();
-                            console.log('📺 Clicking element:', focused);
-                            // Try multiple click methods
-                            if (typeof focused.onclick === 'function') {
-                                focused.onclick.call(focused, e);
+                            this.navigate('up');
+                            break;
+                        case 'ArrowDown':
+                            e.preventDefault();
+                            this.navigate('down');
+                            break;
+                        case 'ArrowLeft':
+                            e.preventDefault();
+                            this.navigate('left');
+                            break;
+                        case 'ArrowRight':
+                            e.preventDefault();
+                            this.navigate('right');
+                            break;
+                        case 'Enter':
+                        case 'OK':
+                            if (this.focusableElements[this.currentIndex]) {
+                                e.preventDefault();
+                                this.focusableElements[this.currentIndex].click();
                             }
-                            focused.click();
-                            // Also dispatch click event
-                            focused.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));
-                        }
+                            break;
                     }
                 });
             },
             
-            navigate: function(delta) {
+            navigate: function(direction) {
                 if (this.focusableElements.length === 0) return;
                 
-                this.currentIndex = (this.currentIndex + delta + this.focusableElements.length) % this.focusableElements.length;
+                const current = this.focusableElements[this.currentIndex];
+                const currentRect = current ? current.getBoundingClientRect() : {top: 0, left: 0};
+                
+                let nextIndex = this.currentIndex;
+                
+                if (direction === 'right' || direction === 'down') {
+                    nextIndex = (this.currentIndex + 1) % this.focusableElements.length;
+                } else if (direction === 'left' || direction === 'up') {
+                    nextIndex = (this.currentIndex - 1 + this.focusableElements.length) % this.focusableElements.length;
+                }
+                
+                this.currentIndex = nextIndex;
                 this.focusElement(this.focusableElements[this.currentIndex]);
             },
             
@@ -6531,20 +6503,20 @@
                 if (!element) return;
                 
                 // Remove focus from all
-                document.querySelectorAll('.tv-focused').forEach(el => el.classList.remove('tv-focused'));
+                this.focusableElements.forEach(el => el.classList.remove('tv-focused'));
                 
                 // Add focus to current
                 element.classList.add('tv-focused');
                 element.focus();
-                element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         };
         
         // Initialize when DOM is ready
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => setTimeout(() => TVNav.init(), 500));
+            document.addEventListener('DOMContentLoaded', () => TVNav.init());
         } else {
-            setTimeout(() => TVNav.init(), 500);
+            TVNav.init();
         }
         
         // Re-initialize on content changes
@@ -6552,9 +6524,6 @@
             TVNav.updateFocusableElements();
         });
         observer.observe(document.body, { childList: true, subtree: true });
-        
-        // Make TVNav globally accessible
-        window.TVNav = TVNav;
     })();
     </script>
 </body>
