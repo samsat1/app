@@ -4794,9 +4794,75 @@
                 return;
             }
             
-            // Use simplified HLS playback (same as addon movies)
-            console.log('📺 Playing live content:', content.name, content.url);
-            handleHLSStream(content.url);
+            // Detect LG WebOS, Samsung Tizen, or Safari - use native HLS playback
+            const isLGTV = navigator.userAgent.includes('Web0S') || navigator.userAgent.includes('webOS') || navigator.userAgent.includes('LG');
+            const isSamsungTV = navigator.userAgent.includes('Tizen') || navigator.userAgent.includes('Samsung');
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (isLGTV || isSamsungTV || isSafari || isMobile) {
+                console.log('📺 Using native HLS playback for TV/Mobile device');
+                const video = player.el().querySelector('video');
+                if (hls) {
+                    hls.destroy();
+                    hls = null;
+                }
+                video.src = content.url;
+                video.load();
+                video.play().catch(e => console.log('Autoplay blocked - tap to play'));
+                return;
+            }
+            
+            if (Hls.isSupported()) {
+                if (hls) {
+                    hls.destroy();
+                }
+                
+                hls = new Hls();
+                hls.loadSource(content.url);
+                hls.attachMedia(player.el().querySelector('video'));
+                
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    player.play().catch(e => {
+                        showError('Failed to start playback. Please try again.');
+                    });
+                });
+                
+                hls.on(Hls.Events.ERROR, (event, data) => {
+                    if (data.fatal) {
+                        switch (data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                console.log('🔄 Network error - attempting recovery...');
+                                hls.startLoad();
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                console.log('🔄 Media error - attempting recovery...');
+                                hls.recoverMediaError();
+                                break;
+                            default:
+                                console.log('🔄 Fatal error - reloading stream...');
+                                hls.destroy();
+                                setTimeout(() => {
+                                    playHlsContent(content);
+                                }, 2000);
+                                break;
+                        }
+                    }
+                });
+            } else if (player.tech().isSupported()) {
+                player.src({
+                    src: content.url,
+                    type: 'application/x-mpegURL'
+                });
+                
+                player.ready(() => {
+                    player.play().catch(e => {
+                        showError('Failed to start playback. Please try again.');
+                    });
+                });
+            } else {
+                showError('HLS is not supported in this browser');
+            }
         }
 
         // Show loading indicator for on-demand content
