@@ -6476,44 +6476,46 @@
             
             attachKeyboardListeners: function() {
                 document.addEventListener('keydown', (e) => {
-                    // Skip if typing in input
+                    const key = e.key;
+                    const keyCode = e.keyCode || e.which;
+                    
+                    // Debug - show key pressed
+                    console.log('📺 Key pressed:', key, 'Code:', keyCode);
+                    
+                    // Skip if typing in input (except Enter)
                     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-                        if (e.key !== 'Enter') return;
+                        if (keyCode !== 13) return;
                     }
                     
                     this.updateFocusableElements();
                     
-                    switch(e.key) {
-                        case 'ArrowUp':
+                    // Handle by keyCode for TV compatibility
+                    // 37=Left, 38=Up, 39=Right, 40=Down, 13=Enter, 32=Space
+                    if (keyCode === 38 || key === 'ArrowUp') {
+                        e.preventDefault();
+                        this.navigate(-1);
+                    } else if (keyCode === 40 || key === 'ArrowDown') {
+                        e.preventDefault();
+                        this.navigate(1);
+                    } else if (keyCode === 37 || key === 'ArrowLeft') {
+                        e.preventDefault();
+                        this.navigate(-1);
+                    } else if (keyCode === 39 || key === 'ArrowRight') {
+                        e.preventDefault();
+                        this.navigate(1);
+                    } else if (keyCode === 13 || keyCode === 32 || key === 'Enter' || key === 'OK' || key === ' ') {
+                        const focused = this.focusableElements[this.currentIndex];
+                        if (focused && focused.tagName !== 'INPUT') {
                             e.preventDefault();
-                            this.navigate(-1);
-                            break;
-                        case 'ArrowDown':
-                            e.preventDefault();
-                            this.navigate(1);
-                            break;
-                        case 'ArrowLeft':
-                            e.preventDefault();
-                            this.navigate(-1);
-                            break;
-                        case 'ArrowRight':
-                            e.preventDefault();
-                            this.navigate(1);
-                            break;
-                        case 'Enter':
-                        case 'OK':
-                        case ' ':
-                            const focused = this.focusableElements[this.currentIndex];
-                            if (focused && focused.tagName !== 'INPUT') {
-                                e.preventDefault();
-                                // Trigger onclick if exists
-                                if (focused.onclick) {
-                                    focused.onclick();
-                                } else {
-                                    focused.click();
-                                }
+                            console.log('📺 Clicking element:', focused);
+                            // Try multiple click methods
+                            if (typeof focused.onclick === 'function') {
+                                focused.onclick.call(focused, e);
                             }
-                            break;
+                            focused.click();
+                            // Also dispatch click event
+                            focused.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));
+                        }
                     }
                 });
             },
