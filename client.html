@@ -1936,6 +1936,27 @@
             margin: 10px 0;
             font-size: 14px;
         }
+        
+        /* TV Remote D-Pad Navigation Focus Styles */
+        .tv-focusable:focus,
+        .tv-focused {
+            outline: 4px solid #7c3aed !important;
+            outline-offset: 4px !important;
+            transform: scale(1.05);
+            transition: all 0.2s ease;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
+        }
+        
+        .content-card:focus,
+        .video-card:focus,
+        .package-card:focus,
+        .category-btn:focus,
+        button:focus {
+            outline: 4px solid #7c3aed !important;
+            outline-offset: 4px !important;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
+        }
     </style>
 
     <!-- Firebase SDK -->
@@ -4762,25 +4783,6 @@
 
         // Play HLS stream
         function handleHLSStream(url) {
-            // Detect LG WebOS, Samsung Tizen, or Safari - use native HLS playback
-            const isLGTV = navigator.userAgent.includes('Web0S') || navigator.userAgent.includes('webOS') || navigator.userAgent.includes('WebOS') || navigator.userAgent.includes('LG');
-            const isSamsungTV = navigator.userAgent.includes('Tizen') || navigator.userAgent.includes('Samsung');
-            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            
-            if (isLGTV || isSamsungTV || isSafari || isMobile) {
-                console.log('📺 handleHLSStream: Using native HLS for TV/Mobile');
-                const video = player.el().querySelector('video');
-                if (hls) {
-                    hls.destroy();
-                    hls = null;
-                }
-                video.src = url;
-                video.load();
-                video.play().catch(e => console.log('Autoplay blocked - tap to play'));
-                return;
-            }
-            
             if (Hls.isSupported()) {
                 if (hls) hls.destroy();
                 hls = new Hls();
@@ -6416,5 +6418,113 @@
     </style>
     <!-- Auto-sync enabled - no manual sync UI needed for customers -->
     <!-- Data syncs automatically on app startup from configured URL -->
+    
+    <!-- TV Remote D-Pad Navigation -->
+    <script>
+    (function() {
+        // TV Remote Navigation System
+        const TVNav = {
+            focusableSelectors: [
+                '.content-card',
+                '.video-card', 
+                '.package-card',
+                '.category-btn',
+                'button:not([disabled])',
+                'a[href]',
+                'input:not([disabled])',
+                '.source-tab'
+            ],
+            currentIndex: 0,
+            focusableElements: [],
+            
+            init: function() {
+                this.updateFocusableElements();
+                this.attachKeyboardListeners();
+                console.log('📺 TV Remote Navigation initialized');
+            },
+            
+            updateFocusableElements: function() {
+                const selector = this.focusableSelectors.join(', ');
+                this.focusableElements = Array.from(document.querySelectorAll(selector))
+                    .filter(el => el.offsetParent !== null); // Only visible elements
+            },
+            
+            attachKeyboardListeners: function() {
+                document.addEventListener('keydown', (e) => {
+                    this.updateFocusableElements();
+                    
+                    switch(e.key) {
+                        case 'ArrowUp':
+                            e.preventDefault();
+                            this.navigate('up');
+                            break;
+                        case 'ArrowDown':
+                            e.preventDefault();
+                            this.navigate('down');
+                            break;
+                        case 'ArrowLeft':
+                            e.preventDefault();
+                            this.navigate('left');
+                            break;
+                        case 'ArrowRight':
+                            e.preventDefault();
+                            this.navigate('right');
+                            break;
+                        case 'Enter':
+                        case 'OK':
+                            if (this.focusableElements[this.currentIndex]) {
+                                e.preventDefault();
+                                this.focusableElements[this.currentIndex].click();
+                            }
+                            break;
+                    }
+                });
+            },
+            
+            navigate: function(direction) {
+                if (this.focusableElements.length === 0) return;
+                
+                const current = this.focusableElements[this.currentIndex];
+                const currentRect = current ? current.getBoundingClientRect() : {top: 0, left: 0};
+                
+                let nextIndex = this.currentIndex;
+                
+                if (direction === 'right' || direction === 'down') {
+                    nextIndex = (this.currentIndex + 1) % this.focusableElements.length;
+                } else if (direction === 'left' || direction === 'up') {
+                    nextIndex = (this.currentIndex - 1 + this.focusableElements.length) % this.focusableElements.length;
+                }
+                
+                this.currentIndex = nextIndex;
+                this.focusElement(this.focusableElements[this.currentIndex]);
+            },
+            
+            focusElement: function(element) {
+                if (!element) return;
+                
+                // Remove focus from all
+                this.focusableElements.forEach(el => el.classList.remove('tv-focused'));
+                
+                // Add focus to current
+                element.classList.add('tv-focused');
+                element.focus();
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        };
+        
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => TVNav.init());
+        } else {
+            TVNav.init();
+        }
+        
+        // Re-initialize on content changes
+        const observer = new MutationObserver(() => {
+            TVNav.updateFocusableElements();
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    })();
+    </script>
 </body>
 </html>
