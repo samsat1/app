@@ -6425,77 +6425,103 @@
         // TV Remote Navigation System
         const TVNav = {
             focusableSelectors: [
+                '.source-tab',
+                '.category-btn',
                 '.content-card',
                 '.video-card', 
                 '.package-card',
-                '.category-btn',
                 'button:not([disabled])',
                 'a[href]',
                 'input:not([disabled])',
-                '.source-tab'
+                '[onclick]',
+                '.user-status',
+                '.logout-btn',
+                '.control-btn',
+                '.btn-update',
+                '.btn-dismiss'
             ],
             currentIndex: 0,
             focusableElements: [],
             
             init: function() {
                 this.updateFocusableElements();
+                this.addTabIndex();
                 this.attachKeyboardListeners();
-                console.log('📺 TV Remote Navigation initialized');
+                // Focus first element
+                if (this.focusableElements.length > 0) {
+                    this.focusElement(this.focusableElements[0]);
+                }
+                console.log('📺 TV Remote Navigation initialized - ' + this.focusableElements.length + ' elements');
+            },
+            
+            addTabIndex: function() {
+                this.focusableElements.forEach((el, i) => {
+                    if (!el.hasAttribute('tabindex')) {
+                        el.setAttribute('tabindex', '0');
+                    }
+                });
             },
             
             updateFocusableElements: function() {
                 const selector = this.focusableSelectors.join(', ');
                 this.focusableElements = Array.from(document.querySelectorAll(selector))
-                    .filter(el => el.offsetParent !== null); // Only visible elements
+                    .filter(el => {
+                        const style = window.getComputedStyle(el);
+                        return el.offsetParent !== null && 
+                               style.display !== 'none' && 
+                               style.visibility !== 'hidden';
+                    });
+                this.addTabIndex();
             },
             
             attachKeyboardListeners: function() {
                 document.addEventListener('keydown', (e) => {
+                    // Skip if typing in input
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                        if (e.key !== 'Enter') return;
+                    }
+                    
                     this.updateFocusableElements();
                     
                     switch(e.key) {
                         case 'ArrowUp':
                             e.preventDefault();
-                            this.navigate('up');
+                            this.navigate(-1);
                             break;
                         case 'ArrowDown':
                             e.preventDefault();
-                            this.navigate('down');
+                            this.navigate(1);
                             break;
                         case 'ArrowLeft':
                             e.preventDefault();
-                            this.navigate('left');
+                            this.navigate(-1);
                             break;
                         case 'ArrowRight':
                             e.preventDefault();
-                            this.navigate('right');
+                            this.navigate(1);
                             break;
                         case 'Enter':
                         case 'OK':
-                            if (this.focusableElements[this.currentIndex]) {
+                        case ' ':
+                            const focused = this.focusableElements[this.currentIndex];
+                            if (focused && focused.tagName !== 'INPUT') {
                                 e.preventDefault();
-                                this.focusableElements[this.currentIndex].click();
+                                // Trigger onclick if exists
+                                if (focused.onclick) {
+                                    focused.onclick();
+                                } else {
+                                    focused.click();
+                                }
                             }
                             break;
                     }
                 });
             },
             
-            navigate: function(direction) {
+            navigate: function(delta) {
                 if (this.focusableElements.length === 0) return;
                 
-                const current = this.focusableElements[this.currentIndex];
-                const currentRect = current ? current.getBoundingClientRect() : {top: 0, left: 0};
-                
-                let nextIndex = this.currentIndex;
-                
-                if (direction === 'right' || direction === 'down') {
-                    nextIndex = (this.currentIndex + 1) % this.focusableElements.length;
-                } else if (direction === 'left' || direction === 'up') {
-                    nextIndex = (this.currentIndex - 1 + this.focusableElements.length) % this.focusableElements.length;
-                }
-                
-                this.currentIndex = nextIndex;
+                this.currentIndex = (this.currentIndex + delta + this.focusableElements.length) % this.focusableElements.length;
                 this.focusElement(this.focusableElements[this.currentIndex]);
             },
             
@@ -6503,20 +6529,20 @@
                 if (!element) return;
                 
                 // Remove focus from all
-                this.focusableElements.forEach(el => el.classList.remove('tv-focused'));
+                document.querySelectorAll('.tv-focused').forEach(el => el.classList.remove('tv-focused'));
                 
                 // Add focus to current
                 element.classList.add('tv-focused');
                 element.focus();
-                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
             }
         };
         
         // Initialize when DOM is ready
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => TVNav.init());
+            document.addEventListener('DOMContentLoaded', () => setTimeout(() => TVNav.init(), 500));
         } else {
-            TVNav.init();
+            setTimeout(() => TVNav.init(), 500);
         }
         
         // Re-initialize on content changes
@@ -6524,6 +6550,9 @@
             TVNav.updateFocusableElements();
         });
         observer.observe(document.body, { childList: true, subtree: true });
+        
+        // Make TVNav globally accessible
+        window.TVNav = TVNav;
     })();
     </script>
 </body>
