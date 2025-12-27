@@ -4796,6 +4796,7 @@
             
             // Force native HLS for all non-desktop devices
             const useNative = isLGTV || isSamsungTV || isAndroidTV || isSafari || isMobile;
+            alert('DEBUG HLS: useNative=' + useNative + ', isAndroidTV=' + isAndroidTV + ', isMobile=' + isMobile);
             console.log('📺 Device detection:', {isLGTV, isSamsungTV, isAndroidTV, isSafari, isMobile, useNative, ua: navigator.userAgent});
             
             if (useNative) {
