@@ -4626,9 +4626,11 @@
             console.log('DEBUG: playContent called with ID:', contentId);
             
             if (!isLoggedIn) {
+                alert('DEBUG: NOT logged in!');
                 showError('Please login to start watching');
                 return;
             }
+            alert('DEBUG: Logged in, currentSource=' + currentSource);
             
             // Search in current source first, then fallback to movies/adult for Plex content
             let content = contentData[currentSource]?.content?.find(item => String(item.id) === String(contentId));
