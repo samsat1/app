@@ -4757,8 +4757,8 @@
                 }
                 // ID extraction working - removed debug
                 
-                // Force H.264/AAC transcoding for TV compatibility
-                const directStreamUrl = `${serverUrl}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${plexId}&mediaIndex=0&partIndex=0&protocol=hls&directPlay=0&directStream=0&videoCodec=h264&audioCodec=aac&X-Plex-Token=${token}`;
+                // Force full transcoding with compatible settings for Android TV
+                const directStreamUrl = `${serverUrl}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${plexId}&mediaIndex=0&partIndex=0&protocol=hls&directPlay=0&directStream=0&videoCodec=h264&videoResolution=1920x1080&maxVideoBitrate=8000&audioCodec=aac&audioBitrate=192&subtitleSize=100&X-Plex-Platform=Chrome&X-Plex-Token=${token}`;
                 handleHLSStream(directStreamUrl);
                 return;
                 
