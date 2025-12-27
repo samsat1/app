@@ -4702,7 +4702,13 @@
                     alert('DEBUG: Calling handleHLSContent');
                     handleHLSContent(content);
                 } else if (content.type === 'mp4') {
-                    handleMP4Content(content);
+                    // Check if it's Plex content - use transcoding
+                    if (content.sectionId || content.ratingKey || (content.id && content.id.toString().startsWith('PLEX'))) {
+                        alert('DEBUG: Plex content detected, using transcode');
+                        handlePlexContent(content);
+                    } else {
+                        handleMP4Content(content);
+                    }
                 } else {
                     showError('Unsupported content type: ' + content.type);
                 }
@@ -4715,7 +4721,12 @@
                     if (content.type === 'hls' || content.type === 'movies' || content.url?.includes('.m3u8')) {
                         handleHLSContent(content);
                     } else if (content.type === 'mp4') {
-                        handleMP4Content(content);
+                        // Check if it's Plex content - use transcoding
+                        if (content.sectionId || content.ratingKey || (content.id && content.id.toString().startsWith('PLEX'))) {
+                            handlePlexContent(content);
+                        } else {
+                            handleMP4Content(content);
+                        }
                     } else {
                         showError('Unsupported content type: ' + content.type);
                     }
