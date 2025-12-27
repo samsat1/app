@@ -4622,8 +4622,10 @@
 
         // Global function for playing content - defined early for onclick access
         window.playContent = function(contentId) {
+            try {
             alert('DEBUG: playContent called with ID: ' + contentId);
             console.log('DEBUG: playContent called with ID:', contentId);
+            alert('DEBUG: isLoggedIn = ' + isLoggedIn);
             
             if (!isLoggedIn) {
                 alert('DEBUG: NOT logged in!');
@@ -4718,6 +4720,9 @@
                         showError('Unsupported content type: ' + content.type);
                     }
                 }, 2000); // 2-second delay as specified
+            }
+            } catch(err) {
+                alert('DEBUG ERROR: ' + err.message);
             }
         }
 
