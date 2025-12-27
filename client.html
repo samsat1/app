@@ -4748,27 +4748,19 @@
             console.log('📺 Server:', serverUrl, 'Token:', token.substring(0, 8) + '...');
             
             try {
-                // Method 1: Try the stored HLS transcode URL directly (no fetch needed)
-                if (content.url && content.url.includes('transcode')) {
-                    // Fix any wrong 127.0.0.1 URLs in cached content
-                    let fixedUrl = content.url.replace('http://127.0.0.1:32400', serverUrl);
-                    console.log('✅ Using stored transcode URL (fixed)');
-                    handleHLSStream(fixedUrl);
-                    return;
-                }
-                
-                // Method 2: Construct direct playback URL (no fetch needed)
+                // Skip stored URL - always construct fresh URL with correct ID
                 // Extract numeric ID from content.id (format: PLEX_sectionId_ratingKey)
                 let plexId = content.ratingKey || content.id;
                 if (typeof plexId === 'string' && plexId.toLowerCase().includes('plex')) {
                     const parts = plexId.split('_');
-                    plexId = parts[parts.length - 1]; // Get last part (the ratingKey)
+                    plexId = parts[parts.length - 1];
                 }
-                alert('DEBUG Plex ID: ' + plexId);
-                const directStreamUrl = `${serverUrl}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${plexId}&mediaIndex=0&partIndex=0&protocol=hls&fastSeek=1&directPlay=0&directStream=1&X-Plex-Token=${token}`;
+                alert('DEBUG: Plex numeric ID = ' + plexId);
                 
-                console.log('✅ Playing via transcode URL:', directStreamUrl);
+                const directStreamUrl = `${serverUrl}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${plexId}&mediaIndex=0&partIndex=0&protocol=hls&fastSeek=1&directPlay=0&directStream=1&X-Plex-Token=${token}`;
+                alert('DEBUG: Transcode URL = ' + directStreamUrl.substring(0, 80) + '...');
                 handleHLSStream(directStreamUrl);
+                return;
                 
             } catch (error) {
                 console.error('Plex playback error:', error);
