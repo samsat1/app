@@ -4818,31 +4818,26 @@
         }
         
         function handleHLSContent(content) {
-            // Check if it's Plex content - use direct MP4 instead of HLS transcode
-            // sectionId is a Plex-specific property that indicates this is Plex content
-            if (content.sectionId) {
-                console.log('🎬 Detected Plex content, redirecting to direct playback...');
+            // Check if it's Plex content - use direct MP4
+            if (content.sectionId || content.ratingKey || (content.id && String(content.id).toUpperCase().includes('PLEX'))) {
                 handlePlexContent(content);
                 return;
             }
             
-            // Detect TV devices and mobile - use native HLS playback
-            const isLGTV = navigator.userAgent.includes('Web0S') || navigator.userAgent.includes('webOS') || navigator.userAgent.includes('LG');
-            const isSamsungTV = navigator.userAgent.includes('Tizen') || navigator.userAgent.includes('Samsung');
-            const isAndroidTV = navigator.userAgent.includes('Android') && (navigator.userAgent.includes('TV') || navigator.userAgent.includes('GoogleTV') || navigator.userAgent.includes('Chromecast') || navigator.userAgent.includes('AFT'));
+            // Only use native HLS for devices with TRUE native support
+            // LG webOS, Samsung Tizen, Safari, iOS have native HLS
+            // Android TV / Google TV does NOT - must use hls.js
+            const isLGTV = navigator.userAgent.includes('Web0S') || navigator.userAgent.includes('webOS');
+            const isSamsungTV = navigator.userAgent.includes('Tizen');
             const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
             
-            if (isLGTV || isSamsungTV || isAndroidTV || isSafari || isMobile) {
-                console.log('📺 Using native HLS playback for TV/Mobile device');
+            if (isLGTV || isSamsungTV || isSafari || isiOS) {
                 const video = player.el().querySelector('video');
-                if (hls) {
-                    hls.destroy();
-                    hls = null;
-                }
+                if (hls) { hls.destroy(); hls = null; }
                 video.src = content.url;
                 video.load();
-                video.play().catch(e => console.log('Autoplay blocked - tap to play'));
+                video.play().catch(e => console.log('Tap to play'));
                 return;
             }
             
