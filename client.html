@@ -4971,15 +4971,15 @@
 
         // Handle MP4 content playback
         function handleMP4Content(content) {
-            player.src({
-                src: content.url,
-                type: 'video/mp4'
-            });
+            alert('DEBUG MP4: URL=' + content.url);
             
-            player.ready(() => {
-                player.play().catch(e => {
-                    showError('Failed to start playback. Please try again.');
-                });
+            // Use native video for TV compatibility
+            const video = player.el().querySelector('video');
+            video.src = content.url;
+            video.load();
+            video.play().catch(e => {
+                alert('DEBUG MP4 Error: ' + e.message);
+                showError('Playback failed: ' + e.message);
             });
         }
 
