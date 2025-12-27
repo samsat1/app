@@ -4646,9 +4646,11 @@
             }
             
             if (!content) {
+                alert('DEBUG: Content NOT FOUND for ID: ' + contentId);
                 console.log('❌ Content not found:', contentId);
                 return;
             }
+            alert('DEBUG: Content found: ' + content.name);
             
             // If content is a package, show package details instead of trying to play
             if (content.type === 'package') {
@@ -4659,10 +4661,12 @@
             
             // Check package authentication access
             if (!clientPackageAuth.canAccessContent(content)) {
+                alert('DEBUG: Access DENIED - package auth failed');
                 console.log('🔒 Content access denied - package authentication required:', content.name);
                 showUpgradePrompt(contentId);
                 return;
             }
+            alert('DEBUG: Access granted, continuing...');
             
             // Check adult content access
             if (content.adult || content.category === 'adult') {
