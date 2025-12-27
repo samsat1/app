@@ -4796,19 +4796,19 @@
             
             // Force native HLS for all non-desktop devices
             const useNative = isLGTV || isSamsungTV || isAndroidTV || isSafari || isMobile;
-            alert('DEBUG HLS: useNative=' + useNative + ', isAndroidTV=' + isAndroidTV + ', isMobile=' + isMobile);
-            console.log('📺 Device detection:', {isLGTV, isSamsungTV, isAndroidTV, isSafari, isMobile, useNative, ua: navigator.userAgent});
+            // Detection working - removed debug alerts
             
             if (useNative) {
-                console.log('📺 handleHLSStream: Using native HLS for TV/Mobile, URL:', url);
                 const video = player.el().querySelector('video');
                 if (hls) { hls.destroy(); hls = null; }
+                video.onerror = function() {
+                    const errCode = video.error ? video.error.code : 'none';
+                    const errMsg = video.error ? video.error.message : 'Unknown error';
+                    alert('VIDEO LOAD ERROR code=' + errCode + ': ' + errMsg);
+                };
                 video.src = url;
                 video.load();
-                video.play().catch(e => {
-                    console.log('Play error:', e);
-                    alert('Play error: ' + e.message + '\nURL: ' + url);
-                });
+                video.play().catch(e => alert('PLAY ERROR: ' + e.message));
                 return;
             }
             
