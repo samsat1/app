@@ -4622,6 +4622,9 @@
 
         // Global function for playing content - defined early for onclick access
         window.playContent = function(contentId) {
+            alert('DEBUG: playContent called with ID: ' + contentId);
+            console.log('DEBUG: playContent called with ID:', contentId);
+            
             if (!isLoggedIn) {
                 showError('Please login to start watching');
                 return;
