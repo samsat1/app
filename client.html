@@ -4729,7 +4729,14 @@
                     plexId = parts[parts.length - 1];
                 }
                 
-                // Try to get direct file URL from Plex metadata
+                // If running in Android app, use HLS transcode directly
+                if (typeof AndroidPlayer !== 'undefined') {
+                    const hlsUrl = `${CORRECT_SERVER}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${plexId}&mediaIndex=0&partIndex=0&protocol=hls&directPlay=0&directStream=1&videoCodec=h264&audioCodec=aac&X-Plex-Token=${token}`;
+                    AndroidPlayer.play(hlsUrl, content.name || 'Movie');
+                    return;
+                }
+                
+                // For web browsers - try direct file first
                 let streamUrl = null;
                 try {
                     const metaUrl = `${CORRECT_SERVER}/library/metadata/${plexId}?X-Plex-Token=${token}`;
@@ -4737,7 +4744,6 @@
                     const data = await resp.json();
                     const part = data?.MediaContainer?.Metadata?.[0]?.Media?.[0]?.Part?.[0];
                     if (part?.key) {
-                        // Direct file URL - works best with native players
                         streamUrl = `${CORRECT_SERVER}${part.key}?X-Plex-Token=${token}`;
                     }
                 } catch(e) {
@@ -4747,12 +4753,6 @@
                 // Fallback to HLS transcode
                 if (!streamUrl) {
                     streamUrl = `${CORRECT_SERVER}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${plexId}&mediaIndex=0&partIndex=0&protocol=hls&directPlay=0&directStream=1&videoCodec=h264&audioCodec=aac&X-Plex-Token=${token}`;
-                }
-                
-                // If running in Android app, use native player
-                if (typeof AndroidPlayer !== 'undefined') {
-                    AndroidPlayer.play(streamUrl, content.name || 'Movie');
-                    return;
                 }
                 
                 // For web browsers
@@ -4852,7 +4852,6 @@
             
             // If running in Android app, use native player for non-Plex HLS
             if (typeof AndroidPlayer !== 'undefined') {
-                alert('DEBUG: Playing URL: ' + content.url);
                 AndroidPlayer.play(content.url, content.name || 'Video');
                 return;
             }
