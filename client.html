@@ -4852,6 +4852,7 @@
             
             // If running in Android app, use native player for non-Plex HLS
             if (typeof AndroidPlayer !== 'undefined') {
+                alert('DEBUG: Playing URL: ' + content.url);
                 AndroidPlayer.play(content.url, content.name || 'Video');
                 return;
             }
