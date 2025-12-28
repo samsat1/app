@@ -4717,46 +4717,20 @@
             }
         }
 
-        // Handle Plex content - fetch direct MP4 URL
+        // Handle Plex content
         async function handlePlexContent(content) {
-            // ALWAYS use correct server URL - never use 127.0.0.1
             const CORRECT_SERVER = 'http://192.168.1.100:32400';
             const token = content.plexToken || localStorage.getItem('plexToken') || 'xcak2s6WSj7hzAinAigm';
-            const serverUrl = CORRECT_SERVER; // Force correct server
-            
-            console.log('📺 Playing Plex content:', content.name);
-            console.log('📺 Server:', serverUrl, 'Token:', token.substring(0, 8) + '...');
             
             try {
-                // Extract numeric ID from content.id (format: PLEX_sectionId_ratingKey)
                 let plexId = content.ratingKey || content.id;
                 if (typeof plexId === 'string' && plexId.toLowerCase().includes('plex')) {
                     const parts = plexId.split('_');
                     plexId = parts[parts.length - 1];
                 }
                 
-                // Try direct stream first (no transcoding) - better quality
-                const directUrl = `${serverUrl}/library/metadata/${plexId}?X-Plex-Token=${token}`;
-                
-                // Fetch media info to get direct file path
-                let streamUrl;
-                try {
-                    const response = await fetch(directUrl, { headers: { 'Accept': 'application/json' } });
-                    const data = await response.json();
-                    const media = data?.MediaContainer?.Metadata?.[0]?.Media?.[0];
-                    const part = media?.Part?.[0];
-                    if (part?.key) {
-                        // Use direct stream
-                        streamUrl = `${serverUrl}${part.key}?X-Plex-Token=${token}`;
-                    }
-                } catch(e) {
-                    console.log('Direct stream failed, using transcode');
-                }
-                
-                // Fallback to transcode if direct stream not available
-                if (!streamUrl) {
-                    streamUrl = `${serverUrl}/video/:/transcode/universal/start.mp4?path=%2Flibrary%2Fmetadata%2F${plexId}&mediaIndex=0&partIndex=0&protocol=http&directPlay=0&directStream=1&videoCodec=h264&audioCodec=aac&X-Plex-Token=${token}`;
-                }
+                // Use HLS transcode - works on all devices including Android/LG
+                const streamUrl = `${CORRECT_SERVER}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${plexId}&mediaIndex=0&partIndex=0&protocol=hls&directPlay=0&directStream=1&videoCodec=h264&audioCodec=aac&X-Plex-Token=${token}`;
                 
                 // If running in Android app, use native player
                 if (typeof AndroidPlayer !== 'undefined') {
@@ -4764,17 +4738,13 @@
                     return;
                 }
                 
-                // Play as MP4 directly
-                const video = player.el().querySelector('video');
-                video.src = streamUrl;
-                video.load();
-                video.play().catch(e => showError('Playback failed'));
+                // For web browsers, use HLS.js or native
+                handleHLSStream(streamUrl, content.name);
                 updateNowPlaying(content);
-                return;
                 
             } catch (error) {
                 console.error('Plex playback error:', error);
-                showError('Failed to load content: ' + error.message);
+                showError('Failed to load content');
             }
         }
         
