@@ -4830,15 +4830,15 @@
         }
         
         function handleHLSContent(content) {
-            // If running in Android app, use native player
-            if (typeof AndroidPlayer !== 'undefined') {
-                AndroidPlayer.play(content.url, content.name || 'Video');
+            // Check if it's Plex content FIRST - needs special URL handling
+            if (content.sectionId || content.ratingKey || (content.id && String(content.id).toUpperCase().includes('PLEX'))) {
+                handlePlexContent(content);
                 return;
             }
             
-            // Check if it's Plex content - use direct MP4
-            if (content.sectionId || content.ratingKey || (content.id && String(content.id).toUpperCase().includes('PLEX'))) {
-                handlePlexContent(content);
+            // If running in Android app, use native player for non-Plex HLS
+            if (typeof AndroidPlayer !== 'undefined') {
+                AndroidPlayer.play(content.url, content.name || 'Video');
                 return;
             }
             
