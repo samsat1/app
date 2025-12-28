@@ -4735,8 +4735,28 @@
                     plexId = parts[parts.length - 1];
                 }
                 
-                // Use HTTP progressive download (MP4) instead of HLS - works on all TVs
-                const streamUrl = `${serverUrl}/video/:/transcode/universal/start.mp4?path=%2Flibrary%2Fmetadata%2F${plexId}&mediaIndex=0&partIndex=0&protocol=http&directPlay=0&directStream=0&videoCodec=h264&audioCodec=aac&X-Plex-Token=${token}`;
+                // Try direct stream first (no transcoding) - better quality
+                const directUrl = `${serverUrl}/library/metadata/${plexId}?X-Plex-Token=${token}`;
+                
+                // Fetch media info to get direct file path
+                let streamUrl;
+                try {
+                    const response = await fetch(directUrl, { headers: { 'Accept': 'application/json' } });
+                    const data = await response.json();
+                    const media = data?.MediaContainer?.Metadata?.[0]?.Media?.[0];
+                    const part = media?.Part?.[0];
+                    if (part?.key) {
+                        // Use direct stream
+                        streamUrl = `${serverUrl}${part.key}?X-Plex-Token=${token}`;
+                    }
+                } catch(e) {
+                    console.log('Direct stream failed, using transcode');
+                }
+                
+                // Fallback to transcode if direct stream not available
+                if (!streamUrl) {
+                    streamUrl = `${serverUrl}/video/:/transcode/universal/start.mp4?path=%2Flibrary%2Fmetadata%2F${plexId}&mediaIndex=0&partIndex=0&protocol=http&directPlay=0&directStream=1&videoCodec=h264&audioCodec=aac&X-Plex-Token=${token}`;
+                }
                 
                 // If running in Android app, use native player
                 if (typeof AndroidPlayer !== 'undefined') {
