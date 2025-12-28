@@ -4738,6 +4738,12 @@
                 // Use HTTP progressive download (MP4) instead of HLS - works on all TVs
                 const streamUrl = `${serverUrl}/video/:/transcode/universal/start.mp4?path=%2Flibrary%2Fmetadata%2F${plexId}&mediaIndex=0&partIndex=0&protocol=http&directPlay=0&directStream=0&videoCodec=h264&audioCodec=aac&X-Plex-Token=${token}`;
                 
+                // If running in Android app, use native player
+                if (typeof AndroidPlayer !== 'undefined') {
+                    AndroidPlayer.play(streamUrl, content.name || 'Movie');
+                    return;
+                }
+                
                 // Play as MP4 directly
                 const video = player.el().querySelector('video');
                 video.src = streamUrl;
@@ -4770,7 +4776,13 @@
         }
 
         // Play HLS stream
-        function handleHLSStream(url) {
+        function handleHLSStream(url, title) {
+            // If running in Android app, use native player
+            if (typeof AndroidPlayer !== 'undefined') {
+                AndroidPlayer.play(url, title || 'Live TV');
+                return;
+            }
+            
             // Only use native HLS for devices that support it natively
             // LG webOS, Samsung Tizen, Safari, iOS - have native HLS
             // Android TV / Google TV - does NOT have native HLS, must use hls.js
@@ -4818,6 +4830,12 @@
         }
         
         function handleHLSContent(content) {
+            // If running in Android app, use native player
+            if (typeof AndroidPlayer !== 'undefined') {
+                AndroidPlayer.play(content.url, content.name || 'Video');
+                return;
+            }
+            
             // Check if it's Plex content - use direct MP4
             if (content.sectionId || content.ratingKey || (content.id && String(content.id).toUpperCase().includes('PLEX'))) {
                 handlePlexContent(content);
