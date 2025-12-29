@@ -4762,6 +4762,11 @@
 
         // Play HLS stream
         function handleHLSStream(url) {
+            // Android APK native player
+            if (typeof AndroidPlayer !== 'undefined') {
+                AndroidPlayer.play(url, 'Live TV');
+                return;
+            }
             if (Hls.isSupported()) {
                 if (hls) hls.destroy();
                 hls = new Hls();
@@ -6447,6 +6452,12 @@
         
         // Enhanced stream loading with HLS support for browsers/TVs
         window.loadStreamEnhanced = function(streamUrl, contentName) {
+            // Android APK native player support
+            if (typeof AndroidPlayer !== 'undefined') {
+                console.log('📱 Using Android native player');
+                AndroidPlayer.play(streamUrl, contentName || 'Stream');
+                return;
+            }
             console.log('📺 Loading stream:', streamUrl);
             
             const videoElement = document.getElementById('mainVideo');
