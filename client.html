@@ -4762,10 +4762,6 @@
 
         // Play HLS stream
         function handleHLSStream(url) {
-            // Use native Android player if available
-                console.log('📱 Android: Using native ExoPlayer');
-                return;
-            }
             if (Hls.isSupported()) {
                 if (hls) hls.destroy();
                 hls = new Hls();
@@ -6451,10 +6447,6 @@
         
         // Enhanced stream loading with HLS support for browsers/TVs
         window.loadStreamEnhanced = function(streamUrl, contentName) {
-            // Use native Android player if available
-                console.log('📱 Android: Using native ExoPlayer');
-                return;
-            }
             console.log('📺 Loading stream:', streamUrl);
             
             const videoElement = document.getElementById('mainVideo');
