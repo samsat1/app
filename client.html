@@ -3402,7 +3402,7 @@
             if (localStorage.getItem('plexServerUrl') === 'http://127.0.0.1:32400') {
                 localStorage.removeItem('plexServerUrl');
             }
-            const plexServerUrl = localStorage.getItem('plexServerUrl') || 'http://192.168.2.100:32400';
+            const plexServerUrl = localStorage.getItem('plexServerUrl') || 'http://192.168.1.100:32400';
             const plexToken = localStorage.getItem('plexToken') || localStorage.getItem('plexAutoToken') || 'xcak2s6WSj7hzAinAigm';
             const storedLibraries = localStorage.getItem('plexLibraries');
             
@@ -4713,7 +4713,7 @@
         // Handle Plex content - fetch direct MP4 URL
         async function handlePlexContent(content) {
             // ALWAYS use correct server URL - never use 127.0.0.1
-            const CORRECT_SERVER = 'http://192.168.2.100:32400';
+            const CORRECT_SERVER = 'http://192.168.1.100:32400';
             const token = content.plexToken || localStorage.getItem('plexToken') || 'xcak2s6WSj7hzAinAigm';
             const serverUrl = CORRECT_SERVER; // Force correct server
             
