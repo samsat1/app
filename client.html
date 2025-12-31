@@ -6448,6 +6448,12 @@
         
         // Enhanced stream loading with HLS support for browsers/TVs
         window.loadStreamEnhanced = function(streamUrl, contentName) {
+            // Use Android native player if available
+            if (typeof AndroidPlayer !== 'undefined') {
+                console.log('📱 Android: Using native player for:', streamUrl);
+                AndroidPlayer.play(streamUrl, contentName || 'Stream');
+                return;
+            }
             console.log('📺 Loading stream:', streamUrl);
             
             const videoElement = document.getElementById('mainVideo');
