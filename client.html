@@ -4762,6 +4762,7 @@
 
         // Play HLS stream
         function handleHLSStream(url) {
+            if (typeof AndroidPlayer !== 'undefined') { AndroidPlayer.play(url, currentContent ? currentContent.name : 'Stream'); return; }
             if (Hls.isSupported()) {
                 if (hls) hls.destroy();
                 hls = new Hls();
