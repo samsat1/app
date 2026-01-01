@@ -4824,10 +4824,10 @@
         }
         
         function handleHLSContent(content) {
-            // On Android app: WebView can't play HLS, so always use native player
-            if (typeof AndroidPlayer !== 'undefined') {
-                console.log('📱 Android detected: Using native libVLC player');
-                AndroidPlayer.play(content.url, content.name || 'Stream');
+            // On Android: Use native preview player
+            if (typeof AndroidPlayer !== 'undefined' && typeof AndroidPlayer.preview === 'function') {
+                console.log('📱 Android: Playing in native preview');
+                AndroidPlayer.preview(content.url, content.name || 'Stream');
                 return;
             }
             
@@ -4975,10 +4975,10 @@
 
         // Handle MP4 content playback
         function handleMP4Content(content) {
-            // On Android app: Use native player for better compatibility
-            if (typeof AndroidPlayer !== 'undefined') {
-                console.log('📱 Android detected: Using native libVLC player for MP4');
-                AndroidPlayer.play(content.url, content.name || 'Video');
+            // On Android: Use native preview player
+            if (typeof AndroidPlayer !== 'undefined' && typeof AndroidPlayer.preview === 'function') {
+                console.log('📱 Android: Playing MP4 in native preview');
+                AndroidPlayer.preview(content.url, content.name || 'Video');
                 return;
             }
             
@@ -6111,10 +6111,50 @@
                             break;
                     }
                     
-                    // LG webOS Magic Remote specific key codes
-                    // Also Samsung Tizen remote codes
+                    // Android D-pad, LG webOS, Samsung Tizen key codes
                     const keyCode = e.keyCode || e.which;
                     switch(keyCode) {
+                        // Android D-pad
+                        case 19:  // DPAD_UP
+                            e.preventDefault();
+                            if (typeof currentContent !== 'undefined' && currentContent) {
+                                this.channelUp();
+                            } else {
+                                this.moveFocus('up');
+                            }
+                            break;
+                        case 20:  // DPAD_DOWN
+                            e.preventDefault();
+                            if (typeof currentContent !== 'undefined' && currentContent) {
+                                this.channelDown();
+                            } else {
+                                this.moveFocus('down');
+                            }
+                            break;
+                        case 21:  // DPAD_LEFT
+                            e.preventDefault();
+                            if (typeof currentContent !== 'undefined' && currentContent) {
+                                const video = document.querySelector('video');
+                                if (video) video.volume = Math.max(0, video.volume - 0.1);
+                            } else {
+                                this.moveFocus('left');
+                            }
+                            break;
+                        case 22:  // DPAD_RIGHT
+                            e.preventDefault();
+                            if (typeof currentContent !== 'undefined' && currentContent) {
+                                const video = document.querySelector('video');
+                                if (video) video.volume = Math.min(1, video.volume + 0.1);
+                            } else {
+                                this.moveFocus('right');
+                            }
+                            break;
+                        case 23:  // DPAD_CENTER / OK
+                        case 66:  // ENTER
+                            e.preventDefault();
+                            const focused = document.querySelector('.tv-focused') || document.activeElement;
+                            if (focused) focused.click();
+                            break;
                         case 461:  // LG Back button
                         case 10009: // Samsung Tizen Back
                             e.preventDefault();
