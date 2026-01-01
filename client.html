@@ -4787,6 +4787,13 @@
         }
         
         function handleHLSContent(content) {
+            // Use Android native player if available (for Android TV sticks with libVLC)
+            if (typeof AndroidPlayer !== 'undefined') {
+                console.log('📱 Android: Using native libVLC player for:', content.url);
+                AndroidPlayer.play(content.url, content.name || 'Stream');
+                return;
+            }
+            
             // Check if it's Plex content - use direct MP4 instead of HLS transcode
             // sectionId is a Plex-specific property that indicates this is Plex content
             if (content.sectionId) {
@@ -4931,6 +4938,13 @@
 
         // Handle MP4 content playback
         function handleMP4Content(content) {
+            // Use Android native player if available
+            if (typeof AndroidPlayer !== 'undefined') {
+                console.log('📱 Android: Using native libVLC player for MP4:', content.url);
+                AndroidPlayer.play(content.url, content.name || 'Video');
+                return;
+            }
+            
             player.src({
                 src: content.url,
                 type: 'video/mp4'
