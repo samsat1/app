@@ -1082,12 +1082,22 @@
         .video-container {
             width: 100%;
             height: 500px;
-            background: #000;
+            background: #000 !important;
             border-radius: 15px;
             position: relative;
             overflow: hidden;
             margin-bottom: 25px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            /* Force black background on Android WebView */
+            -webkit-backface-visibility: hidden;
+        }
+        
+        /* Fix Video.js styling for Android */
+        .video-js .vjs-tech {
+            background: #000 !important;
+        }
+        .video-js .vjs-poster {
+            background-color: #000 !important;
         }
 
         .video-player {
@@ -4814,9 +4824,12 @@
         }
         
         function handleHLSContent(content) {
-            // Use Android native player if available (for Android TV sticks with libVLC)
-            // Single click plays in preview - AndroidPlayer only on double-click
-            // (handled by playContentFullscreen function)
+            // On Android app: WebView can't play HLS, so always use native player
+            if (typeof AndroidPlayer !== 'undefined') {
+                console.log('📱 Android detected: Using native libVLC player');
+                AndroidPlayer.play(content.url, content.name || 'Stream');
+                return;
+            }
             
             // Check if it's Plex content - use direct MP4 instead of HLS transcode
             // sectionId is a Plex-specific property that indicates this is Plex content
@@ -4962,7 +4975,13 @@
 
         // Handle MP4 content playback
         function handleMP4Content(content) {
-            // Single click plays in preview - AndroidPlayer only on double-click
+            // On Android app: Use native player for better compatibility
+            if (typeof AndroidPlayer !== 'undefined') {
+                console.log('📱 Android detected: Using native libVLC player for MP4');
+                AndroidPlayer.play(content.url, content.name || 'Video');
+                return;
+            }
+            
             player.src({
                 src: content.url,
                 type: 'video/mp4'
