@@ -4573,7 +4573,7 @@
                     (item.type === 'package' ? `showPackageDetails('${item.packageId}')` : `playContent('${item.id}')`);
                 
                 return `
-                    <div class="${className} ${isLocked ? 'locked-content' : ''}" tabindex="0" onclick="${clickAction}" onkeydown="if(event.key==='Enter'){${clickAction}}">
+                    <div class="${className} ${isLocked ? 'locked-content' : ''}" tabindex="0" onclick="${clickAction}" ondblclick="playContentFullscreen('${item.id}')" onkeydown="if(event.key==='Enter'){${clickAction}}">
                         <div class="content-type-badge ${typeBadge}">${isAdult ? '🔞 ADULT' : contentType}</div>
                         ${isLocked ? '<div class="lock-overlay"><div class="lock-icon">🔒</div></div>' : ''}
                         <div class="content-header">
@@ -4708,6 +4708,26 @@
             }
         }
 
+        // Play content in fullscreen (native player) - triggered by double-click
+        window.playContentFullscreen = function(contentId) {
+            // Find content
+            let content = contentData[currentSource]?.content?.find(item => String(item.id) === String(contentId));
+            if (!content && contentData.movies?.content) {
+                content = contentData.movies.content.find(item => String(item.id) === String(contentId));
+            }
+            if (!content && contentData.adult?.content) {
+                content = contentData.adult.content.find(item => String(item.id) === String(contentId));
+            }
+            
+            if (content && content.url && typeof AndroidPlayer !== 'undefined') {
+                console.log('📺 Double-click: Opening fullscreen player for:', content.name);
+                AndroidPlayer.play(content.url, content.name || 'Stream');
+            } else if (content && player) {
+                // Fallback: use Video.js fullscreen
+                player.requestFullscreen();
+            }
+        }
+
         // Handle Plex content - fetch direct MP4 URL
         async function handlePlexContent(content) {
             // ALWAYS use correct server URL - never use 127.0.0.1
@@ -4786,11 +4806,8 @@
         
         function handleHLSContent(content) {
             // Use Android native player if available (for Android TV sticks with libVLC)
-            if (typeof AndroidPlayer !== 'undefined') {
-                console.log('📱 Android: Using native libVLC player for:', content.url);
-                AndroidPlayer.play(content.url, content.name || 'Stream');
-                return;
-            }
+            // Single click plays in preview - AndroidPlayer only on double-click
+            // (handled by playContentFullscreen function)
             
             // Check if it's Plex content - use direct MP4 instead of HLS transcode
             // sectionId is a Plex-specific property that indicates this is Plex content
@@ -4936,13 +4953,7 @@
 
         // Handle MP4 content playback
         function handleMP4Content(content) {
-            // Use Android native player if available
-            if (typeof AndroidPlayer !== 'undefined') {
-                console.log('📱 Android: Using native libVLC player for MP4:', content.url);
-                AndroidPlayer.play(content.url, content.name || 'Video');
-                return;
-            }
-            
+            // Single click plays in preview - AndroidPlayer only on double-click
             player.src({
                 src: content.url,
                 type: 'video/mp4'
@@ -5977,10 +5988,12 @@
                         case 'ArrowLeft':
                             e.preventDefault();
                             // If video playing, volume down
-                            if (typeof currentContent !== 'undefined' && currentContent && player) {
-                                const newVol = Math.max(0, player.volume() - 0.1);
-                                player.volume(newVol);
-                                console.log('🔉 Volume:', Math.round(newVol * 100) + '%');
+                            if (typeof currentContent !== 'undefined' && currentContent) {
+                                const video = document.querySelector('video');
+                                if (video) {
+                                    video.volume = Math.max(0, video.volume - 0.1);
+                                    console.log('🔉 Volume:', Math.round(video.volume * 100) + '%');
+                                }
                             } else {
                                 this.moveFocus('left');
                             }
@@ -5988,10 +6001,12 @@
                         case 'ArrowRight':
                             e.preventDefault();
                             // If video playing, volume up
-                            if (typeof currentContent !== 'undefined' && currentContent && player) {
-                                const newVol = Math.min(1, player.volume() + 0.1);
-                                player.volume(newVol);
-                                console.log('🔊 Volume:', Math.round(newVol * 100) + '%');
+                            if (typeof currentContent !== 'undefined' && currentContent) {
+                                const video = document.querySelector('video');
+                                if (video) {
+                                    video.volume = Math.min(1, video.volume + 0.1);
+                                    console.log('🔊 Volume:', Math.round(video.volume * 100) + '%');
+                                }
                             } else {
                                 this.moveFocus('right');
                             }
