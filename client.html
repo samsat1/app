@@ -2529,38 +2529,47 @@
                 return addons.includes('adult');
             },
 
-            // SIMPLIFIED: Check if customer can access specific content
+            // Check if customer can access specific content based on subscription
             canAccessContent: function(contentItem) {
-                if (!currentUser || !contentItem) return false;
+                if (!currentUser) return false;
+                if (!contentItem) return true;
 
                 // Admin always has access
                 if (currentUser.role === 'admin') return true;
 
-                // Reload customer data
-                adminCustomers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
-                const customer = adminCustomers.find(c => c.username === currentUser.username);
-                if (!customer) return false;
-
-                // Check subscription expiry
-                if (customer.expiryDate) {
-                    const expiryDate = new Date(customer.expiryDate);
-                    if (expiryDate <= new Date()) return false;
-                }
-
+                // Get customer's subscribed packages from currentUser
+                const userPlan = (currentUser.plan || '').toLowerCase();
+                const userAddons = (currentUser.addons || '').toLowerCase();
+                const userPackages = currentUser.subscribedPackages || [];
+                
                 // Adult content check
                 if (contentItem.isAdult || (contentItem.category || '').toLowerCase().includes('adult')) {
+                    if (!userAddons.includes('adult') && !userPackages.includes('adult')) {
+                        return false;
+                    }
                     return this.canAccessAdult();
                 }
 
-                // If content requires specific package, check it
-                if (contentItem.requiresPackage || contentItem.packageId) {
-                    const pkgId = contentItem.requiresPackage || contentItem.packageId;
-                    const validation = this.validatePackageAccess(customer, pkgId);
-                    return validation.hasAccess;
+                // Check content category against user's packages
+                const contentCategory = (contentItem.category || contentItem.type || '').toLowerCase();
+                
+                // Live TV - check if user has live/basic package
+                if (contentCategory === 'live' || contentCategory === 'hls') {
+                    return userPlan.includes('basic') || userPlan.includes('live') || userAddons.includes('live') || userPackages.includes('basicTV');
+                }
+                
+                // Movies - check if user has movies package
+                if (contentCategory === 'movies' || contentCategory === 'vod') {
+                    return userAddons.includes('movies') || userPlan.includes('movies') || userPackages.includes('movies');
+                }
+                
+                // Sports - check if user has sports package
+                if (contentCategory === 'sports') {
+                    return userAddons.includes('sports') || userPackages.includes('sports');
                 }
 
-                // Regular content - allow if customer has active subscription
-                return customer.status === 'active' || !!customer.plan;
+                // Default: allow access if user has any active subscription
+                return !!userPlan || userPackages.length > 0;
             },
 
             // Real-time authentication updates
@@ -5948,10 +5957,16 @@
                 
                 // Add focus to new element
                 element.classList.add('tv-focused');
-                element.focus({ preventScroll: false });
+                element.focus({ preventScroll: true });
                 
-                // Scroll into view
-                element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                // Scroll only within the content list container, not the whole page
+                const contentList = element.closest('.content-list');
+                if (contentList) {
+                    const elementTop = element.offsetTop;
+                    const containerHeight = contentList.clientHeight;
+                    const scrollTarget = elementTop - (containerHeight / 2) + (element.offsetHeight / 2);
+                    contentList.scrollTo({ top: scrollTarget, behavior: 'smooth' });
+                }
             },
             
             // Handle remote button press
