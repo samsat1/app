@@ -2862,41 +2862,24 @@
             try {
                 // Check for stored credentials
                 const storedCredentials = localStorage.getItem('iwatch_tv_credentials');
-                const storedExpiry = localStorage.getItem('iwatch_tv_expiry');
                 
-                if (storedCredentials && storedExpiry) {
+                if (storedCredentials) {
                     const credentials = JSON.parse(storedCredentials);
-                    const expiryDate = new Date(storedExpiry);
-                    const currentDate = new Date();
+                    console.log('🔑 Auto-login: Found stored credentials, attempting login...');
                     
-                    // Check if subscription is still valid
-                    if (currentDate < expiryDate) {
-                        console.log('🔑 Auto-login: Found valid credentials, logging in...');
-                        
-                        // Find customer in database
-                        const customer = adminCustomers.find(c => 
-                            c.username === credentials.username && c.password === credentials.password);
-                        
-                        if (customer) {
-                            // Auto-login
-                            const userData = {
-                                username: customer.username,
-                                customerId: customer.id,
-                                loginTime: new Date().toISOString()
-                            };
-                            
-                            currentUser = userData;
-                            isLoggedIn = true;
-                            
-                            updateUserInterface();
-                            console.log(`✅ Auto-login successful for ${customer.username}`);
-                            return;
-                        } else {
-                            console.log('❌ Auto-login: Stored credentials not found in database');
-                            clearStoredCredentials();
-                        }
+                    // Use the full authenticateUser to get complete user object
+                    const user = passwordManager.authenticateUser(credentials.username, credentials.password);
+                    
+                    if (user) {
+                        isLoggedIn = true;
+                        currentUser = user;
+                        adminCustomers = loadCustomersFromAdmin();
+                        updateUserInterface();
+                        console.log(`✅ Auto-login successful for ${user.username}`);
+                        loadPlexLibraryContent();
+                        return;
                     } else {
-                        console.log('⏰ Auto-login: Subscription expired, clearing stored credentials');
+                        console.log('❌ Auto-login: Credentials invalid or expired');
                         clearStoredCredentials();
                     }
                 }
@@ -3662,7 +3645,7 @@
                 // Show success message
                 if (libraryIds && libraryIds.length > 0) {
                     const totalLoaded = mediaContent.movies.length + mediaContent.series.length + mediaContent.vod.length + (mediaContent.adult?.length || 0);
-                    showSuccess(`Loaded ${totalLoaded} items from your media libraries`);
+                    console.log(`Loaded ${totalLoaded} items from media libraries`);
                 }
                 
             } catch (error) {
@@ -3801,7 +3784,10 @@
                         console.log('✅ Login successful:', user.username);
                         updateUserInterface();
                         hideLoginModal();
-                        showSuccess(`Welcome back, ${user.username}!`);
+                        // Welcome message removed
+                        // Store credentials for auto-login
+                        const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
+                        storeCredentials(username, password, user.subscriptionExpiry, rememberMe);
                         // Refresh content from Firebase on login
                         loadPlexLibraryContent();
                         return true;
@@ -3819,7 +3805,10 @@
                 adminCustomers = loadCustomersFromAdmin();
                 updateUserInterface();
                 hideLoginModal();
-                showSuccess(`Welcome back, ${user.username}!`);
+                // Welcome message removed
+                // Store credentials for auto-login
+                const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
+                storeCredentials(username, password, user.subscriptionExpiry, rememberMe);
                 // Refresh content from Firebase on login
                 loadPlexLibraryContent();
                 return true;
@@ -5969,26 +5958,40 @@
                         // Navigation - Arrow Keys
                         case 'ArrowUp':
                             e.preventDefault();
-                            this.moveFocus('up');
+                            // If video playing, switch to previous channel
+                            if (typeof currentContent !== 'undefined' && currentContent) {
+                                this.channelUp();
+                            } else {
+                                this.moveFocus('up');
+                            }
                             break;
                         case 'ArrowDown':
                             e.preventDefault();
-                            this.moveFocus('down');
+                            // If video playing, switch to next channel
+                            if (typeof currentContent !== 'undefined' && currentContent) {
+                                this.channelDown();
+                            } else {
+                                this.moveFocus('down');
+                            }
                             break;
                         case 'ArrowLeft':
                             e.preventDefault();
-                            // If video playing, seek backward
-                            if (player && !player.paused()) {
-                                player.currentTime(player.currentTime() - 10);
+                            // If video playing, volume down
+                            if (typeof currentContent !== 'undefined' && currentContent && player) {
+                                const newVol = Math.max(0, player.volume() - 0.1);
+                                player.volume(newVol);
+                                console.log('🔉 Volume:', Math.round(newVol * 100) + '%');
                             } else {
                                 this.moveFocus('left');
                             }
                             break;
                         case 'ArrowRight':
                             e.preventDefault();
-                            // If video playing, seek forward
-                            if (player && !player.paused()) {
-                                player.currentTime(player.currentTime() + 10);
+                            // If video playing, volume up
+                            if (typeof currentContent !== 'undefined' && currentContent && player) {
+                                const newVol = Math.min(1, player.volume() + 0.1);
+                                player.volume(newVol);
+                                console.log('🔊 Volume:', Math.round(newVol * 100) + '%');
                             } else {
                                 this.moveFocus('right');
                             }
@@ -6135,22 +6138,32 @@
                 }
             },
             
-            // Channel navigation
+            // Channel navigation - switches and plays channels
             channelUp() {
-                const cards = document.querySelectorAll('.content-card:not([style*="display: none"])');
-                if (cards.length > 0) {
-                    const currentIndex = Array.from(cards).findIndex(c => c.classList.contains('tv-focused'));
-                    const prevIndex = currentIndex > 0 ? currentIndex - 1 : cards.length - 1;
-                    this.setFocus(cards[prevIndex]);
+                const content = contentData[currentSource]?.content || [];
+                if (content.length === 0) return;
+                
+                const currentIndex = content.findIndex(c => c.id === currentContent?.id);
+                const prevIndex = currentIndex > 0 ? currentIndex - 1 : content.length - 1;
+                const prevContent = content[prevIndex];
+                
+                if (prevContent && prevContent.id) {
+                    console.log('📺 Channel Up:', prevContent.name);
+                    playContent(prevContent.id);
                 }
             },
             
             channelDown() {
-                const cards = document.querySelectorAll('.content-card:not([style*="display: none"])');
-                if (cards.length > 0) {
-                    const currentIndex = Array.from(cards).findIndex(c => c.classList.contains('tv-focused'));
-                    const nextIndex = currentIndex < cards.length - 1 ? currentIndex + 1 : 0;
-                    this.setFocus(cards[nextIndex]);
+                const content = contentData[currentSource]?.content || [];
+                if (content.length === 0) return;
+                
+                const currentIndex = content.findIndex(c => c.id === currentContent?.id);
+                const nextIndex = currentIndex < content.length - 1 ? currentIndex + 1 : 0;
+                const nextContent = content[nextIndex];
+                
+                if (nextContent && nextContent.id) {
+                    console.log('📺 Channel Down:', nextContent.name);
+                    playContent(nextContent.id);
                 }
             }
         };
