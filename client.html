@@ -907,6 +907,15 @@
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
 
+        /* D-pad focus styling for TV remotes */
+        .content-item:focus {
+            outline: 3px solid #00ff00 !important;
+            outline-offset: 2px;
+            background: rgba(102, 126, 234, 0.3);
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+
         .content-item.adult-content {
             border-color: var(--adult-color);
         }
@@ -4575,7 +4584,7 @@
                     (item.type === 'package' ? `showPackageDetails('${item.packageId}')` : `playContent('${item.id}')`);
                 
                 return `
-                    <div class="${className} ${isLocked ? 'locked-content' : ''}" onclick="${clickAction}">
+                    <div class="${className} ${isLocked ? 'locked-content' : ''}" tabindex="0" onclick="${clickAction}" onkeydown="if(event.key==='Enter'){${clickAction}}">
                         <div class="content-type-badge ${typeBadge}">${isAdult ? '🔞 ADULT' : contentType}</div>
                         ${isLocked ? '<div class="lock-overlay"><div class="lock-icon">🔒</div></div>' : ''}
                         <div class="content-header">
