@@ -4799,10 +4799,10 @@
 
         // Play HLS stream
         function handleHLSStream(url) {
-            // Use native preview player if available
-            if (typeof AndroidPlayerPreview !== 'undefined') {
-                console.log('📱 Android: Playing in native preview');
-                AndroidPlayerPreview.playInPreview(url, currentContent ? currentContent.name : 'Stream');
+            // Use Android native player if available
+            if (typeof AndroidPlayer !== 'undefined') {
+                console.log('📱 Android: Using native player');
+                AndroidPlayer.play(url, currentContent ? currentContent.name : 'Stream');
                 return;
             }
             if (Hls.isSupported()) {
@@ -4829,10 +4829,10 @@
         }
         
         function handleHLSContent(content) {
-            // On Android: Use native preview player
-            if (typeof AndroidPlayerPreview !== 'undefined') {
-                console.log('📱 Android: Playing in native preview');
-                AndroidPlayerPreview.playInPreview(content.url, content.name || 'Stream');
+            // On Android: Use native player
+            if (typeof AndroidPlayer !== 'undefined') {
+                console.log('📱 Android: Using native player');
+                AndroidPlayer.play(content.url, content.name || 'Stream');
                 return;
             }
             
@@ -6605,10 +6605,10 @@
         
         // Enhanced stream loading with HLS support for browsers/TVs
         window.loadStreamEnhanced = function(streamUrl, contentName) {
-            // Use Android native preview player if available
-            if (typeof AndroidPlayerPreview !== 'undefined') {
-                console.log('📱 Android: Using native preview for:', streamUrl);
-                AndroidPlayerPreview.playInPreview(streamUrl, contentName || 'Stream');
+            // Use Android native player if available
+            if (typeof AndroidPlayer !== 'undefined') {
+                console.log('📱 Android: Using native player for:', streamUrl);
+                AndroidPlayer.play(streamUrl, contentName || 'Stream');
                 return;
             }
             console.log('📺 Loading stream:', streamUrl);
