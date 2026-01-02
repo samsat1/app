@@ -5937,10 +5937,16 @@
                 
                 // Add focus to new element
                 element.classList.add('tv-focused');
-                element.focus({ preventScroll: false });
+                element.focus({ preventScroll: true });
                 
-                // Scroll into view
-                element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                // Scroll only within content list, not whole page
+                const contentList = element.closest('.content-list');
+                if (contentList) {
+                    const itemTop = element.offsetTop;
+                    const containerHeight = contentList.clientHeight;
+                    const scrollTarget = itemTop - (containerHeight / 2) + (element.offsetHeight / 2);
+                    contentList.scrollTo({ top: scrollTarget, behavior: 'smooth' });
+                }
             },
             
             // Handle remote button press
@@ -6062,10 +6068,39 @@
                             break;
                     }
                     
-                    // LG webOS Magic Remote specific key codes
-                    // Also Samsung Tizen remote codes
+                    // Android D-pad, LG webOS, Samsung Tizen key codes
                     const keyCode = e.keyCode || e.which;
                     switch(keyCode) {
+                        // Android D-pad
+                        case 19:  // DPAD_UP
+                            e.preventDefault();
+                            if (typeof currentContent !== 'undefined' && currentContent) {
+                                this.channelUp();
+                            } else {
+                                this.moveFocus('up');
+                            }
+                            break;
+                        case 20:  // DPAD_DOWN
+                            e.preventDefault();
+                            if (typeof currentContent !== 'undefined' && currentContent) {
+                                this.channelDown();
+                            } else {
+                                this.moveFocus('down');
+                            }
+                            break;
+                        case 21:  // DPAD_LEFT
+                            e.preventDefault();
+                            this.moveFocus('left');
+                            break;
+                        case 22:  // DPAD_RIGHT
+                            e.preventDefault();
+                            this.moveFocus('right');
+                            break;
+                        case 23:  // DPAD_CENTER (OK)
+                            e.preventDefault();
+                            const focused = document.querySelector('.tv-focused') || document.activeElement;
+                            if (focused) focused.click();
+                            break;
                         case 461:  // LG Back button
                         case 10009: // Samsung Tizen Back
                             e.preventDefault();
