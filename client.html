@@ -5964,21 +5964,11 @@
                         // Navigation - Arrow Keys
                         case 'ArrowUp':
                             e.preventDefault();
-                            // If video playing, switch to previous channel
-                            if (typeof currentContent !== 'undefined' && currentContent) {
-                                this.channelUp();
-                            } else {
-                                this.moveFocus('up');
-                            }
+                            this.moveFocus('up');
                             break;
                         case 'ArrowDown':
                             e.preventDefault();
-                            // If video playing, switch to next channel
-                            if (typeof currentContent !== 'undefined' && currentContent) {
-                                this.channelDown();
-                            } else {
-                                this.moveFocus('down');
-                            }
+                            this.moveFocus('down');
                             break;
                         case 'ArrowLeft':
                             e.preventDefault();
@@ -6071,22 +6061,14 @@
                     // Android D-pad, LG webOS, Samsung Tizen key codes
                     const keyCode = e.keyCode || e.which;
                     switch(keyCode) {
-                        // Android D-pad
+                        // Android D-pad - only move focus in list
                         case 19:  // DPAD_UP
                             e.preventDefault();
-                            if (typeof currentContent !== 'undefined' && currentContent) {
-                                this.channelUp();
-                            } else {
-                                this.moveFocus('up');
-                            }
+                            this.moveFocus('up');
                             break;
                         case 20:  // DPAD_DOWN
                             e.preventDefault();
-                            if (typeof currentContent !== 'undefined' && currentContent) {
-                                this.channelDown();
-                            } else {
-                                this.moveFocus('down');
-                            }
+                            this.moveFocus('down');
                             break;
                         case 21:  // DPAD_LEFT
                             e.preventDefault();
