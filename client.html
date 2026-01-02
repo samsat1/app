@@ -1082,22 +1082,12 @@
         .video-container {
             width: 100%;
             height: 500px;
-            background: #000 !important;
+            background: #000;
             border-radius: 15px;
             position: relative;
             overflow: hidden;
             margin-bottom: 25px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-            /* Force black background on Android WebView */
-            -webkit-backface-visibility: hidden;
-        }
-        
-        /* Fix Video.js styling for Android */
-        .video-js .vjs-tech {
-            background: #000 !important;
-        }
-        .video-js .vjs-poster {
-            background-color: #000 !important;
         }
 
         .video-player {
@@ -2539,47 +2529,38 @@
                 return addons.includes('adult');
             },
 
-            // Check if customer can access specific content based on subscription
+            // SIMPLIFIED: Check if customer can access specific content
             canAccessContent: function(contentItem) {
-                if (!currentUser) return false;
-                if (!contentItem) return true;
+                if (!currentUser || !contentItem) return false;
 
                 // Admin always has access
                 if (currentUser.role === 'admin') return true;
 
-                // Get customer's subscribed packages from currentUser
-                const userPlan = (currentUser.plan || '').toLowerCase();
-                const userAddons = (currentUser.addons || '').toLowerCase();
-                const userPackages = currentUser.subscribedPackages || [];
-                
+                // Reload customer data
+                adminCustomers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
+                const customer = adminCustomers.find(c => c.username === currentUser.username);
+                if (!customer) return false;
+
+                // Check subscription expiry
+                if (customer.expiryDate) {
+                    const expiryDate = new Date(customer.expiryDate);
+                    if (expiryDate <= new Date()) return false;
+                }
+
                 // Adult content check
                 if (contentItem.isAdult || (contentItem.category || '').toLowerCase().includes('adult')) {
-                    if (!userAddons.includes('adult') && !userPackages.includes('adult')) {
-                        return false;
-                    }
                     return this.canAccessAdult();
                 }
 
-                // Check content category against user's packages
-                const contentCategory = (contentItem.category || contentItem.type || '').toLowerCase();
-                
-                // Live TV - check if user has live/basic package
-                if (contentCategory === 'live' || contentCategory === 'hls') {
-                    return userPlan.includes('basic') || userPlan.includes('live') || userAddons.includes('live') || userPackages.includes('basicTV');
-                }
-                
-                // Movies - check if user has movies package
-                if (contentCategory === 'movies' || contentCategory === 'vod') {
-                    return userAddons.includes('movies') || userPlan.includes('movies') || userPackages.includes('movies');
-                }
-                
-                // Sports - check if user has sports package
-                if (contentCategory === 'sports') {
-                    return userAddons.includes('sports') || userPackages.includes('sports');
+                // If content requires specific package, check it
+                if (contentItem.requiresPackage || contentItem.packageId) {
+                    const pkgId = contentItem.requiresPackage || contentItem.packageId;
+                    const validation = this.validatePackageAccess(customer, pkgId);
+                    return validation.hasAccess;
                 }
 
-                // Default: allow access if user has any active subscription
-                return !!userPlan || userPackages.length > 0;
+                // Regular content - allow if customer has active subscription
+                return customer.status === 'active' || !!customer.plan;
             },
 
             // Real-time authentication updates
@@ -4592,7 +4573,7 @@
                     (item.type === 'package' ? `showPackageDetails('${item.packageId}')` : `playContent('${item.id}')`);
                 
                 return `
-                    <div class="${className} ${isLocked ? 'locked-content' : ''}" tabindex="0" onclick="${clickAction}" ondblclick="playContentFullscreen('${item.id}')" onkeydown="if(event.key==='Enter'){${clickAction}}">
+                    <div class="${className} ${isLocked ? 'locked-content' : ''}" tabindex="0" onclick="${clickAction}" onkeydown="if(event.key==='Enter'){${clickAction}}">
                         <div class="content-type-badge ${typeBadge}">${isAdult ? '🔞 ADULT' : contentType}</div>
                         ${isLocked ? '<div class="lock-overlay"><div class="lock-icon">🔒</div></div>' : ''}
                         <div class="content-header">
@@ -4727,26 +4708,6 @@
             }
         }
 
-        // Play content in fullscreen (native player) - triggered by double-click
-        window.playContentFullscreen = function(contentId) {
-            // Find content
-            let content = contentData[currentSource]?.content?.find(item => String(item.id) === String(contentId));
-            if (!content && contentData.movies?.content) {
-                content = contentData.movies.content.find(item => String(item.id) === String(contentId));
-            }
-            if (!content && contentData.adult?.content) {
-                content = contentData.adult.content.find(item => String(item.id) === String(contentId));
-            }
-            
-            if (content && content.url && typeof AndroidPlayer !== 'undefined') {
-                console.log('📺 Double-click: Opening fullscreen player for:', content.name);
-                AndroidPlayer.play(content.url, content.name || 'Stream');
-            } else if (content && player) {
-                // Fallback: use Video.js fullscreen
-                player.requestFullscreen();
-            }
-        }
-
         // Handle Plex content - fetch direct MP4 URL
         async function handlePlexContent(content) {
             // ALWAYS use correct server URL - never use 127.0.0.1
@@ -4799,12 +4760,7 @@
 
         // Play HLS stream
         function handleHLSStream(url) {
-            // Use Android native player if available
-            if (typeof AndroidPlayer !== 'undefined') {
-                console.log('📱 Android: Using native player');
-                AndroidPlayer.play(url, currentContent ? currentContent.name : 'Stream');
-                return;
-            }
+            if (typeof AndroidPlayer !== 'undefined') { AndroidPlayer.play(url, currentContent ? currentContent.name : 'Stream'); return; }
             if (Hls.isSupported()) {
                 if (hls) hls.destroy();
                 hls = new Hls();
@@ -4829,9 +4785,9 @@
         }
         
         function handleHLSContent(content) {
-            // On Android: Use native player
+            // Use Android native player if available (for Android TV sticks with libVLC)
             if (typeof AndroidPlayer !== 'undefined') {
-                console.log('📱 Android: Using native player');
+                console.log('📱 Android: Using native libVLC player for:', content.url);
                 AndroidPlayer.play(content.url, content.name || 'Stream');
                 return;
             }
@@ -4980,10 +4936,10 @@
 
         // Handle MP4 content playback
         function handleMP4Content(content) {
-            // On Android: Use native preview player
-            if (typeof AndroidPlayer !== 'undefined' && typeof AndroidPlayer.preview === 'function') {
-                console.log('📱 Android: Playing MP4 in native preview');
-                AndroidPlayer.preview(content.url, content.name || 'Video');
+            // Use Android native player if available
+            if (typeof AndroidPlayer !== 'undefined') {
+                console.log('📱 Android: Using native libVLC player for MP4:', content.url);
+                AndroidPlayer.play(content.url, content.name || 'Video');
                 return;
             }
             
@@ -5981,16 +5937,10 @@
                 
                 // Add focus to new element
                 element.classList.add('tv-focused');
-                element.focus({ preventScroll: true });
+                element.focus({ preventScroll: false });
                 
-                // Scroll only within the content list container, not the whole page
-                const contentList = element.closest('.content-list');
-                if (contentList) {
-                    const elementTop = element.offsetTop;
-                    const containerHeight = contentList.clientHeight;
-                    const scrollTarget = elementTop - (containerHeight / 2) + (element.offsetHeight / 2);
-                    contentList.scrollTo({ top: scrollTarget, behavior: 'smooth' });
-                }
+                // Scroll into view
+                element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
             },
             
             // Handle remote button press
@@ -6027,12 +5977,10 @@
                         case 'ArrowLeft':
                             e.preventDefault();
                             // If video playing, volume down
-                            if (typeof currentContent !== 'undefined' && currentContent) {
-                                const video = document.querySelector('video');
-                                if (video) {
-                                    video.volume = Math.max(0, video.volume - 0.1);
-                                    console.log('🔉 Volume:', Math.round(video.volume * 100) + '%');
-                                }
+                            if (typeof currentContent !== 'undefined' && currentContent && player) {
+                                const newVol = Math.max(0, player.volume() - 0.1);
+                                player.volume(newVol);
+                                console.log('🔉 Volume:', Math.round(newVol * 100) + '%');
                             } else {
                                 this.moveFocus('left');
                             }
@@ -6040,12 +5988,10 @@
                         case 'ArrowRight':
                             e.preventDefault();
                             // If video playing, volume up
-                            if (typeof currentContent !== 'undefined' && currentContent) {
-                                const video = document.querySelector('video');
-                                if (video) {
-                                    video.volume = Math.min(1, video.volume + 0.1);
-                                    console.log('🔊 Volume:', Math.round(video.volume * 100) + '%');
-                                }
+                            if (typeof currentContent !== 'undefined' && currentContent && player) {
+                                const newVol = Math.min(1, player.volume() + 0.1);
+                                player.volume(newVol);
+                                console.log('🔊 Volume:', Math.round(newVol * 100) + '%');
                             } else {
                                 this.moveFocus('right');
                             }
@@ -6116,50 +6062,10 @@
                             break;
                     }
                     
-                    // Android D-pad, LG webOS, Samsung Tizen key codes
+                    // LG webOS Magic Remote specific key codes
+                    // Also Samsung Tizen remote codes
                     const keyCode = e.keyCode || e.which;
                     switch(keyCode) {
-                        // Android D-pad
-                        case 19:  // DPAD_UP
-                            e.preventDefault();
-                            if (typeof currentContent !== 'undefined' && currentContent) {
-                                this.channelUp();
-                            } else {
-                                this.moveFocus('up');
-                            }
-                            break;
-                        case 20:  // DPAD_DOWN
-                            e.preventDefault();
-                            if (typeof currentContent !== 'undefined' && currentContent) {
-                                this.channelDown();
-                            } else {
-                                this.moveFocus('down');
-                            }
-                            break;
-                        case 21:  // DPAD_LEFT
-                            e.preventDefault();
-                            if (typeof currentContent !== 'undefined' && currentContent) {
-                                const video = document.querySelector('video');
-                                if (video) video.volume = Math.max(0, video.volume - 0.1);
-                            } else {
-                                this.moveFocus('left');
-                            }
-                            break;
-                        case 22:  // DPAD_RIGHT
-                            e.preventDefault();
-                            if (typeof currentContent !== 'undefined' && currentContent) {
-                                const video = document.querySelector('video');
-                                if (video) video.volume = Math.min(1, video.volume + 0.1);
-                            } else {
-                                this.moveFocus('right');
-                            }
-                            break;
-                        case 23:  // DPAD_CENTER / OK
-                        case 66:  // ENTER
-                            e.preventDefault();
-                            const focused = document.querySelector('.tv-focused') || document.activeElement;
-                            if (focused) focused.click();
-                            break;
                         case 461:  // LG Back button
                         case 10009: // Samsung Tizen Back
                             e.preventDefault();
@@ -6244,7 +6150,6 @@
                 if (prevContent && prevContent.id) {
                     console.log('📺 Channel Up:', prevContent.name);
                     playContent(prevContent.id);
-                    this.updateChannelListFocus(prevIndex);
                 }
             },
             
@@ -6259,32 +6164,6 @@
                 if (nextContent && nextContent.id) {
                     console.log('📺 Channel Down:', nextContent.name);
                     playContent(nextContent.id);
-                    this.updateChannelListFocus(nextIndex);
-                }
-            },
-            
-            updateChannelListFocus(index) {
-                const contentItems = document.querySelectorAll('.content-item');
-                if (contentItems.length === 0) return;
-                
-                // Remove previous focus/active
-                contentItems.forEach(item => {
-                    item.classList.remove('tv-focused', 'active');
-                });
-                
-                // Add focus to current item
-                const targetItem = contentItems[index];
-                if (targetItem) {
-                    targetItem.classList.add('tv-focused', 'active');
-                    
-                    // Scroll only the content list, not the whole page
-                    const contentList = targetItem.closest('.content-list');
-                    if (contentList) {
-                        const itemTop = targetItem.offsetTop;
-                        const containerHeight = contentList.clientHeight;
-                        const scrollTarget = itemTop - (containerHeight / 2) + (targetItem.offsetHeight / 2);
-                        contentList.scrollTo({ top: scrollTarget, behavior: 'smooth' });
-                    }
                 }
             }
         };
