@@ -6150,6 +6150,7 @@
                 if (prevContent && prevContent.id) {
                     console.log('📺 Channel Up:', prevContent.name);
                     playContent(prevContent.id);
+                    this.updateChannelListFocus(prevIndex);
                 }
             },
             
@@ -6164,6 +6165,33 @@
                 if (nextContent && nextContent.id) {
                     console.log('📺 Channel Down:', nextContent.name);
                     playContent(nextContent.id);
+                    this.updateChannelListFocus(nextIndex);
+                }
+            },
+            
+            // Update channel list focus and scroll
+            updateChannelListFocus(index) {
+                const contentItems = document.querySelectorAll('.content-item');
+                if (contentItems.length === 0) return;
+                
+                // Remove previous focus/active
+                contentItems.forEach(item => {
+                    item.classList.remove('tv-focused', 'active');
+                });
+                
+                // Add focus to current item
+                const targetItem = contentItems[index];
+                if (targetItem) {
+                    targetItem.classList.add('tv-focused', 'active');
+                    
+                    // Scroll only the content list, not the whole page
+                    const contentList = targetItem.closest('.content-list');
+                    if (contentList) {
+                        const itemTop = targetItem.offsetTop;
+                        const containerHeight = contentList.clientHeight;
+                        const scrollTarget = itemTop - (containerHeight / 2) + (targetItem.offsetHeight / 2);
+                        contentList.scrollTo({ top: scrollTarget, behavior: 'smooth' });
+                    }
                 }
             }
         };
