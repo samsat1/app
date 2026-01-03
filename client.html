@@ -907,6 +907,15 @@
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
 
+        /* D-pad focus styling for TV remotes */
+        .content-item:focus {
+            outline: 3px solid #00ff00 !important;
+            outline-offset: 2px;
+            background: rgba(102, 126, 234, 0.3);
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+
         .content-item.adult-content {
             border-color: var(--adult-color);
         }
@@ -2303,6 +2312,7 @@
         let currentCategory = 'all';
         let adultUnlocked = false;
         let currentContent = null;
+        let isFullscreenMode = false; // Track if VLC fullscreen is active
         let adultTypingSequence = '';
         let typingTimeout = null;
         let adminCustomers = [];
@@ -2853,41 +2863,24 @@
             try {
                 // Check for stored credentials
                 const storedCredentials = localStorage.getItem('iwatch_tv_credentials');
-                const storedExpiry = localStorage.getItem('iwatch_tv_expiry');
                 
-                if (storedCredentials && storedExpiry) {
+                if (storedCredentials) {
                     const credentials = JSON.parse(storedCredentials);
-                    const expiryDate = new Date(storedExpiry);
-                    const currentDate = new Date();
+                    console.log('🔑 Auto-login: Found stored credentials, attempting login...');
                     
-                    // Check if subscription is still valid
-                    if (currentDate < expiryDate) {
-                        console.log('🔑 Auto-login: Found valid credentials, logging in...');
-                        
-                        // Find customer in database
-                        const customer = adminCustomers.find(c => 
-                            c.username === credentials.username && c.password === credentials.password);
-                        
-                        if (customer) {
-                            // Auto-login
-                            const userData = {
-                                username: customer.username,
-                                customerId: customer.id,
-                                loginTime: new Date().toISOString()
-                            };
-                            
-                            currentUser = userData;
-                            isLoggedIn = true;
-                            
-                            updateUserInterface();
-                            console.log(`✅ Auto-login successful for ${customer.username}`);
-                            return;
-                        } else {
-                            console.log('❌ Auto-login: Stored credentials not found in database');
-                            clearStoredCredentials();
-                        }
+                    // Use the full authenticateUser to get complete user object
+                    const user = passwordManager.authenticateUser(credentials.username, credentials.password);
+                    
+                    if (user) {
+                        isLoggedIn = true;
+                        currentUser = user;
+                        adminCustomers = loadCustomersFromAdmin();
+                        updateUserInterface();
+                        console.log(`✅ Auto-login successful for ${user.username}`);
+                        loadPlexLibraryContent();
+                        return;
                     } else {
-                        console.log('⏰ Auto-login: Subscription expired, clearing stored credentials');
+                        console.log('❌ Auto-login: Credentials invalid or expired');
                         clearStoredCredentials();
                     }
                 }
@@ -3653,7 +3646,7 @@
                 // Show success message
                 if (libraryIds && libraryIds.length > 0) {
                     const totalLoaded = mediaContent.movies.length + mediaContent.series.length + mediaContent.vod.length + (mediaContent.adult?.length || 0);
-                    showSuccess(`Loaded ${totalLoaded} items from your media libraries`);
+                    console.log(`Loaded ${totalLoaded} items from media libraries`);
                 }
                 
             } catch (error) {
@@ -3792,7 +3785,10 @@
                         console.log('✅ Login successful:', user.username);
                         updateUserInterface();
                         hideLoginModal();
-                        showSuccess(`Welcome back, ${user.username}!`);
+                        // Welcome message removed
+                        // Store credentials for auto-login
+                        const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
+                        storeCredentials(username, password, user.subscriptionExpiry, rememberMe);
                         // Refresh content from Firebase on login
                         loadPlexLibraryContent();
                         return true;
@@ -3810,7 +3806,10 @@
                 adminCustomers = loadCustomersFromAdmin();
                 updateUserInterface();
                 hideLoginModal();
-                showSuccess(`Welcome back, ${user.username}!`);
+                // Welcome message removed
+                // Store credentials for auto-login
+                const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
+                storeCredentials(username, password, user.subscriptionExpiry, rememberMe);
                 // Refresh content from Firebase on login
                 loadPlexLibraryContent();
                 return true;
@@ -4574,8 +4573,10 @@
                     `showUpgradePrompt('${item.id}')` : 
                     (item.type === 'package' ? `showPackageDetails('${item.packageId}')` : `playContent('${item.id}')`);
                 
+                const dblClickAction = isLocked ? '' : (item.type === 'package' ? '' : `playFullscreen('${item.id}')`);
+                
                 return `
-                    <div class="${className} ${isLocked ? 'locked-content' : ''}" onclick="${clickAction}">
+                    <div class="${className} ${isLocked ? 'locked-content' : ''}" tabindex="0" onclick="${clickAction}" ondblclick="${dblClickAction}" onkeydown="if(event.key==='Enter'){${clickAction}}">
                         <div class="content-type-badge ${typeBadge}">${isAdult ? '🔞 ADULT' : contentType}</div>
                         ${isLocked ? '<div class="lock-overlay"><div class="lock-icon">🔒</div></div>' : ''}
                         <div class="content-header">
@@ -4620,7 +4621,42 @@
             });
         }
 
-        // Global function for playing content - defined early for onclick access
+        // Global function for playing in FULLSCREEN (double-click)
+        window.playFullscreen = function(contentId) {
+            console.log('🎬 FULLSCREEN requested for:', contentId);
+            
+            // Find content across all sources
+            let content = null;
+            for (const source in contentData) {
+                content = contentData[source]?.content?.find(c => c.id === contentId);
+                if (content) break;
+            }
+            
+            if (!content) {
+                console.error('Content not found:', contentId);
+                return;
+            }
+            
+            const streamUrl = content.streamUrl || content.url;
+            const contentName = content.name || 'Stream';
+            
+            // Use Android native fullscreen player
+            if (typeof AndroidPlayer !== 'undefined') {
+                console.log('📱 Android: Opening FULLSCREEN for:', streamUrl);
+                isFullscreenMode = true;
+                AndroidPlayer.play(streamUrl, contentName);
+                return;
+            }
+            
+            // Fallback: browser fullscreen
+            if (player) {
+                player.src({ src: streamUrl, type: 'application/x-mpegURL' });
+                player.play();
+                player.requestFullscreen();
+            }
+        };
+        
+        // Global function for playing content in PREVIEW (single-click)
         window.playContent = function(contentId) {
             if (!isLoggedIn) {
                 showError('Please login to start watching');
@@ -4762,25 +4798,7 @@
 
         // Play HLS stream
         function handleHLSStream(url) {
-            // Detect LG WebOS, Samsung Tizen, or Safari - use native HLS playback
-            const isLGTV = navigator.userAgent.includes('Web0S') || navigator.userAgent.includes('webOS') || navigator.userAgent.includes('WebOS') || navigator.userAgent.includes('LG');
-            const isSamsungTV = navigator.userAgent.includes('Tizen') || navigator.userAgent.includes('Samsung');
-            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            
-            if (isLGTV || isSamsungTV || isSafari || isMobile) {
-                console.log('📺 handleHLSStream: Using native HLS for TV/Mobile');
-                const video = player.el().querySelector('video');
-                if (hls) {
-                    hls.destroy();
-                    hls = null;
-                }
-                video.src = url;
-                video.load();
-                video.play().catch(e => console.log('Autoplay blocked - tap to play'));
-                return;
-            }
-            
+            if (typeof AndroidPlayer !== 'undefined') { AndroidPlayer.play(url, currentContent ? currentContent.name : 'Stream'); return; }
             if (Hls.isSupported()) {
                 if (hls) hls.destroy();
                 hls = new Hls();
@@ -4805,6 +4823,13 @@
         }
         
         function handleHLSContent(content) {
+            // Use Android native player if available (for Android TV sticks with libVLC)
+            if (typeof AndroidPlayer !== 'undefined') {
+                console.log('📱 Android: Using native libVLC player for:', content.url);
+                AndroidPlayer.play(content.url, content.name || 'Stream');
+                return;
+            }
+            
             // Check if it's Plex content - use direct MP4 instead of HLS transcode
             // sectionId is a Plex-specific property that indicates this is Plex content
             if (content.sectionId) {
@@ -4949,6 +4974,13 @@
 
         // Handle MP4 content playback
         function handleMP4Content(content) {
+            // Use Android native player if available
+            if (typeof AndroidPlayer !== 'undefined') {
+                console.log('📱 Android: Using native libVLC player for MP4:', content.url);
+                AndroidPlayer.play(content.url, content.name || 'Video');
+                return;
+            }
+            
             player.src({
                 src: content.url,
                 type: 'video/mp4'
@@ -5964,26 +5996,32 @@
                         // Navigation - Arrow Keys
                         case 'ArrowUp':
                             e.preventDefault();
-                            this.moveFocus('up');
+                            // Switch channels in both list and fullscreen
+                            this.channelUp();
                             break;
                         case 'ArrowDown':
                             e.preventDefault();
-                            this.moveFocus('down');
+                            // Switch channels in both list and fullscreen
+                            this.channelDown();
                             break;
                         case 'ArrowLeft':
                             e.preventDefault();
-                            // If video playing, seek backward
-                            if (player && !player.paused()) {
-                                player.currentTime(player.currentTime() - 10);
+                            // If video playing, volume down
+                            if (typeof currentContent !== 'undefined' && currentContent && player) {
+                                const newVol = Math.max(0, player.volume() - 0.1);
+                                player.volume(newVol);
+                                console.log('🔉 Volume:', Math.round(newVol * 100) + '%');
                             } else {
                                 this.moveFocus('left');
                             }
                             break;
                         case 'ArrowRight':
                             e.preventDefault();
-                            // If video playing, seek forward
-                            if (player && !player.paused()) {
-                                player.currentTime(player.currentTime() + 10);
+                            // If video playing, volume up
+                            if (typeof currentContent !== 'undefined' && currentContent && player) {
+                                const newVol = Math.min(1, player.volume() + 0.1);
+                                player.volume(newVol);
+                                console.log('🔊 Volume:', Math.round(newVol * 100) + '%');
                             } else {
                                 this.moveFocus('right');
                             }
@@ -6001,6 +6039,7 @@
                         // Back button - Backspace or Escape
                         case 'Backspace':
                         case 'BrowserBack':
+                        case 'Escape':
                             e.preventDefault();
                             this.handleBack();
                             break;
@@ -6054,9 +6093,38 @@
                             break;
                     }
                     
-                    // LG webOS Magic Remote specific key codes
-                    // Also Samsung Tizen remote codes
+                    // Android D-pad key codes
                     const keyCode = e.keyCode || e.which;
+                    switch(keyCode) {
+                        case 19: // Android D-pad UP
+                            e.preventDefault();
+                            this.channelUp();
+                            break;
+                        case 20: // Android D-pad DOWN
+                            e.preventDefault();
+                            this.channelDown();
+                            break;
+                        case 21: // Android D-pad LEFT
+                            e.preventDefault();
+                            this.moveFocus('left');
+                            break;
+                        case 22: // Android D-pad RIGHT
+                            e.preventDefault();
+                            this.moveFocus('right');
+                            break;
+                        case 23: // Android D-pad CENTER/OK
+                        case 66: // Android ENTER
+                            e.preventDefault();
+                            const focused = document.querySelector('.tv-focused') || document.activeElement;
+                            if (focused) focused.click();
+                            break;
+                        case 4: // Android BACK
+                            e.preventDefault();
+                            this.handleBack();
+                            break;
+                    }
+                    
+                    // LG webOS Magic Remote specific key codes
                     switch(keyCode) {
                         case 461:  // LG Back button
                         case 10009: // Samsung Tizen Back
@@ -6112,6 +6180,15 @@
             
             // Handle back button
             handleBack() {
+                // If in fullscreen VLC mode, exit it
+                if (isFullscreenMode) {
+                    isFullscreenMode = false;
+                    if (typeof AndroidPlayer !== 'undefined') {
+                        AndroidPlayer.stop();
+                    }
+                    return;
+                }
+                
                 // Check for open modals
                 const loginModal = document.getElementById('loginModal');
                 const adultModal = document.getElementById('adultModal');
@@ -6130,22 +6207,136 @@
                 }
             },
             
-            // Channel navigation
+            // Channel navigation - switches channels and scrolls list only
             channelUp() {
-                const cards = document.querySelectorAll('.content-card:not([style*="display: none"])');
-                if (cards.length > 0) {
-                    const currentIndex = Array.from(cards).findIndex(c => c.classList.contains('tv-focused'));
-                    const prevIndex = currentIndex > 0 ? currentIndex - 1 : cards.length - 1;
-                    this.setFocus(cards[prevIndex]);
+                const content = contentData[currentSource]?.content || [];
+                if (content.length === 0) return;
+                
+                const currentIndex = content.findIndex(c => c.id === currentContent?.id);
+                const prevIndex = currentIndex > 0 ? currentIndex - 1 : content.length - 1;
+                const prevContent = content[prevIndex];
+                
+                if (prevContent && prevContent.id) {
+                    console.log('📺 Channel Up:', prevContent.name);
+                    // Play the channel (preview or fullscreen depending on mode)
+                    if (isFullscreenMode) {
+                        playFullscreen(prevContent.id);
+                    } else {
+                        playContent(prevContent.id);
+                    }
+                    this.scrollChannelListOnly(prevIndex);
                 }
             },
             
             channelDown() {
-                const cards = document.querySelectorAll('.content-card:not([style*="display: none"])');
-                if (cards.length > 0) {
-                    const currentIndex = Array.from(cards).findIndex(c => c.classList.contains('tv-focused'));
-                    const nextIndex = currentIndex < cards.length - 1 ? currentIndex + 1 : 0;
-                    this.setFocus(cards[nextIndex]);
+                const content = contentData[currentSource]?.content || [];
+                if (content.length === 0) return;
+                
+                const currentIndex = content.findIndex(c => c.id === currentContent?.id);
+                const nextIndex = currentIndex < content.length - 1 ? currentIndex + 1 : 0;
+                const nextContent = content[nextIndex];
+                
+                if (nextContent && nextContent.id) {
+                    console.log('📺 Channel Down:', nextContent.name);
+                    // Play the channel (preview or fullscreen depending on mode)
+                    if (isFullscreenMode) {
+                        playFullscreen(nextContent.id);
+                    } else {
+                        playContent(nextContent.id);
+                    }
+                    this.scrollChannelListOnly(nextIndex);
+                }
+            },
+            
+            // Scroll only the channel list container, not the whole page
+            scrollChannelListOnly(index) {
+                const contentItems = document.querySelectorAll('.content-item');
+                if (contentItems.length === 0 || index < 0 || index >= contentItems.length) return;
+                
+                // Remove previous active/focus
+                contentItems.forEach(item => {
+                    item.classList.remove('tv-focused', 'active');
+                });
+                
+                // Add focus to current item
+                const targetItem = contentItems[index];
+                if (targetItem) {
+                    targetItem.classList.add('tv-focused', 'active');
+                    
+                    // Scroll ONLY the content-list container
+                    const contentList = targetItem.closest('.content-list');
+                    if (contentList) {
+                        const itemRect = targetItem.getBoundingClientRect();
+                        const listRect = contentList.getBoundingClientRect();
+                        
+                        // Calculate scroll position to center the item in the list
+                        const scrollTop = targetItem.offsetTop - (contentList.clientHeight / 2) + (targetItem.offsetHeight / 2);
+                        contentList.scrollTo({
+                            top: Math.max(0, scrollTop),
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+            },
+            
+            // Move focus within channel list only (scroll, no play)
+            moveFocusInList(direction) {
+                const contentItems = document.querySelectorAll('.content-item');
+                if (contentItems.length === 0) return;
+                
+                let currentIndex = -1;
+                contentItems.forEach((item, i) => {
+                    if (item.classList.contains('tv-focused') || item === document.activeElement) {
+                        currentIndex = i;
+                    }
+                });
+                
+                let newIndex;
+                if (direction === 'up') {
+                    newIndex = currentIndex > 0 ? currentIndex - 1 : contentItems.length - 1;
+                } else {
+                    newIndex = currentIndex < contentItems.length - 1 ? currentIndex + 1 : 0;
+                }
+                
+                const targetItem = contentItems[newIndex];
+                if (targetItem) {
+                    contentItems.forEach(item => item.classList.remove('tv-focused'));
+                    targetItem.classList.add('tv-focused');
+                    targetItem.focus();
+                    
+                    const contentList = targetItem.closest('.content-list');
+                    if (contentList) {
+                        const itemTop = targetItem.offsetTop;
+                        const containerHeight = contentList.clientHeight;
+                        const scrollTarget = itemTop - (containerHeight / 2) + (targetItem.offsetHeight / 2);
+                        contentList.scrollTo({ top: Math.max(0, scrollTarget), behavior: 'smooth' });
+                    }
+                }
+            },
+            
+            // Update channel list focus and scroll
+            updateChannelListFocus(index) {
+                const contentItems = document.querySelectorAll('.content-item');
+                if (contentItems.length === 0) return;
+                
+                // Remove previous focus/active
+                contentItems.forEach(item => {
+                    item.classList.remove('tv-focused', 'active');
+                });
+                
+                // Add focus to current item
+                const targetItem = contentItems[index];
+                if (targetItem) {
+                    targetItem.classList.add('tv-focused', 'active');
+                    
+                    // Scroll only the content list, not the whole page
+                    const contentList = targetItem.closest('.content-list');
+                    if (contentList) {
+                        const itemTop = targetItem.offsetTop;
+                        const containerHeight = contentList.clientHeight;
+                        const scrollTarget = itemTop - (containerHeight / 2) + (targetItem.offsetHeight / 2);
+                        contentList.scrollTo({ top: scrollTarget, behavior: 'smooth' });
+                    }
                 }
             }
         };
@@ -6416,5 +6607,170 @@
     </style>
     <!-- Auto-sync enabled - no manual sync UI needed for customers -->
     <!-- Data syncs automatically on app startup from configured URL -->
+    
+    <!-- HLS.js for Browser/TV Playback Support -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    
+    <!-- Smart TV and Browser Stream Playback Enhancement -->
+    <script>
+    // Enhanced stream playback for Android Stick, LG WebOS, Samsung Tizen
+    // NO CHANGES TO EXISTING FEATURES - Only adds HLS support
+    
+    (function() {
+        // Store original initializePlayer if exists
+        const originalInitializePlayer = window.initializePlayer;
+        
+        // Enhanced player initialization with HLS support
+        window.initializePlayer = function() {
+            console.log('🎬 Initializing enhanced player with HLS support...');
+            
+            // Initialize Video.js player if not already done
+            if (typeof videojs !== 'undefined' && !player) {
+                const videoElement = document.getElementById('mainVideo');
+                if (videoElement) {
+                    player = videojs(videoElement, {
+                        controls: true,
+                        autoplay: false,
+                        preload: 'auto',
+                        fluid: true,
+                        playbackRates: [0.5, 1, 1.5, 2],
+                        html5: {
+                            vhs: {
+                                overrideNative: true
+                            }
+                        }
+                    });
+                    
+                    player.on('error', function(e) {
+                        console.log('Player error:', e);
+                    });
+                    
+                    console.log('✅ Video.js player initialized');
+                }
+            }
+            
+            // Call original function if exists
+            if (originalInitializePlayer) {
+                originalInitializePlayer();
+            }
+        };
+        
+        // Enhanced stream loading with HLS support for browsers/TVs
+        window.loadStreamEnhanced = function(streamUrl, contentName) {
+            // Use Android native player if available
+            if (typeof AndroidPlayer !== 'undefined') {
+                console.log('📱 Android: Using native player for:', streamUrl);
+                AndroidPlayer.play(streamUrl, contentName || 'Stream');
+                return;
+            }
+            console.log('📺 Loading stream:', streamUrl);
+            
+            const videoElement = document.getElementById('mainVideo');
+            if (!videoElement) {
+                console.error('Video element not found');
+                return;
+            }
+            
+            // Check if this is an HLS stream (.m3u8)
+            if (streamUrl.includes('.m3u8') || streamUrl.includes('hls') || streamUrl.includes('live')) {
+                if (Hls.isSupported()) {
+                    console.log('🎥 Using HLS.js for stream playback');
+                    
+                    // Destroy existing HLS instance
+                    if (window.hlsInstance) {
+                        window.hlsInstance.destroy();
+                    }
+                    
+                    // Create new HLS instance
+                    const hls = new Hls({
+                        enableWorker: true,
+                        lowLatencyMode: true,
+                        backBufferLength: 90
+                    });
+                    
+                    window.hlsInstance = hls;
+                    
+                    hls.loadSource(streamUrl);
+                    hls.attachMedia(videoElement);
+                    
+                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                        console.log('✅ HLS stream loaded successfully');
+                        videoElement.play().catch(function(e) {
+                            console.log('Auto-play blocked, user interaction needed');
+                        });
+                    });
+                    
+                    hls.on(Hls.Events.ERROR, function(event, data) {
+                        console.error('HLS Error:', data.type, data.details);
+                        if (data.fatal) {
+                            switch(data.type) {
+                                case Hls.ErrorTypes.NETWORK_ERROR:
+                                    console.log('Network error, trying to recover...');
+                                    hls.startLoad();
+                                    break;
+                                case Hls.ErrorTypes.MEDIA_ERROR:
+                                    console.log('Media error, trying to recover...');
+                                    hls.recoverMediaError();
+                                    break;
+                                default:
+                                    console.log('Fatal error, cannot recover');
+                                    break;
+                            }
+                        }
+                    });
+                } 
+                // For Safari (native HLS support)
+                else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+                    console.log('🎥 Using native HLS support (Safari)');
+                    videoElement.src = streamUrl;
+                    videoElement.addEventListener('loadedmetadata', function() {
+                        videoElement.play().catch(function(e) {
+                            console.log('Auto-play blocked');
+                        });
+                    });
+                }
+                else {
+                    console.log('🎥 Using Video.js for stream playback');
+                    // Fallback to Video.js
+                    if (player) {
+                        player.src({ src: streamUrl, type: 'application/x-mpegURL' });
+                        player.play().catch(function(e) {
+                            console.log('Auto-play blocked');
+                        });
+                    }
+                }
+            } else {
+                // Non-HLS stream, use Video.js
+                console.log('🎥 Using Video.js for direct stream');
+                if (player) {
+                    player.src({ src: streamUrl, type: 'application/x-mpegURL' });
+                    player.play().catch(function(e) {
+                        console.log('Auto-play blocked');
+                    });
+                }
+            }
+        };
+        
+        // Stop stream function enhancement
+        window.stopStreamEnhanced = function() {
+            console.log('🛑 Stopping stream...');
+            
+            // Destroy HLS instance if exists
+            if (window.hlsInstance) {
+                window.hlsInstance.destroy();
+                window.hlsInstance = null;
+            }
+            
+            // Call original stopStream if exists
+            if (typeof stopStream === 'function') {
+                stopStream();
+            }
+        };
+        
+        console.log('✅ HLS playback enhancement loaded');
+        console.log('📺 Compatible with: Android Stick, LG WebOS, Samsung Tizen, Chrome, Firefox, Safari');
+        
+    })();
+    </script>
 </body>
 </html>
