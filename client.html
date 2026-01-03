@@ -4622,7 +4622,7 @@
                 const dblClickAction = isLocked ? '' : (item.type === 'package' ? '' : `handleDoubleClick('${item.id}')`);
                 
                 return `
-                    <div class="${className} ${isLocked ? 'locked-content' : ''}" tabindex="0" onclick="${clickAction}" ondblclick="${dblClickAction}" onkeydown="if(event.key==='Enter'){playContent('${item.id}')}">`
+                    <div class="${className} ${isLocked ? 'locked-content' : ''}" tabindex="0" onclick="${clickAction}" ondblclick="${dblClickAction}" onkeydown="if(event.key==='Enter'){playContent('${item.id}')}">
                         <div class="content-type-badge ${typeBadge}">${isAdult ? '🔞 ADULT' : contentType}</div>
                         ${isLocked ? '<div class="lock-overlay"><div class="lock-icon">🔒</div></div>' : ''}
                         <div class="content-header">
