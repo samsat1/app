@@ -4798,6 +4798,7 @@
 
         // Play HLS stream
         function handleHLSStream(url) {
+            if (typeof AndroidPlayerPreview !== 'undefined') { AndroidPlayerPreview.playInPreview(url, currentContent ? currentContent.name : 'Stream'); return; }
             if (typeof AndroidPlayer !== 'undefined') { AndroidPlayer.play(url, currentContent ? currentContent.name : 'Stream'); return; }
             if (Hls.isSupported()) {
                 if (hls) hls.destroy();
@@ -4823,9 +4824,15 @@
         }
         
         function handleHLSContent(content) {
-            // Use Android native player if available (for Android TV sticks with libVLC)
+            // Use Android PREVIEW player if available (single-click = preview)
+            if (typeof AndroidPlayerPreview !== 'undefined') {
+                console.log('📱 Android: Using PREVIEW player for:', content.url);
+                AndroidPlayerPreview.playInPreview(content.url, content.name || 'Stream');
+                return;
+            }
+            // Fallback to fullscreen if preview not available
             if (typeof AndroidPlayer !== 'undefined') {
-                console.log('📱 Android: Using native libVLC player for:', content.url);
+                console.log('📱 Android: Fallback to fullscreen player for:', content.url);
                 AndroidPlayer.play(content.url, content.name || 'Stream');
                 return;
             }
@@ -4974,9 +4981,15 @@
 
         // Handle MP4 content playback
         function handleMP4Content(content) {
-            // Use Android native player if available
+            // Use Android PREVIEW player if available (single-click = preview)
+            if (typeof AndroidPlayerPreview !== 'undefined') {
+                console.log('📱 Android: Using PREVIEW player for MP4:', content.url);
+                AndroidPlayerPreview.playInPreview(content.url, content.name || 'Video');
+                return;
+            }
+            // Fallback to fullscreen if preview not available
             if (typeof AndroidPlayer !== 'undefined') {
-                console.log('📱 Android: Using native libVLC player for MP4:', content.url);
+                console.log('📱 Android: Fallback to fullscreen for MP4:', content.url);
                 AndroidPlayer.play(content.url, content.name || 'Video');
                 return;
             }
@@ -6657,9 +6670,15 @@
         
         // Enhanced stream loading with HLS support for browsers/TVs
         window.loadStreamEnhanced = function(streamUrl, contentName) {
-            // Use Android native player if available
+            // Use Android PREVIEW player if available
+            if (typeof AndroidPlayerPreview !== 'undefined') {
+                console.log('📱 Android: Using PREVIEW player for:', streamUrl);
+                AndroidPlayerPreview.playInPreview(streamUrl, contentName || 'Stream');
+                return;
+            }
+            // Fallback to fullscreen
             if (typeof AndroidPlayer !== 'undefined') {
-                console.log('📱 Android: Using native player for:', streamUrl);
+                console.log('📱 Android: Fallback to fullscreen for:', streamUrl);
                 AndroidPlayer.play(streamUrl, contentName || 'Stream');
                 return;
             }
