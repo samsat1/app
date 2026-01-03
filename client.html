@@ -2313,7 +2313,53 @@
         let adultUnlocked = false;
         let currentContent = null;
         let isFullscreenMode = false; // Track if VLC fullscreen is active
+        let clickTimer = null; // For single/double click detection
+        let clickDelay = 400; // ms to wait before treating as single click
         let adultTypingSequence = '';
+        
+        // Handle single click with delay (to detect double-click)
+        window.handleSingleClick = function(contentId, event) {
+            if (event) event.stopPropagation();
+            
+            // Clear any pending click
+            if (clickTimer) clearTimeout(clickTimer);
+            
+            // Wait to see if it's a double-click
+            clickTimer = setTimeout(() => {
+                console.log('📺 Single click - playing preview:', contentId);
+                playContent(contentId);
+                highlightCurrentChannel(contentId);
+            }, clickDelay);
+        };
+        
+        // Handle double click - go fullscreen
+        window.handleDoubleClick = function(contentId) {
+            // Cancel the pending single-click
+            if (clickTimer) clearTimeout(clickTimer);
+            clickTimer = null;
+            
+            console.log('📺 Double click - going fullscreen:', contentId);
+            playFullscreen(contentId);
+        };
+        
+        // Highlight current channel in list
+        window.highlightCurrentChannel = function(contentId) {
+            const contentItems = document.querySelectorAll('.content-item');
+            contentItems.forEach(item => {
+                item.style.outline = '';
+                item.style.boxShadow = '';
+                item.classList.remove('tv-focused', 'active');
+            });
+            
+            // Find and highlight the matching item
+            const content = contentData[currentSource]?.content || [];
+            const index = content.findIndex(c => String(c.id) === String(contentId));
+            if (index >= 0 && contentItems[index]) {
+                contentItems[index].classList.add('tv-focused', 'active');
+                contentItems[index].style.outline = '3px solid #00ff00';
+                contentItems[index].style.boxShadow = '0 0 15px #00ff00';
+            }
+        };
         let typingTimeout = null;
         let adminCustomers = [];
 
@@ -4571,12 +4617,12 @@
                 
                 const clickAction = isLocked ? 
                     `showUpgradePrompt('${item.id}')` : 
-                    (item.type === 'package' ? `showPackageDetails('${item.packageId}')` : `playContent('${item.id}')`);
+                    (item.type === 'package' ? `showPackageDetails('${item.packageId}')` : `handleSingleClick('${item.id}', event)`);
                 
-                const dblClickAction = isLocked ? '' : (item.type === 'package' ? '' : `playFullscreen('${item.id}')`);
+                const dblClickAction = isLocked ? '' : (item.type === 'package' ? '' : `handleDoubleClick('${item.id}')`);
                 
                 return `
-                    <div class="${className} ${isLocked ? 'locked-content' : ''}" tabindex="0" onclick="${clickAction}" ondblclick="${dblClickAction}" onkeydown="if(event.key==='Enter'){${clickAction}}">
+                    <div class="${className} ${isLocked ? 'locked-content' : ''}" tabindex="0" onclick="${clickAction}" ondblclick="${dblClickAction}" onkeydown="if(event.key==='Enter'){playContent('${item.id}')}">`
                         <div class="content-type-badge ${typeBadge}">${isAdult ? '🔞 ADULT' : contentType}</div>
                         ${isLocked ? '<div class="lock-overlay"><div class="lock-icon">🔒</div></div>' : ''}
                         <div class="content-header">
@@ -6266,28 +6312,34 @@
                 const contentItems = document.querySelectorAll('.content-item');
                 if (contentItems.length === 0 || index < 0 || index >= contentItems.length) return;
                 
-                // Remove previous active/focus
+                // Remove previous active/focus from ALL items
                 contentItems.forEach(item => {
                     item.classList.remove('tv-focused', 'active');
+                    item.style.outline = '';
+                    item.style.boxShadow = '';
                 });
                 
-                // Add focus to current item
+                // Add STRONG visible focus to current item
                 const targetItem = contentItems[index];
                 if (targetItem) {
                     targetItem.classList.add('tv-focused', 'active');
+                    targetItem.style.outline = '3px solid #00ff00';
+                    targetItem.style.boxShadow = '0 0 15px #00ff00';
                     
-                    // Scroll ONLY the content-list container
+                    // Scroll ONLY if item is not visible
                     const contentList = targetItem.closest('.content-list');
                     if (contentList) {
-                        const itemRect = targetItem.getBoundingClientRect();
-                        const listRect = contentList.getBoundingClientRect();
+                        const itemTop = targetItem.offsetTop;
+                        const itemHeight = targetItem.offsetHeight;
+                        const listHeight = contentList.clientHeight;
+                        const scrollTop = contentList.scrollTop;
                         
-                        // Calculate scroll position to center the item in the list
-                        const scrollTop = targetItem.offsetTop - (contentList.clientHeight / 2) + (targetItem.offsetHeight / 2);
-                        contentList.scrollTo({
-                            top: Math.max(0, scrollTop),
-                            behavior: 'smooth'
-                        });
+                        // Check if item is above or below visible area
+                        if (itemTop < scrollTop) {
+                            contentList.scrollTo({ top: itemTop - 10, behavior: 'smooth' });
+                        } else if (itemTop + itemHeight > scrollTop + listHeight) {
+                            contentList.scrollTo({ top: itemTop - listHeight + itemHeight + 10, behavior: 'smooth' });
+                        }
                     }
                 }
             },
