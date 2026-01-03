@@ -6055,13 +6055,11 @@
                         // Navigation - Arrow Keys
                         case 'ArrowUp':
                             e.preventDefault();
-                            // Switch channels in both list and fullscreen
-                            this.channelUp();
+                            this.moveFocusInList('up');
                             break;
                         case 'ArrowDown':
                             e.preventDefault();
-                            // Switch channels in both list and fullscreen
-                            this.channelDown();
+                            this.moveFocusInList('down');
                             break;
                         case 'ArrowLeft':
                             e.preventDefault();
@@ -6157,11 +6155,11 @@
                     switch(keyCode) {
                         case 19: // Android D-pad UP
                             e.preventDefault();
-                            this.channelUp();
+                            this.moveFocusInList('up');
                             break;
                         case 20: // Android D-pad DOWN
                             e.preventDefault();
-                            this.channelDown();
+                            this.moveFocusInList('down');
                             break;
                         case 21: // Android D-pad LEFT
                             e.preventDefault();
@@ -6174,8 +6172,13 @@
                         case 23: // Android D-pad CENTER/OK
                         case 66: // Android ENTER
                             e.preventDefault();
-                            const focused = document.querySelector('.tv-focused') || document.activeElement;
-                            if (focused) focused.click();
+                            const focusedItem = document.querySelector('.content-item.tv-focused');
+                            if (focusedItem && focusedItem.dataset && focusedItem.dataset.id) {
+                                playContent(focusedItem.dataset.id);
+                            } else {
+                                const focused = document.querySelector('.tv-focused') || document.activeElement;
+                                if (focused) focused.click();
+                            }
                             break;
                         case 4: // Android BACK
                             e.preventDefault();
