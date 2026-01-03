@@ -1076,6 +1076,8 @@
             backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow-y: auto;
+            max-height: calc(100vh - 120px);
         }
 
         /* Video Container */
@@ -1105,21 +1107,17 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, rgba(26, 26, 46, 0.9), rgba(15, 52, 96, 0.9));
-            display: flex;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
             border-radius: 15px;
             z-index: 10;
         }
 
         .video-overlay.show {
-            opacity: 1;
-            pointer-events: auto;
+            display: flex;
         }
 
         .play-button {
@@ -1259,9 +1257,12 @@
             font-size: 14px;
         }
 
-        .control-btn:hover {
+        .control-btn:hover,
+        .control-btn:focus {
             background: rgba(255, 255, 255, 0.15);
             transform: translateY(-1px);
+            outline: 3px solid #7c3aed;
+            outline-offset: 2px;
         }
 
         .volume-control {
@@ -2153,10 +2154,10 @@
             
             <!-- Video Controls -->
             <div class="video-controls">
-                <button class="control-btn" onclick="togglePlay()">▶️ Play/Pause</button>
-                <button class="control-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
-                <button class="control-btn" onclick="toggleMute()">🔊 Mute/Unmute</button>
-                <button class="control-btn" onclick="stopStream()">⏹️ Stop</button>
+                <button class="control-btn" tabindex="0" onclick="togglePlay()">▶️ Play/Pause</button>
+                <button class="control-btn" tabindex="0" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+                <button class="control-btn" tabindex="0" onclick="toggleMute()">🔊 Mute/Unmute</button>
+                <button class="control-btn" tabindex="0" onclick="stopStream()">⏹️ Stop</button>
                 
                 <div class="volume-control">
                     <span>🔊</span>
@@ -4622,7 +4623,7 @@
                 const dblClickAction = isLocked ? '' : (item.type === 'package' ? '' : `handleDoubleClick('${item.id}')`);
                 
                 return `
-                    <div class="${className} ${isLocked ? 'locked-content' : ''}" tabindex="0" onclick="${clickAction}" ondblclick="${dblClickAction}" onkeydown="if(event.key==='Enter'){playContent('${item.id}')}">
+                    <div class="${className} ${isLocked ? 'locked-content' : ''}" tabindex="0" data-id="${item.id}" onclick="${clickAction}" ondblclick="${dblClickAction}" onkeydown="if(event.key==='Enter'){playContent('${item.id}')}">
                         <div class="content-type-badge ${typeBadge}">${isAdult ? '🔞 ADULT' : contentType}</div>
                         ${isLocked ? '<div class="lock-overlay"><div class="lock-icon">🔒</div></div>' : ''}
                         <div class="content-header">
@@ -4686,20 +4687,45 @@
             const streamUrl = content.streamUrl || content.url;
             const contentName = content.name || 'Stream';
             
-            // Use Android native fullscreen player
-            if (typeof AndroidPlayer !== 'undefined') {
-                console.log('📱 Android: Opening FULLSCREEN for:', streamUrl);
-                isFullscreenMode = true;
-                AndroidPlayer.play(streamUrl, contentName);
-                return;
+            // Play content and go fullscreen
+            const video = document.getElementById('videoPlayer');
+            if (!video) return;
+            
+            // Load the stream using HLS.js
+            if (streamUrl.includes('.m3u8') && typeof Hls !== 'undefined' && Hls.isSupported()) {
+                if (window.hlsInstance) window.hlsInstance.destroy();
+                window.hlsInstance = new Hls({ enableWorker: true, maxBufferLength: 30, maxMaxBufferLength: 60 });
+                window.hlsInstance.loadSource(streamUrl);
+                window.hlsInstance.attachMedia(video);
+                window.hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+                    video.play();
+                    // Go fullscreen after video starts
+                    setTimeout(() => {
+                        if (video.requestFullscreen) {
+                            video.requestFullscreen();
+                        } else if (video.webkitRequestFullscreen) {
+                            video.webkitRequestFullscreen();
+                        }
+                    }, 500);
+                });
+            } else {
+                // Direct video source
+                video.src = streamUrl;
+                video.play();
+                setTimeout(() => {
+                    if (video.requestFullscreen) {
+                        video.requestFullscreen();
+                    } else if (video.webkitRequestFullscreen) {
+                        video.webkitRequestFullscreen();
+                    }
+                }, 500);
             }
             
-            // Fallback: browser fullscreen
-            if (player) {
-                player.src({ src: streamUrl, type: 'application/x-mpegURL' });
-                player.play();
-                player.requestFullscreen();
-            }
+            // Hide overlay
+            document.getElementById('videoOverlay').classList.remove('show');
+            
+            // Update now playing
+            updateNowPlaying(content);
         };
         
         // Global function for playing content in PREVIEW (single-click)
@@ -4776,19 +4802,15 @@
                     showError('Unsupported content type: ' + content.type);
                 }
             } else {
-                // On-demand content: show loading indicator for 2 seconds, then stream
-                console.log('⏸️ Loading on-demand content:', content.name);
-                showLoadingIndicator(content.name, streamingMode);
-                
-                setTimeout(() => {
-                    if (content.type === 'hls' || content.type === 'movies' || content.url?.includes('.m3u8')) {
-                        handleHLSContent(content);
-                    } else if (content.type === 'mp4') {
-                        handleMP4Content(content);
-                    } else {
-                        showError('Unsupported content type: ' + content.type);
-                    }
-                }, 2000); // 2-second delay as specified
+                // On-demand content: play immediately (no loading delay)
+                console.log('▶️ Playing on-demand content:', content.name);
+                if (content.type === 'hls' || content.type === 'movies' || content.url?.includes('.m3u8')) {
+                    handleHLSContent(content);
+                } else if (content.type === 'mp4') {
+                    handleMP4Content(content);
+                } else {
+                    showError('Unsupported content type: ' + content.type);
+                }
             }
         }
 
@@ -5082,6 +5104,74 @@
                 </div>
             `;
         }
+
+        // Toggle video fullscreen - click on video to go fullscreen
+        window.toggleVideoFullscreen = function() {
+            const video = document.getElementById('videoPlayer');
+            if (!video) return;
+            
+            // Check if already fullscreen
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                // Exit fullscreen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            } else {
+                // Enter fullscreen
+                if (video.requestFullscreen) {
+                    video.requestFullscreen();
+                } else if (video.webkitRequestFullscreen) {
+                    video.webkitRequestFullscreen();
+                } else if (video.webkitEnterFullscreen) {
+                    video.webkitEnterFullscreen(); // iOS
+                }
+            }
+        };
+
+        // Fullscreen channel switching
+        window.fullscreenChannelUp = function() {
+            const content = contentData[currentSource]?.content || [];
+            if (content.length === 0) return;
+            const currentIndex = content.findIndex(c => c.id === currentContent?.id);
+            const prevIndex = currentIndex > 0 ? currentIndex - 1 : content.length - 1;
+            const prevContent = content[prevIndex];
+            if (prevContent) {
+                playFullscreen(prevContent.id);
+            }
+        };
+        
+        window.fullscreenChannelDown = function() {
+            const content = contentData[currentSource]?.content || [];
+            if (content.length === 0) return;
+            const currentIndex = content.findIndex(c => c.id === currentContent?.id);
+            const nextIndex = currentIndex < content.length - 1 ? currentIndex + 1 : 0;
+            const nextContent = content[nextIndex];
+            if (nextContent) {
+                playFullscreen(nextContent.id);
+            }
+        };
+        
+        // Global keydown for fullscreen channel switching
+        document.addEventListener('keydown', function(e) {
+            // Only handle when in fullscreen
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) return;
+            
+            const keyCode = e.keyCode || e.which;
+            
+            if (e.key === 'ArrowUp' || keyCode === 19) {
+                e.preventDefault();
+                fullscreenChannelUp();
+            } else if (e.key === 'ArrowDown' || keyCode === 20) {
+                e.preventDefault();
+                fullscreenChannelDown();
+            } else if (e.key === 'Escape' || e.key === 'Backspace' || keyCode === 4) {
+                e.preventDefault();
+                if (document.exitFullscreen) document.exitFullscreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            }
+        });
 
         // Global function for starting playback - defined early for onclick access
         window.startPlaying = function() {
@@ -6352,12 +6442,16 @@
                 const contentItems = document.querySelectorAll('.content-item');
                 if (contentItems.length === 0) return;
                 
+                // Find current focused index
                 let currentIndex = -1;
                 contentItems.forEach((item, i) => {
-                    if (item.classList.contains('tv-focused') || item === document.activeElement) {
+                    if (item.classList.contains('tv-focused')) {
                         currentIndex = i;
                     }
                 });
+                
+                // If nothing focused, start at 0
+                if (currentIndex === -1) currentIndex = 0;
                 
                 let newIndex;
                 if (direction === 'up') {
@@ -6366,19 +6460,39 @@
                     newIndex = currentIndex < contentItems.length - 1 ? currentIndex + 1 : 0;
                 }
                 
+                // Clear ALL focus styles from ALL items
+                contentItems.forEach(item => {
+                    item.classList.remove('tv-focused', 'active');
+                    item.style.outline = '';
+                    item.style.boxShadow = '';
+                    item.style.background = '';
+                });
+                
                 const targetItem = contentItems[newIndex];
                 if (targetItem) {
-                    contentItems.forEach(item => item.classList.remove('tv-focused'));
+                    // Add VERY VISIBLE focus
                     targetItem.classList.add('tv-focused');
-                    targetItem.focus();
+                    targetItem.style.outline = '4px solid #00ff00';
+                    targetItem.style.boxShadow = '0 0 20px #00ff00, inset 0 0 10px rgba(0,255,0,0.3)';
+                    targetItem.style.background = 'rgba(0, 255, 0, 0.15)';
                     
+                    // Scroll ONLY the content list - keep item in view
                     const contentList = targetItem.closest('.content-list');
                     if (contentList) {
-                        const itemTop = targetItem.offsetTop;
-                        const containerHeight = contentList.clientHeight;
-                        const scrollTarget = itemTop - (containerHeight / 2) + (targetItem.offsetHeight / 2);
-                        contentList.scrollTo({ top: Math.max(0, scrollTarget), behavior: 'smooth' });
+                        const itemRect = targetItem.getBoundingClientRect();
+                        const listRect = contentList.getBoundingClientRect();
+                        
+                        // Only scroll if item is outside visible area
+                        if (itemRect.top < listRect.top) {
+                            // Item above visible area
+                            contentList.scrollTop -= (listRect.top - itemRect.top + 20);
+                        } else if (itemRect.bottom > listRect.bottom) {
+                            // Item below visible area
+                            contentList.scrollTop += (itemRect.bottom - listRect.bottom + 20);
+                        }
                     }
+                    
+                    console.log('📺 Focus on:', targetItem.querySelector('.content-name')?.textContent || newIndex);
                 }
             },
             
@@ -6758,8 +6872,10 @@
                     // Create new HLS instance
                     const hls = new Hls({
                         enableWorker: true,
-                        lowLatencyMode: true,
-                        backBufferLength: 90
+                        lowLatencyMode: false,
+                        maxBufferLength: 30,
+                        maxMaxBufferLength: 60,
+                        backBufferLength: 30
                     });
                     
                     window.hlsInstance = hls;
