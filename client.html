@@ -790,9 +790,11 @@
             color: white;
         }
 
-        /* Content List */
+        /* Content List - TV Optimized */
         .content-section {
-            height: 400px;
+            height: calc(100vh - 400px);
+            min-height: 400px;
+            max-height: 600px;
             overflow: hidden;
         }
 
@@ -908,12 +910,14 @@
         }
 
         /* D-pad focus styling for TV remotes */
-        .content-item:focus {
-            outline: 3px solid #00ff00 !important;
+        .content-item:focus,
+        .content-item.tv-focused {
+            outline: 4px solid #00ff00 !important;
             outline-offset: 2px;
-            background: rgba(102, 126, 234, 0.3);
+            background: linear-gradient(135deg, rgba(0, 255, 0, 0.2), rgba(102, 126, 234, 0.3)) !important;
             transform: scale(1.02);
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+            box-shadow: 0 0 25px rgba(0, 255, 0, 0.6), inset 0 0 15px rgba(0, 255, 0, 0.1) !important;
+            z-index: 10;
         }
 
         .content-item.adult-content {
@@ -1070,10 +1074,9 @@
 
         /* Main Player Area */
         .player-area {
-            background: var(--glass-bg);
+            background: rgba(15, 15, 35, 0.95);
             border-radius: 20px;
             padding: 25px;
-            backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
             overflow-y: auto;
@@ -2117,7 +2120,7 @@
         <!-- Player Area -->
         <section class="player-area">
             <!-- Video Player -->
-            <div class="video-container">
+            <div class="video-container" ondblclick="toggleVideoFullscreen()">
                 <video 
                     id="videoPlayer" 
                     class="video-player video-js vjs-default-skin" 
@@ -2911,29 +2914,40 @@
                 // Check for stored credentials
                 const storedCredentials = localStorage.getItem('iwatch_tv_credentials');
                 
-                if (storedCredentials) {
-                    const credentials = JSON.parse(storedCredentials);
-                    console.log('🔑 Auto-login: Found stored credentials, attempting login...');
-                    
-                    // Use the full authenticateUser to get complete user object
-                    const user = passwordManager.authenticateUser(credentials.username, credentials.password);
-                    
-                    if (user) {
-                        isLoggedIn = true;
-                        currentUser = user;
-                        adminCustomers = loadCustomersFromAdmin();
-                        updateUserInterface();
-                        console.log(`✅ Auto-login successful for ${user.username}`);
-                        loadPlexLibraryContent();
-                        return;
-                    } else {
-                        console.log('❌ Auto-login: Credentials invalid or expired');
-                        clearStoredCredentials();
-                    }
+                if (!storedCredentials) {
+                    console.log('🔑 Auto-login: No stored credentials found');
+                    return false;
+                }
+                
+                const credentials = JSON.parse(storedCredentials);
+                console.log('🔑 Auto-login: Found stored credentials for:', credentials.username);
+                
+                // IMPORTANT: Wait for customer data to be available
+                const customers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
+                if (customers.length === 0) {
+                    console.log('🔑 Auto-login: Customer data not ready, will retry...');
+                    return false; // Signal retry needed
+                }
+                
+                // Use the full authenticateUser to get complete user object
+                const user = passwordManager.authenticateUser(credentials.username, credentials.password);
+                
+                if (user) {
+                    isLoggedIn = true;
+                    currentUser = user;
+                    adminCustomers = loadCustomersFromAdmin();
+                    updateUserInterface();
+                    console.log(`✅ Auto-login successful for ${user.username}`);
+                    loadPlexLibraryContent();
+                    return true;
+                } else {
+                    console.log('❌ Auto-login: Credentials invalid or device mismatch');
+                    // Don't clear on first failure - may be timing issue
+                    return false;
                 }
             } catch (error) {
                 console.error('❌ Auto-login error:', error);
-                clearStoredCredentials();
+                return false;
             }
         }
         
@@ -4687,7 +4701,18 @@
             const streamUrl = content.streamUrl || content.url;
             const contentName = content.name || 'Stream';
             
-            // Play content and go fullscreen
+            // Use native Android player if available (ExoPlayer)
+            if (typeof AndroidPlayer !== 'undefined' && window.useNativePlayer) {
+                console.log('📱 Using native Android player for fullscreen:', streamUrl);
+                AndroidPlayer.playFullscreen(streamUrl);
+                updateNowPlaying(content);
+                currentContent = content;
+                return;
+            }
+            
+            // Fallback to web player - HIDE OVERLAY FIRST
+            document.getElementById('videoOverlay').classList.remove('show');
+            
             const video = document.getElementById('videoPlayer');
             if (!video) return;
             
@@ -4699,7 +4724,6 @@
                 window.hlsInstance.attachMedia(video);
                 window.hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
                     video.play();
-                    // Go fullscreen after video starts
                     setTimeout(() => {
                         if (video.requestFullscreen) {
                             video.requestFullscreen();
@@ -4709,7 +4733,6 @@
                     }, 500);
                 });
             } else {
-                // Direct video source
                 video.src = streamUrl;
                 video.play();
                 setTimeout(() => {
@@ -4721,10 +4744,7 @@
                 }, 500);
             }
             
-            // Hide overlay
             document.getElementById('videoOverlay').classList.remove('show');
-            
-            // Update now playing
             updateNowPlaying(content);
         };
         
@@ -4864,10 +4884,76 @@
             updateNowPlaying(content);
         }
 
+        // Toggle fullscreen on double-click
+        function toggleVideoFullscreen() {
+            const video = document.getElementById('videoPlayer');
+            if (!video) return;
+            
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                if (video.requestFullscreen) {
+                    video.requestFullscreen();
+                } else if (video.webkitRequestFullscreen) {
+                    video.webkitRequestFullscreen();
+                } else if (video.webkitEnterFullscreen) {
+                    video.webkitEnterFullscreen(); // iOS
+                }
+            }
+        }
+
+        // Hide video overlay for native Android player
+        function hideVideoOverlayForNative() {
+            // Hide the play button overlay
+            const overlay = document.getElementById('videoOverlay');
+            if (overlay) overlay.classList.remove('show');
+            
+            // Make video container transparent so native VLC surface shows through
+            const videoContainer = document.querySelector('.video-container');
+            if (videoContainer) {
+                videoContainer.style.background = 'transparent';
+            }
+            
+            // Hide the Video.js player
+            const videoPlayer = document.querySelector('.video-player');
+            if (videoPlayer) {
+                videoPlayer.style.opacity = '0';
+                videoPlayer.style.visibility = 'hidden';
+            }
+            
+            console.log('📱 Hidden web overlay for native player');
+        }
+        
+        // Show video overlay (when stopping native player)
+        function showVideoOverlayForWeb() {
+            const videoContainer = document.querySelector('.video-container');
+            if (videoContainer) {
+                videoContainer.style.background = '#000';
+            }
+            
+            const videoPlayer = document.querySelector('.video-player');
+            if (videoPlayer) {
+                videoPlayer.style.opacity = '1';
+                videoPlayer.style.visibility = 'visible';
+            }
+        }
+
         // Play HLS stream
         function handleHLSStream(url) {
-            if (typeof AndroidPlayerPreview !== 'undefined') { AndroidPlayerPreview.playInPreview(url, currentContent ? currentContent.name : 'Stream'); return; }
-            if (typeof AndroidPlayer !== 'undefined') { AndroidPlayer.play(url, currentContent ? currentContent.name : 'Stream'); return; }
+            // Android native player - hide web overlay to show VLC surface
+            if (typeof AndroidPlayerPreview !== 'undefined') {
+                hideVideoOverlayForNative();
+                AndroidPlayerPreview.playInPreview(url, currentContent ? currentContent.name : 'Stream');
+                return;
+            }
+            if (typeof AndroidPlayer !== 'undefined') {
+                hideVideoOverlayForNative();
+                AndroidPlayer.play(url, currentContent ? currentContent.name : 'Stream');
+                return;
+            }
+            // HIDE OVERLAY for WebView playback
+            document.getElementById('videoOverlay').classList.remove('show');
+            
             if (Hls.isSupported()) {
                 if (hls) hls.destroy();
                 hls = new Hls();
@@ -4892,16 +4978,10 @@
         }
         
         function handleHLSContent(content) {
-            // Use Android PREVIEW player if available (single-click = preview)
-            if (typeof AndroidPlayerPreview !== 'undefined') {
-                console.log('📱 Android: Using PREVIEW player for:', content.url);
-                AndroidPlayerPreview.playInPreview(content.url, content.name || 'Stream');
-                return;
-            }
-            // Fallback to fullscreen if preview not available
-            if (typeof AndroidPlayer !== 'undefined') {
-                console.log('📱 Android: Fallback to fullscreen player for:', content.url);
-                AndroidPlayer.play(content.url, content.name || 'Stream');
+            // Use native Android ExoPlayer if available
+            if (typeof AndroidPlayer !== 'undefined' && window.useNativePlayer) {
+                console.log('📱 Using native Android ExoPlayer for:', content.url);
+                AndroidPlayer.play(content.url);
                 return;
             }
             
@@ -5052,6 +5132,7 @@
             // Use Android PREVIEW player if available (single-click = preview)
             if (typeof AndroidPlayerPreview !== 'undefined') {
                 console.log('📱 Android: Using PREVIEW player for MP4:', content.url);
+                hideVideoOverlayForNative();
                 AndroidPlayerPreview.playInPreview(content.url, content.name || 'Video');
                 return;
             }
@@ -5062,16 +5143,17 @@
                 return;
             }
             
-            player.src({
-                src: content.url,
-                type: 'video/mp4'
-            });
+            // HIDE OVERLAY - Use same player as HLS
+            document.getElementById('videoOverlay').classList.remove('show');
             
-            player.ready(() => {
-                player.play().catch(e => {
-                    showError('Failed to start playback. Please try again.');
+            // Use Video.js player (same as HLS)
+            const video = document.getElementById('videoPlayer');
+            if (video) {
+                video.src = content.url;
+                video.play().catch(e => {
+                    console.log('Autoplay blocked - tap to play');
                 });
-            });
+            }
         }
 
         function updateNowPlaying(content) {
@@ -5510,8 +5592,25 @@
             // Load built-in content if no admin data exists
             ensureBuiltInContent();
             
-            // Auto-login check for TV platform
-            checkAutoLogin();
+            // Auto-login check for TV platform with retry logic
+            const autoLoginSuccess = checkAutoLogin();
+            
+            // If auto-login failed (data not ready), retry after sync completes
+            if (!autoLoginSuccess && localStorage.getItem('iwatch_tv_credentials')) {
+                console.log('🔄 Will retry auto-login in 2 seconds...');
+                setTimeout(() => {
+                    console.log('🔄 Retrying auto-login...');
+                    checkAutoLogin();
+                }, 2000);
+                
+                // Also try again after 5 seconds in case sync takes longer
+                setTimeout(() => {
+                    if (!isLoggedIn && localStorage.getItem('iwatch_tv_credentials')) {
+                        console.log('🔄 Final auto-login retry...');
+                        checkAutoLogin();
+                    }
+                }, 5000);
+            }
             
             // Apply subscription filtering
             const availablePackages = filterContentBySubscription();
@@ -6177,9 +6276,19 @@
                         // Select/OK - Enter key
                         case 'Enter':
                             e.preventDefault();
-                            const focused = document.querySelector('.tv-focused') || document.activeElement;
-                            if (focused) {
-                                focused.click();
+                            // Find focused content item and play it directly
+                            const focusedItem = document.querySelector('.content-item.tv-focused');
+                            if (focusedItem && focusedItem.dataset && focusedItem.dataset.id) {
+                                console.log('📺 D-pad Enter: Playing', focusedItem.dataset.id);
+                                if (typeof playContent === 'function') {
+                                    playContent(focusedItem.dataset.id);
+                                }
+                            } else {
+                                // Fallback for other focusable elements
+                                const focused = document.querySelector('.tv-focused') || document.activeElement;
+                                if (focused) {
+                                    focused.click();
+                                }
                             }
                             break;
                             
@@ -6842,6 +6951,7 @@
             // Use Android PREVIEW player if available
             if (typeof AndroidPlayerPreview !== 'undefined') {
                 console.log('📱 Android: Using PREVIEW player for:', streamUrl);
+                if (typeof hideVideoOverlayForNative === 'function') hideVideoOverlayForNative();
                 AndroidPlayerPreview.playInPreview(streamUrl, contentName || 'Stream');
                 return;
             }
