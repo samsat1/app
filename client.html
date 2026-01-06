@@ -1102,6 +1102,22 @@
 
         .video-js {
             border-radius: 15px;
+            background-color: #000 !important;
+        }
+
+        /* Hide Video.js poster/loading states */
+        .vjs-poster,
+        .vjs-loading-spinner,
+        .video-js .vjs-big-play-button {
+            display: none !important;
+        }
+
+        .video-js video {
+            background-color: #000 !important;
+        }
+
+        .video-container {
+            background-color: #000 !important;
         }
 
         .video-overlay {
@@ -1110,13 +1126,21 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.95);
             display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             border-radius: 15px;
             z-index: 10;
+        }
+
+        /* When playing - ensure overlay is completely hidden */
+        .video-overlay.playing,
+        .video-overlay[style*="display: none"] {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
         }
 
         .video-overlay.show {
@@ -4710,8 +4734,11 @@
                 return;
             }
             
-            // Fallback to web player - HIDE OVERLAY FIRST
-            document.getElementById('videoOverlay').classList.remove('show');
+            // Fallback to web player - HIDE OVERLAY COMPLETELY
+            const overlay = document.getElementById('videoOverlay');
+            overlay.classList.remove('show');
+            overlay.classList.add('playing');
+            overlay.style.display = 'none';
             
             const video = document.getElementById('videoPlayer');
             if (!video) return;
@@ -4744,7 +4771,9 @@
                 }, 500);
             }
             
-            document.getElementById('videoOverlay').classList.remove('show');
+            // Hide overlay completely
+            const ovl = document.getElementById('videoOverlay');
+            if (ovl) { ovl.classList.remove('show'); ovl.classList.add('playing'); ovl.style.display = 'none'; }
             updateNowPlaying(content);
         };
         
@@ -4799,8 +4828,11 @@
             
             currentContent = content;
             
-            // Hide overlay
-            document.getElementById('videoOverlay').classList.remove('show');
+            // Hide overlay COMPLETELY
+            const overlay = document.getElementById('videoOverlay');
+            overlay.classList.remove('show');
+            overlay.classList.add('playing');
+            overlay.style.display = 'none';
             
             // Update now playing
             updateNowPlaying(content);
@@ -4952,7 +4984,9 @@
                 return;
             }
             // HIDE OVERLAY for WebView playback
-            document.getElementById('videoOverlay').classList.remove('show');
+            // Hide overlay completely
+            const ovl2 = document.getElementById('videoOverlay');
+            if (ovl2) { ovl2.classList.remove('show'); ovl2.classList.add('playing'); ovl2.style.display = 'none'; }
             
             if (Hls.isSupported()) {
                 if (hls) hls.destroy();
@@ -4978,11 +5012,14 @@
         }
         
         function handleHLSContent(content) {
-            // Use native Android ExoPlayer if available
-            if (typeof AndroidPlayer !== 'undefined' && window.useNativePlayer) {
-                console.log('📱 Using native Android ExoPlayer for:', content.url);
-                AndroidPlayer.play(content.url);
-                return;
+            console.log('🎬 handleHLSContent called for:', content.name, content.url);
+            
+            // HIDE OVERLAY COMPLETELY
+            const overlay = document.getElementById('videoOverlay');
+            if (overlay) {
+                overlay.classList.remove('show');
+                overlay.classList.add('playing');
+                overlay.style.display = 'none';
             }
             
             // Check if it's Plex content - use direct MP4 instead of HLS transcode
@@ -5131,9 +5168,13 @@
         function handleMP4Content(content) {
             console.log('🎬 handleMP4Content called for:', content.name, content.url);
             
-            // HIDE OVERLAY
+            // HIDE OVERLAY COMPLETELY
             const overlay = document.getElementById('videoOverlay');
-            if (overlay) overlay.classList.remove('show');
+            if (overlay) {
+                overlay.classList.remove('show');
+                overlay.classList.add('playing');
+                overlay.style.display = 'none';
+            }
             
             // Use Video.js player for MP4 (same as HLS)
             if (player) {
@@ -5143,8 +5184,8 @@
                     console.log('Autoplay blocked - tap to play:', e);
                 });
             } else {
-                // Fallback to raw video element
-                const video = document.getElementById('mainVideo') || document.getElementById('mainVideo_html5_api');
+                // Fallback to raw video element (correct ID: videoPlayer)
+                const video = document.getElementById('videoPlayer') || document.querySelector('.video-player video');
                 if (video) {
                     console.log('🎬 Using raw video element for MP4');
                     video.src = content.url;
@@ -5326,7 +5367,9 @@
             }
             
             // Show overlay
-            document.getElementById('videoOverlay').classList.add('show');
+            // Show overlay when stopping
+            const ovlStop = document.getElementById('videoOverlay');
+            if (ovlStop) { ovlStop.classList.remove('playing'); ovlStop.style.display = ''; ovlStop.classList.add('show'); }
             
             // Reset now playing
             const container = document.getElementById('nowPlayingContent');
@@ -6916,9 +6959,9 @@
         window.initializePlayer = function() {
             console.log('🎬 Initializing enhanced player with HLS support...');
             
-            // Initialize Video.js player if not already done
+            // Initialize Video.js player if not already done (correct ID: videoPlayer)
             if (typeof videojs !== 'undefined' && !player) {
-                const videoElement = document.getElementById('mainVideo');
+                const videoElement = document.getElementById('videoPlayer');
                 if (videoElement) {
                     player = videojs(videoElement, {
                         controls: true,
@@ -6949,22 +6992,18 @@
         
         // Enhanced stream loading with HLS support for browsers/TVs
         window.loadStreamEnhanced = function(streamUrl, contentName) {
-            // Use Android PREVIEW player if available
-            if (typeof AndroidPlayerPreview !== 'undefined') {
-                console.log('📱 Android: Using PREVIEW player for:', streamUrl);
-                if (typeof hideVideoOverlayForNative === 'function') hideVideoOverlayForNative();
-                AndroidPlayerPreview.playInPreview(streamUrl, contentName || 'Stream');
-                return;
-            }
-            // Fallback to fullscreen
-            if (typeof AndroidPlayer !== 'undefined') {
-                console.log('📱 Android: Fallback to fullscreen for:', streamUrl);
-                AndroidPlayer.play(streamUrl, contentName || 'Stream');
-                return;
-            }
             console.log('📺 Loading stream:', streamUrl);
             
-            const videoElement = document.getElementById('mainVideo');
+            // HIDE OVERLAY COMPLETELY
+            const overlay = document.getElementById('videoOverlay');
+            if (overlay) {
+                overlay.classList.remove('show');
+                overlay.classList.add('playing');
+                overlay.style.display = 'none';
+            }
+            
+            // Use correct video element (videoPlayer, not mainVideo)
+            const videoElement = document.getElementById('videoPlayer') || document.getElementById('mainVideo');
             if (!videoElement) {
                 console.error('Video element not found');
                 return;
