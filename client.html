@@ -5129,30 +5129,31 @@
 
         // Handle MP4 content playback
         function handleMP4Content(content) {
-            // Use Android PREVIEW player if available (single-click = preview)
-            if (typeof AndroidPlayerPreview !== 'undefined') {
-                console.log('📱 Android: Using PREVIEW player for MP4:', content.url);
-                hideVideoOverlayForNative();
-                AndroidPlayerPreview.playInPreview(content.url, content.name || 'Video');
-                return;
-            }
-            // Fallback to fullscreen if preview not available
-            if (typeof AndroidPlayer !== 'undefined') {
-                console.log('📱 Android: Fallback to fullscreen for MP4:', content.url);
-                AndroidPlayer.play(content.url, content.name || 'Video');
-                return;
-            }
+            console.log('🎬 handleMP4Content called for:', content.name, content.url);
             
-            // HIDE OVERLAY - Use same player as HLS
-            document.getElementById('videoOverlay').classList.remove('show');
+            // HIDE OVERLAY
+            const overlay = document.getElementById('videoOverlay');
+            if (overlay) overlay.classList.remove('show');
             
-            // Use Video.js player (same as HLS)
-            const video = document.getElementById('videoPlayer');
-            if (video) {
-                video.src = content.url;
-                video.play().catch(e => {
-                    console.log('Autoplay blocked - tap to play');
+            // Use Video.js player for MP4 (same as HLS)
+            if (player) {
+                console.log('🎬 Using Video.js for MP4 playback');
+                player.src({ src: content.url, type: 'video/mp4' });
+                player.play().catch(e => {
+                    console.log('Autoplay blocked - tap to play:', e);
                 });
+            } else {
+                // Fallback to raw video element
+                const video = document.getElementById('mainVideo') || document.getElementById('mainVideo_html5_api');
+                if (video) {
+                    console.log('🎬 Using raw video element for MP4');
+                    video.src = content.url;
+                    video.play().catch(e => {
+                        console.log('Autoplay blocked - tap to play:', e);
+                    });
+                } else {
+                    console.error('No video element found for MP4 playback');
+                }
             }
         }
 
