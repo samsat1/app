@@ -392,6 +392,43 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <style>
+        /* WEBVIEW FIX: Disable ALL blur effects globally */
+        *, *::before, *::after {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        
+        /* Hide Video.js overlays - but NOT the video element */
+        .vjs-modal-dialog,
+        .vjs-modal-dialog-content,
+        .video-js .vjs-modal-dialog,
+        .vjs-big-play-button,
+        .video-js .vjs-big-play-button,
+        .video-js button.vjs-big-play-button,
+        .vjs-poster,
+        .video-js .vjs-poster,
+        .vjs-loading-spinner,
+        .video-js .vjs-loading-spinner,
+        .vjs-error-display,
+        .vjs-text-track-display {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        
+        /* FIX: Ensure video element is visible */
+        #videoPlayer,
+        .video-js video,
+        video.vjs-tech {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: #000 !important;
+        }
+        
         :root {
             --primary-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             --accent-blue: #667eea;
@@ -451,12 +488,11 @@
 
         /* Header Styles - TV Fixed Positioning */
         .header {
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(15, 15, 35, 0.98); /* Solid for WebView */
             padding: 20px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--glass-border);
             position: fixed;
             top: 0;
@@ -507,10 +543,9 @@
             align-items: center;
             gap: 12px;
             padding: 10px 16px;
-            background: var(--glass-bg);
+            background: rgba(30, 30, 60, 0.9); /* Solid for WebView */
             border-radius: 20px;
             border: 1px solid var(--glass-border);
-            backdrop-filter: blur(10px);
             transition: all 0.3s ease;
             cursor: pointer;
         }
@@ -614,27 +649,39 @@
             font-weight: 500;
         }
 
-        /* Main Layout - TV Optimized */
+        /* Main Layout - TV Optimized - NO PAGE SCROLL */
         .main-container {
             display: grid;
             grid-template-columns: 380px 1fr;
             gap: 30px;
             padding: 30px;
             margin-top: 80px; /* Account for fixed header */
-            min-height: calc(100vh - 80px);
+            height: calc(100vh - 80px);
+            max-height: calc(100vh - 80px);
+            overflow: hidden;
             position: relative;
             z-index: 1;
         }
+        
+        /* Prevent body/html scroll - only content-list scrolls */
+        html, body {
+            overflow: hidden;
+            height: 100vh;
+            max-height: 100vh;
+        }
 
-        /* Sidebar Styles */
+        /* Sidebar Styles - FIXED: sidebar stays, only content-list scrolls */
         .sidebar {
-            background: var(--glass-bg);
+            background: rgba(20, 20, 45, 0.95); /* Solid for WebView */
             border-radius: 20px;
             padding: 25px;
-            backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
-            height: fit-content;
+            height: calc(100vh - 140px);
+            max-height: calc(100vh - 140px);
+            overflow: hidden;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
         }
 
         .section-title {
@@ -792,16 +839,19 @@
 
         /* Content List - TV Optimized */
         .content-section {
-            height: calc(100vh - 400px);
-            min-height: 400px;
-            max-height: 600px;
+            flex: 1;
+            min-height: 200px;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .content-list {
-            height: 100%;
+            flex: 1;
             overflow-y: auto;
+            overflow-x: hidden;
             padding-right: 10px;
+            scroll-behavior: smooth;
         }
 
         .content-list::-webkit-scrollbar {
@@ -902,31 +952,28 @@
             box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2);
         }
 
+        /* Selected/active - blue border */
         .content-item.active {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            border-color: transparent;
-            color: white;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            border: 2px solid var(--accent-blue) !important;
         }
 
-        /* Currently playing indicator */
+        /* Currently PLAYING indicator - GREEN BORDER with badge */
         .content-item.now-playing {
-            background: linear-gradient(135deg, #00c853, #00e676) !important;
-            border-color: #00ff00 !important;
-            color: white !important;
+            border: 3px solid #00ff00 !important;
+            box-shadow: 0 0 8px #00ff00;
             position: relative;
         }
 
         .content-item.now-playing::before {
-            content: '▶ NOW PLAYING';
+            content: '▶ PLAYING';
             position: absolute;
             top: 5px;
             right: 10px;
             background: #ff0000;
             color: white;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 8px;
             font-weight: bold;
             animation: pulse 1.5s infinite;
         }
@@ -936,15 +983,19 @@
             50% { opacity: 0.5; }
         }
 
-        /* D-pad focus styling for TV remotes */
+        /* D-pad NAVIGATION focus - YELLOW BORDER (different from now-playing) */
         .content-item:focus,
         .content-item.tv-focused {
-            outline: 4px solid #00ff00 !important;
-            outline-offset: 2px;
-            background: linear-gradient(135deg, rgba(0, 255, 0, 0.2), rgba(102, 126, 234, 0.3)) !important;
-            transform: scale(1.02);
-            box-shadow: 0 0 25px rgba(0, 255, 0, 0.6), inset 0 0 15px rgba(0, 255, 0, 0.1) !important;
+            outline: none !important;
+            border: 3px solid #ffff00 !important;
+            box-shadow: 0 0 10px #ffff00;
             z-index: 10;
+        }
+        
+        /* When item is BOTH focused AND playing - show green (playing takes priority) */
+        .content-item.tv-focused.now-playing {
+            border: 3px solid #00ff00 !important;
+            box-shadow: 0 0 12px #00ff00;
         }
 
         .content-item.adult-content {
@@ -1099,15 +1150,18 @@
             color: white;
         }
 
-        /* Main Player Area */
+        /* Main Player Area - FIXED: stays in place while sidebar scrolls */
         .player-area {
             background: rgba(15, 15, 35, 0.95);
             border-radius: 20px;
             padding: 25px;
             border: 1px solid var(--glass-border);
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            overflow-y: auto;
+            overflow: visible;
             max-height: calc(100vh - 120px);
+            position: sticky;
+            top: 100px;
+            align-self: flex-start;
         }
 
         /* Video Container */
@@ -1132,17 +1186,32 @@
             background-color: #000 !important;
         }
 
-        /* HIDE ALL Video.js overlays/loading states - NO BLUR */
+        /* Hide Video.js overlays - keep video visible */
         .vjs-poster,
         .vjs-loading-spinner,
+        .vjs-big-play-button,
         .video-js .vjs-big-play-button,
         .vjs-modal-dialog,
         .vjs-error-display,
-        .vjs-text-track-display {
+        .vjs-text-track-display,
+        .video-js .vjs-poster,
+        .video-js .vjs-loading-spinner,
+        .video-js button.vjs-big-play-button {
             display: none !important;
             visibility: hidden !important;
             opacity: 0 !important;
-            background: transparent !important;
+            pointer-events: none !important;
+        }
+
+        /* Hide video player completely until channel is selected */
+        .video-js.vjs-waiting-for-content,
+        .video-js.vjs-no-source {
+            background: #000 !important;
+        }
+        
+        .video-js.vjs-waiting-for-content::before,
+        .video-js.vjs-waiting-for-content::after {
+            display: none !important;
         }
 
         .video-js video {
@@ -1334,11 +1403,13 @@
         }
 
         .control-btn:hover,
-        .control-btn:focus {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateY(-1px);
-            outline: 3px solid #7c3aed;
+        .control-btn:focus,
+        .control-btn.tv-focused {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.05);
+            outline: 3px solid #ffff00;
             outline-offset: 2px;
+            box-shadow: 0 0 10px #ffff00;
         }
 
         .volume-control {
@@ -1365,15 +1436,14 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.98); /* Solid dark background - WebView compatible */
+            /* backdrop-filter removed - causes blur box issue in Android WebView */
             display: none;
             justify-content: center;
-            align-items: flex-start; /* Changed for mobile scroll */
-            z-index: 10000; /* Higher z-index for TV interface */
-            animation: fadeIn 0.3s ease;
-            overflow-y: auto; /* Enable scroll on mobile */
-            padding: 20px 0; /* Add padding for scroll space */
+            align-items: center; /* Center for TV/WebView */
+            z-index: 10000;
+            overflow-y: auto;
+            padding: 20px;
         }
 
         .login-modal.show {
@@ -1381,16 +1451,15 @@
         }
 
         .login-content {
-            background: var(--primary-gradient);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); /* Explicit gradient for WebView */
             border-radius: 20px;
             padding: 40px;
-            max-width: 400px;
+            max-width: 450px;
             width: 90%;
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            animation: slideUp 0.3s ease;
-            margin: auto; /* Center vertically when space available */
-            flex-shrink: 0; /* Don't shrink on mobile */
+            min-width: 300px;
+            border: 2px solid #667eea;
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+            /* animation removed for WebView compatibility */
         }
 
         .login-header {
@@ -1515,13 +1584,11 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            backdrop-filter: blur(15px);
+            background: rgba(0, 0, 0, 0.98); /* Solid for WebView */
             display: none;
             justify-content: center;
             align-items: center;
             z-index: 1500;
-            animation: fadeIn 0.3s ease;
             pointer-events: none;
         }
         
@@ -2196,20 +2263,19 @@
             <div class="video-container" ondblclick="toggleVideoFullscreen()">
                 <video 
                     id="videoPlayer" 
-                    class="video-player video-js vjs-default-skin vjs-big-play-centered" 
+                    class="video-player video-js vjs-default-skin" 
                     controls 
-                    preload="auto"
+                    preload="none"
                     playsinline
-                    data-setup='{"bigPlayButton": false, "loadingSpinner": false}'
+                    style="background: #000 !important;"
+                    data-setup='{"bigPlayButton": false, "loadingSpinner": false, "poster": false, "errorDisplay": false}'
                 ></video>
                 
-                <div class="video-overlay show" id="videoOverlay">
-                    <div class="play-button" onclick="startPlaying()">
-                        <div class="play-icon"></div>
-                    </div>
+                <!-- Welcome message instead of play button -->
+                <div class="video-overlay" id="videoOverlay" style="display: flex; background: #000;">
                     <div class="overlay-info">
-                        <h2 class="overlay-title">Welcome to iWATCH TV</h2>
-                        <p class="overlay-description">Ready to watch! Login to access your content.</p>
+                        <h2 class="overlay-title" style="color: #667eea;">iWATCH TV</h2>
+                        <p class="overlay-description" style="color: #888;">Select a channel from the list to start watching</p>
                     </div>
                 </div>
             </div>
@@ -2379,7 +2445,7 @@
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <script>
-        console.log('🎬🎬🎬 CLIENT V5.3 LOADED - ENHANCED PLEX DEBUG 🎬🎬🎬');
+        console.log('🎬🎬🎬 CLIENT V6.6 LOADED - WEBVIEW COMPATIBLE 🎬🎬🎬');
         
         // Global Variables
         let player = null;
@@ -2394,6 +2460,38 @@
         let clickTimer = null; // For single/double click detection
         let clickDelay = 400; // ms to wait before treating as single click
         let adultTypingSequence = '';
+        
+        // WEBVIEW-COMPATIBLE: Direct login click handler (bypasses form submit issues)
+        window.handleLoginClick = async function() {
+            console.log('🔐 Login button clicked');
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const loginBtn = document.getElementById('loginBtn');
+            
+            if (!username || !password) {
+                alert('Please enter username and password');
+                return;
+            }
+            
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Logging in...';
+            
+            try {
+                const loginSuccess = await loginUser(username, password);
+                console.log('Login result:', loginSuccess);
+                
+                if (loginSuccess) {
+                    document.getElementById('username').value = '';
+                    document.getElementById('password').value = '';
+                }
+            } catch(e) {
+                console.error('Login error:', e);
+                alert('Login failed. Please try again.');
+            }
+            
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Login';
+        };
         
         // Handle single click with delay (to detect double-click)
         window.handleSingleClick = function(contentId, event) {
@@ -2420,23 +2518,24 @@
             playFullscreen(contentId);
         };
         
-        // Highlight current channel in list - UNIFIED function
+        // Highlight current channel in list - UNIFIED function (BORDER ONLY)
+        // This is the ONLY function that should set highlights when playing
         window.highlightCurrentChannel = function(contentId) {
             const contentItems = document.querySelectorAll('.content-item');
-            // Clear ALL highlights from ALL items
+            // Clear ALL highlights from ALL items - including inline styles
             contentItems.forEach(item => {
+                item.classList.remove('tv-focused', 'active', 'now-playing');
+                item.style.border = '';
                 item.style.outline = '';
                 item.style.boxShadow = '';
-                item.style.background = '';
-                item.classList.remove('tv-focused', 'active', 'now-playing');
             });
             
-            // Find and highlight by data-id attribute (more reliable)
+            // Find and highlight ONLY this item (BORDER ONLY - no background)
             const targetItem = document.querySelector(`.content-item[data-id="${contentId}"]`);
             if (targetItem) {
-                targetItem.classList.add('tv-focused', 'active', 'now-playing');
-                targetItem.style.outline = '3px solid #00ff00';
-                targetItem.style.boxShadow = '0 0 15px #00ff00';
+                targetItem.classList.add('now-playing');
+                // Store the currently playing ID for reference
+                window.currentlyPlayingId = contentId;
                 targetItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 console.log('✅ Highlighted channel:', contentId);
             } else {
@@ -4764,6 +4863,8 @@
                 bigPlayButton: false,
                 loadingSpinner: false,
                 errorDisplay: false,
+                poster: false,
+                textTrackDisplay: false,
                 playbackRates: [0.5, 1, 1.25, 1.5, 2],
                 sources: [],
                 html5: {
@@ -4774,6 +4875,15 @@
                     nativeVideoTracks: false
                 }
             });
+            
+            // IMMEDIATELY hide all Video.js generated elements
+            setTimeout(function() {
+                var vjsElements = document.querySelectorAll('.vjs-big-play-button, .vjs-poster, .vjs-loading-spinner');
+                vjsElements.forEach(function(el) {
+                    el.style.cssText = 'display:none!important;visibility:hidden!important;opacity:0!important;width:0!important;height:0!important;';
+                    el.remove(); // Completely remove from DOM
+                });
+            }, 0);
 
             player.ready(() => {
                 console.log('Video.js player ready');
@@ -4868,14 +4978,21 @@
                 return;
             }
             
-            // Fallback to web player - HIDE OVERLAY COMPLETELY
+            // Fallback to web player - HIDE OVERLAY, SHOW VIDEO
             const overlay = document.getElementById('videoOverlay');
-            overlay.classList.remove('show');
-            overlay.classList.add('playing');
-            overlay.style.display = 'none';
+            if (overlay) overlay.style.display = 'none';
             
             const video = document.getElementById('videoPlayer');
             if (!video) return;
+            
+            // Make sure video is visible - ALSO SHOW Video.js container
+            video.style.display = 'block';
+            const vjsContainer = video.closest('.video-js') || document.querySelector('.video-js');
+            if (vjsContainer) {
+                vjsContainer.style.display = 'block';
+                vjsContainer.style.visibility = 'visible';
+                vjsContainer.style.opacity = '1';
+            }
             
             // Load the stream using HLS.js
             if (streamUrl.includes('.m3u8') && typeof Hls !== 'undefined' && Hls.isSupported()) {
@@ -4969,16 +5086,35 @@
             
             currentContent = content;
             
-            // Highlight currently playing channel in list
+            // Highlight currently playing channel in list (ONLY this one)
             highlightNowPlaying(content.id);
+            
+            // Show video player AND its Video.js wrapper, hide overlay
+            const videoEl = document.getElementById('videoPlayer');
+            if (videoEl) {
+                videoEl.style.display = 'block';
+                // Also show Video.js wrapper container
+                const vjsWrapper = videoEl.closest('.video-js') || videoEl.parentElement;
+                if (vjsWrapper) {
+                    vjsWrapper.style.display = 'block';
+                    vjsWrapper.style.visibility = 'visible';
+                    vjsWrapper.style.opacity = '1';
+                }
+            }
+            
+            // Also ensure the video-player class is visible
+            document.querySelectorAll('.video-player, .video-js').forEach(el => {
+                el.style.display = 'block';
+                el.style.visibility = 'visible';
+            });
             
             // Hide overlay COMPLETELY
             const overlay = document.getElementById('videoOverlay');
-            overlay.classList.remove('show');
-            overlay.classList.add('playing');
-            overlay.style.display = 'none';
+            if (overlay) {
+                overlay.style.display = 'none';
+            }
             
-            // Hide Video.js overlays
+            // Hide Video.js overlays (buttons, spinners) but NOT the video itself
             hideVideoJsOverlays();
             
             // Update now playing
@@ -5120,6 +5256,30 @@
             const ovl2 = document.getElementById('videoOverlay');
             if (ovl2) { ovl2.classList.remove('show'); ovl2.classList.add('playing'); ovl2.style.display = 'none'; }
             
+            // CRITICAL: Force video player and container to be visible
+            const videoEl = document.getElementById('videoPlayer');
+            if (videoEl) {
+                videoEl.style.display = 'block';
+                videoEl.style.visibility = 'visible';
+                videoEl.style.opacity = '1';
+            }
+            // Show Video.js wrapper container
+            document.querySelectorAll('.video-js, .video-player').forEach(el => {
+                el.style.display = 'block';
+                el.style.visibility = 'visible';
+                el.style.opacity = '1';
+            });
+            // Also ensure the player's internal video element is visible
+            if (player && player.el()) {
+                const playerVideo = player.el().querySelector('video');
+                if (playerVideo) {
+                    playerVideo.style.display = 'block';
+                    playerVideo.style.visibility = 'visible';
+                }
+                player.el().style.display = 'block';
+                player.el().style.visibility = 'visible';
+            }
+            
             if (Hls.isSupported()) {
                 if (hls) hls.destroy();
                 hls = new Hls({
@@ -5151,7 +5311,7 @@
         function handleHLSContent(content) {
             console.log('🎬 handleHLSContent called for:', content.name, content.url);
             
-            // HIDE OVERLAY COMPLETELY
+            // HIDE OVERLAY IMMEDIATELY
             const overlay = document.getElementById('videoOverlay');
             if (overlay) {
                 overlay.classList.remove('show');
@@ -5159,88 +5319,120 @@
                 overlay.style.display = 'none';
             }
             
+            // CRITICAL: Force video player visible (fixes audio-only bug)
+            const videoEl = document.getElementById('videoPlayer');
+            if (videoEl) {
+                videoEl.style.display = 'block';
+                videoEl.style.visibility = 'visible';
+            }
+            document.querySelectorAll('.video-js, .video-player').forEach(el => {
+                el.style.display = 'block';
+                el.style.visibility = 'visible';
+            });
+            
+            // Get video element
+            const video = player ? player.el().querySelector('video') : document.getElementById('videoPlayer');
+            if (!video) {
+                console.error('Video element not found');
+                return;
+            }
+            
             // Check if it's Plex content - use direct MP4 instead of HLS transcode
-            // sectionId is a Plex-specific property that indicates this is Plex content
             if (content.sectionId) {
                 console.log('🎬 Detected Plex content, redirecting to direct playback...');
                 handlePlexContent(content);
                 return;
             }
             
-            // Detect LG WebOS, Samsung Tizen, or Safari - use native HLS playback
-            const isLGTV = navigator.userAgent.includes('Web0S') || navigator.userAgent.includes('webOS') || navigator.userAgent.includes('LG');
-            const isSamsungTV = navigator.userAgent.includes('Tizen') || navigator.userAgent.includes('Samsung');
+            // DETECT TV BROWSERS - LG webOS has NATIVE HLS support (faster than HLS.js)
+            const isLGTV = /Web0S|webOS|LG|NetCast/i.test(navigator.userAgent);
+            const isSamsungTV = /Tizen|Samsung|SmartTV/i.test(navigator.userAgent);
+            const hasNativeHLS = video.canPlayType('application/vnd.apple.mpegurl') !== '';
             const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             
-            if (isLGTV || isSamsungTV || isSafari || isMobile) {
-                console.log('📺 Using native HLS playback for TV/Mobile device');
-                const video = player.el().querySelector('video');
+            // TV BROWSERS & NATIVE HLS: Use direct playback (MUCH FASTER)
+            if (isLGTV || isSamsungTV || hasNativeHLS || isSafari) {
+                console.log('📺 TV/Native HLS detected - using fast native playback');
+                
+                // Destroy HLS.js instance if running (prevents conflicts)
                 if (hls) {
                     hls.destroy();
                     hls = null;
                 }
+                if (window.hlsInstance) {
+                    window.hlsInstance.destroy();
+                    window.hlsInstance = null;
+                }
+                
+                // DIRECT NATIVE PLAYBACK - fastest for LG/Samsung
                 video.src = content.url;
                 video.load();
-                video.play().catch(e => console.log('Autoplay blocked - tap to play'));
+                
+                // Play immediately
+                const playPromise = video.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(e => {
+                        console.log('Autoplay blocked - tap to play');
+                    });
+                }
+                
+                // Update now playing info
+                updateNowPlaying(content);
                 return;
             }
             
-            if (Hls.isSupported()) {
+            // DESKTOP BROWSERS: Use HLS.js with optimized settings
+            if (typeof Hls !== 'undefined' && Hls.isSupported()) {
                 if (hls) {
                     hls.destroy();
                 }
                 
+                // Optimized HLS.js config for faster start
                 hls = new Hls({
-                    enableWorker: true,
-                    maxBufferLength: 60,
-                    maxMaxBufferLength: 120,
-                    startLevel: -1
+                    enableWorker: false,        // Disable for TV compatibility
+                    lowLatencyMode: false,
+                    maxBufferLength: 10,        // Reduced for faster start
+                    maxMaxBufferLength: 30,
+                    maxBufferSize: 10 * 1000 * 1000,  // 10MB
+                    startLevel: 0,              // Start with lowest quality
+                    capLevelToPlayerSize: true,
+                    debug: false
                 });
+                
                 hls.loadSource(content.url);
-                hls.attachMedia(player.el().querySelector('video'));
+                hls.attachMedia(video);
                 
                 hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                    player.play().catch(e => {
-                        showError('Failed to start playback. Please try again.');
-                    });
+                    video.play().catch(e => console.log('Autoplay blocked'));
                 });
                 
                 hls.on(Hls.Events.ERROR, (event, data) => {
                     if (data.fatal) {
-                        switch (data.type) {
-                            case Hls.ErrorTypes.NETWORK_ERROR:
-                                console.log('🔄 Network error - attempting recovery...');
-                                hls.startLoad();
-                                break;
-                            case Hls.ErrorTypes.MEDIA_ERROR:
-                                console.log('🔄 Media error - attempting recovery...');
-                                hls.recoverMediaError();
-                                break;
-                            default:
-                                console.log('🔄 Fatal error - reloading stream...');
-                                hls.destroy();
-                                setTimeout(() => {
-                                    playHlsContent(content);
-                                }, 2000);
-                                break;
+                        if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                            console.log('🔄 Network error - recovering...');
+                            hls.startLoad();
+                        } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                            console.log('🔄 Media error - recovering...');
+                            hls.recoverMediaError();
+                        } else {
+                            console.log('🔄 Fatal error - trying native fallback');
+                            hls.destroy();
+                            video.src = content.url;
+                            video.load();
+                            video.play().catch(e => {});
                         }
                     }
                 });
-            } else if (player.tech().isSupported()) {
-                player.src({
-                    src: content.url,
-                    type: 'application/x-mpegURL'
-                });
-                
-                player.ready(() => {
-                    player.play().catch(e => {
-                        showError('Failed to start playback. Please try again.');
-                    });
-                });
             } else {
-                showError('HLS is not supported in this browser');
+                // Final fallback - native video
+                console.log('📺 Using native video fallback');
+                video.src = content.url;
+                video.load();
+                video.play().catch(e => console.log('Autoplay blocked'));
             }
+            
+            // Update now playing info
+            updateNowPlaying(content);
         }
 
         // Show loading indicator for on-demand content
@@ -5310,7 +5502,7 @@
         function handleMP4Content(content) {
             console.log('🎬 handleMP4Content called for:', content.name, content.url);
             
-            // HIDE OVERLAY COMPLETELY
+            // HIDE OVERLAY IMMEDIATELY
             const overlay = document.getElementById('videoOverlay');
             if (overlay) {
                 overlay.classList.remove('show');
@@ -5318,26 +5510,53 @@
                 overlay.style.display = 'none';
             }
             
-            // Use Video.js player for MP4 (same as HLS)
+            // DESTROY HLS.js if running (prevents conflicts)
+            if (hls) {
+                hls.destroy();
+                hls = null;
+            }
+            if (window.hlsInstance) {
+                window.hlsInstance.destroy();
+                window.hlsInstance = null;
+            }
+            
+            // Get video element - prefer direct access for LG webOS
+            const video = document.getElementById('videoPlayer') || 
+                          (player ? player.el().querySelector('video') : null) ||
+                          document.querySelector('.video-player video');
+            
+            if (!video) {
+                console.error('No video element found for MP4 playback');
+                return;
+            }
+            
+            // Detect TV browsers
+            const isTV = /Web0S|webOS|LG|Tizen|Samsung|SmartTV/i.test(navigator.userAgent);
+            
+            // FOR TV BROWSERS: Use direct video element (FASTER than Video.js)
+            if (isTV) {
+                console.log('📺 TV detected - using direct MP4 playback');
+                video.preload = 'auto';
+                video.src = content.url;
+                video.load();
+                video.play().catch(e => console.log('Autoplay blocked'));
+                updateNowPlaying(content);
+                return;
+            }
+            
+            // DESKTOP: Use Video.js
             if (player) {
                 console.log('🎬 Using Video.js for MP4 playback');
                 player.src({ src: content.url, type: 'video/mp4' });
-                player.play().catch(e => {
-                    console.log('Autoplay blocked - tap to play:', e);
-                });
+                player.play().catch(e => console.log('Autoplay blocked'));
             } else {
-                // Fallback to raw video element (correct ID: videoPlayer)
-                const video = document.getElementById('videoPlayer') || document.querySelector('.video-player video');
-                if (video) {
-                    console.log('🎬 Using raw video element for MP4');
-                    video.src = content.url;
-                    video.play().catch(e => {
-                        console.log('Autoplay blocked - tap to play:', e);
-                    });
-                } else {
-                    console.error('No video element found for MP4 playback');
-                }
+                console.log('🎬 Using raw video element for MP4');
+                video.src = content.url;
+                video.load();
+                video.play().catch(e => console.log('Autoplay blocked'));
             }
+            
+            updateNowPlaying(content);
         }
 
         function updateNowPlaying(content) {
@@ -5373,33 +5592,38 @@
 
         // Toggle video fullscreen - works on Android WebView and browsers
         window.toggleVideoFullscreen = function() {
-            // Try Video.js fullscreen first
-            if (player) {
+            const video = document.getElementById('videoPlayer');
+            if (!video) return;
+            
+            // Check if already in fullscreen
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                console.log('📺 Exiting fullscreen');
+                if (document.exitFullscreen) document.exitFullscreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                return;
+            }
+            
+            console.log('📺 Entering fullscreen');
+            
+            // For Android WebView: use webkitEnterFullscreen on video element
+            // This triggers onShowCustomView in the Android app
+            if (video.webkitEnterFullscreen) {
                 try {
-                    if (player.isFullscreen()) {
-                        player.exitFullscreen();
-                    } else {
-                        player.requestFullscreen();
-                    }
+                    video.webkitEnterFullscreen();
                     return;
                 } catch(e) {
-                    console.log('Video.js fullscreen failed, trying native');
+                    console.log('webkitEnterFullscreen failed:', e);
                 }
             }
             
-            // Fallback to native fullscreen on video container
-            const container = document.querySelector('.video-container');
-            const video = document.getElementById('videoPlayer');
-            const elem = container || video;
-            if (!elem) return;
-            
-            if (document.fullscreenElement || document.webkitFullscreenElement) {
-                if (document.exitFullscreen) document.exitFullscreen();
-                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-            } else {
-                if (elem.requestFullscreen) elem.requestFullscreen();
-                else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
-                else if (video && video.webkitEnterFullscreen) video.webkitEnterFullscreen();
+            // For browsers: try requestFullscreen on video element
+            if (video.requestFullscreen) {
+                video.requestFullscreen();
+            } else if (video.webkitRequestFullscreen) {
+                video.webkitRequestFullscreen();
+            } else if (player && player.requestFullscreen) {
+                // Fallback to Video.js
+                player.requestFullscreen();
             }
         };
 
@@ -6293,9 +6517,11 @@
                 const selectors = [
                     'button:not([disabled]):not([style*="display: none"])',
                     '.content-card',
+                    '.content-item',
                     '.source-tab',
                     '.package-card',
                     '.video-card',
+                    '.control-btn',
                     'input:not([disabled])',
                     '.close-btn',
                     '[tabindex]:not([tabindex="-1"])'
@@ -6432,44 +6658,52 @@
                         // Navigation - Arrow Keys
                         case 'ArrowUp':
                             e.preventDefault();
-                            this.moveFocusInList('up');
+                            // Check if on control button - use general navigation
+                            if (document.activeElement?.classList.contains('control-btn')) {
+                                this.moveFocus('up');
+                            } else {
+                                this.moveFocusInList('up');
+                            }
                             break;
                         case 'ArrowDown':
                             e.preventDefault();
-                            this.moveFocusInList('down');
+                            // Check if on control button - use general navigation
+                            if (document.activeElement?.classList.contains('control-btn')) {
+                                this.moveFocus('down');
+                            } else {
+                                this.moveFocusInList('down');
+                            }
                             break;
                         case 'ArrowLeft':
                             e.preventDefault();
-                            // If video playing, volume down
-                            if (typeof currentContent !== 'undefined' && currentContent && player) {
-                                const newVol = Math.max(0, player.volume() - 0.1);
-                                player.volume(newVol);
-                                console.log('🔉 Volume:', Math.round(newVol * 100) + '%');
-                            } else {
-                                this.moveFocus('left');
-                            }
+                            // Always allow navigation left (to channel list or between controls)
+                            this.moveFocus('left');
                             break;
                         case 'ArrowRight':
                             e.preventDefault();
-                            // If video playing, volume up
-                            if (typeof currentContent !== 'undefined' && currentContent && player) {
-                                const newVol = Math.min(1, player.volume() + 0.1);
-                                player.volume(newVol);
-                                console.log('🔊 Volume:', Math.round(newVol * 100) + '%');
-                            } else {
-                                this.moveFocus('right');
-                            }
+                            // Always allow navigation right (to control buttons)
+                            this.moveFocus('right');
                             break;
                             
-                        // Select/OK - Enter key
+                        // Select/OK - Enter key (with double-press for fullscreen)
                         case 'Enter':
                             e.preventDefault();
-                            // Find focused content item and play it directly
+                            // Find focused content item
                             const focusedItem = document.querySelector('.content-item.tv-focused');
                             if (focusedItem && focusedItem.dataset && focusedItem.dataset.id) {
-                                console.log('📺 D-pad Enter: Playing', focusedItem.dataset.id);
-                                if (typeof playContent === 'function') {
-                                    playContent(focusedItem.dataset.id);
+                                const cid = focusedItem.dataset.id;
+                                const now = Date.now();
+                                // Double-press detection (within 500ms)
+                                if (window.lastDpadEnterTime && window.lastDpadEnterId === cid && (now - window.lastDpadEnterTime) < 500) {
+                                    console.log('📺 D-pad Double-Enter: FULLSCREEN', cid);
+                                    window.lastDpadEnterTime = 0;
+                                    window.lastDpadEnterId = null;
+                                    if (typeof playFullscreen === 'function') playFullscreen(cid);
+                                } else {
+                                    console.log('📺 D-pad Enter: Playing', cid);
+                                    window.lastDpadEnterTime = now;
+                                    window.lastDpadEnterId = cid;
+                                    if (typeof playContent === 'function') playContent(cid);
                                 }
                             } else {
                                 // Fallback for other focusable elements
@@ -6559,9 +6793,22 @@
                         case 23: // Android D-pad CENTER/OK
                         case 66: // Android ENTER
                             e.preventDefault();
-                            const focusedItem = document.querySelector('.content-item.tv-focused');
-                            if (focusedItem && focusedItem.dataset && focusedItem.dataset.id) {
-                                playContent(focusedItem.dataset.id);
+                            const focusedItemAnd = document.querySelector('.content-item.tv-focused');
+                            if (focusedItemAnd && focusedItemAnd.dataset && focusedItemAnd.dataset.id) {
+                                const cidAnd = focusedItemAnd.dataset.id;
+                                const nowAnd = Date.now();
+                                // Double-press detection for Android D-pad
+                                if (window.lastDpadEnterTime && window.lastDpadEnterId === cidAnd && (nowAnd - window.lastDpadEnterTime) < 500) {
+                                    console.log('📺 Android D-pad Double: FULLSCREEN', cidAnd);
+                                    window.lastDpadEnterTime = 0;
+                                    window.lastDpadEnterId = null;
+                                    if (typeof playFullscreen === 'function') playFullscreen(cidAnd);
+                                } else {
+                                    console.log('📺 Android D-pad: Playing', cidAnd);
+                                    window.lastDpadEnterTime = nowAnd;
+                                    window.lastDpadEnterId = cidAnd;
+                                    if (typeof playContent === 'function') playContent(cidAnd);
+                                }
                             } else {
                                 const focused = document.querySelector('.tv-focused') || document.activeElement;
                                 if (focused) focused.click();
@@ -6702,19 +6949,19 @@
                 const contentItems = document.querySelectorAll('.content-item');
                 if (contentItems.length === 0 || index < 0 || index >= contentItems.length) return;
                 
-                // Remove previous active/focus from ALL items
+                // Remove previous focus from ALL items (keep now-playing)
                 contentItems.forEach(item => {
-                    item.classList.remove('tv-focused', 'active');
-                    item.style.outline = '';
-                    item.style.boxShadow = '';
+                    if (!item.classList.contains('now-playing')) {
+                        item.classList.remove('tv-focused', 'active');
+                        item.style.border = '';
+                        item.style.boxShadow = '';
+                    }
                 });
                 
-                // Add STRONG visible focus to current item
+                // Add visible focus border to current item (D-pad friendly)
                 const targetItem = contentItems[index];
                 if (targetItem) {
-                    targetItem.classList.add('tv-focused', 'active');
-                    targetItem.style.outline = '3px solid #00ff00';
-                    targetItem.style.boxShadow = '0 0 15px #00ff00';
+                    targetItem.classList.add('tv-focused');
                     
                     // Scroll ONLY if item is not visible
                     const contentList = targetItem.closest('.content-list');
@@ -6764,17 +7011,14 @@
                     if (!item.classList.contains('now-playing')) {
                         item.style.outline = '';
                         item.style.boxShadow = '';
-                        item.style.background = '';
+                        item.style.border = '';
                     }
                 });
                 
                 const targetItem = contentItems[newIndex];
                 if (targetItem) {
-                    // Add focus
+                    // Add focus - BORDER ONLY, no background
                     targetItem.classList.add('tv-focused');
-                    targetItem.style.outline = '4px solid #00ff00';
-                    targetItem.style.boxShadow = '0 0 20px #00ff00, inset 0 0 10px rgba(0,255,0,0.3)';
-                    targetItem.style.background = 'rgba(0, 255, 0, 0.15)';
                     
                     // Scroll to keep focused item in view
                     targetItem.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
@@ -7157,9 +7401,11 @@
                     const hls = new Hls({
                         enableWorker: true,
                         lowLatencyMode: false,
-                        maxBufferLength: 30,
-                        maxMaxBufferLength: 60,
-                        backBufferLength: 30
+                        maxBufferLength: 120,
+                        maxMaxBufferLength: 300,
+                        backBufferLength: 60,
+                        liveSyncDurationCount: 5,
+                        liveMaxLatencyDurationCount: 10
                     });
                     
                     window.hlsInstance = hls;
@@ -7246,5 +7492,48 @@
         
     })();
     </script>
+    
+    <!-- FINAL OVERRIDE: Load LAST to override Video.js -->
+    <style>
+        /* FORCE hide all Video.js overlays - loads after Video.js */
+        .vjs-big-play-button,
+        .video-js .vjs-big-play-button,
+        .video-js button.vjs-big-play-button,
+        .vjs-loading-spinner,
+        .video-js .vjs-loading-spinner,
+        .vjs-poster,
+        .video-js .vjs-poster,
+        .vjs-modal-dialog,
+        .vjs-error-display {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            width: 0 !important;
+            height: 0 !important;
+            transform: scale(0) !important;
+            pointer-events: none !important;
+        }
+        
+        /* FORCE no blur anywhere */
+        * {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        
+        /* FORCE video visible */
+        video, .video-js video, video.vjs-tech, #videoPlayer {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+        
+        /* FORCE solid backgrounds - no blur */
+        .login-modal, .adult-modal, .header, .sidebar, .user-status {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+    </style>
 </body>
 </html>
