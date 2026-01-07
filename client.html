@@ -902,28 +902,31 @@
             box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2);
         }
 
-        /* Selected/active - blue border */
         .content-item.active {
-            border: 2px solid var(--accent-blue) !important;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border-color: transparent;
+            color: white;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
 
-        /* Currently PLAYING indicator - GREEN BORDER with badge */
+        /* Currently playing indicator */
         .content-item.now-playing {
-            border: 3px solid #00ff00 !important;
-            box-shadow: 0 0 8px #00ff00;
+            background: linear-gradient(135deg, #00c853, #00e676) !important;
+            border-color: #00ff00 !important;
+            color: white !important;
             position: relative;
         }
 
         .content-item.now-playing::before {
-            content: '▶ PLAYING';
+            content: '▶ NOW PLAYING';
             position: absolute;
             top: 5px;
             right: 10px;
             background: #ff0000;
             color: white;
-            padding: 2px 6px;
-            border-radius: 8px;
-            font-size: 8px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 9px;
             font-weight: bold;
             animation: pulse 1.5s infinite;
         }
@@ -933,19 +936,15 @@
             50% { opacity: 0.5; }
         }
 
-        /* D-pad NAVIGATION focus - YELLOW BORDER (different from now-playing) */
+        /* D-pad focus styling for TV remotes */
         .content-item:focus,
         .content-item.tv-focused {
-            outline: none !important;
-            border: 3px solid #ffff00 !important;
-            box-shadow: 0 0 10px #ffff00;
+            outline: 4px solid #00ff00 !important;
+            outline-offset: 2px;
+            background: linear-gradient(135deg, rgba(0, 255, 0, 0.2), rgba(102, 126, 234, 0.3)) !important;
+            transform: scale(1.02);
+            box-shadow: 0 0 25px rgba(0, 255, 0, 0.6), inset 0 0 15px rgba(0, 255, 0, 0.1) !important;
             z-index: 10;
-        }
-        
-        /* When item is BOTH focused AND playing - show green (playing takes priority) */
-        .content-item.tv-focused.now-playing {
-            border: 3px solid #00ff00 !important;
-            box-shadow: 0 0 12px #00ff00;
         }
 
         .content-item.adult-content {
@@ -1133,36 +1132,17 @@
             background-color: #000 !important;
         }
 
-        /* HIDE ALL Video.js overlays/loading states - AGGRESSIVE FIX */
+        /* HIDE ALL Video.js overlays/loading states - NO BLUR */
         .vjs-poster,
         .vjs-loading-spinner,
-        .vjs-big-play-button,
         .video-js .vjs-big-play-button,
         .vjs-modal-dialog,
         .vjs-error-display,
-        .vjs-text-track-display,
-        .video-js .vjs-poster,
-        .video-js .vjs-loading-spinner,
-        .video-js button.vjs-big-play-button {
+        .vjs-text-track-display {
             display: none !important;
             visibility: hidden !important;
             opacity: 0 !important;
             background: transparent !important;
-            pointer-events: none !important;
-            width: 0 !important;
-            height: 0 !important;
-            border: none !important;
-        }
-
-        /* Hide video player completely until channel is selected */
-        .video-js.vjs-waiting-for-content,
-        .video-js.vjs-no-source {
-            background: #000 !important;
-        }
-        
-        .video-js.vjs-waiting-for-content::before,
-        .video-js.vjs-waiting-for-content::after {
-            display: none !important;
         }
 
         .video-js video {
@@ -2216,19 +2196,20 @@
             <div class="video-container" ondblclick="toggleVideoFullscreen()">
                 <video 
                     id="videoPlayer" 
-                    class="video-player video-js vjs-default-skin" 
+                    class="video-player video-js vjs-default-skin vjs-big-play-centered" 
                     controls 
-                    preload="none"
+                    preload="auto"
                     playsinline
-                    style="background: #000 !important;"
-                    data-setup='{"bigPlayButton": false, "loadingSpinner": false, "poster": false, "errorDisplay": false}'
+                    data-setup='{"bigPlayButton": false, "loadingSpinner": false}'
                 ></video>
                 
-                <!-- Welcome message instead of play button -->
-                <div class="video-overlay" id="videoOverlay" style="display: flex; background: #000;">
+                <div class="video-overlay show" id="videoOverlay">
+                    <div class="play-button" onclick="startPlaying()">
+                        <div class="play-icon"></div>
+                    </div>
                     <div class="overlay-info">
-                        <h2 class="overlay-title" style="color: #667eea;">iWATCH TV</h2>
-                        <p class="overlay-description" style="color: #888;">Select a channel from the list to start watching</p>
+                        <h2 class="overlay-title">Welcome to iWATCH TV</h2>
+                        <p class="overlay-description">Ready to watch! Login to access your content.</p>
                     </div>
                 </div>
             </div>
@@ -2439,24 +2420,23 @@
             playFullscreen(contentId);
         };
         
-        // Highlight current channel in list - UNIFIED function (BORDER ONLY)
-        // This is the ONLY function that should set highlights when playing
+        // Highlight current channel in list - UNIFIED function
         window.highlightCurrentChannel = function(contentId) {
             const contentItems = document.querySelectorAll('.content-item');
-            // Clear ALL highlights from ALL items - including inline styles
+            // Clear ALL highlights from ALL items
             contentItems.forEach(item => {
-                item.classList.remove('tv-focused', 'active', 'now-playing');
-                item.style.border = '';
                 item.style.outline = '';
                 item.style.boxShadow = '';
+                item.style.background = '';
+                item.classList.remove('tv-focused', 'active', 'now-playing');
             });
             
-            // Find and highlight ONLY this item (BORDER ONLY - no background)
+            // Find and highlight by data-id attribute (more reliable)
             const targetItem = document.querySelector(`.content-item[data-id="${contentId}"]`);
             if (targetItem) {
-                targetItem.classList.add('now-playing');
-                // Store the currently playing ID for reference
-                window.currentlyPlayingId = contentId;
+                targetItem.classList.add('tv-focused', 'active', 'now-playing');
+                targetItem.style.outline = '3px solid #00ff00';
+                targetItem.style.boxShadow = '0 0 15px #00ff00';
                 targetItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 console.log('✅ Highlighted channel:', contentId);
             } else {
@@ -4784,8 +4764,6 @@
                 bigPlayButton: false,
                 loadingSpinner: false,
                 errorDisplay: false,
-                poster: false,
-                textTrackDisplay: false,
                 playbackRates: [0.5, 1, 1.25, 1.5, 2],
                 sources: [],
                 html5: {
@@ -4796,15 +4774,6 @@
                     nativeVideoTracks: false
                 }
             });
-            
-            // IMMEDIATELY hide all Video.js generated elements
-            setTimeout(function() {
-                var vjsElements = document.querySelectorAll('.vjs-big-play-button, .vjs-poster, .vjs-loading-spinner');
-                vjsElements.forEach(function(el) {
-                    el.style.cssText = 'display:none!important;visibility:hidden!important;opacity:0!important;width:0!important;height:0!important;';
-                    el.remove(); // Completely remove from DOM
-                });
-            }, 0);
 
             player.ready(() => {
                 console.log('Video.js player ready');
@@ -4899,21 +4868,14 @@
                 return;
             }
             
-            // Fallback to web player - HIDE OVERLAY, SHOW VIDEO
+            // Fallback to web player - HIDE OVERLAY COMPLETELY
             const overlay = document.getElementById('videoOverlay');
-            if (overlay) overlay.style.display = 'none';
+            overlay.classList.remove('show');
+            overlay.classList.add('playing');
+            overlay.style.display = 'none';
             
             const video = document.getElementById('videoPlayer');
             if (!video) return;
-            
-            // Make sure video is visible - ALSO SHOW Video.js container
-            video.style.display = 'block';
-            const vjsContainer = video.closest('.video-js') || document.querySelector('.video-js');
-            if (vjsContainer) {
-                vjsContainer.style.display = 'block';
-                vjsContainer.style.visibility = 'visible';
-                vjsContainer.style.opacity = '1';
-            }
             
             // Load the stream using HLS.js
             if (streamUrl.includes('.m3u8') && typeof Hls !== 'undefined' && Hls.isSupported()) {
@@ -5007,35 +4969,16 @@
             
             currentContent = content;
             
-            // Highlight currently playing channel in list (ONLY this one)
+            // Highlight currently playing channel in list
             highlightNowPlaying(content.id);
-            
-            // Show video player AND its Video.js wrapper, hide overlay
-            const videoEl = document.getElementById('videoPlayer');
-            if (videoEl) {
-                videoEl.style.display = 'block';
-                // Also show Video.js wrapper container
-                const vjsWrapper = videoEl.closest('.video-js') || videoEl.parentElement;
-                if (vjsWrapper) {
-                    vjsWrapper.style.display = 'block';
-                    vjsWrapper.style.visibility = 'visible';
-                    vjsWrapper.style.opacity = '1';
-                }
-            }
-            
-            // Also ensure the video-player class is visible
-            document.querySelectorAll('.video-player, .video-js').forEach(el => {
-                el.style.display = 'block';
-                el.style.visibility = 'visible';
-            });
             
             // Hide overlay COMPLETELY
             const overlay = document.getElementById('videoOverlay');
-            if (overlay) {
-                overlay.style.display = 'none';
-            }
+            overlay.classList.remove('show');
+            overlay.classList.add('playing');
+            overlay.style.display = 'none';
             
-            // Hide Video.js overlays (buttons, spinners) but NOT the video itself
+            // Hide Video.js overlays
             hideVideoJsOverlays();
             
             // Update now playing
@@ -5177,30 +5120,6 @@
             const ovl2 = document.getElementById('videoOverlay');
             if (ovl2) { ovl2.classList.remove('show'); ovl2.classList.add('playing'); ovl2.style.display = 'none'; }
             
-            // CRITICAL: Force video player and container to be visible
-            const videoEl = document.getElementById('videoPlayer');
-            if (videoEl) {
-                videoEl.style.display = 'block';
-                videoEl.style.visibility = 'visible';
-                videoEl.style.opacity = '1';
-            }
-            // Show Video.js wrapper container
-            document.querySelectorAll('.video-js, .video-player').forEach(el => {
-                el.style.display = 'block';
-                el.style.visibility = 'visible';
-                el.style.opacity = '1';
-            });
-            // Also ensure the player's internal video element is visible
-            if (player && player.el()) {
-                const playerVideo = player.el().querySelector('video');
-                if (playerVideo) {
-                    playerVideo.style.display = 'block';
-                    playerVideo.style.visibility = 'visible';
-                }
-                player.el().style.display = 'block';
-                player.el().style.visibility = 'visible';
-            }
-            
             if (Hls.isSupported()) {
                 if (hls) hls.destroy();
                 hls = new Hls({
@@ -5239,17 +5158,6 @@
                 overlay.classList.add('playing');
                 overlay.style.display = 'none';
             }
-            
-            // CRITICAL: Force video player visible (fixes audio-only bug)
-            const videoEl = document.getElementById('videoPlayer');
-            if (videoEl) {
-                videoEl.style.display = 'block';
-                videoEl.style.visibility = 'visible';
-            }
-            document.querySelectorAll('.video-js, .video-player').forEach(el => {
-                el.style.display = 'block';
-                el.style.visibility = 'visible';
-            });
             
             // Check if it's Plex content - use direct MP4 instead of HLS transcode
             // sectionId is a Plex-specific property that indicates this is Plex content
@@ -5465,38 +5373,33 @@
 
         // Toggle video fullscreen - works on Android WebView and browsers
         window.toggleVideoFullscreen = function() {
-            const video = document.getElementById('videoPlayer');
-            if (!video) return;
-            
-            // Check if already in fullscreen
-            if (document.fullscreenElement || document.webkitFullscreenElement) {
-                console.log('📺 Exiting fullscreen');
-                if (document.exitFullscreen) document.exitFullscreen();
-                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-                return;
-            }
-            
-            console.log('📺 Entering fullscreen');
-            
-            // For Android WebView: use webkitEnterFullscreen on video element
-            // This triggers onShowCustomView in the Android app
-            if (video.webkitEnterFullscreen) {
+            // Try Video.js fullscreen first
+            if (player) {
                 try {
-                    video.webkitEnterFullscreen();
+                    if (player.isFullscreen()) {
+                        player.exitFullscreen();
+                    } else {
+                        player.requestFullscreen();
+                    }
                     return;
                 } catch(e) {
-                    console.log('webkitEnterFullscreen failed:', e);
+                    console.log('Video.js fullscreen failed, trying native');
                 }
             }
             
-            // For browsers: try requestFullscreen on video element
-            if (video.requestFullscreen) {
-                video.requestFullscreen();
-            } else if (video.webkitRequestFullscreen) {
-                video.webkitRequestFullscreen();
-            } else if (player && player.requestFullscreen) {
-                // Fallback to Video.js
-                player.requestFullscreen();
+            // Fallback to native fullscreen on video container
+            const container = document.querySelector('.video-container');
+            const video = document.getElementById('videoPlayer');
+            const elem = container || video;
+            if (!elem) return;
+            
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                if (document.exitFullscreen) document.exitFullscreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            } else {
+                if (elem.requestFullscreen) elem.requestFullscreen();
+                else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+                else if (video && video.webkitEnterFullscreen) video.webkitEnterFullscreen();
             }
         };
 
@@ -6558,25 +6461,15 @@
                             }
                             break;
                             
-                        // Select/OK - Enter key (with double-press for fullscreen)
+                        // Select/OK - Enter key
                         case 'Enter':
                             e.preventDefault();
-                            // Find focused content item
+                            // Find focused content item and play it directly
                             const focusedItem = document.querySelector('.content-item.tv-focused');
                             if (focusedItem && focusedItem.dataset && focusedItem.dataset.id) {
-                                const cid = focusedItem.dataset.id;
-                                const now = Date.now();
-                                // Double-press detection (within 500ms)
-                                if (window.lastDpadEnterTime && window.lastDpadEnterId === cid && (now - window.lastDpadEnterTime) < 500) {
-                                    console.log('📺 D-pad Double-Enter: FULLSCREEN', cid);
-                                    window.lastDpadEnterTime = 0;
-                                    window.lastDpadEnterId = null;
-                                    if (typeof playFullscreen === 'function') playFullscreen(cid);
-                                } else {
-                                    console.log('📺 D-pad Enter: Playing', cid);
-                                    window.lastDpadEnterTime = now;
-                                    window.lastDpadEnterId = cid;
-                                    if (typeof playContent === 'function') playContent(cid);
+                                console.log('📺 D-pad Enter: Playing', focusedItem.dataset.id);
+                                if (typeof playContent === 'function') {
+                                    playContent(focusedItem.dataset.id);
                                 }
                             } else {
                                 // Fallback for other focusable elements
@@ -6666,22 +6559,9 @@
                         case 23: // Android D-pad CENTER/OK
                         case 66: // Android ENTER
                             e.preventDefault();
-                            const focusedItemAnd = document.querySelector('.content-item.tv-focused');
-                            if (focusedItemAnd && focusedItemAnd.dataset && focusedItemAnd.dataset.id) {
-                                const cidAnd = focusedItemAnd.dataset.id;
-                                const nowAnd = Date.now();
-                                // Double-press detection for Android D-pad
-                                if (window.lastDpadEnterTime && window.lastDpadEnterId === cidAnd && (nowAnd - window.lastDpadEnterTime) < 500) {
-                                    console.log('📺 Android D-pad Double: FULLSCREEN', cidAnd);
-                                    window.lastDpadEnterTime = 0;
-                                    window.lastDpadEnterId = null;
-                                    if (typeof playFullscreen === 'function') playFullscreen(cidAnd);
-                                } else {
-                                    console.log('📺 Android D-pad: Playing', cidAnd);
-                                    window.lastDpadEnterTime = nowAnd;
-                                    window.lastDpadEnterId = cidAnd;
-                                    if (typeof playContent === 'function') playContent(cidAnd);
-                                }
+                            const focusedItem = document.querySelector('.content-item.tv-focused');
+                            if (focusedItem && focusedItem.dataset && focusedItem.dataset.id) {
+                                playContent(focusedItem.dataset.id);
                             } else {
                                 const focused = document.querySelector('.tv-focused') || document.activeElement;
                                 if (focused) focused.click();
@@ -6822,19 +6702,19 @@
                 const contentItems = document.querySelectorAll('.content-item');
                 if (contentItems.length === 0 || index < 0 || index >= contentItems.length) return;
                 
-                // Remove previous focus from ALL items (keep now-playing)
+                // Remove previous active/focus from ALL items
                 contentItems.forEach(item => {
-                    if (!item.classList.contains('now-playing')) {
-                        item.classList.remove('tv-focused', 'active');
-                        item.style.border = '';
-                        item.style.boxShadow = '';
-                    }
+                    item.classList.remove('tv-focused', 'active');
+                    item.style.outline = '';
+                    item.style.boxShadow = '';
                 });
                 
-                // Add visible focus border to current item (D-pad friendly)
+                // Add STRONG visible focus to current item
                 const targetItem = contentItems[index];
                 if (targetItem) {
-                    targetItem.classList.add('tv-focused');
+                    targetItem.classList.add('tv-focused', 'active');
+                    targetItem.style.outline = '3px solid #00ff00';
+                    targetItem.style.boxShadow = '0 0 15px #00ff00';
                     
                     // Scroll ONLY if item is not visible
                     const contentList = targetItem.closest('.content-list');
@@ -6884,14 +6764,17 @@
                     if (!item.classList.contains('now-playing')) {
                         item.style.outline = '';
                         item.style.boxShadow = '';
-                        item.style.border = '';
+                        item.style.background = '';
                     }
                 });
                 
                 const targetItem = contentItems[newIndex];
                 if (targetItem) {
-                    // Add focus - BORDER ONLY, no background
+                    // Add focus
                     targetItem.classList.add('tv-focused');
+                    targetItem.style.outline = '4px solid #00ff00';
+                    targetItem.style.boxShadow = '0 0 20px #00ff00, inset 0 0 10px rgba(0,255,0,0.3)';
+                    targetItem.style.background = 'rgba(0, 255, 0, 0.15)';
                     
                     // Scroll to keep focused item in view
                     targetItem.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
