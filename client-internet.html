@@ -7554,6 +7554,272 @@
     })();
     </script>
     
+    <!-- MOBILE TOUCH & TV NAVIGATION FIX -->
+    <script>
+    (function() {
+        'use strict';
+        
+        console.log('📱 Mobile Touch & TV Navigation System Loading...');
+        
+        // ===============================
+        // MOBILE TOUCH CONTROLS
+        // ===============================
+        
+        // Enable touch scrolling on all scrollable containers
+        function enableMobileTouch() {
+            // Fix for body/html overflow - enable scrolling
+            document.body.style.overflow = 'auto';
+            document.documentElement.style.overflow = 'auto';
+            
+            // Find all scrollable containers and enable touch scroll
+            const scrollableSelectors = [
+                '.content-list', 
+                '.package-grid', 
+                '.channel-grid',
+                '.movie-grid',
+                '.main-content',
+                '.content-area',
+                '#contentArea'
+            ];
+            
+            scrollableSelectors.forEach(selector => {
+                document.querySelectorAll(selector).forEach(container => {
+                    container.style.overflowY = 'auto';
+                    container.style.overflowX = 'hidden';
+                    container.style.webkitOverflowScrolling = 'touch';
+                    container.styleoverscrollBehavior = 'contain';
+                });
+            });
+            
+            // Horizontal scroll containers for carousels
+            const horizontalSelectors = [
+                '.source-tabs',
+                '.package-tabs',
+                '.channel-list'
+            ];
+            
+            horizontalSelectors.forEach(selector => {
+                document.querySelectorAll(selector).forEach(container => {
+                    container.style.overflowX = 'auto';
+                    container.style.overflowY = 'hidden';
+                    container.style.webkitOverflowScrolling = 'touch';
+                    container.style.whiteSpace = 'nowrap';
+                    container.style.scrollSnapType = 'x mandatory';
+                });
+            });
+            
+            console.log('✅ Mobile touch scrolling enabled');
+        }
+        
+        // Touch swipe detection for navigation
+        function initTouchSwipe() {
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let touchEndX = 0;
+            let touchEndY = 0;
+            const minSwipeDistance = 50;
+            
+            document.addEventListener('touchstart', function(e) {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }, { passive: true });
+            
+            document.addEventListener('touchend', function(e) {
+                touchEndX = e.changedTouches[0].screenX;
+                touchEndY = e.changedTouches[0].screenY;
+                handleSwipe();
+            }, { passive: true });
+            
+            function handleSwipe() {
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
+                const absX = Math.abs(deltaX);
+                const absY = Math.abs(deltaY);
+                
+                // Determine if horizontal or vertical swipe
+                if (absX > absY && absX > minSwipeDistance) {
+                    // Horizontal swipe
+                    if (deltaX > 0) {
+                        console.log('➡️ Swipe Right - Previous');
+                        triggerTVNavigation('left');
+                    } else {
+                        console.log('⬅️ Swipe Left - Next');
+                        triggerTVNavigation('right');
+                    }
+                } else if (absY > absX && absY > minSwipeDistance) {
+                    // Vertical swipe
+                    if (deltaY > 0) {
+                        console.log('⬇️ Swipe Down');
+                        triggerTVNavigation('down');
+                    } else {
+                        console.log('⬆️ Swipe Up');
+                        triggerTVNavigation('up');
+                    }
+                }
+            }
+        }
+        
+        // ===============================
+        // TV REMOTE NAVIGATION ENHANCEMENT
+        // ===============================
+        
+        function triggerTVNavigation(direction) {
+            // Dispatch keyboard event to trigger existing TV navigation
+            const keyMap = {
+                'up': 38,
+                'down': 40,
+                'left': 37,
+                'right': 39,
+                'enter': 13
+            };
+            
+            const event = new KeyboardEvent('keydown', {
+                key: direction,
+                keyCode: keyMap[direction],
+                which: keyMap[direction],
+                bubbles: true
+            });
+            
+            document.dispatchEvent(event);
+        }
+        
+        // Enhanced TV remote key handler
+        function initTVRemoteEnhancement() {
+            document.addEventListener('keydown', function(e) {
+                // Prevent default for arrow keys to avoid page scroll
+                if ([37, 38, 39, 40].includes(e.keyCode)) {
+                    // Only prevent if focus is on interactive element
+                    if (e.target.tagName === 'BODY' || e.target.classList.contains('content-card')) {
+                        e.preventDefault();
+                    }
+                }
+                
+                // Log keypress for debugging
+                console.log('🎮 Remote Key:', e.key, e.keyCode);
+            });
+            
+            console.log('✅ TV Remote enhancement active');
+        }
+        
+        // Focus management for TV
+        function manageTVFocus() {
+            // Auto-focus first element on load
+            setTimeout(() => {
+                const firstInteractive = document.querySelector('.source-tab, .content-card, .package-card, button');
+                if (firstInteractive && document.activeElement === document.body) {
+                    firstInteractive.focus();
+                    firstInteractive.classList.add('tv-focused');
+                }
+            }, 1000);
+            
+            // Add focus styles
+            document.addEventListener('focusin', function(e) {
+                if (e.target.classList.contains('content-card') || 
+                    e.target.classList.contains('source-tab') ||
+                    e.target.classList.contains('package-card')) {
+                    e.target.classList.add('tv-focused');
+                }
+            });
+            
+            document.addEventListener('focusout', function(e) {
+                e.target.classList.remove('tv-focused');
+            });
+        }
+        
+        // Initialize everything
+        function init() {
+            enableMobileTouch();
+            initTouchSwipe();
+            initTVRemoteEnhancement();
+            manageTVFocus();
+            console.log('✅ Mobile & TV Navigation System Ready');
+        }
+        
+        // Run on load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+        
+        // Re-initialize after content loads
+        setTimeout(init, 500);
+        setTimeout(init, 1000);
+        setTimeout(init, 2000);
+        
+    })();
+    </script>
+    
+    <!-- Enhanced CSS for Mobile & TV -->
+    <style>
+        /* Mobile Scroll Fix */
+        html, body {
+            overflow: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior: contain !important;
+        }
+        
+        /* Content Areas - Enable Scroll */
+        .content-list,
+        .main-content,
+        .content-area,
+        #contentArea {
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior: contain !important;
+            height: auto !important;
+            max-height: none !important;
+        }
+        
+        /* TV Focus Styles - High Visibility */
+        .tv-focused {
+            outline: 4px solid #00E5FF !important;
+            outline-offset: 3px !important;
+            transform: scale(1.05);
+            z-index: 1000 !important;
+            position: relative;
+        }
+        
+        /* Touch-friendly targets */
+        .content-card,
+        .source-tab,
+        .package-card,
+        button {
+            min-height: 48px;
+            min-width: 48px;
+            touch-action: manipulation;
+        }
+        
+        /* Horizontal scroll containers */
+        .source-tabs,
+        .package-tabs {
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            white-space: nowrap !important;
+            -webkit-overflow-scrolling: touch !important;
+            scroll-snap-type: x mandatory !important;
+            -webkit-scroll-snap-type: mandatory;
+        }
+        
+        .source-tab,
+        .package-tab {
+            scroll-snap-align: start !important;
+            flex-shrink: 0 !important;
+        }
+        
+        /* Disable pull-to-refresh on mobile */
+        body {
+            overscroll-behavior-y: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Prevent zoom on double tap */
+        * {
+            touch-action: manipulation;
+        }
+    </style>
+    
     <!-- FINAL OVERRIDE: Load LAST to override Video.js -->
     <style>
         /* FORCE hide all Video.js overlays - loads after Video.js */
