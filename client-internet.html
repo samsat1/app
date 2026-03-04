@@ -7605,24 +7605,31 @@
             console.log('✅ Mobile touch scrolling enabled');
         }
         
-        // Touch swipe detection for navigation
+        // Touch swipe detection for navigation - IMPROVED
         function initTouchSwipe() {
             let touchStartX = 0;
             let touchStartY = 0;
             let touchEndX = 0;
             let touchEndY = 0;
-            const minSwipeDistance = 50;
+            const minSwipeDistance = 80; // Increased threshold to prevent accidental swipes
+            let isScrolling = false;
             
-            document.addEventListener('touchstart', function(e) {
-                touchStartX = e.changedTouches[0].screenX;
-                touchStartY = e.changedTouches[0].screenY;
-            }, { passive: true });
-            
-            document.addEventListener('touchend', function(e) {
-                touchEndX = e.changedTouches[0].screenX;
-                touchEndY = e.changedTouches[0].screenY;
-                handleSwipe();
-            }, { passive: true });
+            // Only listen for swipes on the source tabs, not everywhere
+            document.querySelectorAll('.source-tabs, .source-selector').forEach(container => {
+                container.addEventListener('touchstart', function(e) {
+                    touchStartX = e.changedTouches[0].screenX;
+                    touchStartY = e.changedTouches[0].screenY;
+                    isScrolling = false;
+                }, { passive: true });
+                
+                container.addEventListener('touchend', function(e) {
+                    if (isScrolling) return;
+                    
+                    touchEndX = e.changedTouches[0].screenX;
+                    touchEndY = e.changedTouches[0].screenY;
+                    handleSwipe();
+                }, { passive: true });
+            });
             
             function handleSwipe() {
                 const deltaX = touchEndX - touchStartX;
@@ -7630,26 +7637,18 @@
                 const absX = Math.abs(deltaX);
                 const absY = Math.abs(deltaY);
                 
-                // Determine if horizontal or vertical swipe
+                // ONLY trigger horizontal swipes on tabs - never interfere with vertical scrolling
                 if (absX > absY && absX > minSwipeDistance) {
-                    // Horizontal swipe
+                    // Horizontal swipe only on tabs
                     if (deltaX > 0) {
-                        console.log('➡️ Swipe Right - Previous');
+                        console.log('➡️ Swipe Right - Previous tab');
                         triggerTVNavigation('left');
                     } else {
-                        console.log('⬅️ Swipe Left - Next');
+                        console.log('⬅️ Swipe Left - Next tab');
                         triggerTVNavigation('right');
                     }
-                } else if (absY > absX && absY > minSwipeDistance) {
-                    // Vertical swipe
-                    if (deltaY > 0) {
-                        console.log('⬇️ Swipe Down');
-                        triggerTVNavigation('down');
-                    } else {
-                        console.log('⬆️ Swipe Up');
-                        triggerTVNavigation('up');
-                    }
                 }
+                // Vertical swipes do NOTHING - let browser handle normal scrolling
             }
         }
         
@@ -7746,11 +7745,15 @@
     
     <!-- Enhanced CSS for Mobile & TV -->
     <style>
-        /* Mobile Scroll Fix */
+        /* Mobile Scroll Fix - Allow normal scrolling */
         html, body {
             overflow: auto !important;
+            overflow-y: auto !important;
             -webkit-overflow-scrolling: touch !important;
-            overscroll-behavior: contain !important;
+            overscroll-behavior: auto !important;
+            height: auto !important;
+            max-height: none !important;
+            position: static !important;
         }
         
         /* Content Areas - Enable Scroll */
@@ -7761,9 +7764,18 @@
             overflow-y: auto !important;
             overflow-x: hidden !important;
             -webkit-overflow-scrolling: touch !important;
-            overscroll-behavior: contain !important;
             height: auto !important;
             max-height: none !important;
+            position: static !important;
+        }
+        
+        /* Remove any fixed positioning that blocks scrolling */
+        .app-container, 
+        .main-container,
+        .container {
+            position: static !important;
+            height: auto !important;
+            overflow: visible !important;
         }
         
         /* TV Focus Styles - High Visibility */
