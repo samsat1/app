@@ -7251,28 +7251,34 @@ Network: Always Streaming → Optimized for instant access`;
             `;
         }
 
-        function editReseller(resellerId) {
-            // Hide display elements
-            document.getElementById(`username-display-${resellerId}`).style.display = 'none';
-            document.getElementById(`password-display-${resellerId}`).style.display = 'none';
-            document.getElementById(`commission-display-${resellerId}`).style.display = 'none';
-            
-            // Show edit elements
-            document.getElementById(`username-edit-${resellerId}`).style.display = 'block';
-            document.getElementById(`password-edit-${resellerId}`).style.display = 'block';
-            document.getElementById(`commission-edit-${resellerId}`).style.display = 'block';
-            
-            // Toggle buttons
-            document.getElementById(`edit-btn-${resellerId}`).style.display = 'none';
-            document.getElementById(`save-btn-${resellerId}`).style.display = 'inline-block';
-            document.getElementById(`cancel-btn-${resellerId}`).style.display = 'inline-block';
-        }
+        window.editReseller = function(resellerId) {
+            try {
+                // Hide display elements
+                document.getElementById(`username-display-${resellerId}`).style.display = 'none';
+                document.getElementById(`password-display-${resellerId}`).style.display = 'none';
+                document.getElementById(`commission-display-${resellerId}`).style.display = 'none';
+                
+                // Show edit elements
+                document.getElementById(`username-edit-${resellerId}`).style.display = 'block';
+                document.getElementById(`password-edit-${resellerId}`).style.display = 'block';
+                document.getElementById(`commission-edit-${resellerId}`).style.display = 'block';
+                
+                // Toggle buttons
+                document.getElementById(`edit-btn-${resellerId}`).style.display = 'none';
+                document.getElementById(`save-btn-${resellerId}`).style.display = 'inline-block';
+                document.getElementById(`cancel-btn-${resellerId}`).style.display = 'inline-block';
+            } catch(e) {
+                console.error('Edit error:', e);
+                showNotification('Error opening edit mode', 'error');
+            }
+        };
 
-        function cancelEdit(resellerId) {
-            // Show display elements
-            document.getElementById(`username-display-${resellerId}`).style.display = 'block';
-            document.getElementById(`password-display-${resellerId}`).style.display = 'block';
-            document.getElementById(`commission-display-${resellerId}`).style.display = 'block';
+        window.cancelEdit = function(resellerId) {
+            try {
+                // Show display elements
+                document.getElementById(`username-display-${resellerId}`).style.display = 'block';
+                document.getElementById(`password-display-${resellerId}`).style.display = 'block';
+                document.getElementById(`commission-display-${resellerId}`).style.display = 'block';
             
             // Hide edit elements
             document.getElementById(`username-edit-${resellerId}`).style.display = 'none';
@@ -7285,7 +7291,7 @@ Network: Always Streaming → Optimized for instant access`;
             document.getElementById(`cancel-btn-${resellerId}`).style.display = 'none';
         }
 
-        function saveReseller(resellerId) {
+        window.saveReseller = function(resellerId) {
             const newUsername = document.getElementById(`username-edit-${resellerId}`).value.trim();
             const newPassword = document.getElementById(`password-edit-${resellerId}`).value.trim();
 
