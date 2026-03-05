@@ -3400,9 +3400,6 @@
             // Get existing channels
             let liveChannels = JSON.parse(localStorage.getItem('liveChannelsCache') || '[]');
             
-            // Get selected package
-            const packageType = document.getElementById('contentPackage')?.value || 'basic';
-            
             // Add new channel
             const newChannel = {
                 id: 'live_' + Date.now(),
@@ -3411,7 +3408,7 @@
                 type: 'hls',
                 url: url,
                 quality: quality,
-                package: packageType,
+                package: type.toLowerCase().includes('sport') ? 'sports' : 'basic',
                 logo: '',
                 addedAt: new Date().toISOString()
             };
@@ -3431,58 +3428,6 @@
             // Clear form
             if (document.getElementById('contentName')) document.getElementById('contentName').value = '';
             if (document.getElementById('contentURL')) document.getElementById('contentURL').value = '';
-            
-            // Refresh list
-            loadLiveChannelsList();
-        }
-        
-        function loadLiveChannelsList() {
-            const container = document.getElementById('liveChannelsList');
-            if (!container) return;
-            
-            let channels = JSON.parse(localStorage.getItem('liveChannelsCache') || '[]');
-            
-            if (channels.length === 0) {
-                container.innerHTML = '<p style="color: rgba(255,255,255,0.5); text-align: center; padding: 20px;">No Live TV channels added yet</p>';
-                return;
-            }
-            
-            let html = '';
-            channels.forEach((ch, index) => {
-                html += `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 8px;">
-                        <div style="flex: 1;">
-                            <div style="color: white; font-weight: 500;">${ch.name || 'Unnamed'} <span style="font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 8px; background: ${ch.package === 'sports' ? '#ff5722' : ch.package === 'livetv-addon' ? '#9c27b0' : ch.package === 'premium' ? '#ffd700' : '#4caf50'}; color: ${ch.package === 'premium' ? '#000' : '#fff'};">${ch.package === 'sports' ? 'Sports' : ch.package === 'livetv-addon' ? 'TV Addon' : ch.package === 'premium' ? 'Premium' : 'Basic'}</span></div>
-                            <div style="color: rgba(255,255,255,0.5); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px;">${ch.url || ''}</div>
-                        </div>
-                        <button onclick="deleteLiveChannel('${ch.id}')" style="background: rgba(244,67,54,0.3); border: 1px solid #f44336; color: #f44336; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Delete</button>
-                    </div>
-                `;
-            });
-            
-            container.innerHTML = html;
-        }
-        
-        function deleteLiveChannel(channelId) {
-            let channels = JSON.parse(localStorage.getItem('liveChannelsCache') || '[]');
-            const channel = channels.find(c => c.id === channelId);
-            channels = channels.filter(c => c.id !== channelId);
-            
-            localStorage.setItem('liveChannelsCache', JSON.stringify(channels));
-            saveToFirebase('liveChannels', { list: channels, updated: Date.now() });
-            
-            showNotification(`🗑️ "${channel?.name || 'Channel'}" deleted`, 'success');
-            loadLiveChannelsList();
-        }
-        
-        function clearAllLiveChannels() {
-            if (!confirm('Delete ALL Live TV channels?')) return;
-            
-            localStorage.setItem('liveChannelsCache', '[]');
-            saveToFirebase('liveChannels', { list: [], updated: Date.now() });
-            
-            showNotification('🗑️ All Live TV channels cleared', 'success');
-            loadLiveChannelsList();
         }
 
         // Settings management functions
@@ -4220,6 +4165,9 @@
             }, 2000);
         }
         
+        // DISABLED - Auto-generating tokens doesn't work and causes issues
+        // Real Plex tokens must be obtained from Plex account
+        /*
         function generatePlexToken() {
             showNotification('🔑 Generating auto token...', 'info');
             
@@ -4243,6 +4191,7 @@
             const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
             return prefix + suffix;
         }
+        */
         
         // Direct Plex API calls - requires CORS browser extension enabled
         // Extension adds 'Access-Control-Allow-Origin: *' header automatically
@@ -4253,7 +4202,7 @@
         
         function testPlexConnection() {
             const serverUrl = document.getElementById('plexServerUrl')?.value || 'http://185.187.94.41:32400';
-            const accessToken = document.getElementById('plexToken')?.value || localStorage.getItem('plexAutoToken') || localStorage.getItem('plexToken');
+            const accessToken = document.getElementById('plexToken')?.value || localStorage.getItem('plexToken');
             
             if (!serverUrl) {
                 showNotification('⚠️ Please enter Plex Server URL (or use default)', 'warning');
@@ -4301,7 +4250,7 @@
         function loadPlexLibraries() {
             // Get server URL and token from input fields or localStorage
             const serverUrl = document.getElementById('plexServerUrl')?.value || localStorage.getItem('plexServerUrl') || 'http://185.187.94.41:32400';
-            const accessToken = document.getElementById('plexToken')?.value || localStorage.getItem('plexAutoToken') || localStorage.getItem('plexToken');
+            const accessToken = document.getElementById('plexToken')?.value || localStorage.getItem('plexToken');
             
             // Debug: Check what values we actually have
             console.log('🔍 loadPlexLibraries Debug:', {
@@ -4529,7 +4478,7 @@
         // Enhanced load libraries with content caching
         async function loadAndCachePlexContent() {
             const serverUrl = document.getElementById('plexServerUrl')?.value || localStorage.getItem('plexServerUrl') || 'http://185.187.94.41:32400';
-            const accessToken = document.getElementById('plexToken')?.value || localStorage.getItem('plexAutoToken') || localStorage.getItem('plexToken');
+            const accessToken = document.getElementById('plexToken')?.value || localStorage.getItem('plexToken');
             
             if (!accessToken) {
                 showNotification('⚠️ No Plex token found', 'warning');
@@ -5645,7 +5594,8 @@ Network: Always Streaming → Optimized for instant access`;
                     status: 'active',
                     duration: calculation.duration,
                     durationMonths: calculation.durationMonths,
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
+                    resetDeviceLock: resetDeviceLock ? Date.now() : null
                 };
                 
                 window.customers.push(customer);
@@ -7871,26 +7821,8 @@ Network: Always Streaming → Optimized for instant access`;
                                     <option>480p SD</option>
                                 </select>
                             </div>
-                            <div>
-                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Package:</label>
-                                <select id="contentPackage" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
-                                    <option value="basic">Basic Live TV</option>
-                                    <option value="sports">Sports Addon</option>
-                                    <option value="livetv-addon">Live TV Addon</option>
-                                    <option value="premium">Premium</option>
-                                </select>
-                            </div>
                             <button onclick="addContentSource()" class="btn btn-primary" style="padding: 12px 20px;">➕ Add Source</button>
                         </div>
-                    </div>
-                    
-                    <div class="section-card">
-                        <h3 class="section-title">📺 Manage Live TV Channels</h3>
-                        <div id="liveChannelsList" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px;">
-                            <p style="color: rgba(255,255,255,0.5);">Loading channels...</p>
-                        </div>
-                        <button onclick="loadLiveChannelsList()" class="btn btn-secondary" style="padding: 10px 15px; margin-right: 10px;">🔄 Refresh</button>
-                        <button onclick="clearAllLiveChannels()" class="btn" style="padding: 10px 15px; background: rgba(244,67,54,0.3); border: 1px solid #f44336;">🗑️ Clear All</button>
                     </div>
                     
                     <div class="section-card">
@@ -7931,9 +7863,6 @@ Network: Always Streaming → Optimized for instant access`;
                     </div>
                 </div>
             `;
-            
-            // Auto-load live channels list
-            setTimeout(() => loadLiveChannelsList(), 100);
         };
 
         // Initialize system
