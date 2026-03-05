@@ -698,25 +698,17 @@
         async function adminLogin() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
-            const errorDiv = document.getElementById('loginError');
-            const loginBtn = document.querySelector('#loginOverlay button');
             
             if (!email || !password) {
-                errorDiv.textContent = 'Please enter email and password';
+                document.getElementById('loginError').textContent = 'Please enter email and password';
                 return;
             }
             
-            loginBtn.textContent = 'Logging in...';
-            loginBtn.disabled = true;
-            
             try {
                 await auth.signInWithEmailAndPassword(email, password);
-                errorDiv.textContent = '';
             } catch (error) {
                 console.error('Login error:', error);
-                errorDiv.textContent = 'Invalid email or password';
-                loginBtn.textContent = 'Login';
-                loginBtn.disabled = false;
+                document.getElementById('loginError').textContent = 'Invalid email or password';
             }
         }
         
@@ -7295,15 +7287,18 @@ Network: Always Streaming → Optimized for instant access`;
                 document.getElementById(`password-display-${resellerId}`).style.display = 'block';
                 document.getElementById(`commission-display-${resellerId}`).style.display = 'block';
             
-            // Hide edit elements
-            document.getElementById(`username-edit-${resellerId}`).style.display = 'none';
-            document.getElementById(`password-edit-${resellerId}`).style.display = 'none';
-            document.getElementById(`commission-edit-${resellerId}`).style.display = 'none';
-            
-            // Toggle buttons
-            document.getElementById(`edit-btn-${resellerId}`).style.display = 'inline-block';
-            document.getElementById(`save-btn-${resellerId}`).style.display = 'none';
-            document.getElementById(`cancel-btn-${resellerId}`).style.display = 'none';
+                // Hide edit elements
+                document.getElementById(`username-edit-${resellerId}`).style.display = 'none';
+                document.getElementById(`password-edit-${resellerId}`).style.display = 'none';
+                document.getElementById(`commission-edit-${resellerId}`).style.display = 'none';
+                
+                // Toggle buttons
+                document.getElementById(`edit-btn-${resellerId}`).style.display = 'inline-block';
+                document.getElementById(`save-btn-${resellerId}`).style.display = 'none';
+                document.getElementById(`cancel-btn-${resellerId}`).style.display = 'none';
+            } catch(e) {
+                console.error('Cancel error:', e);
+            }
         }
 
         window.saveReseller = function(resellerId) {
