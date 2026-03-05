@@ -808,13 +808,14 @@
                     </div>
                     
                     <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="customerEmail" placeholder="Email address">
+                        <label>Email (Optional)</label>
+                        <input type="email" id="customerEmail" placeholder="Email address (optional)">
                     </div>
                     
                     <div class="form-group" id="packageSelection">
-                        <label>Select Package *</label>
+                        <label>Select Packages * (Click to select multiple)</label>
                         <div id="packagesOptions"></div>
+                        <button type="button" class="clear-btn" onclick="clearPackageSelection()" style="margin-top: 10px; padding: 8px 16px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; cursor: pointer;">Clear Selection</button>
                     </div>
                     
                     <div class="form-group" id="durationSelection">
@@ -896,7 +897,7 @@
         let currentReseller = null;
         let packages = [];
         let customers = [];
-        let selectedPackage = null;
+        let selectedPackages = [];
         let selectedDuration = 1;
         let renewSelectedDuration = 1;
         let walletBalance = 0;
@@ -1077,7 +1078,8 @@
                         </div>
                         <div class="customer-info">
                             <div>Username: ${customer.username}</div>
-                            <div>Package: ${customer.packageName || 'Basic'}</div>
+                            <div>Packages: ${customer.packageName || 'Basic'}</div>
+                            <div>Price: $${parseFloat(customer.packagePrice || 0).toFixed(2)}/month</div>
                             <div>Phone: ${customer.phone || '-'}</div>
                             <div>Expiry: ${expiry.toLocaleDateString()}</div>
                         </div>
@@ -1168,7 +1170,8 @@
             // Render package options
             renderPackageOptions();
             
-            selectedPackage = null;
+            // Clear selected packages
+            selectedPackages = [];
             selectedDuration = 1;
             document.querySelectorAll('#durationSelection .duration-btn').forEach((b, i) => {
                 b.classList.toggle('selected', i === 0);
@@ -1183,25 +1186,124 @@
         function renderPackageOptions() {
             const container = document.getElementById('packagesOptions');
             
-            container.innerHTML = packages.map(pkg => `
-                <div class="package-option" data-id="${pkg.id}" data-price="${pkg.price}" onclick="selectPackage(this)">
-                    <div class="package-name">${pkg.name}</div>
-                    <div class="package-price">$${parseFloat(pkg.price || 0).toFixed(2)}/month</div>
-                </div>
-            `).join('');
+            container.innerHTML = packages.map(pkg => {
+                const isSelected = selectedPackages.some(p => p.id === pkg.id);
+                return `
+                    <div class="package-option ${isSelected ? 'selected' : ''}" data-id="${pkg.id}" data-price="${pkg.price}" onclick="selectPackage(this)">
+                        <div class="package-name">${pkg.name}</div>
+                        <div class="package-price">$${parseFloat(pkg.price || 0).toFixed(2)}/month</div>
+                    </div>
+                `;
+            }).join('');
         }
         
-        // Select Package
+        // Check if package has required dependencies
+        function checkPackageDependency(pkgId, currentSelections) {
+            const pkg = packages.find(p => p.id === pkgId);
+            if (!pkg) return { valid: false, message: 'Package not found' };
+            
+            // Check if this package requires another package
+            if (pkg.requiresPackage) {
+                // Find the required package in the list
+                const requiredPkg = packages.find(p => p.name === pkg.requiresPackage || p.id === pkg.requiresPackage);
+                if (requiredPkg) {
+                    // Check if required package is already selected
+                    const hasRequired = currentSelections.some(p => p.id === requiredPkg.id || p.name === pkg.requiresPackage);
+                    if (!hasRequired) {
+                        return { 
+                            valid: false, 
+                            message: `${pkg.name} requires ${pkg.requiresPackage} to be selected first` 
+                        };
+                    }
+                }
+            }
+            
+            // Check if trying to select 3rd TV without 2nd TV
+            if (pkg.isThirdTV) {
+                const hasSecondTV = currentSelections.some(p => p.isSecondTV || p.id === 'PKG_2NDTV');
+                if (!hasSecondTV) {
+                    return { 
+                        valid: false, 
+                        message: '3rd TV requires 2nd TV to be selected first' 
+                    };
+                }
+            }
+            
+            return { valid: true, message: 'OK' };
+        }
+        
+        // Check if removing a package would break dependencies for other selected packages
+        function canRemovePackage(pkgId, currentSelections) {
+            const pkg = packages.find(p => p.id === pkgId);
+            if (!pkg) return false;
+            
+            // Find all packages that depend on this package
+            const dependingPackages = packages.filter(p => {
+                if (p.requiresPackage === pkg.name || p.requiresPackage === pkg.id) return true;
+                if (pkg.isSecondTV && p.isThirdTV) return true;
+                return false;
+            });
+            
+            // Check if any depending package is selected
+            for (const depPkg of dependingPackages) {
+                if (currentSelections.some(p => p.id === depPkg.id)) {
+                    return { 
+                        canRemove: false, 
+                        message: `Cannot remove ${pkg.name} because ${depPkg.name} depends on it` 
+                    };
+                }
+            }
+            
+            return { canRemove: true, message: 'OK' };
+        }
+        
+        // Select Package (supports multiple selection with dependency checking)
         function selectPackage(element) {
-            document.querySelectorAll('.package-option').forEach(p => p.classList.remove('selected'));
-            element.classList.add('selected');
+            const pkgId = element.dataset.id;
+            const pkg = packages.find(p => p.id === pkgId);
+            if (!pkg) return;
             
-            selectedPackage = {
-                id: element.dataset.id,
-                price: parseFloat(element.dataset.price) || 0,
-                name: element.querySelector('.package-name').textContent
-            };
+            // Check if already selected - if so, try to remove it
+            const existingIndex = selectedPackages.findIndex(p => p.id === pkgId);
             
+            if (existingIndex >= 0) {
+                // Try to remove the package
+                const removeCheck = canRemovePackage(pkgId, selectedPackages);
+                if (!removeCheck.canRemove) {
+                    showNotification(removeCheck.message, 'error');
+                    return;
+                }
+                
+                // Remove the package
+                selectedPackages.splice(existingIndex, 1);
+            } else {
+                // Try to add the package - check dependencies
+                const depCheck = checkPackageDependency(pkgId, selectedPackages);
+                if (!depCheck.valid) {
+                    showNotification(depCheck.message, 'error');
+                    return;
+                }
+                
+                // Add the package
+                selectedPackages.push({
+                    id: pkg.id,
+                    name: pkg.name,
+                    price: parseFloat(pkg.price) || 0,
+                    isAddOn: pkg.isAddOn,
+                    isSecondTV: pkg.isSecondTV,
+                    isThirdTV: pkg.isThirdTV
+                });
+            }
+            
+            // Re-render to show selection state
+            renderPackageOptions();
+            calculateTotal();
+        }
+        
+        // Clear all selected packages
+        function clearPackageSelection() {
+            selectedPackages = [];
+            renderPackageOptions();
             calculateTotal();
         }
         
@@ -1211,18 +1313,23 @@
             const warningElement = document.getElementById('walletWarning');
             const submitBtn = document.getElementById('submitBtn');
             
-            if (!selectedPackage) {
+            if (selectedPackages.length === 0) {
                 totalElement.textContent = '$0.00';
                 warningElement.style.display = 'none';
                 submitBtn.disabled = true;
                 return;
             }
             
-            const total = selectedPackage.price * selectedDuration;
+            // Calculate total for all selected packages
+            const total = selectedPackages.reduce((sum, pkg) => sum + pkg.price, 0) * selectedDuration;
             totalElement.textContent = '$' + total.toFixed(2);
+            
+            // Show selected packages summary
+            const selectedNames = selectedPackages.map(p => p.name).join(', ');
             
             if (total > walletBalance) {
                 warningElement.style.display = 'block';
+                warningElement.textContent = `Insufficient wallet balance. Required: $${total.toFixed(2)}, Available: $${walletBalance.toFixed(2)}`;
                 submitBtn.disabled = true;
             } else {
                 warningElement.style.display = 'none';
@@ -1273,23 +1380,25 @@
                 await updateCustomer(customerId, customerData);
             } else {
                 // Create new customer
-                if (!selectedPackage) {
-                    showNotification('Please select a package', 'error');
+                if (selectedPackages.length === 0) {
+                    showNotification('Please select at least one package', 'error');
                     return;
                 }
                 
-                const total = selectedPackage.price * selectedDuration;
+                // Calculate total for all selected packages
+                const total = selectedPackages.reduce((sum, pkg) => sum + pkg.price, 0) * selectedDuration;
+                
                 if (total > walletBalance) {
                     showNotification('Insufficient wallet balance', 'error');
                     return;
                 }
                 
-                await createCustomer(customerData, selectedPackage, selectedDuration, total);
+                await createCustomer(customerData, selectedPackages, selectedDuration, total);
             }
         }
         
         // Create Customer
-        async function createCustomer(customerData, pkg, duration, total) {
+        async function createCustomer(customerData, pkgs, duration, total) {
             try {
                 showNotification('Creating customer...', 'success');
                 
@@ -1297,12 +1406,17 @@
                 const expiryDate = new Date();
                 expiryDate.setMonth(expiryDate.getMonth() + duration);
                 
+                // Get package names for display
+                const packageNames = pkgs.map(p => p.name).join(', ');
+                const packageIds = pkgs.map(p => p.id).join(',');
+                
                 // Create new customer object
                 const newCustomer = {
                     id: 'cust_' + Date.now(),
                     ...customerData,
-                    packageId: pkg.id,
-                    packageName: pkg.name,
+                    packageId: packageIds,
+                    packageName: packageNames,
+                    packages: pkgs.map(p => ({ id: p.id, name: p.name, price: p.price })),
                     packagePrice: total,
                     expiryDate: expiryDate.toISOString().split('T')[0],
                     resellerId: currentReseller.id,
@@ -1326,7 +1440,7 @@
                     amount: -total,
                     customerId: newCustomer.id,
                     customerName: customerData.name,
-                    packageName: pkg.name,
+                    packageName: packageNames,
                     date: new Date().toISOString()
                 });
                 
@@ -1378,9 +1492,23 @@
             document.getElementById('renewCustomerId').value = customerId;
             document.getElementById('renewCustomerName').textContent = customer.name;
             
-            // Find package price
-            const pkg = packages.find(p => p.id === customer.packageId);
-            const price = pkg ? parseFloat(pkg.price) : parseFloat(customer.packagePrice) || 25;
+            // Handle both single package and multiple packages (comma-separated)
+            let price = 0;
+            if (customer.packages && Array.isArray(customer.packages)) {
+                // Multiple packages stored in new format
+                price = customer.packages.reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0);
+            } else if (customer.packageId && customer.packageId.includes(',')) {
+                // Multiple packages in old comma-separated format
+                const pkgIds = customer.packageId.split(',');
+                price = pkgIds.reduce((sum, pkgId) => {
+                    const pkg = packages.find(p => p.id === pkgId.trim());
+                    return sum + (pkg ? parseFloat(pkg.price) || 0 : 0);
+                }, 0);
+            } else {
+                // Single package (old format)
+                const pkg = packages.find(p => p.id === customer.packageId);
+                price = pkg ? parseFloat(pkg.price) : parseFloat(customer.packagePrice) || 25;
+            }
             
             document.getElementById('renewCustomerId').dataset.price = price;
             document.getElementById('renewCustomerId').dataset.packageName = customer.packageName || 'Basic';
