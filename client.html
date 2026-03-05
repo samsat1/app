@@ -2091,23 +2091,15 @@
                     const session = doc.data();
                     const currentDevice = getDeviceFingerprint();
                     
-                    // If different device, check if same network
+                    // STRICT MODE: Block if same account logged in anywhere
+                    // Even on same network - only one device at a time
                     if (session.deviceId !== currentDevice) {
-                        // Different device - check IP
-                        const currentIP = await getUserIP();
-                        if (session.ipAddress === currentIP) {
-                            // Same network (same WiFi) - Allow multiple TVs
-                            console.log('Same network - allowing multiple devices');
-                            return { allowed: true, sameNetwork: true };
-                        } else {
-                            // Different network - Block
-                            console.log('Different network - blocking device');
-                            return { 
-                                allowed: false, 
-                                message: 'This account is already logged in on another device. Please logout from that device first.',
-                                existingDevice: session.deviceType || 'another device'
-                            };
-                        }
+                        console.log('🔒 Device blocked - account already logged in on another device');
+                        return { 
+                            allowed: false, 
+                            message: 'This account is logged in on another device. Please logout from that device first.',
+                            existingDevice: session.deviceType || 'another device'
+                        };
                     }
                     // Same device - Allow (auto-login)
                     return { allowed: true, sameDevice: true };
@@ -2116,7 +2108,17 @@
                 return { allowed: true, firstLogin: true };
             } catch(e) {
                 console.log('Session check error:', e);
-                return { allowed: true, error: true }; // Allow on error
+                // STRICT: Check local storage as fallback - block if session exists
+                const storedSession = localStorage.getItem('activeSession_' + username);
+                if (storedSession) {
+                    console.log('🔒 Session found in localStorage - blocking login');
+                    return { 
+                        allowed: false, 
+                        message: 'This account is logged in on another device. Please logout from that device first.'
+                    };
+                }
+                // No local session - allow login
+                return { allowed: true, error: true };
             }
         }
         
@@ -2134,6 +2136,14 @@
                     platform: navigator.platform
                 });
                 
+                // Also save to localStorage as backup
+                localStorage.setItem('activeSession_' + username, JSON.stringify({
+                    deviceId: deviceId,
+                    ipAddress: ipAddress,
+                    deviceType: getDeviceType(),
+                    loginTime: Date.now()
+                }));
+                
                 console.log('Session created for:', username);
             } catch(e) {
                 console.log('Session creation error:', e);
@@ -2148,6 +2158,8 @@
             } catch(e) {
                 console.log('Session clear error:', e);
             }
+            // Also clear localStorage session
+            localStorage.removeItem('activeSession_' + username);
         }
         
         // Detect device type
@@ -5200,16 +5212,55 @@
 
         // Handle MP4 content playback
         function handleMP4Content(content) {
-            player.src({
-                src: content.url,
-                type: 'video/mp4'
-            });
+            // Detect LG WebOS - use native video playback for better compatibility
+            const isLGTV = navigator.userAgent.includes('Web0S') || navigator.userAgent.includes('webOS') || navigator.userAgent.includes('WebOS') || navigator.userAgent.includes('LG');
             
-            player.ready(() => {
-                player.play().catch(e => {
-                    showError('Failed to start playback. Please try again.');
+            console.log('📺 Playing MP4:', content.name, '| WebOS:', isLGTV, '| Adult:', content.adult);
+            
+            if (isLGTV) {
+                // WebOS - use native video element directly with more options
+                const videoElement = document.createElement('video');
+                videoElement.src = content.url;
+                videoElement.type = 'video/mp4';
+                videoElement.controls = true;
+                videoElement.autoplay = true;
+                videoElement.playsInline = true;
+                videoElement.crossOrigin = 'anonymous';
+                
+                // Replace video.js player with native video
+                const playerContainer = player.el();
+                const existingVideo = playerContainer.querySelector('video');
+                if (existingVideo) {
+                    existingVideo.src = content.url;
+                    existingVideo.type = 'video/mp4';
+                    existingVideo.controls = true;
+                    existingVideo.autoplay = true;
+                    existingVideo.load();
+                    existingVideo.play().catch(e => {
+                        console.log('WebOS autoplay blocked');
+                    });
+                } else {
+                    player.src({
+                        src: content.url,
+                        type: 'video/mp4'
+                    });
+                    player.ready(() => {
+                        player.play().catch(e => {});
+                    });
+                }
+            } else {
+                // Other platforms - use video.js
+                player.src({
+                    src: content.url,
+                    type: 'video/mp4'
                 });
-            });
+                
+                player.ready(() => {
+                    player.play().catch(e => {
+                        showError('Failed to start playback. Please try again.');
+                    });
+                });
+            }
         }
 
         function updateNowPlaying(content) {
