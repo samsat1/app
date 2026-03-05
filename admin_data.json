@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-05T12:58:08.610Z",
+  "exportDate": "2026-03-05T13:04:18.423Z",
   "customers": [
     {
       "duration": "1 Month",
@@ -184,12 +184,12 @@
     "reseller001": {
       "name": "Reseller 001",
       "id": "reseller001",
-      "username": "shadi001",
+      "username": "reseller001",
       "password": "shadi123",
       "status": "active",
       "commissionRate": 20,
-      "updatedAt": "2026-03-05T08:12:24.900Z",
-      "walletBalance": 70
+      "updatedAt": "2026-03-05T13:02:20.710Z",
+      "walletBalance": 80
     },
     "reseller002": {
       "name": "Reseller 002",
@@ -299,6 +299,17 @@
       "walletBalance": 0,
       "commissionRate": 20,
       "createdAt": "2026-03-05T08:10:39.314Z"
+    },
+    "shadi": {
+      "name": "Reseller shadi",
+      "id": "shadi",
+      "username": "shadi001",
+      "password": "shadi123",
+      "status": "active",
+      "walletBalance": 10,
+      "commissionRate": 20,
+      "createdAt": "2026-03-05T13:00:59.991Z",
+      "updatedAt": "2026-03-05T13:01:20.888Z"
     }
   },
   "creditTransfers": [
@@ -356,6 +367,28 @@
       "timestamp": 1772715343500,
       "previousBalance": 45,
       "newBalance": 70
+    },
+    {
+      "id": "credit_1772715563563",
+      "resellerId": "reseller001",
+      "amount": 10,
+      "type": "credit",
+      "date": "2026-03-05T12:59:23.563Z",
+      "note": "Admin credit transfer",
+      "timestamp": 1772715563563,
+      "previousBalance": 70,
+      "newBalance": 80
+    },
+    {
+      "id": "credit_1772715790553",
+      "resellerId": "shadi",
+      "amount": 10,
+      "type": "credit",
+      "date": "2026-03-05T13:03:10.553Z",
+      "note": "Admin credit transfer",
+      "timestamp": 1772715790553,
+      "previousBalance": 0,
+      "newBalance": 10
     }
   ],
   "resellerTransactions": [],
@@ -364,7 +397,7 @@
   "plexMoviesSection": "5",
   "plexAdultSection": "4",
   "tvSyncUrl": "https://raw.githubusercontent.com/samsat1/app/main/admin_data.json",
-  "githubToken": "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",
+  "githubToken": "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",
   "githubUsername": "samsat1",
   "githubRepo": "app"
 }
