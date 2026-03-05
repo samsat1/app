@@ -1004,6 +1004,7 @@
                 
                 // Get packages
                 packages = adminData.packages || [];
+                console.log('Loaded packages:', packages.map(p => p.name + ' (requires: ' + (p.requiresPackage || 'none') + ')'));
                 
                 // Get customers for this reseller
                 customers = (adminData.customers || []).filter(c => c.resellerId === currentReseller.id);
@@ -1188,10 +1189,17 @@
             
             container.innerHTML = packages.map(pkg => {
                 const isSelected = selectedPackages.some(p => p.id === pkg.id);
+                const requiresText = pkg.requiresPackage ? `<div style="font-size: 11px; color: #ff9800; margin-top: 4px;">Requires: ${pkg.requiresPackage}</div>` : '';
+                const secondTVText = pkg.isSecondTV ? `<div style="font-size: 11px; color: #ff9800; margin-top: 4px;">Requires: Basic TV (1st TV)</div>` : '';
+                const thirdTVText = pkg.isThirdTV ? `<div style="font-size: 11px; color: #ff9800; margin-top: 4px;">Requires: 2nd TV</div>` : '';
+                
                 return `
                     <div class="package-option ${isSelected ? 'selected' : ''}" data-id="${pkg.id}" data-price="${pkg.price}" onclick="selectPackage(this)">
                         <div class="package-name">${pkg.name}</div>
                         <div class="package-price">$${parseFloat(pkg.price || 0).toFixed(2)}/month</div>
+                        ${requiresText}
+                        ${secondTVText}
+                        ${thirdTVText}
                     </div>
                 `;
             }).join('');
@@ -1202,29 +1210,55 @@
             const pkg = packages.find(p => p.id === pkgId);
             if (!pkg) return { valid: false, message: 'Package not found' };
             
+            console.log('Checking dependency for:', pkg.name, 'requiresPackage:', pkg.requiresPackage);
+            console.log('Current selections:', currentSelections.map(p => p.name));
+            
             // Check if this package requires another package
             if (pkg.requiresPackage) {
-                // Find the required package in the list
-                const requiredPkg = packages.find(p => p.name === pkg.requiresPackage || p.id === pkg.requiresPackage);
-                if (requiredPkg) {
-                    // Check if required package is already selected
-                    const hasRequired = currentSelections.some(p => p.id === requiredPkg.id || p.name === pkg.requiresPackage);
-                    if (!hasRequired) {
-                        return { 
-                            valid: false, 
-                            message: `${pkg.name} requires ${pkg.requiresPackage} to be selected first` 
-                        };
-                    }
+                // Normalize the required package name for comparison
+                const requiredName = pkg.requiresPackage.toLowerCase().trim();
+                
+                // Check if required package is already selected (compare by name or ID)
+                const hasRequired = currentSelections.some(p => 
+                    p.name.toLowerCase().trim() === requiredName ||
+                    p.id.toLowerCase().trim() === requiredName.toLowerCase().replace(/\s+/g, '_') ||
+                    pkg.requiresPackage.includes(p.name)
+                );
+                
+                console.log('Has required package:', hasRequired);
+                
+                if (!hasRequired) {
+                    return { 
+                        valid: false, 
+                        message: `${pkg.name} requires "${pkg.requiresPackage}" to be selected first` 
+                    };
+                }
+            }
+            
+            // Check if trying to select 2nd TV without Basic TV
+            if (pkg.isSecondTV || pkg.id === 'PKG_2NDTV') {
+                const hasBasicTV = currentSelections.some(p => 
+                    p.name.toLowerCase().includes('basic') || 
+                    p.id === 'PKG_BASIC'
+                );
+                if (!hasBasicTV) {
+                    return { 
+                        valid: false, 
+                        message: '2nd TV requires "Basic TV" to be selected first' 
+                    };
                 }
             }
             
             // Check if trying to select 3rd TV without 2nd TV
-            if (pkg.isThirdTV) {
-                const hasSecondTV = currentSelections.some(p => p.isSecondTV || p.id === 'PKG_2NDTV');
+            if (pkg.isThirdTV || pkg.id === 'PKG_3RDTV') {
+                const hasSecondTV = currentSelections.some(p => 
+                    p.name.toLowerCase().includes('2nd') || 
+                    p.id === 'PKG_2NDTV'
+                );
                 if (!hasSecondTV) {
                     return { 
                         valid: false, 
-                        message: '3rd TV requires 2nd TV to be selected first' 
+                        message: '3rd TV requires "2nd TV" to be selected first' 
                     };
                 }
             }
@@ -1235,21 +1269,35 @@
         // Check if removing a package would break dependencies for other selected packages
         function canRemovePackage(pkgId, currentSelections) {
             const pkg = packages.find(p => p.id === pkgId);
-            if (!pkg) return false;
+            if (!pkg) return { canRemove: false, message: 'Package not found' };
             
-            // Find all packages that depend on this package
-            const dependingPackages = packages.filter(p => {
-                if (p.requiresPackage === pkg.name || p.requiresPackage === pkg.id) return true;
-                if (pkg.isSecondTV && p.isThirdTV) return true;
-                return false;
-            });
-            
-            // Check if any depending package is selected
-            for (const depPkg of dependingPackages) {
-                if (currentSelections.some(p => p.id === depPkg.id)) {
+            // Special case: Cannot remove Basic TV if any addons or TV packages are selected
+            if (pkg.name.toLowerCase().includes('basic') || pkg.id === 'PKG_BASIC') {
+                const hasAddons = currentSelections.some(p => 
+                    p.isAddOn || p.isSecondTV || p.isThirdTV ||
+                    p.name.toLowerCase().includes('sport') ||
+                    p.name.toLowerCase().includes('movie') ||
+                    p.name.toLowerCase().includes('adult') ||
+                    p.name.toLowerCase().includes('2nd') ||
+                    p.name.toLowerCase().includes('3rd')
+                );
+                if (hasAddons) {
                     return { 
                         canRemove: false, 
-                        message: `Cannot remove ${pkg.name} because ${depPkg.name} depends on it` 
+                        message: 'Cannot remove Basic TV because other selected packages depend on it' 
+                    };
+                }
+            }
+            
+            // Special case: Cannot remove 2nd TV if 3rd TV is selected
+            if (pkg.name.toLowerCase().includes('2nd') || pkg.id === 'PKG_2NDTV') {
+                const hasThirdTV = currentSelections.some(p => 
+                    p.isThirdTV || p.name.toLowerCase().includes('3rd') || p.id === 'PKG_3RDTV'
+                );
+                if (hasThirdTV) {
+                    return { 
+                        canRemove: false, 
+                        message: 'Cannot remove 2nd TV because 3rd TV depends on it' 
                     };
                 }
             }

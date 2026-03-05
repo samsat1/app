@@ -3576,10 +3576,14 @@
                 const content = safeBase64Encode(jsonString);
                 const apiUrl = `https://api.github.com/repos/${username}/${repo}/contents/admin_data.json`;
                 
-                // Function to get fresh SHA with aggressive cache-busting
-                const getFreshSHA = async () => {
+                // Upload with retry logic for 409/422 errors
+                const uploadWithRetry = async (retries = 5) => {
+                    let lastError = null;
+                    let sha = null;
+                    
+                    // First, try to get the SHA
                     try {
-                        // Use unique timestamp to prevent any caching
+                        console.log('Getting file SHA...');
                         const noCacheUrl = apiUrl + '?_=' + Date.now() + Math.random();
                         const checkRes = await fetch(noCacheUrl, {
                             method: 'GET',
@@ -3592,37 +3596,31 @@
                             },
                             cache: 'no-store'
                         });
+                        
                         if (checkRes.ok) {
                             const fileData = await checkRes.json();
-                            console.log('Got SHA:', fileData.sha);
-                            return fileData.sha;
+                            sha = fileData.sha;
+                            console.log('Got SHA:', sha);
                         } else if (checkRes.status === 404) {
                             console.log('File does not exist, will create new');
-                            return null;
+                            sha = null;
+                        } else {
+                            console.log('Could not get SHA, status:', checkRes.status);
                         }
                     } catch (e) {
                         console.log('Error getting SHA:', e);
                     }
-                    return null;
-                };
-                
-                // Upload with retry logic for 409/422 errors
-                const uploadWithRetry = async (retries = 5) => {
-                    let lastError = null;
                     
                     for (let attempt = 1; attempt <= retries; attempt++) {
-                        console.log(`Upload attempt ${attempt}/${retries}`);
+                        console.log(`Upload attempt ${attempt}/${retries}, SHA: ${sha ? 'present' : 'missing'}`);
                         btn.innerHTML = `⏳ Uploading... (${attempt}/${retries})`;
-                        
-                        // Get fresh SHA for each attempt
-                        const sha = await getFreshSHA();
                         
                         const body = {
                             message: `Update admin_data.json - ${new Date().toISOString()}`,
                             content: content
                         };
                         
-                        // Only include SHA if file exists
+                        // Include SHA if we have it (required for updates)
                         if (sha) {
                             body.sha = sha;
                         }
@@ -3646,10 +3644,32 @@
                             const errorData = await response.json().catch(() => ({}));
                             console.log('Error response:', response.status, errorData);
                             
+                            // Check for SHA-related errors and try to refresh SHA
+                            if (errorData.message && errorData.message.toLowerCase().includes('sha')) {
+                                console.log('SHA-related error, trying to get fresh SHA...');
+                                try {
+                                    const noCacheUrl = apiUrl + '?_=' + Date.now();
+                                    const checkRes = await fetch(noCacheUrl, {
+                                        method: 'GET',
+                                        headers: { 
+                                            'Authorization': `token ${token}`,
+                                            'Accept': 'application/vnd.github.v3+json'
+                                        }
+                                    });
+                                    if (checkRes.ok) {
+                                        const fileData = await checkRes.json();
+                                        sha = fileData.sha;
+                                        console.log('Got fresh SHA:', sha);
+                                    }
+                                } catch (e) {
+                                    console.log('Error getting fresh SHA:', e);
+                                }
+                            }
+                            
                             // Retry on 409 (conflict) or 422 (validation error)
                             if ((response.status === 409 || response.status === 422) && attempt < retries) {
                                 console.log(`Error ${response.status}, waiting and retrying...`);
-                                await new Promise(r => setTimeout(r, 1500 * attempt)); // Increasing delay
+                                await new Promise(r => setTimeout(r, 1500 * attempt));
                                 continue;
                             }
                             
