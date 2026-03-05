@@ -698,10 +698,25 @@
         async function adminLogin() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+            const loginBtn = document.querySelector('#loginOverlay button');
+            
+            if (!email || !password) {
+                errorDiv.textContent = 'Please enter email and password';
+                return;
+            }
+            
+            loginBtn.textContent = 'Logging in...';
+            loginBtn.disabled = true;
+            
             try {
                 await auth.signInWithEmailAndPassword(email, password);
+                errorDiv.textContent = '';
             } catch (error) {
-                document.getElementById('loginError').textContent = 'Invalid email or password';
+                console.error('Login error:', error);
+                errorDiv.textContent = 'Invalid email or password';
+                loginBtn.textContent = 'Login';
+                loginBtn.disabled = false;
             }
         }
         
