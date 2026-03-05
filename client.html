@@ -88,7 +88,52 @@
         // Run update check on page load
         window.addEventListener('load', function() {
             checkAppUpdate();
+            // Register service worker for PWA
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+            }
+            // Listen for PWA install prompt
+            let deferredPrompt;
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                showInstallPrompt();
+            });
         });
+        
+        // Show PWA install prompt
+        function showInstallPrompt() {
+            const installBanner = document.createElement('div');
+            installBanner.id = 'installBanner';
+            installBanner.innerHTML = `
+                <div style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
+                    background: linear-gradient(135deg, #7c3aed, #5b21b6); padding: 15px 25px; 
+                    border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 10000;
+                    display: flex; align-items: center; gap: 15px;">
+                    <span style="color: white; font-size: 16px;">📲 Install iWATCH TV App</span>
+                    <button onclick="installPWA()" style="background: #00F5A0; border: none; 
+                        padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;
+                        color: #000;">Install</button>
+                    <button onclick="this.parentElement.remove()" style="background: transparent; border: none; 
+                        color: white; cursor: pointer; font-size: 20px;">✕</button>
+                </div>
+            `;
+            document.body.appendChild(installBanner);
+        }
+        
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+        
+        async function installPWA() {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            document.getElementById('installBanner')?.remove();
+        }
         
         // Remote Update System
         const updateSystem = {
@@ -2221,9 +2266,6 @@
                     <button class="source-tab" onclick="switchSource('movies')" data-source="movies">
                         🎬 Movies
                     </button>
-                    <button class="source-tab" onclick="switchSource('vod')" data-source="vod">
-                        📀 VOD
-                    </button>
                     <button class="source-tab" onclick="switchSource('basic')" data-source="basic">
                         🏠 Basic
                     </button>
@@ -2233,9 +2275,6 @@
                     <!-- Adult tab - hidden by default, appears only when password is entered -->
                     <button class="source-tab adult-tab" onclick="switchSource('adult')" data-source="adult" id="adultTab" style="display: none;">
                         🔞 Adult
-                    </button>
-                    <button class="source-tab" onclick="switchSource('internet')" data-source="internet">
-                        🌐 Videos
                     </button>
                 </div>
             </div>
