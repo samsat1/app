@@ -3079,36 +3079,43 @@
                     const expiryDate = new Date(storedExpiry);
                     const currentDate = new Date();
                     
+                    console.log('🔑 Auto-login: Found stored credentials, expiry:', expiryDate);
+                    
                     // Check if subscription is still valid
                     if (currentDate < expiryDate) {
-                        console.log('🔑 Auto-login: Found valid credentials, logging in...');
+                        console.log('🔑 Auto-login: Subscription valid, attempting login...');
+                        
+                        // Load customer data if not already loaded
+                        if (!adminCustomers || adminCustomers.length === 0) {
+                            const storedCustomers = localStorage.getItem('adminCustomers');
+                            if (storedCustomers) {
+                                adminCustomers = JSON.parse(storedCustomers);
+                            }
+                        }
                         
                         // Find customer in database
-                        const customer = adminCustomers.find(c => 
+                        const customer = adminCustomers?.find(c => 
                             c.username === credentials.username && c.password === credentials.password);
                         
                         if (customer) {
-                            // Auto-login
-                            const userData = {
-                                username: customer.username,
-                                customerId: customer.id,
-                                loginTime: new Date().toISOString()
-                            };
-                            
-                            currentUser = userData;
+                            // Auto-login with full customer data
+                            currentUser = customer;
                             isLoggedIn = true;
                             
                             updateUserInterface();
                             console.log(`✅ Auto-login successful for ${customer.username}`);
+                            showSuccess(`Welcome back, ${customer.username}!`);
                             return;
                         } else {
                             console.log('❌ Auto-login: Stored credentials not found in database');
                             clearStoredCredentials();
                         }
                     } else {
-                        console.log('⏰ Auto-login: Subscription expired, clearing stored credentials');
+                        console.log('⏰ Auto-login: Subscription expired on', expiryDate);
                         clearStoredCredentials();
                     }
+                } else {
+                    console.log('🔑 Auto-login: No stored credentials found');
                 }
             } catch (error) {
                 console.error('❌ Auto-login error:', error);
@@ -4021,6 +4028,11 @@
                         adminCustomers = customers;
                         localStorage.setItem('adminCustomers', JSON.stringify(customers));
                         
+                        // Auto-save credentials for persistent login (no need to check rememberMe)
+                        if (user.expiryDate) {
+                            storeCredentials(user.username, user.password, user.expiryDate, true);
+                        }
+                        
                         console.log('✅ Login successful:', user.username);
                         updateUserInterface();
                         hideLoginModal();
@@ -4054,6 +4066,12 @@
                 isLoggedIn = true;
                 currentUser = user;
                 adminCustomers = loadCustomersFromAdmin();
+                
+                // Auto-save credentials for persistent login
+                if (user.expiryDate) {
+                    storeCredentials(user.username, user.password, user.expiryDate, true);
+                }
+                
                 updateUserInterface();
                 hideLoginModal();
                 showSuccess(`Welcome back, ${user.username}!`);
