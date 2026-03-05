@@ -60,11 +60,36 @@
     <script>
         // App Version Management
         const APP_CONFIG = {
-            VERSION: '2.1.0',
+            VERSION: '2.2.0',
             UPDATE_CHECK_INTERVAL: 60000, // Check for updates every 1 minute
             AUTO_UPDATE_ENABLED: true
         };
 
+        // Automatic App Update Checker
+        // Checks if admin updated the app and refreshes automatically
+        function checkAppUpdate() {
+            const currentVersion = APP_CONFIG.VERSION;
+            const storedVersion = localStorage.getItem('iwatch_app_version');
+            
+            if (storedVersion && storedVersion !== currentVersion) {
+                console.log(`🔄 App update detected: ${storedVersion} → ${currentVersion}, refreshing...`);
+                showNotification('🔄 Updating app...', 'info');
+                // Clear cache and refresh to get new app code
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                // Save current version for next check
+                localStorage.setItem('iwatch_app_version', currentVersion);
+                console.log('📱 App version:', currentVersion);
+            }
+        }
+        
+        // Run update check on page load
+        window.addEventListener('load', function() {
+            checkAppUpdate();
+        });
+        
         // Remote Update System
         const updateSystem = {
             currentVersion: APP_CONFIG.VERSION,
@@ -3951,6 +3976,8 @@
                         showSuccess(`Welcome back, ${user.username}!`);
                         // Refresh content from Firebase on login
                         loadPlexLibraryContent();
+                        // Auto-check for app updates
+                        checkAppUpdate();
                         return true;
                     }
                 }
@@ -3981,6 +4008,8 @@
                 showSuccess(`Welcome back, ${user.username}!`);
                 // Refresh content from Firebase on login
                 loadPlexLibraryContent();
+                // Auto-check for app updates
+                checkAppUpdate();
                 return true;
             }
             
