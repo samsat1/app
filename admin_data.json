@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-06T20:47:25.788Z",
+  "exportDate": "2026-03-06T20:56:08.299Z",
   "customers": [],
   "packages": [
     {
@@ -22,6 +22,66 @@
       "rejectionReason": null,
       "createdAt": "2026-03-06T20:42:01.833Z",
       "id": "PKG_1772829721833"
+    },
+    {
+      "name": "Sport",
+      "price": 7,
+      "duration": "1 Month",
+      "features": "Sports",
+      "secondTVPrice": 5,
+      "thirdTVPrice": 2,
+      "sportsPrice": 0,
+      "moviesPrice": 0,
+      "isAdult": "",
+      "adultPackagePrice": 0,
+      "approved": true,
+      "approvedDate": "2026-03-06T20:53:27.544Z",
+      "approvedBy": "admin",
+      "rejectedDate": null,
+      "rejectedBy": null,
+      "rejectionReason": null,
+      "createdAt": "2026-03-06T20:53:27.544Z",
+      "id": "PKG_1772830407544"
+    },
+    {
+      "name": "Movies",
+      "price": 7,
+      "duration": "1 Month",
+      "features": "Movies",
+      "secondTVPrice": 5,
+      "thirdTVPrice": 5,
+      "sportsPrice": 0,
+      "moviesPrice": 7,
+      "isAdult": "",
+      "adultPackagePrice": 0,
+      "approved": true,
+      "approvedDate": "2026-03-06T20:54:15.180Z",
+      "approvedBy": "admin",
+      "rejectedDate": null,
+      "rejectedBy": null,
+      "rejectionReason": null,
+      "createdAt": "2026-03-06T20:54:15.180Z",
+      "id": "PKG_1772830455180"
+    },
+    {
+      "name": "Adult",
+      "price": 5,
+      "duration": "1 Month",
+      "features": "+18",
+      "secondTVPrice": 5,
+      "thirdTVPrice": 5,
+      "sportsPrice": 0,
+      "moviesPrice": 0,
+      "isAdult": true,
+      "adultPackagePrice": 5,
+      "approved": true,
+      "approvedDate": "2026-03-06T20:54:44.847Z",
+      "approvedBy": "admin",
+      "rejectedDate": null,
+      "rejectedBy": null,
+      "rejectionReason": null,
+      "createdAt": "2026-03-06T20:54:44.847Z",
+      "id": "PKG_1772830484847"
     }
   ],
   "resellers": {
@@ -137,11 +197,12 @@
   "creditTransfers": [],
   "resellerTransactions": [],
   "plexServerUrl": "http://192.168.1.100:32400",
+  "plexLocalUrl": "http://192.168.1.100:32400",
   "plexToken": "R7ysV2bxxFL2SgqsnpyF",
   "plexMoviesSection": "5",
   "plexAdultSection": "4",
   "tvSyncUrl": "https://raw.githubusercontent.com/samsat1/app/main/admin_data.json",
-  "githubToken": "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",
+  "githubToken": "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",
   "githubUsername": "samsat1",
   "githubRepo": "app"
 }
