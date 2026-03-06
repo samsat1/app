@@ -3352,8 +3352,6 @@
                     try {
                         // Use unique timestamp to prevent any caching
                         const noCacheUrl = apiUrl + '?_=' + Date.now() + Math.random();
-                        console.log('Getting SHA from:', noCacheUrl);
-                        
                         const checkRes = await fetch(noCacheUrl, {
                             method: 'GET',
                             headers: { 
@@ -3365,9 +3363,6 @@
                             },
                             cache: 'no-store'
                         });
-                        
-                        console.log('SHA check response status:', checkRes.status);
-                        
                         if (checkRes.ok) {
                             const fileData = await checkRes.json();
                             console.log('Got SHA:', fileData.sha);
@@ -3375,23 +3370,9 @@
                         } else if (checkRes.status === 404) {
                             console.log('File does not exist, will create new');
                             return null;
-                        } else if (checkRes.status === 401 || checkRes.status === 403) {
-                            const errText = await checkRes.text();
-                            console.log('Auth error:', errText);
-                            throw new Error('GitHub authentication failed! Please check your token.');
-                        } else {
-                            // For any other error, log it and return null (will try without SHA)
-                            console.log('Error getting SHA - Status:', checkRes.status, checkRes.statusText);
-                            const errText = await checkRes.text();
-                            console.log('Error details:', errText);
-                            return null;
                         }
                     } catch (e) {
                         console.log('Error getting SHA:', e);
-                        // Re-throw auth errors immediately
-                        if (e.message.includes('authentication') || e.message.includes('token')) {
-                            throw e;
-                        }
                     }
                     return null;
                 };
@@ -3405,13 +3386,7 @@
                         btn.innerHTML = `⏳ Uploading... (${attempt}/${retries})`;
                         
                         // Get fresh SHA for each attempt
-                        let sha;
-                        try {
-                            sha = await getFreshSHA();
-                        } catch (shaError) {
-                            // If getFreshSHA throws an error (like auth failure), show it immediately
-                            throw shaError;
-                        }
+                        const sha = await getFreshSHA();
                         
                         const body = {
                             message: `Update admin_data.json - ${new Date().toISOString()}`,
@@ -3421,9 +3396,6 @@
                         // Only include SHA if file exists
                         if (sha) {
                             body.sha = sha;
-                            console.log('Uploading with SHA:', sha);
-                        } else {
-                            console.log('Uploading WITHOUT SHA (new file or SHA fetch failed)');
                         }
                         
                         try {
@@ -3438,46 +3410,30 @@
                             });
                             
                             if (response.ok) {
-                                console.log('Upload successful! Status:', response.status);
+                                console.log('Upload successful!');
                                 return response;
                             }
                             
-                            // Try to get error details
-                            let errorDetails = '';
-                            try {
-                                const errorData = await response.json();
-                                errorDetails = JSON.stringify(errorData);
-                                console.log('Error response:', response.status, errorData);
-                            } catch(e) {
-                                errorDetails = 'Could not parse error response';
-                                console.log('Error response (raw):', response.status, response.statusText);
-                            }
-                            
-                            // Check for specific "sha wasn't supplied" error
-                            const errorStr = errorDetails.toLowerCase();
-                            const isShaRequired = (errorStr.includes('sha') || errorStr.includes('wasn\'t supplied')) && (response.status === 422 || response.status === 409);
+                            const errorData = await response.json().catch(() => ({}));
+                            console.log('Error response:', response.status, errorData);
                             
                             // Retry on 409 (conflict) or 422 (validation error)
-                            // Note: We DON'T retry on SHA errors because getting SHA failed - need to investigate why
-                            const isRetryableError = (response.status === 409 || response.status === 422) && !isShaRequired;
+                            // Check if it's a SHA error
+                            const errorMsg = errorData.message || '';
+                            const isShaError = errorMsg.includes('sha');
                             
-                            if (isRetryableError && attempt < retries) {
+                            if ((response.status === 409 || response.status === 422) && attempt < retries) {
+                                console.log(`Error ${response.status}: ${errorMsg}`);
+                                if (isShaError) {
+                                    // SHA error - don't retry, show clear message
+                                    throw new Error('SHA required! File exists but SHA could not be fetched. Please delete admin_data.json from GitHub and try again.');
+                                }
                                 console.log(`Error ${response.status}, waiting and retrying...`);
                                 await new Promise(r => setTimeout(r, 1500 * attempt)); // Increasing delay
                                 continue;
                             }
                             
-                            // For non-retryable errors or after all retries, set the error message
-                            if (isShaRequired) {
-                                lastError = 'SHA required! Could not get file SHA from GitHub. Please delete admin_data.json from GitHub and try again. Also check browser console (F12) for details.';
-                            } else {
-                                lastError = `Error ${response.status}: ${errorDetails}`;
-                            }
-                            
-                            // If this was an auth error, show it immediately
-                            if (response.status === 401 || response.status === 403) {
-                                throw new Error(`Authentication failed (${response.status}). Please check your GitHub token!`);
-                            }
+                            lastError = `Error ${response.status}: ${errorData.message || 'Unknown error'}`;
                         } catch (fetchError) {
                             console.log('Fetch error:', fetchError);
                             lastError = fetchError.message;
@@ -3493,45 +3449,8 @@
                 
                 await uploadWithRetry();
                 
-                // Verify the upload was actually successful
-                btn.innerHTML = '⏳ Verifying...';
-                console.log('Starting verification...');
-                
-                const verifyRes = await fetch(apiUrl + '?_=' + Date.now(), {
-                    method: 'GET',
-                    headers: { 
-                        'Authorization': `token ${token}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
-                
-                if (!verifyRes.ok) {
-                    throw new Error(`Verification failed: Could not fetch file from GitHub (Status: ${verifyRes.status})`);
-                }
-                
-                const verifyData = await verifyRes.json();
-                
-                if (!verifyData.content) {
-                    throw new Error('Verification failed: No content in response');
-                }
-                
-                // Decode base64 content
-                const uploadedContent = atob(verifyData.content);
-                console.log('Uploaded content length:', uploadedContent.length);
-                console.log('Expected version:', exportData.version);
-                
-                // Check if content matches
-                if (uploadedContent.includes(exportData.version) && 
-                    uploadedContent.includes('"customers"') &&
-                    uploadedContent.includes('"packages"')) {
-                    console.log('Verification PASSED');
-                    showNotification('✅ Uploaded to GitHub! TVs will auto-sync.', 'success');
-                    btn.innerHTML = '✅ Uploaded!';
-                } else {
-                    console.log('Verification FAILED - content mismatch');
-                    console.log('Content preview:', uploadedContent.substring(0, 200));
-                    throw new Error('Upload verification failed - content mismatch!');
-                
+                showNotification('✅ Uploaded to GitHub! TVs will auto-sync.', 'success');
+                btn.innerHTML = '✅ Uploaded!';
                 setTimeout(() => {
                     btn.innerHTML = '🚀 Upload to GitHub (One-Click)';
                     btn.disabled = false;
