@@ -468,15 +468,12 @@
     <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
 
     
-    <!-- Login Overlay (Disabled for now) -->
+    <!-- Login Overlay (Completely Disabled) -->
     <div id="loginOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1a1a2e,#16213e);z-index:9999;align-items:center;justify-content:center;">
         <div style="background:rgba(255,255,255,0.1);padding:40px;border-radius:20px;text-align:center;backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.2);max-width:400px;width:90%;">
             <div style="font-size:60px;margin-bottom:20px;">🔐</div>
             <h2 style="color:white;margin-bottom:30px;">Admin Login</h2>
-            <input type="email" id="loginEmail" placeholder="Email" style="width:100%;padding:15px;margin-bottom:15px;border-radius:10px;border:none;font-size:16px;">
-            <input type="password" id="loginPassword" placeholder="Password" style="width:100%;padding:15px;margin-bottom:15px;border-radius:10px;border:none;font-size:16px;">
-            <div id="loginError" style="color:#f44336;margin-bottom:15px;"></div>
-            <button onclick="adminLogin()" style="width:100%;padding:15px;background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:10px;color:white;font-size:16px;cursor:pointer;">Login</button>
+            <p style="color:white;margin-bottom:20px;">Login is currently disabled</p>
         </div>
     </div>
 
@@ -691,36 +688,6 @@
             document.getElementById('loginOverlay').style.display = 'none';
             document.querySelector('.admin-container').style.display = 'flex';
         });
-        
-        /* auth.onAuthStateChanged(user => {
-            if (user) {
-                console.log('✅ Logged in as:', user.email);
-                document.getElementById('loginOverlay').style.display = 'none';
-                document.querySelector('.admin-container').style.display = 'flex';
-            } else {
-                document.getElementById('loginOverlay').style.display = 'flex';
-                document.querySelector('.admin-container').style.display = 'none';
-            }
-        }); */
-        
-        window.adminLogin = async function() {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            
-            if (!email || !password) {
-                document.getElementById('loginError').textContent = 'Please enter email and password';
-                return;
-            }
-            
-            try {
-                await auth.signInWithEmailAndPassword(email, password);
-            } catch (error) {
-                console.error('Login error:', error);
-                document.getElementById('loginError').textContent = 'Invalid email or password';
-            }
-        }
-        
-        window.adminLogout = function() { auth.signOut(); }
 
 
         
