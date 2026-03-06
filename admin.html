@@ -7022,7 +7022,10 @@ Network: Always Streaming → Optimized for instant access`;
                                 </td>
                                 <td style="padding: 10px 8px; color: rgba(255,255,255,0.9);">
                                     <span id="password-display-${reseller.id}">••••••••</span>
-                                    <input type="text" id="password-edit-${reseller.id}" value="${reseller.credentials.password || reseller.password || ''}" style="display: none; width: 100%; padding: 5px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; color: white; font-size: 13px;" placeholder="New password">
+                                    <div style="display: none; align-items: center; gap: 5px;" id="password-edit-${reseller.id}">
+                                        <input type="text" id="password-edit-input-${reseller.id}" value="${reseller.credentials.password || reseller.password || ''}" style="flex: 1; padding: 5px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; color: white; font-size: 13px;" placeholder="New password">
+                                        <button type="button" onclick="togglePasswordVisibility('${reseller.id}')" style="padding: 5px 8px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">👁️</button>
+                                    </div>
                                 </td>
                                 <td style="padding: 10px 8px; color: #00F5A0; font-weight: 600;">$${walletBalance.toFixed(2)}</td>
                                 <td style="padding: 10px 8px;">
@@ -7046,12 +7049,10 @@ Network: Always Streaming → Optimized for instant access`;
             // Hide display elements
             document.getElementById(`username-display-${resellerId}`).style.display = 'none';
             document.getElementById(`password-display-${resellerId}`).style.display = 'none';
-            document.getElementById(`commission-display-${resellerId}`).style.display = 'none';
             
             // Show edit elements
             document.getElementById(`username-edit-${resellerId}`).style.display = 'block';
-            document.getElementById(`password-edit-${resellerId}`).style.display = 'block';
-            document.getElementById(`commission-edit-${resellerId}`).style.display = 'block';
+            document.getElementById(`password-edit-${resellerId}`).style.display = 'flex';
             
             // Toggle buttons
             document.getElementById(`edit-btn-${resellerId}`).style.display = 'none';
@@ -7059,16 +7060,23 @@ Network: Always Streaming → Optimized for instant access`;
             document.getElementById(`cancel-btn-${resellerId}`).style.display = 'inline-block';
         }
 
+        function togglePasswordVisibility(resellerId) {
+            const input = document.getElementById(`password-edit-input-${resellerId}`);
+            if (input.type === 'password') {
+                input.type = 'text';
+            } else {
+                input.type = 'password';
+            }
+        }
+
         function cancelEdit(resellerId) {
             // Show display elements
             document.getElementById(`username-display-${resellerId}`).style.display = 'block';
             document.getElementById(`password-display-${resellerId}`).style.display = 'block';
-            document.getElementById(`commission-display-${resellerId}`).style.display = 'block';
             
             // Hide edit elements
             document.getElementById(`username-edit-${resellerId}`).style.display = 'none';
             document.getElementById(`password-edit-${resellerId}`).style.display = 'none';
-            document.getElementById(`commission-edit-${resellerId}`).style.display = 'none';
             
             // Toggle buttons
             document.getElementById(`edit-btn-${resellerId}`).style.display = 'inline-block';
@@ -7078,7 +7086,7 @@ Network: Always Streaming → Optimized for instant access`;
 
         function saveReseller(resellerId) {
             const newUsername = document.getElementById(`username-edit-${resellerId}`).value.trim();
-            const newPassword = document.getElementById(`password-edit-${resellerId}`).value.trim();
+            const newPassword = document.getElementById(`password-edit-input-${resellerId}`).value.trim();
 
             if (!newUsername) {
                 showNotification('Username is required', 'error');
