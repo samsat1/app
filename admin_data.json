@@ -1,22 +1,10 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-06T22:17:34.777Z",
+  "exportDate": "2026-03-06T22:44:42.531Z",
   "customers": [],
   "packages": [],
   "resellers": {},
-  "creditTransfers": [
-    {
-      "id": "credit_1772835376331",
-      "resellerId": "reseller001",
-      "amount": 30,
-      "type": "credit",
-      "date": "2026-03-06T22:16:16.331Z",
-      "note": "Admin credit transfer",
-      "timestamp": 1772835376331,
-      "previousBalance": 0,
-      "newBalance": 30
-    }
-  ],
+  "creditTransfers": [],
   "resellerTransactions": [],
   "plexServerUrl": "",
   "plexLocalUrl": "",
@@ -24,7 +12,7 @@
   "plexMoviesSection": "",
   "plexAdultSection": "",
   "tvSyncUrl": "https://raw.githubusercontent.com/samsat1/app/main/admin_data.json",
-  "githubToken": "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",
+  "githubToken": "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",
   "githubUsername": "samsat1",
   "githubRepo": "app"
 }
