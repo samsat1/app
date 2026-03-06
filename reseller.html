@@ -812,6 +812,65 @@
                         <input type="email" id="customerEmail" placeholder="Email address (optional)">
                     </div>
                     
+                    <!-- Device Selection - MANDATORY ORDER (like admin panel) -->
+                    <div class="form-group" id="deviceSelection">
+                        <label>📺 Device Selection * - MANDATORY ORDER</label>
+                        <div id="deviceSelectionBox" style="background: rgba(255,255,255,0.05); border: 2px solid rgba(244,67,54,0.4); border-radius: 12px; padding: 15px; margin-top: 10px;">
+                            <div style="font-size: 12px; color: #ff9800; margin-bottom: 12px; background: rgba(255,152,0,0.15); padding: 8px; border-radius: 6px;">
+                                ⚠️ MANDATORY: Select Basic TV Package FIRST before any other devices!
+                            </div>
+                            
+                            <!-- Basic TV - Always available -->
+                            <label style="display: flex; align-items: center; cursor: pointer; margin-bottom: 10px; padding: 10px; background: rgba(76,175,80,0.15); border-radius: 6px; border: 2px solid #4caf50;">
+                                <input type="checkbox" name="customerDevices" value="basicTV" id="basicTVCheckbox" style="margin-right: 10px; transform: scale(1.2);" onchange="updateResellerDeviceSelection()">
+                                <span style="color: #4caf50; font-weight: 600;">📺 Basic TV Package</span>
+                            </label>
+                            
+                            <!-- 2nd TV - Locked until Basic TV selected -->
+                            <label style="display: flex; align-items: center; cursor: not-allowed; margin-bottom: 10px; padding: 10px; border-radius: 6px; opacity: 0.5;" id="secondTVLabelContainer">
+                                <input type="checkbox" name="customerDevices" value="secondTV" id="secondTVCheckbox" style="margin-right: 10px; transform: scale(1.2);" onchange="updateResellerDeviceSelection()" disabled>
+                                <span id="secondTVLabel" style="color: rgba(255,255,255,0.3);">🔒 2nd TV - Select Basic TV First</span>
+                            </label>
+                            
+                            <!-- 3rd TV - Locked until 2nd TV selected -->
+                            <label style="display: flex; align-items: center; cursor: not-allowed; padding: 10px; border-radius: 6px; opacity: 0.5;" id="thirdTVLabelContainer">
+                                <input type="checkbox" name="customerDevices" value="thirdTV" id="thirdTVCheckbox" style="margin-right: 10px; transform: scale(1.2);" onchange="updateResellerDeviceSelection()" disabled>
+                                <span id="thirdTVLabel" style="color: rgba(255,255,255,0.3);">🔒 3rd TV - Select 2nd TV First</span>
+                            </label>
+                        </div>
+                        <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 8px;">
+                            📋 Order: Basic TV → 2nd TV → 3rd TV
+                        </div>
+                    </div>
+                    
+                    <!-- Addon Selection -->
+                    <div class="form-group" id="addonSelection">
+                        <label>🎯 Additional Addons (After Basic TV Selection)</label>
+                        <div id="addonSelectionBox" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 12px; margin-top: 8px;">
+                            <div id="addonStatusMessage" style="background: rgba(255,193,7,0.2); border: 1px solid rgba(255,193,7,0.4); border-radius: 6px; padding: 8px; margin-bottom: 10px; color: #ffc107; font-size: 12px; text-align: center;">
+                                🔒 Addons are LOCKED - Select Basic TV Package First
+                            </div>
+                            
+                            <!-- Sports Addon -->
+                            <label id="sportsAddonContainer" style="display: flex; align-items: center; cursor: not-allowed; margin-bottom: 8px; opacity: 0.5;" id="sportsAddonLabel">
+                                <input type="checkbox" name="customerAddons" value="sports" id="sportsAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="calculateTotal()" disabled>
+                                <span id="sportsAddonLabelText" style="color: rgba(255,255,255,0.3);">🔒 Sports Package - LOCKED</span>
+                            </label>
+                            
+                            <!-- Movies Addon -->
+                            <label id="moviesAddonContainer" style="display: flex; align-items: center; cursor: not-allowed; margin-bottom: 8px; opacity: 0.5;">
+                                <input type="checkbox" name="customerAddons" value="movies" id="moviesAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="calculateTotal()" disabled>
+                                <span id="moviesAddonLabelText" style="color: rgba(255,255,255,0.3);">🔒 Movies Package - LOCKED</span>
+                            </label>
+                            
+                            <!-- Adult Addon -->
+                            <label id="adultAddonContainer" style="display: flex; align-items: center; cursor: not-allowed; opacity: 0.5;">
+                                <input type="checkbox" name="customerAddons" value="adult" id="adultAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="calculateTotal()" disabled>
+                                <span id="adultAddonLabelText" style="color: rgba(255,255,255,0.3);">🔞 Adult Content - LOCKED</span>
+                            </label>
+                        </div>
+                    </div>
+                    
                     <div class="form-group" id="packageSelection">
                         <label>Select Packages * (Click to select multiple)</label>
                         <div id="packagesOptions"></div>
@@ -1174,9 +1233,24 @@
             document.getElementById('customerId').value = '';
             document.getElementById('customerForm').reset();
             document.getElementById('submitBtn').textContent = 'Create Customer';
-            document.getElementById('packageSelection').style.display = 'block';
+            
+            // Show device and addon selection (new sections)
+            const deviceSelection = document.getElementById('deviceSelection');
+            const addonSelection = document.getElementById('addonSelection');
+            const packageSelection = document.getElementById('packageSelection');
+            
+            if (deviceSelection) deviceSelection.style.display = 'block';
+            if (addonSelection) addonSelection.style.display = 'block';
+            if (packageSelection) packageSelection.style.display = 'block';
+            
             document.getElementById('durationSelection').style.display = 'block';
             document.getElementById('totalDisplay').style.display = 'block';
+            
+            // Initialize device selection (Basic TV starts enabled, others locked)
+            setTimeout(() => {
+                updateResellerDeviceSelection();
+                calculateTotal();
+            }, 100);
             
             // Render package options
             renderPackageOptions();
@@ -1191,6 +1265,200 @@
             calculateTotal();
             
             document.getElementById('customerModal').classList.add('active');
+        }
+        
+        // Device Selection Logic (matches admin panel)
+        function updateResellerDeviceSelection() {
+            const basicTV = document.getElementById('basicTVCheckbox');
+            const secondTV = document.getElementById('secondTVCheckbox');
+            const thirdTV = document.getElementById('thirdTVCheckbox');
+            const secondTVLabel = document.getElementById('secondTVLabel');
+            const thirdTVLabel = document.getElementById('thirdTVLabel');
+            const secondTVLabelContainer = document.getElementById('secondTVLabelContainer');
+            const thirdTVLabelContainer = document.getElementById('thirdTVLabelContainer');
+            
+            // Return early if elements don't exist
+            if (!basicTV || !secondTV || !thirdTV) {
+                return;
+            }
+            
+            // Enable/disable 2nd TV based on Basic TV selection
+            if (!basicTV.checked) {
+                secondTV.disabled = true;
+                secondTV.checked = false;
+                if (secondTVLabel) {
+                    secondTVLabel.textContent = '🔒 2nd TV - Select Basic TV First';
+                    secondTVLabel.style.color = 'rgba(255,255,255,0.3)';
+                }
+                if (secondTVLabelContainer) {
+                    secondTVLabelContainer.style.cursor = 'not-allowed';
+                    secondTVLabelContainer.style.opacity = '0.5';
+                }
+                
+                // Disable 3rd TV if 2nd TV is disabled
+                thirdTV.disabled = true;
+                thirdTV.checked = false;
+                if (thirdTVLabel) {
+                    thirdTVLabel.textContent = '🔒 3rd TV - Select 2nd TV First';
+                    thirdTVLabel.style.color = 'rgba(255,255,255,0.3)';
+                }
+                if (thirdTVLabelContainer) {
+                    thirdTVLabelContainer.style.cursor = 'not-allowed';
+                    thirdTVLabelContainer.style.opacity = '0.5';
+                }
+            } else {
+                // Enable 2nd TV when Basic TV is selected
+                secondTV.disabled = false;
+                if (secondTVLabel) {
+                    secondTVLabel.textContent = '📺 2nd TV Package';
+                    secondTVLabel.style.color = '#4caf50';
+                }
+                if (secondTVLabelContainer) {
+                    secondTVLabelContainer.style.cursor = 'pointer';
+                    secondTVLabelContainer.style.opacity = '1';
+                }
+            }
+            
+            // Enable/disable 3rd TV based on 2nd TV selection
+            if (basicTV.checked && secondTV.checked) {
+                thirdTV.disabled = false;
+                if (thirdTVLabel) {
+                    thirdTVLabel.textContent = '📺 3rd TV Package';
+                    thirdTVLabel.style.color = '#4caf50';
+                }
+                if (thirdTVLabelContainer) {
+                    thirdTVLabelContainer.style.cursor = 'pointer';
+                    thirdTVLabelContainer.style.opacity = '1';
+                }
+            } else {
+                thirdTV.disabled = true;
+                thirdTV.checked = false;
+                if (thirdTVLabel) {
+                    thirdTVLabel.textContent = '🔒 3rd TV - Select 2nd TV First';
+                    thirdTVLabel.style.color = 'rgba(255,255,255,0.3)';
+                }
+                if (thirdTVLabelContainer) {
+                    thirdTVLabelContainer.style.cursor = 'not-allowed';
+                    thirdTVLabelContainer.style.opacity = '0.5';
+                }
+            }
+            
+            // Update addon availability
+            updateResellerAddonAvailability();
+            
+            // Update price calculation
+            calculateTotal();
+        }
+        
+        // Update Addon Availability in Reseller Panel
+        function updateResellerAddonAvailability() {
+            const basicTV = document.getElementById('basicTVCheckbox');
+            const secondTV = document.getElementById('secondTVCheckbox');
+            const thirdTV = document.getElementById('thirdTVCheckbox');
+            const sportsAddon = document.getElementById('sportsAddon');
+            const moviesAddon = document.getElementById('moviesAddon');
+            const adultAddon = document.getElementById('adultAddon');
+            const sportsAddonContainer = document.getElementById('sportsAddonContainer');
+            const moviesAddonContainer = document.getElementById('moviesAddonContainer');
+            const adultAddonContainer = document.getElementById('adultAddonContainer');
+            const addonStatusMessage = document.getElementById('addonStatusMessage');
+            
+            // Regular addons (Sports, Movies) - require Basic TV
+            if (basicTV?.checked) {
+                if (sportsAddon) {
+                    sportsAddon.disabled = false;
+                    const sportsLabel = document.getElementById('sportsAddonLabelText');
+                    if (sportsLabel) {
+                        sportsLabel.textContent = '🏆 Sports Package';
+                        sportsLabel.style.color = '#4caf50';
+                    }
+                    if (sportsAddonContainer) {
+                        sportsAddonContainer.style.cursor = 'pointer';
+                        sportsAddonContainer.style.opacity = '1';
+                    }
+                }
+                if (moviesAddon) {
+                    moviesAddon.disabled = false;
+                    const moviesLabel = document.getElementById('moviesAddonLabelText');
+                    if (moviesLabel) {
+                        moviesLabel.textContent = '🎬 Movies Package';
+                        moviesLabel.style.color = '#4caf50';
+                    }
+                    if (moviesAddonContainer) {
+                        moviesAddonContainer.style.cursor = 'pointer';
+                        moviesAddonContainer.style.opacity = '1';
+                    }
+                }
+                if (addonStatusMessage) {
+                    addonStatusMessage.textContent = '✅ Addons are now available!';
+                    addonStatusMessage.style.background = 'rgba(76,175,80,0.2)';
+                    addonStatusMessage.style.borderColor = 'rgba(76,175,80,0.4)';
+                    addonStatusMessage.style.color = '#4caf50';
+                }
+            } else {
+                // Disable regular addons
+                if (sportsAddon) {
+                    sportsAddon.disabled = true;
+                    sportsAddon.checked = false;
+                    const sportsLabel = document.getElementById('sportsAddonLabelText');
+                    if (sportsLabel) {
+                        sportsLabel.textContent = '🔒 Sports Package - LOCKED';
+                        sportsLabel.style.color = 'rgba(255,255,255,0.3)';
+                    }
+                    if (sportsAddonContainer) {
+                        sportsAddonContainer.style.cursor = 'not-allowed';
+                        sportsAddonContainer.style.opacity = '0.5';
+                    }
+                }
+                if (moviesAddon) {
+                    moviesAddon.disabled = true;
+                    moviesAddon.checked = false;
+                    const moviesLabel = document.getElementById('moviesAddonLabelText');
+                    if (moviesLabel) {
+                        moviesLabel.textContent = '🔒 Movies Package - LOCKED';
+                        moviesLabel.style.color = 'rgba(255,255,255,0.3)';
+                    }
+                    if (moviesAddonContainer) {
+                        moviesAddonContainer.style.cursor = 'not-allowed';
+                        moviesAddonContainer.style.opacity = '0.5';
+                    }
+                }
+                if (addonStatusMessage) {
+                    addonStatusMessage.textContent = '🔒 Addons are LOCKED - Select Basic TV Package First';
+                    addonStatusMessage.style.background = 'rgba(255,193,7,0.2)';
+                    addonStatusMessage.style.borderColor = 'rgba(255,193,7,0.4)';
+                    addonStatusMessage.style.color = '#ffc107';
+                }
+            }
+            
+            // Adult addon - can be selected with ANY TV package (Basic, 2nd, or 3rd)
+            const hasAnyTV = basicTV?.checked || secondTV?.checked || thirdTV?.checked;
+            if (adultAddon) {
+                if (hasAnyTV) {
+                    adultAddon.disabled = false;
+                    const adultLabel = document.getElementById('adultAddonLabelText');
+                    if (adultLabel) {
+                        adultLabel.textContent = '🔞 Adult Content Package';
+                        adultLabel.style.color = '#ff4757';
+                    }
+                    if (adultAddonContainer) {
+                        adultAddonContainer.style.cursor = 'pointer';
+                        adultAddonContainer.style.opacity = '1';
+                    }
+                } else {
+                    adultAddon.disabled = true;
+                    adultAddon.checked = false;
+                    const adultLabel = document.getElementById('adultAddonLabelText');
+                    if (adultLabel) {
+                        adultLabel.textContent = '🔞 Adult Content - LOCKED';
+                        adultLabel.style.color = 'rgba(255,255,255,0.3)';
+                    }
+                    if (adultAddonContainer) {
+                        adultAddonContainer.style.cursor = 'not-allowed';
+                        adultAddonContainer.style.opacity = '0.5';
+                    }
+                }
+            }
         }
         
         // Render Package Options
@@ -1611,25 +1879,83 @@
             calculateTotal();
         }
         
-        // Calculate Total
+        // Calculate Total - includes device selection and addon prices
         function calculateTotal() {
             const totalElement = document.getElementById('totalAmount');
             const warningElement = document.getElementById('walletWarning');
             const submitBtn = document.getElementById('submitBtn');
             
-            if (selectedPackages.length === 0) {
+            // Get device selections
+            const basicTV = document.getElementById('basicTVCheckbox');
+            const secondTV = document.getElementById('secondTVCheckbox');
+            const thirdTV = document.getElementById('thirdTVCheckbox');
+            const sportsAddon = document.getElementById('sportsAddon');
+            const moviesAddon = document.getElementById('moviesAddon');
+            const adultAddon = document.getElementById('adultAddon');
+            
+            // Get prices from packages array
+            let basePrice = 25; // Default
+            let secondTVPrice = 15; // Default
+            let thirdTVPrice = 10; // Default
+            let sportsPrice = 8; // Default
+            let moviesPrice = 8; // Default
+            let adultPrice = 0; // Default
+            
+            // Try to get actual prices from packages
+            if (packages.length > 0) {
+                const firstPkg = packages[0];
+                basePrice = firstPkg.price || basePrice;
+                secondTVPrice = firstPkg.secondTVPrice || secondTVPrice;
+                thirdTVPrice = firstPkg.thirdTVPrice || thirdTVPrice;
+                sportsPrice = firstPkg.sportsPrice || sportsPrice;
+                moviesPrice = firstPkg.moviesPrice || moviesPrice;
+                adultPrice = firstPkg.adultPackagePrice || adultPrice;
+            }
+            
+            // Calculate total
+            let total = 0;
+            const selectedItems = [];
+            
+            // Add device prices
+            if (basicTV?.checked) {
+                total += basePrice;
+                selectedItems.push('Basic TV ($' + basePrice + ')');
+            }
+            if (secondTV?.checked) {
+                total += secondTVPrice;
+                selectedItems.push('2nd TV ($' + secondTVPrice + ')');
+            }
+            if (thirdTV?.checked) {
+                total += thirdTVPrice;
+                selectedItems.push('3rd TV ($' + thirdTVPrice + ')');
+            }
+            
+            // Add addon prices
+            if (sportsAddon?.checked) {
+                total += sportsPrice;
+                selectedItems.push('Sports ($' + sportsPrice + ')');
+            }
+            if (moviesAddon?.checked) {
+                total += moviesPrice;
+                selectedItems.push('Movies ($' + moviesPrice + ')');
+            }
+            if (adultAddon?.checked) {
+                total += adultPrice;
+                selectedItems.push('Adult ($' + adultPrice + ')');
+            }
+            
+            // Apply duration multiplier
+            total = total * selectedDuration;
+            
+            // Update display
+            if (selectedItems.length === 0) {
                 totalElement.textContent = '$0.00';
                 warningElement.style.display = 'none';
                 submitBtn.disabled = true;
                 return;
             }
             
-            // Calculate total for all selected packages
-            const total = selectedPackages.reduce((sum, pkg) => sum + pkg.price, 0) * selectedDuration;
             totalElement.textContent = '$' + total.toFixed(2);
-            
-            // Show selected packages summary
-            const selectedNames = selectedPackages.map(p => p.name).join(', ');
             
             if (total > walletBalance) {
                 warningElement.style.display = 'block';
@@ -1683,33 +2009,79 @@
                 // Update existing customer
                 await updateCustomer(customerId, customerData);
             } else {
-                // Create new customer
-                if (selectedPackages.length === 0) {
-                    showNotification('Please select at least one package', 'error');
-                    return;
-                }
+                // Create new customer - check device selection
+                const basicTV = document.getElementById('basicTVCheckbox');
+                const secondTV = document.getElementById('secondTVCheckbox');
+                const thirdTV = document.getElementById('thirdTVCheckbox');
+                const sportsAddon = document.getElementById('sportsAddon');
+                const moviesAddon = document.getElementById('moviesAddon');
+                const adultAddon = document.getElementById('adultAddon');
                 
                 // CRITICAL: Validate Basic TV is selected (MANDATORY)
-                const hasBasicTV = selectedPackages.some(p => 
-                    (p.name || '').toLowerCase().includes('basic') || 
-                    (p.id || '').toLowerCase() === 'pkg_basic' ||
-                    p.isBasicTV
-                );
-                
-                if (!hasBasicTV) {
+                if (!basicTV || !basicTV.checked) {
                     showNotification('🚨 ERROR: Basic TV Package is MANDATORY FIRST! You cannot proceed without selecting Basic TV Package first!', 'error');
                     return;
                 }
                 
-                // Calculate total for all selected packages
-                const total = selectedPackages.reduce((sum, pkg) => sum + pkg.price, 0) * selectedDuration;
+                // Get prices from packages array
+                let basePrice = 25;
+                let secondTVPrice = 15;
+                let thirdTVPrice = 10;
+                let sportsPrice = 8;
+                let moviesPrice = 8;
+                let adultPrice = 0;
+                
+                if (packages.length > 0) {
+                    const firstPkg = packages[0];
+                    basePrice = firstPkg.price || basePrice;
+                    secondTVPrice = firstPkg.secondTVPrice || secondTVPrice;
+                    thirdTVPrice = firstPkg.thirdTVPrice || thirdTVPrice;
+                    sportsPrice = firstPkg.sportsPrice || sportsPrice;
+                    moviesPrice = firstPkg.moviesPrice || moviesPrice;
+                    adultPrice = firstPkg.adultPackagePrice || adultPrice;
+                }
+                
+                // Calculate total based on device and addon selections
+                let total = 0;
+                const selectedItems = [];
+                
+                // Add device prices
+                if (basicTV?.checked) {
+                    total += basePrice;
+                    selectedItems.push('Basic TV');
+                }
+                if (secondTV?.checked) {
+                    total += secondTVPrice;
+                    selectedItems.push('2nd TV');
+                }
+                if (thirdTV?.checked) {
+                    total += thirdTVPrice;
+                    selectedItems.push('3rd TV');
+                }
+                
+                // Add addon prices
+                if (sportsAddon?.checked) {
+                    total += sportsPrice;
+                    selectedItems.push('Sports');
+                }
+                if (moviesAddon?.checked) {
+                    total += moviesPrice;
+                    selectedItems.push('Movies');
+                }
+                if (adultAddon?.checked) {
+                    total += adultPrice;
+                    selectedItems.push('Adult');
+                }
+                
+                // Apply duration multiplier
+                total = total * selectedDuration;
                 
                 if (total > walletBalance) {
                     showNotification('Insufficient wallet balance', 'error');
                     return;
                 }
                 
-                await createCustomer(customerData, selectedPackages, selectedDuration, total);
+                await createCustomer(customerData, selectedItems, selectedDuration, total);
             }
         }
         
