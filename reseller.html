@@ -999,85 +999,30 @@
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value;
             
-            console.log('=== LOGIN DEBUG START ===');
-            console.log('Username input:', username);
-            console.log('Password input length:', password ? password.length : 0);
-            
             document.getElementById('loginError').style.display = 'none';
             
             try {
                 // Fetch admin data from GitHub
-                console.log('Fetching from:', GITHUB_DATA_URL);
                 const response = await fetch(GITHUB_DATA_URL + '?t=' + Date.now());
-                
-                console.log('Response status:', response.status);
-                console.log('Response OK:', response.ok);
-                
-                if (!response.ok) {
-                    throw new Error('Failed to fetch data: ' + response.status);
-                }
+                if (!response.ok) throw new Error('Failed to fetch data');
                 
                 adminData = await response.json();
-                console.log('AdminData keys:', Object.keys(adminData));
-                console.log('Has resellers field:', 'resellers' in adminData);
                 
-                // Check reseller credentials
+                // Check reseller credentials - search through all resellers by username property
                 const resellers = adminData.resellers || {};
-                console.log('Resellers type:', typeof resellers);
-                console.log('Resellers is array:', Array.isArray(resellers));
-                console.log('Resellers keys:', Array.isArray(resellers) ? 'N/A (array)' : Object.keys(resellers));
-                
-                console.log('Available resellers:', JSON.stringify(resellers, null, 2));
-                console.log('Login attempt - username:', username);
-                
-                // Find reseller by username (search through all resellers)
                 let reseller = null;
                 let resellerId = null;
                 
-                // Handle both object and array formats
-                if (Array.isArray(resellers)) {
-                    // Array format
-                    console.log('Processing as array format');
-                    for (const data of resellers) {
-                        console.log('Checking array item:', data.username);
-                        if (data.username === username) {
-                            reseller = data;
-                            resellerId = data.id;
-                            break;
-                        }
-                    }
-                } else {
-                    // Object format
-                    console.log('Processing as object format');
-                    for (const [id, data] of Object.entries(resellers)) {
-                        console.log(`Checking ID ${id}:`, data.username);
-                        if (data.username === username) {
-                            reseller = data;
-                            resellerId = id;
-                            break;
-                        }
+                // Search through all resellers to find matching username
+                for (const [id, data] of Object.entries(resellers)) {
+                    if (data.username === username) {
+                        reseller = data;
+                        resellerId = id;
+                        break;
                     }
                 }
                 
-                console.log('Found reseller:', reseller);
-                console.log('Reseller ID:', resellerId);
-                
-                if (!reseller) {
-                    console.log('ERROR: No reseller found with username:', username);
-                    document.getElementById('loginError').textContent = 'Reseller not found';
-                    document.getElementById('loginError').style.display = 'block';
-                    console.log('=== LOGIN DEBUG END ===');
-                    return;
-                }
-                
-                console.log('Stored password:', reseller.password);
-                console.log('Password match:', reseller.password === password);
-                console.log('Reseller status:', reseller.status);
-                
-                // Check if reseller exists and password matches
-                // Allow login if status is 'active' OR if status field doesn't exist (backward compatibility)
-                if (reseller && reseller.password === password && (reseller.status === 'active' || !reseller.status)) {
-                    console.log('LOGIN SUCCESS!');
+                if (reseller && reseller.password === password && reseller.status === 'active') {
                     currentReseller = {
                         id: resellerId,
                         name: reseller.name || username,
@@ -1086,24 +1031,12 @@
                     localStorage.setItem('currentReseller', JSON.stringify(currentReseller));
                     showMainPanel();
                 } else {
-                    console.log('LOGIN FAILED - Password or status check failed');
-                    if (reseller.password !== password) {
-                        console.log('Reason: Password mismatch');
-                        document.getElementById('loginError').textContent = 'Invalid password';
-                    } else if (reseller.status && reseller.status !== 'active') {
-                        console.log('Reason: Account not active');
-                        document.getElementById('loginError').textContent = 'Account is not active';
-                    } else {
-                        document.getElementById('loginError').textContent = 'Invalid username or password';
-                    }
                     document.getElementById('loginError').style.display = 'block';
                 }
-                console.log('=== LOGIN DEBUG END ===');
             } catch (error) {
                 console.error('Login error:', error);
-                document.getElementById('loginError').textContent = 'Connection error: ' + error.message;
+                document.getElementById('loginError').textContent = 'Connection error. Please try again.';
                 document.getElementById('loginError').style.display = 'block';
-                console.log('=== LOGIN DEBUG END ===');
             }
         }
         
