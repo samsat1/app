@@ -695,7 +695,7 @@
             }
         });
         
-        async function adminLogin() {
+        window.adminLogin = async function() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             
@@ -712,7 +712,7 @@
             }
         }
         
-        function adminLogout() { auth.signOut(); }
+        window.adminLogout = function() { auth.signOut(); }
 
 
         
