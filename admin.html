@@ -3991,6 +3991,193 @@
             }
         }
         
+        // Save all package prices at once - automatically creates all 6 packages
+        window.saveAllPackagePrices = function() {
+            const price = document.getElementById('packagePrice')?.value || '0';
+            const duration = document.getElementById('packageDuration')?.value || '1 Month';
+            const features = document.getElementById('packageFeatures')?.value || 'Live TV, Movies, Adult Content';
+            const secondTVPrice = document.getElementById('secondTVPrice')?.value || '0';
+            const thirdTVPrice = document.getElementById('thirdTVPrice')?.value || '0';
+            const sportsPrice = document.getElementById('sportsPrice')?.value || '0';
+            const moviesPrice = document.getElementById('moviesPrice')?.value || '0';
+            const adultPackagePrice = document.getElementById('adultPackagePrice')?.value || '0';
+            
+            if (!price || parseFloat(price) <= 0) {
+                showNotification('❌ Please enter Basic Package price first', 'error');
+                return;
+            }
+            
+            // Get existing packages
+            let packages = JSON.parse(localStorage.getItem('adminPackages')) || [];
+            
+            // Define all 6 packages to create/update
+            const packagesToCreate = [
+                {
+                    id: 'PKG_BASIC',
+                    name: 'Basic TV',
+                    price: parseFloat(price),
+                    duration: duration,
+                    features: features,
+                    secondTVPrice: parseFloat(secondTVPrice),
+                    thirdTVPrice: parseFloat(thirdTVPrice),
+                    sportsPrice: parseFloat(sportsPrice),
+                    moviesPrice: parseFloat(moviesPrice),
+                    isAdult: false,
+                    adultPackagePrice: 0,
+                    isAddOn: false,
+                    requiresPackage: null,
+                    isSecondTV: false,
+                    isThirdTV: false,
+                    approved: true,
+                    approvedDate: new Date().toISOString(),
+                    approvedBy: 'admin',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 'PKG_SPORTS',
+                    name: 'Sports Add-on',
+                    price: parseFloat(sportsPrice),
+                    duration: duration,
+                    features: 'Sports Channels - requires Basic TV',
+                    secondTVPrice: 0,
+                    thirdTVPrice: 0,
+                    sportsPrice: 0,
+                    moviesPrice: 0,
+                    isAdult: false,
+                    adultPackagePrice: 0,
+                    isAddOn: true,
+                    requiresPackage: 'Basic TV',
+                    isSecondTV: false,
+                    isThirdTV: false,
+                    approved: true,
+                    approvedDate: new Date().toISOString(),
+                    approvedBy: 'admin',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 'PKG_MOVIES',
+                    name: 'Movies Add-on',
+                    price: parseFloat(moviesPrice),
+                    duration: duration,
+                    features: 'Movies Library - requires Basic TV',
+                    secondTVPrice: 0,
+                    thirdTVPrice: 0,
+                    sportsPrice: 0,
+                    moviesPrice: 0,
+                    isAdult: false,
+                    adultPackagePrice: 0,
+                    isAddOn: true,
+                    requiresPackage: 'Basic TV',
+                    isSecondTV: false,
+                    isThirdTV: false,
+                    approved: true,
+                    approvedDate: new Date().toISOString(),
+                    approvedBy: 'admin',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 'PKG_ADULT',
+                    name: 'Adult Add-on',
+                    price: parseFloat(adultPackagePrice),
+                    duration: duration,
+                    features: 'Adult Content - requires Basic TV',
+                    secondTVPrice: 0,
+                    thirdTVPrice: 0,
+                    sportsPrice: 0,
+                    moviesPrice: 0,
+                    isAdult: true,
+                    adultPackagePrice: parseFloat(adultPackagePrice),
+                    isAddOn: true,
+                    requiresPackage: 'Basic TV',
+                    isSecondTV: false,
+                    isThirdTV: false,
+                    approved: true,
+                    approvedDate: new Date().toISOString(),
+                    approvedBy: 'admin',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 'PKG_2NDTV',
+                    name: '2nd TV',
+                    price: parseFloat(secondTVPrice),
+                    duration: duration,
+                    features: 'Additional TV - requires Basic TV',
+                    secondTVPrice: 0,
+                    thirdTVPrice: 0,
+                    sportsPrice: 0,
+                    moviesPrice: 0,
+                    isAdult: false,
+                    adultPackagePrice: 0,
+                    isAddOn: true,
+                    requiresPackage: 'Basic TV',
+                    isSecondTV: true,
+                    isThirdTV: false,
+                    approved: true,
+                    approvedDate: new Date().toISOString(),
+                    approvedBy: 'admin',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 'PKG_3RDTV',
+                    name: '3rd TV',
+                    price: parseFloat(thirdTVPrice),
+                    duration: duration,
+                    features: 'Third TV - requires 2nd TV',
+                    secondTVPrice: 0,
+                    thirdTVPrice: 0,
+                    sportsPrice: 0,
+                    moviesPrice: 0,
+                    isAdult: false,
+                    adultPackagePrice: 0,
+                    isAddOn: true,
+                    requiresPackage: '2nd TV',
+                    isSecondTV: false,
+                    isThirdTV: true,
+                    approved: true,
+                    approvedDate: new Date().toISOString(),
+                    approvedBy: 'admin',
+                    createdAt: new Date().toISOString()
+                }
+            ];
+            
+            // Update or add each package
+            packagesToCreate.forEach(newPkg => {
+                const existingIndex = packages.findIndex(p => p.id === newPkg.id);
+                if (existingIndex >= 0) {
+                    packages[existingIndex] = { ...packages[existingIndex], ...newPkg };
+                } else {
+                    packages.push(newPkg);
+                }
+            });
+            
+            // Save to localStorage
+            localStorage.setItem('adminPackages', JSON.stringify(packages));
+            localStorage.setItem('packages', JSON.stringify(packages));
+            
+            showNotification('✅ All 6 packages saved! Basic: $' + price + ', Sports: $' + sportsPrice + ', Movies: $' + moviesPrice + ', Adult: $' + adultPackagePrice + ', 2nd TV: $' + secondTVPrice + ', 3rd TV: $' + thirdTVPrice, 'success');
+            
+            // Update the list
+            updatePackagesList();
+            updatePackageStats();
+        }
+        
+        // Clear all packages
+        window.clearAllPackages = function() {
+            if (!confirm('Are you sure you want to DELETE all packages? This cannot be undone!')) {
+                return;
+            }
+            
+            const packages = [];
+            localStorage.setItem('adminPackages', JSON.stringify(packages));
+            localStorage.setItem('packages', JSON.stringify(packages));
+            
+            showNotification('🗑️ All packages deleted!', 'success');
+            
+            // Update the list
+            updatePackagesList();
+            updatePackageStats();
+        }
+        
         function createNewPackage() {
             const name = document.getElementById('packageName')?.value;
             const price = document.getElementById('packagePrice')?.value;
@@ -4087,13 +4274,24 @@
             
             if (packagesList && packages.length > 0) {
                 packagesList.innerHTML = packages.map((pkg, index) => {
-                    const isAdultPackage = pkg.isAdult || pkg.name.toLowerCase().includes('adult') || pkg.name.toLowerCase().includes('xxx');
+                    // More robust adult detection - only mark as adult if explicitly set or has adult in name (not add-on)
+                    const isAdultPackage = pkg.isAdult === true || 
+                                          (pkg.name && pkg.name.toLowerCase().includes('adult') && !pkg.name.toLowerCase().includes('add-on') && !pkg.name.toLowerCase().includes('addon')) || 
+                                          (pkg.name && pkg.name.toLowerCase().includes('xxx')) ||
+                                          (pkg.adultPackagePrice && parseFloat(pkg.adultPackagePrice) > 0 && !pkg.name.toLowerCase().includes('sport'));
+                    
+                    const isSportsPackage = pkg.name && (pkg.name.toLowerCase().includes('sport') || pkg.isSecondTV);
+                    
+                    // Determine border color: red for adult, orange for sports/2ndTV, green for normal
+                    let borderColor = '#4caf50'; // green for normal
+                    if (isAdultPackage) borderColor = '#ff4757'; // red for adult
+                    else if (isSportsPackage || pkg.isSecondTV || pkg.isThirdTV) borderColor = '#ff9800'; // orange for sports/2nd/3rd TV
                     
                     return `
-                    <div style="margin-bottom: 12px; padding: 12px; background: ${isAdultPackage ? 'rgba(255,71,87,0.15)' : 'rgba(255,255,255,0.05)'}; border-radius: 6px; border-left: 3px solid ${isAdultPackage ? '#ff4757' : '#4caf50'};">
+                    <div style="margin-bottom: 12px; padding: 12px; background: ${isAdultPackage ? 'rgba(255,71,87,0.15)' : (isSportsPackage || pkg.isSecondTV ? 'rgba(255,152,0,0.1)' : 'rgba(255,255,255,0.05)')}; border-radius: 6px; border-left: 3px solid ${borderColor};">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="flex: 1;">
-                                <div style="font-weight: 600; color: ${isAdultPackage ? '#ff4757' : 'white'};">
+                                <div style="font-weight: 600; color: ${isAdultPackage ? '#ff4757' : (isSportsPackage || pkg.isSecondTV ? '#ff9800' : 'white')};">
                                     ${isAdultPackage ? '🔞 ' : ''}${pkg.name}
                                     ${isAdultPackage ? '<span style="color: #ff4757; font-size: 10px; font-weight: normal; margin-left: 8px;">(ADULT CONTENT)</span>' : ''}
                                 </div>
@@ -6571,6 +6769,8 @@ Network: Always Streaming → Optimized for instant access`;
                                 <textarea id="packageFeatures" placeholder="HD Channels, Sports Package, Movies..." style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; min-height: 80px;"></textarea>
                             </div>
                             <button onclick="createNewPackage()" class="btn btn-warning" style="padding: 12px 20px; margin-right: 10px;" id="createPackageBtn">➕ Create Package</button>
+                            <button onclick="saveAllPackagePrices()" class="btn btn-success" style="padding: 12px 20px; margin-right: 10px;">💾 Save All Prices</button>
+                            <button onclick="clearAllPackages()" class="btn btn-danger" style="padding: 12px 20px; margin-right: 10px;">🗑️ Clear All Packages</button>
                             <button onclick="cancelPackageEdit()" class="btn btn-danger" style="padding: 12px 20px; margin-right: 10px; display: none;" id="cancelPackageEditBtn">❌ Cancel Edit</button>
                             <div style="margin-bottom: 15px;">
                                 <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Package Structure:</label>
@@ -6842,72 +7042,6 @@ Network: Always Streaming → Optimized for instant access`;
             if (adultCountEl) adultCountEl.textContent = `Adult videos cached: ${cachedAdult.length}`;
         }
 
-        // Section Functions
-        window.showAdminDashboard = function() {
-        function updatePackagesList() {
-            console.log('updatePackagesList called');
-            const packagesList = document.getElementById('packagesList');
-            if (!packagesList) {
-                console.error('packagesList element not found');
-                return;
-            }
-            
-            // Load packages from localStorage - ensure consistency with adminPackages
-            const packages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
-            
-            packagesList.innerHTML = packages.map((pkg, index) => {
-                const isAdultPackage = pkg.isAdult || 
-                                      pkg.name.toLowerCase().includes('adult') || 
-                                      pkg.name.toLowerCase().includes('xxx') ||
-                                      (pkg.addonPrices && pkg.addonPrices.adult && pkg.addonPrices.adult > 0) ||
-                                      (pkg.adultPackagePrice && pkg.adultPackagePrice > 0);
-                
-                return `
-                    <div style="border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 15px; margin-bottom: 15px; background: ${isAdultPackage ? 'rgba(255,71,87,0.15)' : 'rgba(255,255,255,0.05)'}; border-left: 3px solid ${isAdultPackage ? '#ff4757' : '#4caf50'};">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <div>
-                                <h5 style="color: ${isAdultPackage ? '#ff4757' : 'white'}; margin: 0; font-size: 15px; font-weight: 600;">
-                                    ${isAdultPackage ? '🔞 ' : ''}${pkg.name}
-                                    ${isAdultPackage ? '<span style="color: #ff4757; font-size: 11px; font-weight: normal; margin-left: 8px;">(ADULT CONTENT)</span>' : ''}
-                                </h5>
-                                <div style="font-size: 12px; color: rgba(255,255,255,0.8); margin-top: 4px;">
-                                    <strong>Base:</strong> $${pkg.price}/${pkg.duration}
-                                    ${pkg.adultPackagePrice > 0 ? ` | <strong style="color: #ff4757;">Adult Price:</strong> $${pkg.adultPackagePrice}` : ''}
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                <button onclick="editPackage('${index}')" style="background: #2196f3; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">✏️ EDIT</button>
-                                <button onclick="cancelPackageEdit()" style="background: #ff9800; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">❌ CANCEL</button>
-                                <button onclick="deletePackage('${index}')" style="background: #f44336; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">🗑️ Delete</button>
-                            </div>
-                        </div>
-                        
-                        <div style="font-size: 12px; color: rgba(255,255,255,0.8); margin-bottom: 8px;">
-                            <strong>Device Pricing:</strong>
-                            ${pkg.secondTVPrice > 0 ? `2nd TV: $${pkg.secondTVPrice}` : ''}
-                            ${pkg.thirdTVPrice > 0 ? ` | 3rd TV: $${pkg.thirdTVPrice}` : ''}
-                            ${pkg.secondTVPrice <= 0 && pkg.thirdTVPrice <= 0 ? ' No additional devices' : ''}
-                        </div>
-                        
-                        <div style="font-size: 12px; color: rgba(255,255,255,0.8); margin-bottom: 8px;">
-                            <strong>Addon Pricing:</strong>
-                            ${pkg.sportsPrice > 0 ? `Sports: $${pkg.sportsPrice}` : ''}
-                            ${pkg.moviesPrice > 0 ? ` | Movies: $${pkg.moviesPrice}` : ''}
-                            ${!pkg.sportsPrice && !pkg.moviesPrice ? ' No addon pricing set' : ''}
-                        </div>
-                        
-                        ${pkg.features ? `<div style="margin-top: 8px; font-size: 11px; color: rgba(255,255,255,0.7); padding: 8px; background: rgba(255,255,255,0.1); border-radius: 4px;">${pkg.features}</div>` : ''}
-                        
-                        ${isAdultPackage ? `
-                            <div style="margin-top: 8px; padding: 6px 10px; background: rgba(255,71,87,0.2); border-radius: 4px; font-size: 11px; color: #ff4757; font-weight: 600;">
-                                ⚠️ ADULT CONTENT: This package is hidden in client interface and requires special access
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            }).join('');
-        }
-
         // Edit package function
         window.editPackage = function(packageIndex) {
             // Load from adminPackages first, fallback to packages
@@ -6940,42 +7074,44 @@ Network: Always Streaming → Optimized for instant access`;
         // Delete package function
         window.deletePackage = function(packageIndex) {
             console.log('Delete package called with index:', packageIndex);
-            const packages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
-            const pkg = packages[packageIndex];
+            
+            // Get current packages from localStorage
+            let packagesArray = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
+            const pkg = packagesArray[packageIndex];
             
             if (!pkg) {
                 console.error('Package not found at index:', packageIndex);
+                showNotification('Package not found', 'error');
                 return;
             }
             
             if (confirm(`Are you sure you want to delete package "${pkg.name}"? This action cannot be undone.`)) {
-                packages.splice(packageIndex, 1);
-                // Save to both localStorage keys for consistency
-                localStorage.setItem('packages', JSON.stringify(packages));
-                localStorage.setItem('adminPackages', JSON.stringify(packages));
+                // Remove the package
+                packagesArray.splice(packageIndex, 1);
                 
-                // Trigger real-time notification to clients for package deletion
-                localStorage.setItem('packageDeleted', JSON.stringify({
-                    packageId: pkg.id,
-                    packageName: pkg.name,
-                    timestamp: new Date().toISOString(),
-                    action: 'deleted'
-                }));
+                // Save to localStorage
+                localStorage.setItem('packages', JSON.stringify(packagesArray));
+                localStorage.setItem('adminPackages', JSON.stringify(packagesArray));
                 
-                // Update global packages variable to ensure consistency
-                packages = [...packages]; // Create a copy to ensure reference update
+                console.log('Package deleted, remaining:', packagesArray.length);
                 
-                setTimeout(() => {
-                    showPackagesSection();
-                    showNotification(`🗑️ Package "${pkg.name}" deleted`, 'success');
-                }, 50);
+                // Refresh the display
+                showPackagesSection();
+                showNotification(`🗑️ Package "${pkg.name}" deleted`, 'success');
             }
         }
 
         // Cancel edit mode
         window.cancelPackageEdit = function() {
             console.log('Cancel package edit called');
-            clearPackageForm();
+            
+            // Clear the form fields
+            const fields = ['packageName', 'packagePrice', 'secondTVPrice', 'thirdTVPrice', 'sportsPrice', 'moviesPrice', 'adultPackagePrice', 'packageFeatures'];
+            fields.forEach(field => {
+                const element = document.getElementById(field);
+                if (element) element.value = '';
+            });
+            
             const createBtn = document.getElementById('createPackageBtn');
             if (createBtn) {
                 createBtn.textContent = '➕ Create Package';
