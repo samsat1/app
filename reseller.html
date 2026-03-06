@@ -1197,22 +1197,205 @@
         function renderPackageOptions() {
             const container = document.getElementById('packagesOptions');
             
+            // First update availability based on current selections
+            updatePackageAvailability();
+            
             container.innerHTML = packages.map(pkg => {
                 const isSelected = selectedPackages.some(p => p.id === pkg.id);
-                const requiresText = pkg.requiresPackage ? `<div style="font-size: 11px; color: #ff9800; margin-top: 4px;">Requires: ${pkg.requiresPackage}</div>` : '';
-                const secondTVText = pkg.isSecondTV ? `<div style="font-size: 11px; color: #ff9800; margin-top: 4px;">Requires: Basic TV (1st TV)</div>` : '';
-                const thirdTVText = pkg.isThirdTV ? `<div style="font-size: 11px; color: #ff9800; margin-top: 4px;">Requires: 2nd TV</div>` : '';
+                
+                // Determine if package is locked
+                const isLocked = isPackageLocked(pkg);
+                const lockedClass = isLocked ? 'package-locked' : '';
+                const lockedStyle = isLocked ? 'opacity: 0.5; cursor: not-allowed; border-color: rgba(255,255,255,0.1);' : '';
+                const lockedCursor = isLocked ? 'not-allowed' : 'pointer';
+                
+                // Determine package type for display
+                let packageTypeIcon = '';
+                let packageTypeLabel = '';
+                
+                if (pkg.isSecondTV || pkg.id === 'PKG_2NDTV' || pkg.name.toLowerCase().includes('2nd tv')) {
+                    packageTypeIcon = '📺';
+                    packageTypeLabel = '2nd TV';
+                } else if (pkg.isThirdTV || pkg.id === 'PKG_3RDTV' || pkg.name.toLowerCase().includes('3rd tv')) {
+                    packageTypeIcon = '📺';
+                    packageTypeLabel = '3rd TV';
+                } else if (pkg.isAddOn || pkg.name.toLowerCase().includes('sport')) {
+                    packageTypeIcon = '🏆';
+                    packageTypeLabel = 'Sports';
+                } else if (pkg.name.toLowerCase().includes('movie')) {
+                    packageTypeIcon = '🎬';
+                    packageTypeLabel = 'Movies';
+                } else if (pkg.adultPackagePrice || pkg.name.toLowerCase().includes('adult')) {
+                    packageTypeIcon = '🔞';
+                    packageTypeLabel = 'Adult';
+                } else if (pkg.name.toLowerCase().includes('basic')) {
+                    packageTypeIcon = '📺';
+                    packageTypeLabel = 'Basic TV';
+                }
+                
+                // Locked message
+                let lockedMessage = '';
+                if (isLocked) {
+                    const lockReason = getPackageLockReason(pkg);
+                    lockedMessage = `<div style="font-size: 11px; color: #ff9800; margin-top: 4px;">🔒 ${lockReason}</div>`;
+                }
                 
                 return `
-                    <div class="package-option ${isSelected ? 'selected' : ''}" data-id="${pkg.id}" data-price="${pkg.price}" onclick="selectPackage(this)">
-                        <div class="package-name">${pkg.name}</div>
+                    <div class="package-option ${isSelected ? 'selected' : ''} ${lockedClass}" 
+                         data-id="${pkg.id}" 
+                         data-price="${pkg.price}" 
+                         onclick="${isLocked ? '' : 'selectPackage(this)'}"
+                         style="${lockedStyle} cursor: ${lockedCursor};">
+                        <div class="package-name">${packageTypeIcon} ${pkg.name}</div>
                         <div class="package-price">$${parseFloat(pkg.price || 0).toFixed(2)}/month</div>
-                        ${requiresText}
-                        ${secondTVText}
-                        ${thirdTVText}
+                        ${lockedMessage}
+                        ${!isLocked && pkg.requiresPackage ? `<div style="font-size: 11px; color: #4caf50; margin-top: 4px;">✓ Available</div>` : ''}
                     </div>
                 `;
             }).join('');
+            
+            // Add status message
+            const statusDiv = document.createElement('div');
+            statusDiv.id = 'packageStatusMessage';
+            statusDiv.style.cssText = 'background: rgba(255,193,7,0.2); border: 1px solid rgba(255,193,7,0.4); border-radius: 6px; padding: 10px; margin-bottom: 15px; color: #ffc107; font-size: 13px; text-align: center;';
+            statusDiv.innerHTML = getPackageStatusMessage();
+            container.insertBefore(statusDiv, container.firstChild);
+        }
+        
+        // Check if a package is currently locked
+        function isPackageLocked(pkg) {
+            const pkgNameLower = (pkg.name || '').toLowerCase();
+            const pkgIdLower = (pkg.id || '').toLowerCase();
+            
+            // Check if this is Basic TV - always unlocked (it must be selected first)
+            if (pkgNameLower.includes('basic') || pkgIdLower === 'pkg_basic' || pkg.isBasicTV) {
+                return false;
+            }
+            
+            // Check if this is 2nd TV - locked if Basic TV not selected
+            if (pkgNameLower.includes('2nd') || pkgNameLower.includes('2nd tv') || pkgNameLower.includes('second tv') || 
+                pkgIdLower.includes('2ndtv') || pkgIdLower === 'pkg_2ndtv' || pkg.isSecondTV) {
+                const hasBasicTV = selectedPackages.some(p => 
+                    (p.name || '').toLowerCase().includes('basic') || 
+                    (p.id || '').toLowerCase() === 'pkg_basic' ||
+                    p.isBasicTV
+                );
+                return !hasBasicTV;
+            }
+            
+            // Check if this is 3rd TV - locked if 2nd TV not selected
+            if (pkgNameLower.includes('3rd') || pkgNameLower.includes('3rd tv') || pkgNameLower.includes('third tv') || 
+                pkgIdLower.includes('3rdtv') || pkgIdLower === 'pkg_3rdtv' || pkg.isThirdTV) {
+                const hasSecondTV = selectedPackages.some(p => 
+                    (p.name || '').toLowerCase().includes('2nd') ||
+                    (p.name || '').toLowerCase().includes('second') ||
+                    (p.id || '').toLowerCase().includes('2nd') ||
+                    p.isSecondTV
+                );
+                return !hasSecondTV;
+            }
+            
+            // Check if this is Sports or Movies addon - locked if Basic TV not selected
+            if (pkgNameLower.includes('sport') || pkgNameLower.includes('movie')) {
+                const hasBasicTV = selectedPackages.some(p => 
+                    (p.name || '').toLowerCase().includes('basic') || 
+                    (p.id || '').toLowerCase() === 'pkg_basic' ||
+                    p.isBasicTV
+                );
+                return !hasBasicTV;
+            }
+            
+            // Adult content - can be selected with any TV package (Basic, 2nd, or 3rd)
+            if (pkg.adultPackagePrice || pkgNameLower.includes('adult') || pkg.isAdult) {
+                const hasAnyTV = selectedPackages.some(p => 
+                    (p.name || '').toLowerCase().includes('basic') || 
+                    (p.name || '').toLowerCase().includes('2nd') ||
+                    (p.name || '').toLowerCase().includes('3rd') ||
+                    (p.name || '').toLowerCase().includes('second') ||
+                    (p.name || '').toLowerCase().includes('third') ||
+                    (p.id || '').toLowerCase() === 'pkg_basic' ||
+                    (p.id || '').toLowerCase().includes('2nd') ||
+                    (p.id || '').toLowerCase().includes('3rd') ||
+                    p.isBasicTV || p.isSecondTV || p.isThirdTV
+                );
+                return !hasAnyTV;
+            }
+            
+            // For packages with explicit flags
+            if (pkg.isAddOn) {
+                const hasBasicTV = selectedPackages.some(p => 
+                    (p.name || '').toLowerCase().includes('basic') || 
+                    (p.id || '').toLowerCase() === 'pkg_basic' ||
+                    p.isBasicTV
+                );
+                return !hasBasicTV;
+            }
+            
+            // Default: not locked (allow selection)
+            return false;
+        }
+        
+        // Get the reason why a package is locked
+        function getPackageLockReason(pkg) {
+            const pkgNameLower = (pkg.name || '').toLowerCase();
+            const pkgIdLower = (pkg.id || '').toLowerCase();
+            
+            // 2nd TV
+            if (pkgNameLower.includes('2nd') || pkgNameLower.includes('second') || pkgIdLower.includes('2nd') || pkg.isSecondTV) {
+                return 'Select Basic TV First';
+            }
+            
+            // 3rd TV
+            if (pkgNameLower.includes('3rd') || pkgNameLower.includes('third') || pkgIdLower.includes('3rd') || pkg.isThirdTV) {
+                return 'Select 2nd TV First';
+            }
+            
+            // Sports/Movies addons
+            if (pkgNameLower.includes('sport') || pkgNameLower.includes('movie')) {
+                return 'Select Basic TV First';
+            }
+            
+            // Adult content
+            if (pkg.adultPackagePrice || pkgNameLower.includes('adult') || pkg.isAdult) {
+                return 'Select a TV Package First';
+            }
+            
+            // Addons
+            if (pkg.isAddOn) {
+                return 'Select Basic TV First';
+            }
+            
+            return 'Required package not selected';
+        }
+        
+        // Get status message based on current selection
+        function getPackageStatusMessage() {
+            const hasBasicTV = selectedPackages.some(p => 
+                p.name.toLowerCase().includes('basic') || p.id === 'PKG_BASIC'
+            );
+            const hasSecondTV = selectedPackages.some(p => 
+                p.name.toLowerCase().includes('2nd') || p.id === 'PKG_2NDTV'
+            );
+            
+            if (!hasBasicTV) {
+                return '🔒 <strong>MANDATORY:</strong> Select Basic TV Package FIRST to unlock other options';
+            }
+            
+            if (hasBasicTV && !hasSecondTV) {
+                return '✅ Basic TV selected! Now you can select 2nd TV and addons (Sports, Movies, Adult)';
+            }
+            
+            if (hasBasicTV && hasSecondTV) {
+                return '✅ 2nd TV selected! Now you can select 3rd TV and all addons';
+            }
+            
+            return '📋 Select packages in order: Basic TV → 2nd TV → 3rd TV';
+        }
+        
+        // Update package availability (called when selections change)
+        function updatePackageAvailability() {
+            // This function is called to refresh the UI - actual logic is in renderPackageOptions
+            console.log('Updating package availability, selected packages:', selectedPackages.map(p => p.name));
         }
         
         // Check if package has required dependencies
@@ -1220,8 +1403,18 @@
             const pkg = packages.find(p => p.id === pkgId);
             if (!pkg) return { valid: false, message: 'Package not found' };
             
+            const pkgNameLower = (pkg.name || '').toLowerCase();
+            const pkgIdLower = (pkg.id || '').toLowerCase();
+            
             console.log('Checking dependency for:', pkg.name, 'requiresPackage:', pkg.requiresPackage);
             console.log('Current selections:', currentSelections.map(p => p.name));
+            
+            // CRITICAL: Check if Basic TV is selected first - this is MANDATORY
+            const hasBasicTV = currentSelections.some(p => 
+                (p.name || '').toLowerCase().includes('basic') || 
+                (p.id || '').toLowerCase() === 'pkg_basic' ||
+                p.isBasicTV
+            );
             
             // Check if this package requires another package
             if (pkg.requiresPackage) {
@@ -1230,9 +1423,9 @@
                 
                 // Check if required package is already selected (compare by name or ID)
                 const hasRequired = currentSelections.some(p => 
-                    p.name.toLowerCase().trim() === requiredName ||
-                    p.id.toLowerCase().trim() === requiredName.toLowerCase().replace(/\s+/g, '_') ||
-                    pkg.requiresPackage.includes(p.name)
+                    (p.name || '').toLowerCase().trim() === requiredName ||
+                    (p.id || '').toLowerCase().trim() === requiredName.toLowerCase().replace(/\s+/g, '_') ||
+                    pkg.requiresPackage.includes(p.name || '')
                 );
                 
                 console.log('Has required package:', hasRequired);
@@ -1246,11 +1439,7 @@
             }
             
             // Check if trying to select 2nd TV without Basic TV
-            if (pkg.isSecondTV || pkg.id === 'PKG_2NDTV') {
-                const hasBasicTV = currentSelections.some(p => 
-                    p.name.toLowerCase().includes('basic') || 
-                    p.id === 'PKG_BASIC'
-                );
+            if (pkgNameLower.includes('2nd') || pkgNameLower.includes('second') || pkgIdLower.includes('2nd') || pkg.isSecondTV) {
                 if (!hasBasicTV) {
                     return { 
                         valid: false, 
@@ -1260,10 +1449,12 @@
             }
             
             // Check if trying to select 3rd TV without 2nd TV
-            if (pkg.isThirdTV || pkg.id === 'PKG_3RDTV') {
+            if (pkgNameLower.includes('3rd') || pkgNameLower.includes('third') || pkgIdLower.includes('3rd') || pkg.isThirdTV) {
                 const hasSecondTV = currentSelections.some(p => 
-                    p.name.toLowerCase().includes('2nd') || 
-                    p.id === 'PKG_2NDTV'
+                    (p.name || '').toLowerCase().includes('2nd') ||
+                    (p.name || '').toLowerCase().includes('second') ||
+                    (p.id || '').toLowerCase().includes('2nd') ||
+                    p.isSecondTV
                 );
                 if (!hasSecondTV) {
                     return { 
@@ -1271,6 +1462,44 @@
                         message: '3rd TV requires "2nd TV" to be selected first' 
                     };
                 }
+            }
+            
+            // Check if trying to select Sports/Movies without Basic TV
+            if (pkgNameLower.includes('sport') || pkgNameLower.includes('movie')) {
+                if (!hasBasicTV) {
+                    return { 
+                        valid: false, 
+                        message: `${pkg.name} requires "Basic TV" to be selected first` 
+                    };
+                }
+            }
+            
+            // Check if trying to select Adult without any TV package
+            if (pkg.adultPackagePrice || pkgNameLower.includes('adult') || pkg.isAdult) {
+                const hasAnyTV = currentSelections.some(p => 
+                    (p.name || '').toLowerCase().includes('basic') || 
+                    (p.name || '').toLowerCase().includes('2nd') ||
+                    (p.name || '').toLowerCase().includes('3rd') ||
+                    (p.name || '').toLowerCase().includes('second') ||
+                    (p.name || '').toLowerCase().includes('third') ||
+                    (p.id || '').toLowerCase().includes('2nd') ||
+                    (p.id || '').toLowerCase().includes('3rd') ||
+                    p.isBasicTV || p.isSecondTV || p.isThirdTV
+                );
+                if (!hasAnyTV) {
+                    return { 
+                        valid: false, 
+                        message: 'Adult content requires a TV package to be selected first' 
+                    };
+                }
+            }
+            
+            // Check if addon without Basic TV
+            if (pkg.isAddOn && !hasBasicTV) {
+                return {
+                    valid: false,
+                    message: `${pkg.name} requires "Basic TV" to be selected first`
+                };
             }
             
             return { valid: true, message: 'OK' };
@@ -1281,15 +1510,20 @@
             const pkg = packages.find(p => p.id === pkgId);
             if (!pkg) return { canRemove: false, message: 'Package not found' };
             
+            const pkgNameLower = (pkg.name || '').toLowerCase();
+            const pkgIdLower = (pkg.id || '').toLowerCase();
+            
             // Special case: Cannot remove Basic TV if any addons or TV packages are selected
-            if (pkg.name.toLowerCase().includes('basic') || pkg.id === 'PKG_BASIC') {
+            if (pkgNameLower.includes('basic') || pkgIdLower === 'pkg_basic' || pkg.isBasicTV) {
                 const hasAddons = currentSelections.some(p => 
                     p.isAddOn || p.isSecondTV || p.isThirdTV ||
-                    p.name.toLowerCase().includes('sport') ||
-                    p.name.toLowerCase().includes('movie') ||
-                    p.name.toLowerCase().includes('adult') ||
-                    p.name.toLowerCase().includes('2nd') ||
-                    p.name.toLowerCase().includes('3rd')
+                    (p.name || '').toLowerCase().includes('sport') ||
+                    (p.name || '').toLowerCase().includes('movie') ||
+                    (p.name || '').toLowerCase().includes('adult') ||
+                    (p.name || '').toLowerCase().includes('2nd') ||
+                    (p.name || '').toLowerCase().includes('3rd') ||
+                    (p.name || '').toLowerCase().includes('second') ||
+                    (p.name || '').toLowerCase().includes('third')
                 );
                 if (hasAddons) {
                     return { 
@@ -1300,9 +1534,12 @@
             }
             
             // Special case: Cannot remove 2nd TV if 3rd TV is selected
-            if (pkg.name.toLowerCase().includes('2nd') || pkg.id === 'PKG_2NDTV') {
+            if (pkgNameLower.includes('2nd') || pkgNameLower.includes('second') || pkgIdLower.includes('2nd') || pkg.isSecondTV) {
                 const hasThirdTV = currentSelections.some(p => 
-                    p.isThirdTV || p.name.toLowerCase().includes('3rd') || p.id === 'PKG_3RDTV'
+                    p.isThirdTV || 
+                    (p.name || '').toLowerCase().includes('3rd') ||
+                    (p.name || '').toLowerCase().includes('third') ||
+                    (p.id || '').toLowerCase().includes('3rd')
                 );
                 if (hasThirdTV) {
                     return { 
@@ -1342,14 +1579,23 @@
                     return;
                 }
                 
+                // Determine package type flags based on name/ID
+                const pkgNameLower = (pkg.name || '').toLowerCase();
+                const pkgIdLower = (pkg.id || '').toLowerCase();
+                
+                const isBasic = pkgNameLower.includes('basic') || pkgIdLower === 'pkg_basic' || pkg.isBasicTV;
+                const isSecond = pkgNameLower.includes('2nd') || pkgNameLower.includes('second') || pkgIdLower.includes('2nd') || pkg.isSecondTV;
+                const isThird = pkgNameLower.includes('3rd') || pkgNameLower.includes('third') || pkgIdLower.includes('3rd') || pkg.isThirdTV;
+                
                 // Add the package
                 selectedPackages.push({
                     id: pkg.id,
                     name: pkg.name,
                     price: parseFloat(pkg.price) || 0,
                     isAddOn: pkg.isAddOn,
-                    isSecondTV: pkg.isSecondTV,
-                    isThirdTV: pkg.isThirdTV
+                    isSecondTV: isSecond,
+                    isThirdTV: isThird,
+                    isBasicTV: isBasic
                 });
             }
             
@@ -1440,6 +1686,18 @@
                 // Create new customer
                 if (selectedPackages.length === 0) {
                     showNotification('Please select at least one package', 'error');
+                    return;
+                }
+                
+                // CRITICAL: Validate Basic TV is selected (MANDATORY)
+                const hasBasicTV = selectedPackages.some(p => 
+                    (p.name || '').toLowerCase().includes('basic') || 
+                    (p.id || '').toLowerCase() === 'pkg_basic' ||
+                    p.isBasicTV
+                );
+                
+                if (!hasBasicTV) {
+                    showNotification('🚨 ERROR: Basic TV Package is MANDATORY FIRST! You cannot proceed without selecting Basic TV Package first!', 'error');
                     return;
                 }
                 
