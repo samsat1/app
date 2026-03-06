@@ -1022,7 +1022,9 @@
                     }
                 }
                 
-                if (reseller && reseller.password === password && reseller.status === 'active') {
+                // Check if reseller exists and password matches
+                // Allow login if status is 'active' OR if status field doesn't exist (backward compatibility)
+                if (reseller && reseller.password === password && (reseller.status === 'active' || !reseller.status)) {
                     currentReseller = {
                         id: resellerId,
                         name: reseller.name || username,
