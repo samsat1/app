@@ -951,11 +951,21 @@
                 
                 // Check reseller credentials
                 const resellers = adminData.resellers || {};
-                const reseller = resellers[username];
+                
+                // Find reseller by username (search through all resellers)
+                let reseller = null;
+                let resellerId = null;
+                for (const [id, data] of Object.entries(resellers)) {
+                    if (data.username === username) {
+                        reseller = data;
+                        resellerId = id;
+                        break;
+                    }
+                }
                 
                 if (reseller && reseller.password === password && reseller.status === 'active') {
                     currentReseller = {
-                        id: username,
+                        id: resellerId,
                         name: reseller.name || username,
                         ...reseller
                     };
