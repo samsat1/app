@@ -3352,6 +3352,8 @@
                     try {
                         // Use unique timestamp to prevent any caching
                         const noCacheUrl = apiUrl + '?_=' + Date.now() + Math.random();
+                        console.log('Getting SHA from URL:', noCacheUrl);
+                        
                         const checkRes = await fetch(noCacheUrl, {
                             method: 'GET',
                             headers: { 
@@ -3363,6 +3365,9 @@
                             },
                             cache: 'no-store'
                         });
+                        
+                        console.log('SHA check response status:', checkRes.status);
+                        
                         if (checkRes.ok) {
                             const fileData = await checkRes.json();
                             console.log('Got SHA:', fileData.sha);
@@ -3370,6 +3375,11 @@
                         } else if (checkRes.status === 404) {
                             console.log('File does not exist, will create new');
                             return null;
+                        } else {
+                            // Log what status we got
+                            console.log('Unexpected status getting SHA:', checkRes.status);
+                            const text = await checkRes.text();
+                            console.log('Response:', text);
                         }
                     } catch (e) {
                         console.log('Error getting SHA:', e);
@@ -3387,6 +3397,19 @@
                         
                         // Get fresh SHA for each attempt
                         const sha = await getFreshSHA();
+                        console.log('SHA value:', sha);
+                        
+                        // If no SHA but file exists on GitHub, we have a problem
+                        // Try one more time with longer delay
+                        if (!sha) {
+                            console.log('No SHA obtained, trying one more time...');
+                            await new Promise(r => setTimeout(r, 2000));
+                            const shaRetry = await getFreshSHA();
+                            console.log('SHA retry result:', shaRetry);
+                            if (shaRetry) {
+                                sha = shaRetry;
+                            }
+                        }
                         
                         const body = {
                             message: `Update admin_data.json - ${new Date().toISOString()}`,
