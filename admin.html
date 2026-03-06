@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 10.0 - Firebase Auth + Cloud Database 2025-12-07 -->
+<!-- VERSION 8.2 - Added Local URL Field + Fixed URL Building 2025-12-06 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -467,17 +467,7 @@
     <!-- Mobile Menu Toggle -->
     <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
 
-    
-    <!-- Login Overlay (Completely Disabled) -->
-    <div id="loginOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1a1a2e,#16213e);z-index:9999;align-items:center;justify-content:center;">
-        <div style="background:rgba(255,255,255,0.1);padding:40px;border-radius:20px;text-align:center;backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.2);max-width:400px;width:90%;">
-            <div style="font-size:60px;margin-bottom:20px;">🔐</div>
-            <h2 style="color:white;margin-bottom:30px;">Admin Login</h2>
-            <p style="color:white;margin-bottom:20px;">Login is currently disabled</p>
-        </div>
-    </div>
-
-    <div class="admin-container" style="display:none;">
+    <div class="admin-container">
         <!-- Sidebar Navigation -->
         <aside class="admin-sidebar" id="sidebar">
             <div class="admin-header">
@@ -623,7 +613,6 @@
                         <button onclick="showSection('packages')" class="btn btn-warning">Manage Packages</button>
                         <button onclick="showSection('resellers')" class="btn btn-info">Manage Resellers</button>
                         <button onclick="showSection('satellite')" class="btn btn-success">🛰️ Satellite Config</button>
-                        <button onclick="syncToFirebase()" class="btn" style="background: linear-gradient(135deg, #ff6b35, #f7931e);">🔥 Sync to Cloud</button>
                     </div>
                 </div>
                 
@@ -656,150 +645,7 @@
         </main>
     </div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    
     <script>
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDmuXoHSGbJovbVz7wjqYSHITPjfolIHqw",
-            authDomain: "iwatch-tv.firebaseapp.com",
-            projectId: "iwatch-tv",
-            storageBucket: "iwatch-tv.firebasestorage.app",
-            messagingSenderId: "48651410266",
-            appId: "1:48651410266:web:46f0c8d76a31e0e0c67163",
-            measurementId: "G-EWBT98VDXY"
-        };
-        
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        
-        console.log('🔥 Firebase initialized successfully');
-
-        const auth = firebase.auth();
-        
-        // Login disabled - show admin panel directly
-        // Wait for DOM to be ready before accessing elements
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('✅ Admin panel loaded (login disabled)');
-            document.getElementById('loginOverlay').style.display = 'none';
-            document.querySelector('.admin-container').style.display = 'flex';
-        });
-
-
-        
-        // Firebase Sync Functions
-        async function saveToFirebase(collection, data) {
-            try {
-                await db.collection(collection).doc('main').set(data);
-                console.log(`✅ Saved ${collection} to Firebase`);
-                return true;
-            } catch (error) {
-                console.error(`❌ Firebase save error (${collection}):`, error);
-                return false;
-            }
-        }
-        
-        async function loadFromFirebase(collection) {
-            try {
-                const doc = await db.collection(collection).doc('main').get();
-                if (doc.exists) {
-                    console.log(`✅ Loaded ${collection} from Firebase`);
-                    return doc.data();
-                }
-                return null;
-            } catch (error) {
-                console.error(`❌ Firebase load error (${collection}):`, error);
-                return null;
-            }
-        }
-        
-        // Save all data to Firebase
-        async function syncToFirebase() {
-            const customers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
-            const packages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
-            const resellers = JSON.parse(localStorage.getItem('resellerCredentials') || '{}');
-            const plexConfig = {
-                serverUrl: localStorage.getItem('plexServerUrl') || '',
-                localUrl: localStorage.getItem('plexLocalUrl') || '',
-                token: localStorage.getItem('plexToken') || '',
-                moviesSection: localStorage.getItem('plexMoviesSection') || '',
-                adultSection: localStorage.getItem('plexAdultSection') || ''
-            };
-            
-            await saveToFirebase('customers', { list: customers, updated: Date.now() });
-            await saveToFirebase('packages', { list: packages, updated: Date.now() });
-            await saveToFirebase('resellers', { list: resellers, updated: Date.now() });
-            await saveToFirebase('settings', { plex: plexConfig, updated: Date.now() });
-            
-            // Sync Plex content to Firebase
-            const plexMoviesCache = JSON.parse(localStorage.getItem('plexMoviesCache') || '[]');
-            const plexAdultCache = JSON.parse(localStorage.getItem('plexAdultCache') || '[]');
-            if (plexMoviesCache.length > 0) {
-                await saveToFirebase('plexMovies', { list: plexMoviesCache, updated: Date.now() });
-            }
-            if (plexAdultCache.length > 0) {
-                await saveToFirebase('plexAdult', { list: plexAdultCache, updated: Date.now() });
-            }
-            
-            console.log('🔥 All data synced to Firebase');
-            showNotification('Data synced to cloud!', 'success');
-        }
-        
-        // Load all data from Firebase
-        async function syncFromFirebase() {
-            try {
-                console.log('🔥 Loading data from Firebase...');
-                
-                const customersData = await loadFromFirebase('customers');
-                if (customersData && customersData.list) {
-                    localStorage.setItem('adminCustomers', JSON.stringify(customersData.list));
-                    window.customers = customersData.list;
-                }
-                
-                const packagesData = await loadFromFirebase('packages');
-                if (packagesData && packagesData.list) {
-                    localStorage.setItem('adminPackages', JSON.stringify(packagesData.list));
-                    localStorage.setItem('packages', JSON.stringify(packagesData.list));
-                }
-                
-                const resellersData = await loadFromFirebase('resellers');
-                if (resellersData && resellersData.list) {
-                    localStorage.setItem('resellerCredentials', JSON.stringify(resellersData.list));
-                }
-                
-                const settingsData = await loadFromFirebase('settings');
-                if (settingsData && settingsData.plex) {
-                    const plex = settingsData.plex;
-                    if (plex.serverUrl) localStorage.setItem('plexServerUrl', plex.serverUrl);
-                    if (plex.localUrl) localStorage.setItem('plexLocalUrl', plex.localUrl);
-                    if (plex.token) localStorage.setItem('plexToken', plex.token);
-                    if (plex.moviesSection) localStorage.setItem('plexMoviesSection', plex.moviesSection);
-                    if (plex.adultSection) localStorage.setItem('plexAdultSection', plex.adultSection);
-                }
-                
-                console.log('✅ Firebase sync complete');
-                
-                // Refresh UI
-                if (typeof loadCustomers === 'function') loadCustomers();
-                if (typeof loadPackages === 'function') loadPackages();
-                
-                return true;
-            } catch (error) {
-                console.error('❌ Firebase sync failed:', error);
-                return false;
-            }
-        }
-        
-        // Auto-save to Firebase when data changes
-        function triggerFirebaseSync() {
-            clearTimeout(window.firebaseSyncTimeout);
-            window.firebaseSyncTimeout = setTimeout(syncToFirebase, 2000);
-        }
-        
         // Global Reseller Accounts Data
         // Load RESELLER_ACCOUNTS from localStorage or use defaults
         let RESELLER_ACCOUNTS = {};
@@ -853,23 +699,14 @@
         // Enhanced Password Management System
         const passwordManager = {
             passwords: {
-                'adminLogin': '',
-                'masterPassword': ''
+                'adminLogin': 'admin123',
+                'masterPassword': 'master2025'
             },
             resellerCredentials: {},
             currentSession: null,
             
             initialize: function() {
                 console.log('🔧 PasswordManager initializing...');
-                // Load passwords from localStorage
-                const savedPasswords = localStorage.getItem('adminPasswords');
-                if (savedPasswords) {
-                    try {
-                        this.passwords = JSON.parse(savedPasswords);
-                    } catch (e) {
-                        console.error('Error loading admin passwords:', e);
-                    }
-                }
                 this.initializeCredentials();
                 console.log('✅ PasswordManager initialized');
             },
@@ -884,7 +721,12 @@
                         this.resellerCredentials = {};
                     }
                 } else {
-                    this.resellerCredentials = {};
+                    this.resellerCredentials['reseller'] = {
+                        username: 'reseller',
+                        password: 'reseller123',
+                        createdAt: new Date().toISOString()
+                    };
+                    this.saveCredentials();
                 }
             },
             
@@ -903,25 +745,6 @@
             },
             
             authenticateUser: function(username, password) {
-                // First-time setup: if no admin password set, allow setting it
-                if (username === 'admin' && !this.passwords.adminLogin) {
-                    if (password && password.length >= 4) {
-                        this.passwords.adminLogin = password;
-                        this.saveCredentials();
-                        this.currentSession = {
-                            id: 'admin_' + Date.now(),
-                            username: 'admin',
-                            role: 'admin',
-                            plan: 'Admin Access',
-                            expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-                            status: 'active',
-                            permissions: ['admin', 'full_control']
-                        };
-                        return this.currentSession;
-                    }
-                    return { error: 'first_time_setup', message: 'Enter a password (min 4 characters) to set as your admin password' };
-                }
-                
                 if (username === 'admin' && password === this.passwords.adminLogin) {
                     this.currentSession = {
                         id: 'admin_' + Date.now(),
@@ -1568,9 +1391,6 @@
             // Save to localStorage for consistency (both adminPackages and packages keys)
             localStorage.setItem('adminPackages', JSON.stringify(packages));
             localStorage.setItem('packages', JSON.stringify(packages));
-            
-            // Sync to Firebase
-            triggerFirebaseSync();
             
             // Trigger real-time notification to clients for package updates
             const notificationData = {
@@ -3369,9 +3189,9 @@
 
         // Content management functions
         function addContentSource() {
-            const name = document.getElementById('contentName')?.value?.trim();
+            const name = document.getElementById('contentName')?.value;
             const type = document.getElementById('contentType')?.value;
-            const url = document.getElementById('contentURL')?.value?.trim();
+            const url = document.getElementById('contentURL')?.value;
             const quality = document.getElementById('contentQuality')?.value;
             
             if (!name || !url) {
@@ -3379,37 +3199,13 @@
                 return;
             }
             
-            // Get existing channels
-            let liveChannels = JSON.parse(localStorage.getItem('liveChannelsCache') || '[]');
-            
-            // Add new channel
-            const newChannel = {
-                id: 'live_' + Date.now(),
-                name: name,
-                category: 'live',
-                type: 'hls',
-                url: url,
-                quality: quality,
-                package: type.toLowerCase().includes('sport') ? 'sports' : 'basic',
-                logo: '',
-                addedAt: new Date().toISOString()
-            };
-            
-            liveChannels.push(newChannel);
-            
-            // Save to localStorage
-            localStorage.setItem('liveChannelsCache', JSON.stringify(liveChannels));
-            
-            // Sync to Firebase
-            saveToFirebase('liveChannels', { list: liveChannels, updated: Date.now() });
-            
-            showNotification(`✅ "${name}" added! Total: ${liveChannels.length} channels`, 'success');
-            console.log('📺 Channel added:', newChannel);
-            console.log('☁️ Auto-synced to Firebase liveChannels');
-            
-            // Clear form
-            if (document.getElementById('contentName')) document.getElementById('contentName').value = '';
-            if (document.getElementById('contentURL')) document.getElementById('contentURL').value = '';
+            showNotification('📺 Adding content source...', 'info');
+            setTimeout(() => {
+                showNotification(`✅ "${name}" (${type}) added successfully - ${quality}`, 'success');
+                // Clear form
+                if (document.getElementById('contentName')) document.getElementById('contentName').value = '';
+                if (document.getElementById('contentURL')) document.getElementById('contentURL').value = '';
+            }, 2000);
         }
 
         // Settings management functions
@@ -3551,14 +3347,10 @@
                 const content = safeBase64Encode(jsonString);
                 const apiUrl = `https://api.github.com/repos/${username}/${repo}/contents/admin_data.json`;
                 
-                // Upload with retry logic for 409/422 errors
-                const uploadWithRetry = async (retries = 5) => {
-                    let lastError = null;
-                    let sha = null;
-                    
-                    // First, try to get the SHA
+                // Function to get fresh SHA with aggressive cache-busting
+                const getFreshSHA = async () => {
                     try {
-                        console.log('Getting file SHA...');
+                        // Use unique timestamp to prevent any caching
                         const noCacheUrl = apiUrl + '?_=' + Date.now() + Math.random();
                         const checkRes = await fetch(noCacheUrl, {
                             method: 'GET',
@@ -3571,31 +3363,37 @@
                             },
                             cache: 'no-store'
                         });
-                        
                         if (checkRes.ok) {
                             const fileData = await checkRes.json();
-                            sha = fileData.sha;
-                            console.log('Got SHA:', sha);
+                            console.log('Got SHA:', fileData.sha);
+                            return fileData.sha;
                         } else if (checkRes.status === 404) {
                             console.log('File does not exist, will create new');
-                            sha = null;
-                        } else {
-                            console.log('Could not get SHA, status:', checkRes.status);
+                            return null;
                         }
                     } catch (e) {
                         console.log('Error getting SHA:', e);
                     }
+                    return null;
+                };
+                
+                // Upload with retry logic for 409/422 errors
+                const uploadWithRetry = async (retries = 5) => {
+                    let lastError = null;
                     
                     for (let attempt = 1; attempt <= retries; attempt++) {
-                        console.log(`Upload attempt ${attempt}/${retries}, SHA: ${sha ? 'present' : 'missing'}`);
+                        console.log(`Upload attempt ${attempt}/${retries}`);
                         btn.innerHTML = `⏳ Uploading... (${attempt}/${retries})`;
+                        
+                        // Get fresh SHA for each attempt
+                        const sha = await getFreshSHA();
                         
                         const body = {
                             message: `Update admin_data.json - ${new Date().toISOString()}`,
                             content: content
                         };
                         
-                        // Include SHA if we have it (required for updates)
+                        // Only include SHA if file exists
                         if (sha) {
                             body.sha = sha;
                         }
@@ -3619,32 +3417,10 @@
                             const errorData = await response.json().catch(() => ({}));
                             console.log('Error response:', response.status, errorData);
                             
-                            // Check for SHA-related errors and try to refresh SHA
-                            if (errorData.message && errorData.message.toLowerCase().includes('sha')) {
-                                console.log('SHA-related error, trying to get fresh SHA...');
-                                try {
-                                    const noCacheUrl = apiUrl + '?_=' + Date.now();
-                                    const checkRes = await fetch(noCacheUrl, {
-                                        method: 'GET',
-                                        headers: { 
-                                            'Authorization': `token ${token}`,
-                                            'Accept': 'application/vnd.github.v3+json'
-                                        }
-                                    });
-                                    if (checkRes.ok) {
-                                        const fileData = await checkRes.json();
-                                        sha = fileData.sha;
-                                        console.log('Got fresh SHA:', sha);
-                                    }
-                                } catch (e) {
-                                    console.log('Error getting fresh SHA:', e);
-                                }
-                            }
-                            
                             // Retry on 409 (conflict) or 422 (validation error)
                             if ((response.status === 409 || response.status === 422) && attempt < retries) {
                                 console.log(`Error ${response.status}, waiting and retrying...`);
-                                await new Promise(r => setTimeout(r, 1500 * attempt));
+                                await new Promise(r => setTimeout(r, 1500 * attempt)); // Increasing delay
                                 continue;
                             }
                             
@@ -3752,7 +3528,6 @@
                     }
                     if (data.plexConfig) {
                         if (data.plexConfig.serverUrl) localStorage.setItem('plexServerUrl', data.plexConfig.serverUrl);
-                        if (data.plexConfig.localUrl) localStorage.setItem('plexLocalUrl', data.plexConfig.localUrl);
                         if (data.plexConfig.token) localStorage.setItem('plexToken', data.plexConfig.token);
                         if (data.plexConfig.moviesSection) localStorage.setItem('plexMoviesSection', data.plexConfig.moviesSection);
                         if (data.plexConfig.adultSection) localStorage.setItem('plexAdultSection', data.plexConfig.adultSection);
@@ -3762,11 +3537,6 @@
                     }
                     if (data.adminCredentials) {
                         localStorage.setItem('adminPasswords', JSON.stringify(data.adminCredentials));
-                    }
-                    if (data.githubConfig) {
-                        if (data.githubConfig.username) localStorage.setItem('githubUsername', data.githubConfig.username);
-                        if (data.githubConfig.repo) localStorage.setItem('githubRepo', data.githubConfig.repo);
-                        if (data.githubConfig.token) localStorage.setItem('githubToken', data.githubConfig.token);
                     }
                     
                     showNotification('✅ Data imported successfully! Refreshing...', 'success');
@@ -3966,193 +3736,6 @@
             }
         }
         
-        // Save all package prices at once - automatically creates all 6 packages
-        window.saveAllPackagePrices = function() {
-            const price = document.getElementById('packagePrice')?.value || '0';
-            const duration = document.getElementById('packageDuration')?.value || '1 Month';
-            const features = document.getElementById('packageFeatures')?.value || 'Live TV, Movies, Adult Content';
-            const secondTVPrice = document.getElementById('secondTVPrice')?.value || '0';
-            const thirdTVPrice = document.getElementById('thirdTVPrice')?.value || '0';
-            const sportsPrice = document.getElementById('sportsPrice')?.value || '0';
-            const moviesPrice = document.getElementById('moviesPrice')?.value || '0';
-            const adultPackagePrice = document.getElementById('adultPackagePrice')?.value || '0';
-            
-            if (!price || parseFloat(price) <= 0) {
-                showNotification('❌ Please enter Basic Package price first', 'error');
-                return;
-            }
-            
-            // Get existing packages
-            let packages = JSON.parse(localStorage.getItem('adminPackages')) || [];
-            
-            // Define all 6 packages to create/update
-            const packagesToCreate = [
-                {
-                    id: 'PKG_BASIC',
-                    name: 'Basic TV',
-                    price: parseFloat(price),
-                    duration: duration,
-                    features: features,
-                    secondTVPrice: parseFloat(secondTVPrice),
-                    thirdTVPrice: parseFloat(thirdTVPrice),
-                    sportsPrice: parseFloat(sportsPrice),
-                    moviesPrice: parseFloat(moviesPrice),
-                    isAdult: false,
-                    adultPackagePrice: 0,
-                    isAddOn: false,
-                    requiresPackage: null,
-                    isSecondTV: false,
-                    isThirdTV: false,
-                    approved: true,
-                    approvedDate: new Date().toISOString(),
-                    approvedBy: 'admin',
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: 'PKG_SPORTS',
-                    name: 'Sports Add-on',
-                    price: parseFloat(sportsPrice),
-                    duration: duration,
-                    features: 'Sports Channels - requires Basic TV',
-                    secondTVPrice: 0,
-                    thirdTVPrice: 0,
-                    sportsPrice: 0,
-                    moviesPrice: 0,
-                    isAdult: false,
-                    adultPackagePrice: 0,
-                    isAddOn: true,
-                    requiresPackage: 'Basic TV',
-                    isSecondTV: false,
-                    isThirdTV: false,
-                    approved: true,
-                    approvedDate: new Date().toISOString(),
-                    approvedBy: 'admin',
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: 'PKG_MOVIES',
-                    name: 'Movies Add-on',
-                    price: parseFloat(moviesPrice),
-                    duration: duration,
-                    features: 'Movies Library - requires Basic TV',
-                    secondTVPrice: 0,
-                    thirdTVPrice: 0,
-                    sportsPrice: 0,
-                    moviesPrice: 0,
-                    isAdult: false,
-                    adultPackagePrice: 0,
-                    isAddOn: true,
-                    requiresPackage: 'Basic TV',
-                    isSecondTV: false,
-                    isThirdTV: false,
-                    approved: true,
-                    approvedDate: new Date().toISOString(),
-                    approvedBy: 'admin',
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: 'PKG_ADULT',
-                    name: 'Adult Add-on',
-                    price: parseFloat(adultPackagePrice),
-                    duration: duration,
-                    features: 'Adult Content - requires Basic TV',
-                    secondTVPrice: 0,
-                    thirdTVPrice: 0,
-                    sportsPrice: 0,
-                    moviesPrice: 0,
-                    isAdult: true,
-                    adultPackagePrice: parseFloat(adultPackagePrice),
-                    isAddOn: true,
-                    requiresPackage: 'Basic TV',
-                    isSecondTV: false,
-                    isThirdTV: false,
-                    approved: true,
-                    approvedDate: new Date().toISOString(),
-                    approvedBy: 'admin',
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: 'PKG_2NDTV',
-                    name: '2nd TV',
-                    price: parseFloat(secondTVPrice),
-                    duration: duration,
-                    features: 'Additional TV - requires Basic TV',
-                    secondTVPrice: 0,
-                    thirdTVPrice: 0,
-                    sportsPrice: 0,
-                    moviesPrice: 0,
-                    isAdult: false,
-                    adultPackagePrice: 0,
-                    isAddOn: true,
-                    requiresPackage: 'Basic TV',
-                    isSecondTV: true,
-                    isThirdTV: false,
-                    approved: true,
-                    approvedDate: new Date().toISOString(),
-                    approvedBy: 'admin',
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: 'PKG_3RDTV',
-                    name: '3rd TV',
-                    price: parseFloat(thirdTVPrice),
-                    duration: duration,
-                    features: 'Third TV - requires 2nd TV',
-                    secondTVPrice: 0,
-                    thirdTVPrice: 0,
-                    sportsPrice: 0,
-                    moviesPrice: 0,
-                    isAdult: false,
-                    adultPackagePrice: 0,
-                    isAddOn: true,
-                    requiresPackage: '2nd TV',
-                    isSecondTV: false,
-                    isThirdTV: true,
-                    approved: true,
-                    approvedDate: new Date().toISOString(),
-                    approvedBy: 'admin',
-                    createdAt: new Date().toISOString()
-                }
-            ];
-            
-            // Update or add each package
-            packagesToCreate.forEach(newPkg => {
-                const existingIndex = packages.findIndex(p => p.id === newPkg.id);
-                if (existingIndex >= 0) {
-                    packages[existingIndex] = { ...packages[existingIndex], ...newPkg };
-                } else {
-                    packages.push(newPkg);
-                }
-            });
-            
-            // Save to localStorage
-            localStorage.setItem('adminPackages', JSON.stringify(packages));
-            localStorage.setItem('packages', JSON.stringify(packages));
-            
-            showNotification('✅ All 6 packages saved! Basic: $' + price + ', Sports: $' + sportsPrice + ', Movies: $' + moviesPrice + ', Adult: $' + adultPackagePrice + ', 2nd TV: $' + secondTVPrice + ', 3rd TV: $' + thirdTVPrice, 'success');
-            
-            // Update the list
-            updatePackagesList();
-            updatePackageStats();
-        }
-        
-        // Clear all packages
-        window.clearAllPackages = function() {
-            if (!confirm('Are you sure you want to DELETE all packages? This cannot be undone!')) {
-                return;
-            }
-            
-            const packages = [];
-            localStorage.setItem('adminPackages', JSON.stringify(packages));
-            localStorage.setItem('packages', JSON.stringify(packages));
-            
-            showNotification('🗑️ All packages deleted!', 'success');
-            
-            // Update the list
-            updatePackagesList();
-            updatePackageStats();
-        }
-        
         function createNewPackage() {
             const name = document.getElementById('packageName')?.value;
             const price = document.getElementById('packagePrice')?.value;
@@ -4249,24 +3832,13 @@
             
             if (packagesList && packages.length > 0) {
                 packagesList.innerHTML = packages.map((pkg, index) => {
-                    // More robust adult detection - only mark as adult if explicitly set or has adult in name (not add-on)
-                    const isAdultPackage = pkg.isAdult === true || 
-                                          (pkg.name && pkg.name.toLowerCase().includes('adult') && !pkg.name.toLowerCase().includes('add-on') && !pkg.name.toLowerCase().includes('addon')) || 
-                                          (pkg.name && pkg.name.toLowerCase().includes('xxx')) ||
-                                          (pkg.adultPackagePrice && parseFloat(pkg.adultPackagePrice) > 0);
-                    
-                    const isSportsPackage = pkg.name && (pkg.name.toLowerCase().includes('sport') || pkg.isSecondTV);
-                    
-                    // Determine border color: red for adult, orange for sports/2ndTV, green for normal
-                    let borderColor = '#4caf50'; // green for normal
-                    if (isAdultPackage) borderColor = '#ff4757'; // red for adult
-                    else if (isSportsPackage || pkg.isSecondTV || pkg.isThirdTV) borderColor = '#ff9800'; // orange for sports/2nd/3rd TV
+                    const isAdultPackage = pkg.isAdult || pkg.name.toLowerCase().includes('adult') || pkg.name.toLowerCase().includes('xxx');
                     
                     return `
-                    <div style="margin-bottom: 12px; padding: 12px; background: ${isAdultPackage ? 'rgba(255,71,87,0.15)' : (isSportsPackage || pkg.isSecondTV ? 'rgba(255,152,0,0.1)' : 'rgba(255,255,255,0.05)')}; border-radius: 6px; border-left: 3px solid ${borderColor};">
+                    <div style="margin-bottom: 12px; padding: 12px; background: ${isAdultPackage ? 'rgba(255,71,87,0.15)' : 'rgba(255,255,255,0.05)'}; border-radius: 6px; border-left: 3px solid ${isAdultPackage ? '#ff4757' : '#4caf50'};">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="flex: 1;">
-                                <div style="font-weight: 600; color: ${isAdultPackage ? '#ff4757' : (isSportsPackage || pkg.isSecondTV ? '#ff9800' : 'white')};">
+                                <div style="font-weight: 600; color: ${isAdultPackage ? '#ff4757' : 'white'};">
                                     ${isAdultPackage ? '🔞 ' : ''}${pkg.name}
                                     ${isAdultPackage ? '<span style="color: #ff4757; font-size: 10px; font-weight: normal; margin-left: 8px;">(ADULT CONTENT)</span>' : ''}
                                 </div>
@@ -4365,9 +3937,6 @@
             }, 2000);
         }
         
-        // DISABLED - Auto-generating tokens doesn't work and causes issues
-        // Real Plex tokens must be obtained from Plex account
-        /*
         function generatePlexToken() {
             showNotification('🔑 Generating auto token...', 'info');
             
@@ -4391,7 +3960,6 @@
             const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
             return prefix + suffix;
         }
-        */
         
         // Direct Plex API calls - requires CORS browser extension enabled
         // Extension adds 'Access-Control-Allow-Origin: *' header automatically
@@ -4402,7 +3970,7 @@
         
         function testPlexConnection() {
             const serverUrl = document.getElementById('plexServerUrl')?.value || 'http://185.187.94.41:32400';
-            const accessToken = document.getElementById('plexToken')?.value || localStorage.getItem('plexToken');
+            const accessToken = document.getElementById('plexToken')?.value || localStorage.getItem('plexAutoToken') || localStorage.getItem('plexToken');
             
             if (!serverUrl) {
                 showNotification('⚠️ Please enter Plex Server URL (or use default)', 'warning');
@@ -4450,7 +4018,7 @@
         function loadPlexLibraries() {
             // Get server URL and token from input fields or localStorage
             const serverUrl = document.getElementById('plexServerUrl')?.value || localStorage.getItem('plexServerUrl') || 'http://185.187.94.41:32400';
-            const accessToken = document.getElementById('plexToken')?.value || localStorage.getItem('plexToken');
+            const accessToken = document.getElementById('plexToken')?.value || localStorage.getItem('plexAutoToken') || localStorage.getItem('plexToken');
             
             // Debug: Check what values we actually have
             console.log('🔍 loadPlexLibraries Debug:', {
@@ -4656,14 +4224,9 @@
                 
                 // Store in localStorage for client to use
                 const cacheKey = isAdult ? 'plexAdultCache' : 'plexMoviesCache';
-                const firebaseKey = isAdult ? 'plexAdult' : 'plexMovies';
                 try {
                     localStorage.setItem(cacheKey, JSON.stringify(content));
                     console.log(`✅ Cached ${content.length} items to ${cacheKey}`);
-                    
-                    // Auto-sync to Firebase for TV/mobile access
-                    saveToFirebase(firebaseKey, { list: content, updated: Date.now() });
-                    console.log(`☁️ Auto-synced ${content.length} items to Firebase ${firebaseKey}`);
                 } catch(e) {
                     console.warn('⚠️ Could not cache to localStorage (might be too large)');
                 }
@@ -4678,7 +4241,7 @@
         // Enhanced load libraries with content caching
         async function loadAndCachePlexContent() {
             const serverUrl = document.getElementById('plexServerUrl')?.value || localStorage.getItem('plexServerUrl') || 'http://185.187.94.41:32400';
-            const accessToken = document.getElementById('plexToken')?.value || localStorage.getItem('plexToken');
+            const accessToken = document.getElementById('plexToken')?.value || localStorage.getItem('plexAutoToken') || localStorage.getItem('plexToken');
             
             if (!accessToken) {
                 showNotification('⚠️ No Plex token found', 'warning');
@@ -4961,59 +4524,76 @@
             try {
                 console.log('🔍 Parsing XML, length:', xmlString.length);
                 
-                // Use LOCAL URL for playback
-                const localUrl = PLEX_CONFIG.localUrl || 'http://127.0.0.1:32400';
+                // Find all Video tags (handles any attribute order)
+                const videoTagMatches = xmlString.match(/<Video[^>]+>/g) || [];
+                console.log('📺 Found Video tags:', videoTagMatches.length);
                 
-                // Parse XML properly to get Video elements with their Part children
-                const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
-                const videoElements = xmlDoc.querySelectorAll('Video');
-                
-                console.log('📺 Found Video elements:', videoElements.length);
-                
-                for (const video of videoElements) {
-                    const videoId = video.getAttribute('ratingKey');
-                    const title = video.getAttribute('title');
+                for (const tag of videoTagMatches) {
+                    // Extract ratingKey
+                    const keyMatch = tag.match(/ratingKey="(\d+)"/);
+                    // Extract title
+                    const titleMatch = tag.match(/title="([^"]+)"/);
                     
-                    // Get the Part element to extract direct file path
-                    const part = video.querySelector('Part');
-                    const partKey = part ? part.getAttribute('key') : null;
-                    
-                    if (videoId && title) {
-                        // Build DIRECT MP4 URL (no transcoding needed!)
-                        let directUrl;
-                        if (partKey) {
-                            // Direct file access - most reliable
-                            directUrl = `${localUrl}${partKey}?X-Plex-Token=${PLEX_CONFIG.token}`;
-                        } else {
-                            // Fallback to transcode if no part key
-                            directUrl = `${localUrl}/video/:/transcode/universal/start.mp4?path=/library/metadata/${videoId}&mediaIndex=0&partIndex=0&protocol=http&X-Plex-Token=${PLEX_CONFIG.token}`;
-                        }
+                    if (keyMatch && titleMatch) {
+                        const videoId = keyMatch[1];
+                        const title = titleMatch[1];
                         
-                        // Build thumbnail URL
+                        // Use LOCAL URL for playback (127.0.0.1 or local network IP)
+                        const localUrl = PLEX_CONFIG.localUrl || 'http://127.0.0.1:32400';
+                        
+                        // Build stream URL using LOCAL URL
+                        const streamUrl = `${localUrl}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${videoId}&mediaIndex=0&partIndex=0&protocol=hls&X-Plex-Token=${PLEX_CONFIG.token}`;
+                        
+                        // Build thumbnail URL using LOCAL URL
                         const thumbUrl = `${localUrl}/library/metadata/${videoId}/thumb?X-Plex-Token=${PLEX_CONFIG.token}`;
                         
                         videos.push({
                             id: videoId,
                             name: title,
                             title: title,
-                            url: directUrl,
+                            url: streamUrl,
                             thumb: thumbUrl,
-                            directUrl: directUrl,
-                            partKey: partKey,
+                            directUrl: streamUrl,
                             plexServer: localUrl,
                             plexToken: PLEX_CONFIG.token,
                             type: libraryType,
                             sectionId: sectionId,
-                            isDirectMP4: !!partKey,
                             addedAt: Date.now()
                         });
-                        
-                        console.log(`  ✅ ${title}: ${partKey ? 'Direct MP4' : 'Transcode'}`);
                     }
                 }
                 
-                // Fallback removed - DOMParser handles all cases
+                // Fallback: try to find any ratingKey/title pairs
+                if (videos.length === 0) {
+                    console.log('⚠️ No Video tags found, trying fallback...');
+                    const allKeys = xmlString.match(/ratingKey="(\d+)"/g) || [];
+                    const allTitles = xmlString.match(/title="([^"]+)"/g) || [];
+                    console.log('Found keys:', allKeys.length, 'titles:', allTitles.length);
+                    
+                    for (let i = 0; i < Math.min(allKeys.length, allTitles.length); i++) {
+                        const videoId = allKeys[i].match(/\d+/)[0];
+                        const title = allTitles[i].match(/title="([^"]+)"/)[1];
+                        
+                        // Use LOCAL URL for playback
+                        const localUrl = PLEX_CONFIG.localUrl || 'http://127.0.0.1:32400';
+                        const streamUrl = `${localUrl}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${videoId}&mediaIndex=0&partIndex=0&protocol=hls&X-Plex-Token=${PLEX_CONFIG.token}`;
+                        const thumbUrl = `${localUrl}/library/metadata/${videoId}/thumb?X-Plex-Token=${PLEX_CONFIG.token}`;
+                        
+                        videos.push({
+                            id: videoId,
+                            name: title,
+                            title: title,
+                            url: streamUrl,
+                            thumb: thumbUrl,
+                            directUrl: streamUrl,
+                            plexServer: localUrl,
+                            plexToken: PLEX_CONFIG.token,
+                            type: libraryType,
+                            sectionId: sectionId,
+                            addedAt: Date.now()
+                        });
+                    }
+                }
                 
                 console.log(`📺 Parsed ${videos.length} videos from ${libraryType} XML`);
             } catch (error) {
@@ -5739,7 +5319,7 @@ Network: Always Streaming → Optimized for instant access`;
                         password: customerPassword,
                         macAddress: customerMacAddress,
                         adultPassword: selectedAddons.includes('Adult Content Package') ? customerAdultPassword : '',
-                        resetDeviceLock: resetDeviceLock ? Date.now() : (existingCustomer.resetDeviceLock || 0),
+                        resetDeviceLock: resetDeviceLock ? Date.now() : (customer.resetDeviceLock || 0),
                         status: 'active',
                         duration: calculation.duration,
                         durationMonths: calculation.durationMonths,
@@ -5754,9 +5334,6 @@ Network: Always Streaming → Optimized for instant access`;
                         
                         // Clear form
                         clearCustomerForm();
-                        
-                        // Save to localStorage and Firebase
-                        saveCustomersToAdmin();
                         
                         // Update statistics and customer list
                         updateCustomerStats();
@@ -5794,8 +5371,7 @@ Network: Always Streaming → Optimized for instant access`;
                     status: 'active',
                     duration: calculation.duration,
                     durationMonths: calculation.durationMonths,
-                    createdAt: new Date().toISOString(),
-                    resetDeviceLock: resetDeviceLock ? Date.now() : null
+                    createdAt: new Date().toISOString()
                 };
                 
                 window.customers.push(customer);
@@ -5815,9 +5391,6 @@ Network: Always Streaming → Optimized for instant access`;
             
             // Save to localStorage
             localStorage.setItem('adminCustomers', JSON.stringify(window.customers));
-            
-            // Sync to Firebase
-            triggerFirebaseSync();
             
             // ALSO save to global customer storage for client access
             const globalCustomers = JSON.parse(localStorage.getItem('iptvCustomers')) || [];
@@ -6744,8 +6317,6 @@ Network: Always Streaming → Optimized for instant access`;
                                 <textarea id="packageFeatures" placeholder="HD Channels, Sports Package, Movies..." style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; min-height: 80px;"></textarea>
                             </div>
                             <button onclick="createNewPackage()" class="btn btn-warning" style="padding: 12px 20px; margin-right: 10px;" id="createPackageBtn">➕ Create Package</button>
-                            <button onclick="saveAllPackagePrices()" class="btn btn-success" style="padding: 12px 20px; margin-right: 10px;">💾 Save All Prices</button>
-                            <button onclick="clearAllPackages()" class="btn btn-danger" style="padding: 12px 20px; margin-right: 10px;">🗑️ Clear All Packages</button>
                             <button onclick="cancelPackageEdit()" class="btn btn-danger" style="padding: 12px 20px; margin-right: 10px; display: none;" id="cancelPackageEditBtn">❌ Cancel Edit</button>
                             <div style="margin-bottom: 15px;">
                                 <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Package Structure:</label>
@@ -7017,6 +6588,72 @@ Network: Always Streaming → Optimized for instant access`;
             if (adultCountEl) adultCountEl.textContent = `Adult videos cached: ${cachedAdult.length}`;
         }
 
+        // Section Functions
+        window.showAdminDashboard = function() {
+        function updatePackagesList() {
+            console.log('updatePackagesList called');
+            const packagesList = document.getElementById('packagesList');
+            if (!packagesList) {
+                console.error('packagesList element not found');
+                return;
+            }
+            
+            // Load packages from localStorage - ensure consistency with adminPackages
+            const packages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
+            
+            packagesList.innerHTML = packages.map((pkg, index) => {
+                const isAdultPackage = pkg.isAdult || 
+                                      pkg.name.toLowerCase().includes('adult') || 
+                                      pkg.name.toLowerCase().includes('xxx') ||
+                                      (pkg.addonPrices && pkg.addonPrices.adult && pkg.addonPrices.adult > 0) ||
+                                      (pkg.adultPackagePrice && pkg.adultPackagePrice > 0);
+                
+                return `
+                    <div style="border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 15px; margin-bottom: 15px; background: ${isAdultPackage ? 'rgba(255,71,87,0.15)' : 'rgba(255,255,255,0.05)'}; border-left: 3px solid ${isAdultPackage ? '#ff4757' : '#4caf50'};">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <div>
+                                <h5 style="color: ${isAdultPackage ? '#ff4757' : 'white'}; margin: 0; font-size: 15px; font-weight: 600;">
+                                    ${isAdultPackage ? '🔞 ' : ''}${pkg.name}
+                                    ${isAdultPackage ? '<span style="color: #ff4757; font-size: 11px; font-weight: normal; margin-left: 8px;">(ADULT CONTENT)</span>' : ''}
+                                </h5>
+                                <div style="font-size: 12px; color: rgba(255,255,255,0.8); margin-top: 4px;">
+                                    <strong>Base:</strong> $${pkg.price}/${pkg.duration}
+                                    ${pkg.adultPackagePrice > 0 ? ` | <strong style="color: #ff4757;">Adult Price:</strong> $${pkg.adultPackagePrice}` : ''}
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <button onclick="editPackage('${index}')" style="background: #2196f3; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">✏️ EDIT</button>
+                                <button onclick="cancelPackageEdit()" style="background: #ff9800; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">❌ CANCEL</button>
+                                <button onclick="deletePackage('${index}')" style="background: #f44336; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">🗑️ Delete</button>
+                            </div>
+                        </div>
+                        
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.8); margin-bottom: 8px;">
+                            <strong>Device Pricing:</strong>
+                            ${pkg.secondTVPrice > 0 ? `2nd TV: $${pkg.secondTVPrice}` : ''}
+                            ${pkg.thirdTVPrice > 0 ? ` | 3rd TV: $${pkg.thirdTVPrice}` : ''}
+                            ${pkg.secondTVPrice <= 0 && pkg.thirdTVPrice <= 0 ? ' No additional devices' : ''}
+                        </div>
+                        
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.8); margin-bottom: 8px;">
+                            <strong>Addon Pricing:</strong>
+                            ${pkg.sportsPrice > 0 ? `Sports: $${pkg.sportsPrice}` : ''}
+                            ${pkg.moviesPrice > 0 ? ` | Movies: $${pkg.moviesPrice}` : ''}
+                            ${!pkg.sportsPrice && !pkg.moviesPrice ? ' No addon pricing set' : ''}
+                        </div>
+                        
+                        ${pkg.features ? `<div style="margin-top: 8px; font-size: 11px; color: rgba(255,255,255,0.7); padding: 8px; background: rgba(255,255,255,0.1); border-radius: 4px;">${pkg.features}</div>` : ''}
+                        
+                        ${isAdultPackage ? `
+                            <div style="margin-top: 8px; padding: 6px 10px; background: rgba(255,71,87,0.2); border-radius: 4px; font-size: 11px; color: #ff4757; font-weight: 600;">
+                                ⚠️ ADULT CONTENT: This package is hidden in client interface and requires special access
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
         // Edit package function
         window.editPackage = function(packageIndex) {
             // Load from adminPackages first, fallback to packages
@@ -7049,44 +6686,42 @@ Network: Always Streaming → Optimized for instant access`;
         // Delete package function
         window.deletePackage = function(packageIndex) {
             console.log('Delete package called with index:', packageIndex);
-            
-            // Get current packages from localStorage
-            let packagesArray = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
-            const pkg = packagesArray[packageIndex];
+            const packages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
+            const pkg = packages[packageIndex];
             
             if (!pkg) {
                 console.error('Package not found at index:', packageIndex);
-                showNotification('Package not found', 'error');
                 return;
             }
             
             if (confirm(`Are you sure you want to delete package "${pkg.name}"? This action cannot be undone.`)) {
-                // Remove the package
-                packagesArray.splice(packageIndex, 1);
+                packages.splice(packageIndex, 1);
+                // Save to both localStorage keys for consistency
+                localStorage.setItem('packages', JSON.stringify(packages));
+                localStorage.setItem('adminPackages', JSON.stringify(packages));
                 
-                // Save to localStorage
-                localStorage.setItem('packages', JSON.stringify(packagesArray));
-                localStorage.setItem('adminPackages', JSON.stringify(packagesArray));
+                // Trigger real-time notification to clients for package deletion
+                localStorage.setItem('packageDeleted', JSON.stringify({
+                    packageId: pkg.id,
+                    packageName: pkg.name,
+                    timestamp: new Date().toISOString(),
+                    action: 'deleted'
+                }));
                 
-                console.log('Package deleted, remaining:', packagesArray.length);
+                // Update global packages variable to ensure consistency
+                packages = [...packages]; // Create a copy to ensure reference update
                 
-                // Refresh the display
-                showPackagesSection();
-                showNotification(`🗑️ Package "${pkg.name}" deleted`, 'success');
+                setTimeout(() => {
+                    showPackagesSection();
+                    showNotification(`🗑️ Package "${pkg.name}" deleted`, 'success');
+                }, 50);
             }
         }
 
         // Cancel edit mode
         window.cancelPackageEdit = function() {
             console.log('Cancel package edit called');
-            
-            // Clear the form fields
-            const fields = ['packageName', 'packagePrice', 'secondTVPrice', 'thirdTVPrice', 'sportsPrice', 'moviesPrice', 'adultPackagePrice', 'packageFeatures'];
-            fields.forEach(field => {
-                const element = document.getElementById(field);
-                if (element) element.value = '';
-            });
-            
+            clearPackageForm();
             const createBtn = document.getElementById('createPackageBtn');
             if (createBtn) {
                 createBtn.textContent = '➕ Create Package';
@@ -7389,46 +7024,41 @@ Network: Always Streaming → Optimized for instant access`;
             `;
         }
 
-        window.editReseller = function(resellerId) {
-            try {
-                // Hide display elements
-                document.getElementById(`username-display-${resellerId}`).style.display = 'none';
-                document.getElementById(`password-display-${resellerId}`).style.display = 'none';
-                
-                // Show edit elements
-                document.getElementById(`username-edit-${resellerId}`).style.display = 'block';
-                document.getElementById(`password-edit-${resellerId}`).style.display = 'block';
-                
-                // Toggle buttons
-                document.getElementById(`edit-btn-${resellerId}`).style.display = 'none';
-                document.getElementById(`save-btn-${resellerId}`).style.display = 'inline-block';
-                document.getElementById(`cancel-btn-${resellerId}`).style.display = 'inline-block';
-            } catch(e) {
-                console.error('Edit error:', e);
-                showNotification('Error opening edit mode', 'error');
-            }
-        };
-
-        window.cancelEdit = function(resellerId) {
-            try {
-                // Show display elements
-                document.getElementById(`username-display-${resellerId}`).style.display = 'block';
-                document.getElementById(`password-display-${resellerId}`).style.display = 'block';
+        function editReseller(resellerId) {
+            // Hide display elements
+            document.getElementById(`username-display-${resellerId}`).style.display = 'none';
+            document.getElementById(`password-display-${resellerId}`).style.display = 'none';
+            document.getElementById(`commission-display-${resellerId}`).style.display = 'none';
             
-                // Hide edit elements
-                document.getElementById(`username-edit-${resellerId}`).style.display = 'none';
-                document.getElementById(`password-edit-${resellerId}`).style.display = 'none';
-                
-                // Toggle buttons
-                document.getElementById(`edit-btn-${resellerId}`).style.display = 'inline-block';
-                document.getElementById(`save-btn-${resellerId}`).style.display = 'none';
-                document.getElementById(`cancel-btn-${resellerId}`).style.display = 'none';
-            } catch(e) {
-                console.error('Cancel error:', e);
-            }
+            // Show edit elements
+            document.getElementById(`username-edit-${resellerId}`).style.display = 'block';
+            document.getElementById(`password-edit-${resellerId}`).style.display = 'block';
+            document.getElementById(`commission-edit-${resellerId}`).style.display = 'block';
+            
+            // Toggle buttons
+            document.getElementById(`edit-btn-${resellerId}`).style.display = 'none';
+            document.getElementById(`save-btn-${resellerId}`).style.display = 'inline-block';
+            document.getElementById(`cancel-btn-${resellerId}`).style.display = 'inline-block';
         }
 
-        window.saveReseller = function(resellerId) {
+        function cancelEdit(resellerId) {
+            // Show display elements
+            document.getElementById(`username-display-${resellerId}`).style.display = 'block';
+            document.getElementById(`password-display-${resellerId}`).style.display = 'block';
+            document.getElementById(`commission-display-${resellerId}`).style.display = 'block';
+            
+            // Hide edit elements
+            document.getElementById(`username-edit-${resellerId}`).style.display = 'none';
+            document.getElementById(`password-edit-${resellerId}`).style.display = 'none';
+            document.getElementById(`commission-edit-${resellerId}`).style.display = 'none';
+            
+            // Toggle buttons
+            document.getElementById(`edit-btn-${resellerId}`).style.display = 'inline-block';
+            document.getElementById(`save-btn-${resellerId}`).style.display = 'none';
+            document.getElementById(`cancel-btn-${resellerId}`).style.display = 'none';
+        }
+
+        function saveReseller(resellerId) {
             const newUsername = document.getElementById(`username-edit-${resellerId}`).value.trim();
             const newPassword = document.getElementById(`password-edit-${resellerId}`).value.trim();
 
@@ -8447,12 +8077,6 @@ Network: Always Streaming → Optimized for instant access`;
         }
 
         // Initialize statistics on load
-        // Auto-load data from GitHub on startup
-        // Auto-load from Firebase (replaces GitHub)
-        async function autoLoadFromFirebase() {
-            await syncFromFirebase();
-        }
-
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize Password Manager
             passwordManager.initialize();
@@ -8461,9 +8085,6 @@ Network: Always Streaming → Optimized for instant access`;
             window.customers = JSON.parse(localStorage.getItem('adminCustomers')) || JSON.parse(localStorage.getItem('customers')) || [];
             window.editingCustomerId = null;
             window.renewalMode = false;
-            
-            // Auto-load data from Firebase
-            autoLoadFromFirebase();
             
             setTimeout(() => {
                 updateResellerStatistics();
