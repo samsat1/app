@@ -3352,6 +3352,8 @@
                     try {
                         // Use unique timestamp to prevent any caching
                         const noCacheUrl = apiUrl + '?_=' + Date.now() + Math.random();
+                        console.log('Getting SHA from:', noCacheUrl);
+                        
                         const checkRes = await fetch(noCacheUrl, {
                             method: 'GET',
                             headers: { 
@@ -3364,6 +3366,8 @@
                             cache: 'no-store'
                         });
                         
+                        console.log('SHA check response status:', checkRes.status);
+                        
                         if (checkRes.ok) {
                             const fileData = await checkRes.json();
                             console.log('Got SHA:', fileData.sha);
@@ -3372,9 +3376,15 @@
                             console.log('File does not exist, will create new');
                             return null;
                         } else if (checkRes.status === 401 || checkRes.status === 403) {
+                            const errText = await checkRes.text();
+                            console.log('Auth error:', errText);
                             throw new Error('GitHub authentication failed! Please check your token.');
                         } else {
-                            console.log('Error getting SHA:', checkRes.status);
+                            // For any other error, log it and return null (will try without SHA)
+                            console.log('Error getting SHA - Status:', checkRes.status, checkRes.statusText);
+                            const errText = await checkRes.text();
+                            console.log('Error details:', errText);
+                            return null;
                         }
                     } catch (e) {
                         console.log('Error getting SHA:', e);
@@ -3411,6 +3421,9 @@
                         // Only include SHA if file exists
                         if (sha) {
                             body.sha = sha;
+                            console.log('Uploading with SHA:', sha);
+                        } else {
+                            console.log('Uploading WITHOUT SHA (new file or SHA fetch failed)');
                         }
                         
                         try {
@@ -3425,16 +3438,28 @@
                             });
                             
                             if (response.ok) {
-                                console.log('Upload successful!');
+                                console.log('Upload successful! Status:', response.status);
                                 return response;
                             }
                             
-                            const errorData = await response.json().catch(() => ({}));
-                            console.log('Error response:', response.status, errorData);
+                            // Try to get error details
+                            let errorDetails = '';
+                            try {
+                                const errorData = await response.json();
+                                errorDetails = JSON.stringify(errorData);
+                                console.log('Error response:', response.status, errorData);
+                            } catch(e) {
+                                errorDetails = 'Could not parse error response';
+                                console.log('Error response (raw):', response.status, response.statusText);
+                            }
+                            
+                            // Check for specific "sha wasn't supplied" error
+                            const errorStr = errorDetails.toLowerCase();
+                            const isShaRequired = (errorStr.includes('sha') || errorStr.includes('wasn\'t supplied')) && (response.status === 422 || response.status === 409);
                             
                             // Retry on 409 (conflict) or 422 (validation error)
-                            // Also retry on 401/403 but show error after all retries
-                            const isRetryableError = (response.status === 409 || response.status === 422 || response.status === 401 || response.status === 403);
+                            // Note: We DON'T retry on SHA errors because getting SHA failed - need to investigate why
+                            const isRetryableError = (response.status === 409 || response.status === 422) && !isShaRequired;
                             
                             if (isRetryableError && attempt < retries) {
                                 console.log(`Error ${response.status}, waiting and retrying...`);
@@ -3443,7 +3468,11 @@
                             }
                             
                             // For non-retryable errors or after all retries, set the error message
-                            lastError = `Error ${response.status}: ${errorData.message || 'Unknown error'}`;
+                            if (isShaRequired) {
+                                lastError = 'SHA required! Could not get file SHA from GitHub. Please delete admin_data.json from GitHub and try again. Also check browser console (F12) for details.';
+                            } else {
+                                lastError = `Error ${response.status}: ${errorDetails}`;
+                            }
                             
                             // If this was an auth error, show it immediately
                             if (response.status === 401 || response.status === 403) {
@@ -3466,6 +3495,8 @@
                 
                 // Verify the upload was actually successful
                 btn.innerHTML = '⏳ Verifying...';
+                console.log('Starting verification...');
+                
                 const verifyRes = await fetch(apiUrl + '?_=' + Date.now(), {
                     method: 'GET',
                     headers: { 
@@ -3474,19 +3505,32 @@
                     }
                 });
                 
-                if (verifyRes.ok) {
-                    const verifyData = await verifyRes.json();
-                    // Check if the content matches what we uploaded
-                    const uploadedContent = atob(verifyData.content);
-                    if (uploadedContent.includes(exportData.version)) {
-                        showNotification('✅ Uploaded to GitHub! TVs will auto-sync.', 'success');
-                        btn.innerHTML = '✅ Uploaded!';
-                    } else {
-                        throw new Error('Upload verification failed - content mismatch');
-                    }
-                } else {
-                    throw new Error('Could not verify upload');
+                if (!verifyRes.ok) {
+                    throw new Error(`Verification failed: Could not fetch file from GitHub (Status: ${verifyRes.status})`);
                 }
+                
+                const verifyData = await verifyRes.json();
+                
+                if (!verifyData.content) {
+                    throw new Error('Verification failed: No content in response');
+                }
+                
+                // Decode base64 content
+                const uploadedContent = atob(verifyData.content);
+                console.log('Uploaded content length:', uploadedContent.length);
+                console.log('Expected version:', exportData.version);
+                
+                // Check if content matches
+                if (uploadedContent.includes(exportData.version) && 
+                    uploadedContent.includes('"customers"') &&
+                    uploadedContent.includes('"packages"')) {
+                    console.log('Verification PASSED');
+                    showNotification('✅ Uploaded to GitHub! TVs will auto-sync.', 'success');
+                    btn.innerHTML = '✅ Uploaded!';
+                } else {
+                    console.log('Verification FAILED - content mismatch');
+                    console.log('Content preview:', uploadedContent.substring(0, 200));
+                    throw new Error('Upload verification failed - content mismatch!');
                 
                 setTimeout(() => {
                     btn.innerHTML = '🚀 Upload to GitHub (One-Click)';
