@@ -3347,42 +3347,34 @@
                 const content = safeBase64Encode(jsonString);
                 const apiUrl = `https://api.github.com/repos/${username}/${repo}/contents/admin_data.json`;
                 
-                // Function to get fresh SHA with aggressive cache-busting
+                // Function to get fresh SHA 
                 const getFreshSHA = async () => {
                     try {
-                        // Use unique timestamp to prevent any caching
-                        const noCacheUrl = apiUrl + '?_=' + Date.now() + Math.random();
-                        console.log('Getting SHA from URL:', noCacheUrl);
-                        
-                        const checkRes = await fetch(noCacheUrl, {
+                        // Simple GET request to check if file exists
+                        const checkRes = await fetch(apiUrl, {
                             method: 'GET',
                             headers: { 
                                 'Authorization': `token ${token}`,
-                                'Accept': 'application/vnd.github.v3+json',
-                                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                                'Pragma': 'no-cache',
-                                'Expires': '0'
-                            },
-                            cache: 'no-store'
+                                'Accept': 'application/vnd.github.v3+json'
+                            }
                         });
                         
-                        console.log('SHA check response status:', checkRes.status);
+                        console.log('SHA check status:', checkRes.status);
                         
-                        if (checkRes.ok) {
+                        if (checkRes.status === 200) {
                             const fileData = await checkRes.json();
-                            console.log('Got SHA:', fileData.sha);
+                            console.log('File exists, SHA:', fileData.sha);
                             return fileData.sha;
                         } else if (checkRes.status === 404) {
-                            console.log('File does not exist, will create new');
+                            console.log('File does not exist');
                             return null;
                         } else {
-                            // Log what status we got
-                            console.log('Unexpected status getting SHA:', checkRes.status);
+                            console.log('Unexpected status:', checkRes.status);
                             const text = await checkRes.text();
-                            console.log('Response:', text);
+                            console.log('Response text:', text);
                         }
                     } catch (e) {
-                        console.log('Error getting SHA:', e);
+                        console.log('Exception getting SHA:', e.message);
                     }
                     return null;
                 };
@@ -3396,19 +3388,12 @@
                         btn.innerHTML = `⏳ Uploading... (${attempt}/${retries})`;
                         
                         // Get fresh SHA for each attempt
-                        const sha = await getFreshSHA();
-                        console.log('SHA value:', sha);
+                        let sha = await getFreshSHA();
+                        console.log('SHA value after getFreshSHA:', sha);
                         
-                        // If no SHA but file exists on GitHub, we have a problem
-                        // Try one more time with longer delay
+                        // If still no SHA after retry, try to proceed without it (will create new file if it doesn't exist)
                         if (!sha) {
-                            console.log('No SHA obtained, trying one more time...');
-                            await new Promise(r => setTimeout(r, 2000));
-                            const shaRetry = await getFreshSHA();
-                            console.log('SHA retry result:', shaRetry);
-                            if (shaRetry) {
-                                sha = shaRetry;
-                            }
+                            console.log('Warning: Could not get SHA - will try to create/update without it');
                         }
                         
                         const body = {
