@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-07T21:41:06.074Z",
+  "exportDate": "2026-03-07T21:43:33.236Z",
   "customers": [],
   "packages": [
     {
@@ -92,7 +92,7 @@
       "password": "shadi123",
       "status": "active",
       "commissionRate": 20,
-      "updatedAt": "2026-03-07T21:40:44.862Z",
+      "updatedAt": "2026-03-07T21:42:35.435Z",
       "walletBalance": 30
     },
     "reseller002": {
