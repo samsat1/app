@@ -1,7 +1,26 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-07T03:26:12.050Z",
-  "customers": [],
+  "exportDate": "2026-03-07T03:31:55.167Z",
+  "customers": [
+    {
+      "id": "CUST_1772854246237",
+      "username": "anthony",
+      "name": "anthony",
+      "phone": "123456",
+      "plan": "Basic TV Package",
+      "addons": "Sports Package, Movies Package",
+      "monthlyPrice": 26,
+      "totalPrice": 26,
+      "expiryDate": "2026-04-07",
+      "password": "123456",
+      "macAddress": "",
+      "adultPassword": "",
+      "status": "active",
+      "duration": "1 Month",
+      "durationMonths": 1,
+      "createdAt": "2026-03-07T03:30:46.237Z"
+    }
+  ],
   "packages": [
     {
       "name": "Basic",
@@ -215,7 +234,7 @@
   "plexMoviesSection": "5",
   "plexAdultSection": "4",
   "tvSyncUrl": "https://raw.githubusercontent.com/samsat1/app/main/admin_data.json",
-  "githubToken": "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",
+  "githubToken": "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",
   "githubUsername": "samsat1",
   "githubRepo": "app"
 }
