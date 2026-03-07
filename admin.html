@@ -3261,6 +3261,66 @@
             if (tokenInput) tokenInput.value = localStorage.getItem('githubToken') || '';
         };
         
+        // Auto-load data from GitHub when admin panel opens
+        window.autoLoadFromGitHub = async function() {
+            const username = localStorage.getItem('githubUsername');
+            const repo = localStorage.getItem('githubRepo');
+            const token = localStorage.getItem('githubToken');
+            
+            if (!username || !repo || !token) {
+                console.log('⚠️ GitHub not configured, skipping auto-load');
+                return;
+            }
+            
+            console.log('📥 Auto-loading data from GitHub...');
+            
+            try {
+                const response = await fetch(`https://raw.githubusercontent.com/${username}/${repo}/main/admin_data.json`);
+                
+                if (!response.ok) {
+                    console.log('⚠️ Could not load from GitHub, status:', response.status);
+                    return;
+                }
+                
+                const data = await response.json();
+                console.log('✅ Loaded data from GitHub:', Object.keys(data));
+                
+                // Load customers
+                if (data.customers && Array.isArray(data.customers)) {
+                    localStorage.setItem('adminCustomers', JSON.stringify(data.customers));
+                    localStorage.setItem('customers', JSON.stringify(data.customers));
+                    window.customers = data.customers;
+                    console.log('📊 Loaded', data.customers.length, 'customers');
+                }
+                
+                // Load packages
+                if (data.packages && Array.isArray(data.packages)) {
+                    localStorage.setItem('adminPackages', JSON.stringify(data.packages));
+                    localStorage.setItem('packages', JSON.stringify(data.packages));
+                    console.log('📊 Loaded', data.packages.length, 'packages');
+                }
+                
+                // Load resellers
+                if (data.resellers && typeof data.resellers === 'object') {
+                    localStorage.setItem('RESELLER_ACCOUNTS', JSON.stringify(data.resellers));
+                    console.log('📊 Loaded', Object.keys(data.resellers).length, 'resellers');
+                }
+                
+                // Load Plex config
+                if (data.plexServerUrl) localStorage.setItem('plexServerUrl', data.plexServerUrl);
+                if (data.plexLocalUrl) localStorage.setItem('plexLocalUrl', data.plexLocalUrl);
+                if (data.plexToken) localStorage.setItem('plexToken', data.plexToken);
+                if (data.plexMoviesSection) localStorage.setItem('plexMoviesSection', data.plexMoviesSection);
+                if (data.plexAdultSection) localStorage.setItem('plexAdultSection', data.plexAdultSection);
+                
+                console.log('✅ Auto-load complete!');
+                showNotification('📥 Data loaded from GitHub', 'success');
+                
+            } catch (error) {
+                console.error('❌ Auto-load failed:', error);
+            }
+        };
+        
         // Mobile-compatible base64 encoding
         function safeBase64Encode(str) {
             try {
@@ -7546,6 +7606,16 @@ Network: Always Streaming → Optimized for instant access`;
                         </p>
                     </div>
                     
+                    <!-- Sync Download -->
+                    <div style="margin-bottom: 20px;">
+                        <button onclick="autoLoadFromGitHub()" id="downloadGithubBtn" class="btn btn-info" style="width: 100%; padding: 18px; font-size: 18px;">
+                            📥 Sync Download from GitHub
+                        </button>
+                        <p style="color: rgba(255,255,255,0.5); font-size: 12px; text-align: center; margin-top: 8px;">
+                            Downloads latest data from GitHub to fix any sync issues.
+                        </p>
+                    </div>
+                    
                     <!-- Manual Export/Import -->
                     <div style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
                         <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin-bottom: 10px;">Manual backup:</p>
@@ -7710,6 +7780,11 @@ Network: Always Streaming → Optimized for instant access`;
             
             // Load customers from localStorage
             loadCustomersFromStorage();
+            
+            // Auto-load data from GitHub to prevent data loss
+            setTimeout(() => {
+                autoLoadFromGitHub();
+            }, 500);
             
             // Initialize adult addon availability
             updateAdultAddonAvailability();
