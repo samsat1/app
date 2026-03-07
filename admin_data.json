@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-07T06:20:15.910Z",
+  "exportDate": "2026-03-07T06:22:06.723Z",
   "customers": [],
   "packages": [
     {
@@ -93,7 +93,8 @@
       "status": "active",
       "walletBalance": 0,
       "commissionRate": 20,
-      "createdAt": "2026-03-07T06:19:52.764Z"
+      "createdAt": "2026-03-07T06:19:52.764Z",
+      "updatedAt": "2026-03-07T06:21:57.222Z"
     }
   },
   "creditTransfers": [],
