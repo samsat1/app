@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-07T05:58:48.995Z",
+  "exportDate": "2026-03-07T06:20:15.910Z",
   "customers": [],
   "packages": [
     {
@@ -84,7 +84,18 @@
       "id": "PKG_1772863113096"
     }
   ],
-  "resellers": {},
+  "resellers": {
+    "reseller002": {
+      "name": "Reseller reseller002",
+      "id": "reseller002",
+      "username": "shadi002",
+      "password": "shadi123",
+      "status": "active",
+      "walletBalance": 0,
+      "commissionRate": 20,
+      "createdAt": "2026-03-07T06:19:52.764Z"
+    }
+  },
   "creditTransfers": [],
   "resellerTransactions": [],
   "plexServerUrl": "",
