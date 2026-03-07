@@ -687,6 +687,7 @@
                 </div>
             </div>
             <div style="display: flex; align-items: center;">
+                <button class="logout-btn" onclick="showTokenSettings()" style="margin-right: 8px; background: #00D9F5; color: #0D1117;">Settings</button>
                 <div class="wallet-badge" id="walletBalance">$0.00</div>
                 <button class="logout-btn" onclick="logout()">Logout</button>
             </div>
@@ -771,6 +772,26 @@
                         <div class="spinner"></div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Token Settings Modal (Hidden - Admin Only) -->
+    <div class="modal" id="tokenModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Token Settings</h3>
+                <button class="modal-close" onclick="closeTokenModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 15px; color: rgba(255,255,255,0.7);">
+                    Enter GitHub token for saving customers. This is hidden from reseller.
+                </p>
+                <div class="form-group">
+                    <label>GitHub Token</label>
+                    <input type="password" id="resellerGitHubToken" placeholder="ghp_xxxxxxxxxxxx">
+                </div>
+                <button type="button" class="btn-primary" onclick="saveResellerToken()" style="width: 100%;">Save Token</button>
             </div>
         </div>
     </div>
@@ -1058,10 +1079,20 @@
                 
                 adminData = await response.json();
                 
+                console.log('=== RESELLER LOGIN DEBUG ===');
+                console.log('adminData keys:', Object.keys(adminData));
+                console.log('Has resellerGithubToken:', 'resellerGithubToken' in adminData);
+                console.log('resellerGithubToken value:', adminData.resellerGithubToken ? 'exists' : 'missing');
+                
                 // Get reseller GitHub token from admin_data (for saving customers)
                 if (adminData.resellerGithubToken && !GITHUB_TOKEN) {
                     GITHUB_TOKEN = adminData.resellerGithubToken;
                     localStorage.setItem('resellerGithubToken', GITHUB_TOKEN);
+                    console.log('Token set from adminData');
+                } else {
+                    console.log('Token NOT set - checking conditions:');
+                    console.log('  - resellerGithubToken in adminData:', !!adminData.resellerGithubToken);
+                    console.log('  - GITHUB_TOKEN currently:', GITHUB_TOKEN ? 'exists' : 'empty');
                 }
                 
                 // Get reseller's wallet balance
@@ -2411,6 +2442,29 @@
                 console.error('Save to GitHub error:', error);
                 throw error;
             }
+        }
+        
+        // Token Settings Functions
+        function showTokenSettings() {
+            const savedToken = localStorage.getItem('resellerGithubToken') || '';
+            document.getElementById('resellerGitHubToken').value = savedToken;
+            document.getElementById('tokenModal').style.display = 'flex';
+        }
+        
+        function closeTokenModal() {
+            document.getElementById('tokenModal').style.display = 'none';
+        }
+        
+        function saveResellerToken() {
+            const token = document.getElementById('resellerGitHubToken').value.trim();
+            if (!token) {
+                alert('Please enter a token');
+                return;
+            }
+            GITHUB_TOKEN = token;
+            localStorage.setItem('resellerGithubToken', token);
+            closeTokenModal();
+            alert('Token saved! Customers can now be saved to GitHub.');
         }
         
         // Close Modal
