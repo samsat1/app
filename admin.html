@@ -7781,11 +7781,6 @@ Network: Always Streaming → Optimized for instant access`;
             // Load customers from localStorage
             loadCustomersFromStorage();
             
-            // Auto-load data from GitHub to prevent data loss
-            setTimeout(() => {
-                autoLoadFromGitHub();
-            }, 500);
-            
             // Initialize adult addon availability
             updateAdultAddonAvailability();
             
