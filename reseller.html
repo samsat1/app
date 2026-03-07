@@ -1058,9 +1058,9 @@
                 
                 adminData = await response.json();
                 
-                // Get GitHub token from admin_data if available
-                if (adminData.githubToken && !GITHUB_TOKEN) {
-                    GITHUB_TOKEN = adminData.githubToken;
+                // Get reseller GitHub token from admin_data (for saving customers)
+                if (adminData.resellerGithubToken && !GITHUB_TOKEN) {
+                    GITHUB_TOKEN = adminData.resellerGithubToken;
                     localStorage.setItem('resellerGithubToken', GITHUB_TOKEN);
                 }
                 
