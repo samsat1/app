@@ -902,6 +902,7 @@
     </div>
     
     <!-- Renew Modal -->
+    <!-- Renew Modal -->
     <div class="modal" id="renewModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -2132,11 +2133,25 @@
                     date: new Date().toISOString()
                 });
                 
-                // Save to GitHub
-                await saveToGitHub();
+                // Try to save to GitHub
+                let savedToGithub = false;
+                try {
+                    await saveToGitHub();
+                    savedToGithub = true;
+                } catch (error) {
+                    console.log('GitHub save failed, saving locally only');
+                    // Save locally as backup
+                    localStorage.setItem('resellerPendingCustomers', JSON.stringify(adminData.customers));
+                    localStorage.setItem('resellerPendingTransactions', JSON.stringify(adminData.resellerTransactions));
+                }
                 
-                closeModal();
-                showNotification('Customer created successfully!', 'success');
+                if (savedToGithub) {
+                    closeModal();
+                    showNotification('Customer created successfully!', 'success');
+                } else {
+                    closeModal();
+                    showNotification('Customer saved locally. Will sync when admin uploads.', 'warning');
+                }
                 await loadData();
                 
             } catch (error) {
@@ -2159,11 +2174,23 @@
                     ...customerData
                 };
                 
-                // Save to GitHub
-                await saveToGitHub();
+                // Try to save to GitHub
+                let savedToGithub = false;
+                try {
+                    await saveToGitHub();
+                    savedToGithub = true;
+                } catch (error) {
+                    console.log('GitHub save failed, saving locally only');
+                    localStorage.setItem('resellerPendingCustomers', JSON.stringify(adminData.customers));
+                }
                 
-                closeModal();
-                showNotification('Customer updated successfully!', 'success');
+                if (savedToGithub) {
+                    closeModal();
+                    showNotification('Customer updated successfully!', 'success');
+                } else {
+                    closeModal();
+                    showNotification('Customer updated locally. Will sync when admin uploads.', 'warning');
+                }
                 await loadData();
                 
             } catch (error) {
@@ -2291,11 +2318,24 @@
                     date: new Date().toISOString()
                 });
                 
-                // Save to GitHub
-                await saveToGitHub();
+                // Try to save to GitHub
+                let savedToGithub = false;
+                try {
+                    await saveToGitHub();
+                    savedToGithub = true;
+                } catch (error) {
+                    console.log('GitHub save failed, saving locally only');
+                    localStorage.setItem('resellerPendingCustomers', JSON.stringify(adminData.customers));
+                    localStorage.setItem('resellerPendingTransactions', JSON.stringify(adminData.resellerTransactions));
+                }
                 
-                closeRenewModal();
-                showNotification('Subscription renewed successfully!', 'success');
+                if (savedToGithub) {
+                    closeRenewModal();
+                    showNotification('Subscription renewed successfully!', 'success');
+                } else {
+                    closeRenewModal();
+                    showNotification('Renewed locally. Will sync when admin uploads.', 'warning');
+                }
                 await loadData();
                 
             } catch (error) {
@@ -2318,7 +2358,7 @@
                 }
                 
                 if (!GITHUB_TOKEN) {
-                    throw new Error('No GitHub token available. Please ensure admin has uploaded data with a valid token.');
+                    throw new Error('No GitHub token available');
                 }
                 
                 // Get current file SHA
