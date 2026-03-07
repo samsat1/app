@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-07T04:13:17.395Z",
+  "exportDate": "2026-03-07T04:44:19.748Z",
   "customers": [
     {
       "id": "CUST_1772854246237",
@@ -235,5 +235,6 @@
   "plexAdultSection": "4",
   "tvSyncUrl": "https://raw.githubusercontent.com/samsat1/app/main/admin_data.json",
   "githubUsername": "samsat1",
-  "githubRepo": "app"
+  "githubRepo": "app",
+  "resellerGithubToken": "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"
 }
