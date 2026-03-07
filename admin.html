@@ -656,6 +656,12 @@
             try {
                 RESELLER_ACCOUNTS = JSON.parse(savedAccounts);
                 console.log('📊 Loaded RESELLER_ACCOUNTS from localStorage');
+                
+                // If no resellers in localStorage, load defaults
+                if (Object.keys(RESELLER_ACCOUNTS).length === 0) {
+                    console.log('📊 No resellers found, loading defaults');
+                    initializeDefaultAccounts();
+                }
             } catch (e) {
                 console.error('❌ Failed to parse RESELLER_ACCOUNTS from localStorage:', e);
                 initializeDefaultAccounts();
@@ -7737,8 +7743,8 @@ Network: Always Streaming → Optimized for instant access`;
             // Initialize password manager
             passwordManager.initialize();
             
-            // Initialize and save RESELLER_ACCOUNTS to localStorage
-            saveResellerAccounts();
+            // Don't call saveResellerAccounts() here - it overwrites user data!
+            // Data is already loaded from localStorage at page load
             
             // Auto-generate Plex token if not exists
             const existingToken = localStorage.getItem('plexAutoToken');
