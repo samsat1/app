@@ -3292,11 +3292,7 @@
                 return;
             }
             
-            // Validate token format
-            if (token.length < 30 || token.includes(' ')) {
-                showNotification('⚠️ Invalid GitHub token format!', 'error');
-                return;
-            }
+            // Token validation removed - accept any format
             
             const btn = document.getElementById('uploadGithubBtn');
             btn.disabled = true;
@@ -3338,7 +3334,6 @@
                     plexMoviesSection: localStorage.getItem('plexMoviesSection') || '',
                     plexAdultSection: localStorage.getItem('plexAdultSection') || '',
                     tvSyncUrl: `https://raw.githubusercontent.com/${username}/${repo}/main/admin_data.json`,
-                    githubToken: token,
                     githubUsername: username,
                     githubRepo: repo
                 };
