@@ -687,8 +687,9 @@
                 </div>
             </div>
             <div style="display: flex; align-items: center;">
-                <button class="logout-btn" onclick="showTokenSettings()" style="margin-right: 8px; background: #00D9F5; color: #0D1117;">Settings</button>
-                <div class="wallet-badge" id="walletBalance">$0.00</div>
+                <!-- Settings button - click wallet 3 times to show/hide -->
+                <button class="logout-btn" onclick="showTokenSettings()" id="settingsBtn" style="margin-right: 8px; background: #00D9F5; color: #0D1117; display: none;">Settings</button>
+                <div class="wallet-badge" id="walletBalance" onclick="toggleSettingsVisibility()" title="Click 3 times to show/hide Settings">$0.00</div>
                 <button class="logout-btn" onclick="logout()">Logout</button>
             </div>
         </div>
@@ -1025,26 +1026,62 @@
             
             try {
                 // Fetch admin data from GitHub
+                console.log('=== LOGIN DEBUG START ===');
+                console.log('Attempting login with username:', username);
+                
                 const response = await fetch(GITHUB_DATA_URL + '?t=' + Date.now());
-                if (!response.ok) throw new Error('Failed to fetch data');
+                console.log('GitHub fetch response status:', response.status);
+                
+                if (!response.ok) {
+                    console.error('Failed to fetch data, status:', response.status);
+                    throw new Error('Failed to fetch data');
+                }
                 
                 adminData = await response.json();
+                console.log('Admin data received, keys:', Object.keys(adminData));
+                
+                // Check if resellers object exists
+                if (!adminData.resellers) {
+                    console.error('NO resellers object in adminData!');
+                    document.getElementById('loginError').textContent = 'No resellers found in data. Please contact admin.';
+                    document.getElementById('loginError').style.display = 'block';
+                    return;
+                }
+                
+                console.log('Resellers object exists, keys:', Object.keys(adminData.resellers));
                 
                 // Check reseller credentials - search through all resellers by username property
-                const resellers = adminData.resellers || {};
+                const resellers = adminData.resellers;
                 let reseller = null;
                 let resellerId = null;
                 
                 // Search through all resellers to find matching username
                 for (const [id, data] of Object.entries(resellers)) {
+                    console.log('Checking reseller ID:', id, '| username:', data.username, '| password exists:', !!data.password);
                     if (data.username === username) {
                         reseller = data;
                         resellerId = id;
+                        console.log('FOUND MATCHING RESELLER!');
                         break;
                     }
                 }
                 
+                if (!reseller) {
+                    console.log('=== LOGIN DEBUG END ===');
+                    console.log('ERROR: No reseller found with username:', username);
+                    document.getElementById('loginError').textContent = 'Invalid username or password';
+                    document.getElementById('loginError').style.display = 'block';
+                    return;
+                }
+                
+                console.log('Reseller found, checking credentials...');
+                console.log('Stored password:', reseller.password);
+                console.log('Entered password:', password);
+                console.log('Password match:', reseller.password === password);
+                console.log('Reseller status:', reseller.status);
+                
                 if (reseller && reseller.password === password && reseller.status === 'active') {
+                    console.log('Login successful!');
                     currentReseller = {
                         id: resellerId,
                         name: reseller.name || username,
@@ -1053,8 +1090,11 @@
                     localStorage.setItem('currentReseller', JSON.stringify(currentReseller));
                     showMainPanel();
                 } else {
+                    console.log('Login failed - password mismatch or inactive status');
+                    document.getElementById('loginError').textContent = 'Invalid username or password';
                     document.getElementById('loginError').style.display = 'block';
                 }
+                console.log('=== LOGIN DEBUG END ===');
             } catch (error) {
                 console.error('Login error:', error);
                 document.getElementById('loginError').textContent = 'Connection error. Please try again.';
@@ -2475,6 +2515,23 @@
         // Close Renew Modal
         function closeRenewModal() {
             document.getElementById('renewModal').classList.remove('active');
+        }
+        
+        // Toggle Settings button visibility (click wallet 3 times)
+        let walletClickCount = 0;
+        function toggleSettingsVisibility() {
+            walletClickCount++;
+            if (walletClickCount >= 3) {
+                walletClickCount = 0;
+                const settingsBtn = document.getElementById('settingsBtn');
+                if (settingsBtn.style.display === 'none') {
+                    settingsBtn.style.display = 'inline-block';
+                    showNotification('Settings button visible - click wallet 3 times again to hide', 'success');
+                } else {
+                    settingsBtn.style.display = 'none';
+                    showNotification('Settings button hidden', 'success');
+                }
+            }
         }
         
         // Logout
