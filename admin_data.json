@@ -1,165 +1,138 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-07T06:30:40.357Z",
-  "customers": [
-    {
-      "id": "cust_1772865237470",
-      "name": "salame abdul khalek",
-      "username": "anthony",
-      "password": "shadi123",
-      "phone": "76755399",
-      "email": "sam-sat@hotmail.com",
-      "packageId": ",,,",
-      "packageName": ", , , ",
-      "packages": [
-        {},
-        {},
-        {},
-        {}
-      ],
-      "packagePrice": 26,
-      "expiryDate": "2026-04-07",
-      "resellerId": "reseller003",
-      "createdAt": "2026-03-07T06:33:57.470Z",
-      "status": "active"
-    }
-  ],
-  "packages": [
-    {
-      "name": "Basic",
-      "price": 10,
-      "duration": "1 Month",
-      "features": "",
-      "secondTVPrice": 5,
-      "thirdTVPrice": 5,
-      "sportsPrice": 0,
-      "moviesPrice": 0,
-      "isAdult": "",
-      "adultPackagePrice": 0,
-      "approved": true,
-      "approvedDate": "2026-03-07T06:27:14.589Z",
-      "approvedBy": "admin",
-      "rejectedDate": null,
-      "rejectedBy": null,
-      "rejectionReason": null,
-      "createdAt": "2026-03-07T06:27:14.589Z",
-      "id": "PKG_1772864834589"
-    },
-    {
-      "name": "Sport",
-      "price": 6,
-      "duration": "1 Month",
-      "features": "",
-      "secondTVPrice": 5,
-      "thirdTVPrice": 5,
-      "sportsPrice": 3,
-      "moviesPrice": 0,
-      "isAdult": "",
-      "adultPackagePrice": 0,
-      "approved": true,
-      "approvedDate": "2026-03-07T06:27:35.920Z",
-      "approvedBy": "admin",
-      "rejectedDate": null,
-      "rejectedBy": null,
-      "rejectionReason": null,
-      "createdAt": "2026-03-07T06:27:35.920Z",
-      "id": "PKG_1772864855920"
-    },
-    {
-      "name": "Movies",
-      "price": 6,
-      "duration": "1 Month",
-      "features": "",
-      "secondTVPrice": 5,
-      "thirdTVPrice": 5,
-      "sportsPrice": 0,
-      "moviesPrice": 6,
-      "isAdult": "",
-      "adultPackagePrice": 0,
-      "approved": true,
-      "approvedDate": "2026-03-07T06:27:54.660Z",
-      "approvedBy": "admin",
-      "rejectedDate": null,
-      "rejectedBy": null,
-      "rejectionReason": null,
-      "createdAt": "2026-03-07T06:27:54.660Z",
-      "id": "PKG_1772864874660"
-    },
-    {
-      "name": "Adult",
-      "price": 5,
-      "duration": "1 Month",
-      "features": "+18",
-      "secondTVPrice": 5,
-      "thirdTVPrice": 5,
-      "sportsPrice": 0,
-      "moviesPrice": 0,
-      "isAdult": true,
-      "adultPackagePrice": 3,
-      "approved": true,
-      "approvedDate": "2026-03-07T06:28:16.829Z",
-      "approvedBy": "admin",
-      "rejectedDate": null,
-      "rejectedBy": null,
-      "rejectionReason": null,
-      "createdAt": "2026-03-07T06:28:16.829Z",
-      "id": "PKG_1772864896829"
-    }
-  ],
+  "exportDate": "2026-03-07T21:26:16.519Z",
+  "customers": [],
+  "packages": [],
   "resellers": {
-    "reseller002": {
-      "name": "Reseller reseller002",
-      "id": "reseller002",
-      "username": "shadi002",
+    "reseller001": {
+      "name": "Reseller 001",
+      "id": "reseller001",
+      "username": "shadi001",
       "password": "shadi123",
       "status": "active",
-      "walletBalance": 0,
       "commissionRate": 20,
-      "createdAt": "2026-03-07T06:19:52.764Z",
-      "updatedAt": "2026-03-07T06:21:57.222Z"
+      "updatedAt": "2026-03-07T21:23:48.703Z",
+      "walletBalance": 30
+    },
+    "reseller002": {
+      "name": "Reseller 002",
+      "id": "reseller002",
+      "username": "reseller002",
+      "password": "res002_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
     },
     "reseller003": {
-      "name": "Reseller reseller003",
+      "name": "Reseller 003",
       "id": "reseller003",
       "username": "reseller003",
-      "password": "reseller003",
+      "password": "res003_pass",
       "status": "active",
-      "walletBalance": 24,
       "commissionRate": 20,
-      "createdAt": "2026-03-07T06:24:10.304Z",
-      "updatedAt": "2026-03-07T06:24:17.882Z"
+      "walletBalance": 0
+    },
+    "reseller004": {
+      "name": "Reseller 004",
+      "id": "reseller004",
+      "username": "reseller004",
+      "password": "res004_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller005": {
+      "name": "Reseller 005",
+      "id": "reseller005",
+      "username": "reseller005",
+      "password": "res005_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller006": {
+      "name": "Reseller 006",
+      "id": "reseller006",
+      "username": "reseller006",
+      "password": "res006_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller007": {
+      "name": "Reseller 007",
+      "id": "reseller007",
+      "username": "reseller007",
+      "password": "res007_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller008": {
+      "name": "Reseller 008",
+      "id": "reseller008",
+      "username": "reseller008",
+      "password": "res008_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller009": {
+      "name": "Reseller 009",
+      "id": "reseller009",
+      "username": "reseller009",
+      "password": "res009_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller010": {
+      "name": "Reseller 010",
+      "id": "reseller010",
+      "username": "reseller010",
+      "password": "res010_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller011": {
+      "name": "Reseller 011",
+      "id": "reseller011",
+      "username": "reseller011",
+      "password": "res011_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller012": {
+      "name": "Reseller 012",
+      "id": "reseller012",
+      "username": "reseller012",
+      "password": "res012_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
     }
   },
   "creditTransfers": [
     {
-      "id": "credit_1772865023748",
-      "resellerId": "reseller003",
-      "amount": 50,
+      "id": "credit_1772918645004",
+      "resellerId": "reseller001",
+      "amount": 30,
       "type": "credit",
-      "date": "2026-03-07T06:30:23.748Z",
+      "date": "2026-03-07T21:24:05.004Z",
       "note": "Admin credit transfer",
-      "timestamp": 1772865023748,
+      "timestamp": 1772918645004,
       "previousBalance": 0,
-      "newBalance": 50
+      "newBalance": 30
     }
   ],
-  "resellerTransactions": [
-    {
-      "id": "txn_1772865237470",
-      "resellerId": "reseller003",
-      "type": "sale",
-      "amount": -26,
-      "customerId": "cust_1772865237470",
-      "customerName": "salame abdul khalek",
-      "packageName": ", , , ",
-      "date": "2026-03-07T06:33:57.470Z"
-    }
-  ],
-  "plexServerUrl": "http://192.168.1.100:32400",
-  "plexLocalUrl": "http://192.168.1.100:32400",
-  "plexToken": "R7ysV2bxxFL2SgqsnpyF",
-  "plexMoviesSection": "5",
-  "plexAdultSection": "4",
+  "resellerTransactions": [],
+  "plexServerUrl": "",
+  "plexLocalUrl": "",
+  "plexToken": "",
+  "plexMoviesSection": "",
+  "plexAdultSection": "",
   "tvSyncUrl": "https://raw.githubusercontent.com/samsat1/app/main/admin_data.json",
   "githubUsername": "samsat1",
   "githubRepo": "app"
