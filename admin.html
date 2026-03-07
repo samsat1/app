@@ -3236,12 +3236,10 @@
             const username = document.getElementById('githubUsername')?.value || '';
             const repo = document.getElementById('githubRepo')?.value || '';
             const token = document.getElementById('githubToken')?.value || '';
-            const resellerToken = document.getElementById('resellerToken')?.value || '';
             
             localStorage.setItem('githubUsername', username);
             localStorage.setItem('githubRepo', repo);
             localStorage.setItem('githubToken', token);
-            localStorage.setItem('resellerToken', resellerToken);
             
             // Auto-generate sync URL
             if (username && repo) {
@@ -3257,12 +3255,10 @@
             const usernameInput = document.getElementById('githubUsername');
             const repoInput = document.getElementById('githubRepo');
             const tokenInput = document.getElementById('githubToken');
-            const resellerTokenInput = document.getElementById('resellerToken');
             
             if (usernameInput) usernameInput.value = localStorage.getItem('githubUsername') || '';
             if (repoInput) repoInput.value = localStorage.getItem('githubRepo') || '';
             if (tokenInput) tokenInput.value = localStorage.getItem('githubToken') || '';
-            if (resellerTokenInput) resellerTokenInput.value = localStorage.getItem('resellerToken') || '';
         };
         
         // Mobile-compatible base64 encoding
@@ -3339,8 +3335,7 @@
                     plexAdultSection: localStorage.getItem('plexAdultSection') || '',
                     tvSyncUrl: `https://raw.githubusercontent.com/${username}/${repo}/main/admin_data.json`,
                     githubUsername: username,
-                    githubRepo: repo,
-                    resellerGithubToken: localStorage.getItem('resellerToken') || ''
+                    githubRepo: repo
                 };
                 
                 // Use mobile-compatible base64 encoding
@@ -7535,11 +7530,6 @@ Network: Always Streaming → Optimized for instant access`;
                             <div>
                                 <label style="color: rgba(255,255,255,0.8); font-size: 12px;">Personal Access Token: <a href="https://github.com/settings/tokens" target="_blank" style="color: #667eea;">(Get Token)</a></label>
                                 <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxx" 
-                                    style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; box-sizing: border-box;">
-                            </div>
-                            <div>
-                                <label style="color: rgba(255,255,255,0.8); font-size: 12px;">Reseller Token (for customers over internet):</label>
-                                <input type="password" id="resellerToken" placeholder="ghp_xxxxxxxxxxxx" 
                                     style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; box-sizing: border-box;">
                             </div>
                             <button onclick="saveGithubSettings()" class="btn btn-info" style="padding: 10px;">💾 Save GitHub Settings</button>
