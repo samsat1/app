@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-07T22:07:40.493Z",
+  "exportDate": "2026-03-08T23:56:45.124Z",
   "customers": [],
   "packages": [
     {
@@ -15,13 +15,13 @@
       "isAdult": "",
       "adultPackagePrice": 0,
       "approved": true,
-      "approvedDate": "2026-03-07T21:56:47.660Z",
+      "approvedDate": "2026-03-08T23:54:03.054Z",
       "approvedBy": "admin",
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-03-07T21:56:47.660Z",
-      "id": "PKG_1772920607660"
+      "createdAt": "2026-03-08T23:54:03.054Z",
+      "id": "PKG_1773014043054"
     },
     {
       "name": "Movies",
@@ -35,53 +35,53 @@
       "isAdult": "",
       "adultPackagePrice": 0,
       "approved": true,
-      "approvedDate": "2026-03-07T21:57:03.274Z",
+      "approvedDate": "2026-03-08T23:54:23.145Z",
       "approvedBy": "admin",
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-03-07T21:57:03.274Z",
-      "id": "PKG_1772920623274"
+      "createdAt": "2026-03-08T23:54:23.145Z",
+      "id": "PKG_1773014063145"
     },
     {
       "name": "Sport",
-      "price": 4,
+      "price": 6,
       "duration": "1 Month",
       "features": "",
       "secondTVPrice": 5,
-      "thirdTVPrice": 3,
-      "sportsPrice": 4,
+      "thirdTVPrice": 5,
+      "sportsPrice": 6,
       "moviesPrice": 0,
       "isAdult": "",
       "adultPackagePrice": 0,
       "approved": true,
-      "approvedDate": "2026-03-07T21:57:36.558Z",
+      "approvedDate": "2026-03-08T23:54:51.815Z",
       "approvedBy": "admin",
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-03-07T21:57:36.558Z",
-      "id": "PKG_1772920656558"
+      "createdAt": "2026-03-08T23:54:51.815Z",
+      "id": "PKG_1773014091815"
     },
     {
       "name": "Adult",
-      "price": 4,
+      "price": 5,
       "duration": "1 Month",
       "features": "",
       "secondTVPrice": 5,
-      "thirdTVPrice": 3,
+      "thirdTVPrice": 5,
       "sportsPrice": 0,
       "moviesPrice": 0,
       "isAdult": true,
-      "adultPackagePrice": 3,
+      "adultPackagePrice": 5,
       "approved": true,
-      "approvedDate": "2026-03-07T21:57:50.405Z",
+      "approvedDate": "2026-03-08T23:55:09.832Z",
       "approvedBy": "admin",
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-03-07T21:57:50.405Z",
-      "id": "PKG_1772920670405"
+      "createdAt": "2026-03-08T23:55:09.832Z",
+      "id": "PKG_1773014109832"
     }
   ],
   "resellers": {
@@ -92,8 +92,8 @@
       "password": "shadi123",
       "status": "active",
       "commissionRate": 20,
-      "updatedAt": "2026-03-07T21:58:45.286Z",
-      "walletBalance": 60
+      "updatedAt": "2026-03-08T23:55:58.645Z",
+      "walletBalance": 0
     },
     "reseller002": {
       "name": "Reseller 002",
@@ -195,30 +195,7 @@
       "walletBalance": 0
     }
   },
-  "creditTransfers": [
-    {
-      "id": "credit_1772919875546",
-      "resellerId": "reseller001",
-      "amount": 30,
-      "type": "credit",
-      "date": "2026-03-07T21:44:35.546Z",
-      "note": "Admin credit transfer",
-      "timestamp": 1772919875546,
-      "previousBalance": 0,
-      "newBalance": 30
-    },
-    {
-      "id": "credit_1772921253119",
-      "resellerId": "reseller001",
-      "amount": 30,
-      "type": "credit",
-      "date": "2026-03-07T22:07:33.119Z",
-      "note": "Admin credit transfer",
-      "timestamp": 1772921253119,
-      "previousBalance": 30,
-      "newBalance": 60
-    }
-  ],
+  "creditTransfers": [],
   "resellerTransactions": [],
   "plexServerUrl": "http://192.168.1.100:32400",
   "plexLocalUrl": "http://192.168.1.100:32400",
