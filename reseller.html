@@ -1102,6 +1102,23 @@
             }
         }
         
+        // Load adminData from localStorage backup
+        function loadFromLocalStorageBackup() {
+            try {
+                const savedData = localStorage.getItem('resellerAdminData');
+                if (savedData) {
+                    adminData = JSON.parse(savedData);
+                    console.log('✅ Loaded adminData from localStorage backup');
+                    showNotification('📥 Loaded data from local backup', 'info');
+                } else {
+                    console.log('⚠️ No localStorage backup found');
+                    showNotification('⚠️ No data available. Please check internet connection.', 'error');
+                }
+            } catch (error) {
+                console.error('❌ Error loading from localStorage:', error);
+            }
+        }
+        
         // Show Main Panel
         function showMainPanel() {
             document.getElementById('loginScreen').style.display = 'none';
@@ -1113,15 +1130,31 @@
         // Load Data
         async function loadData() {
             try {
-                // Fetch fresh data
+                // Try to fetch from GitHub first
                 const response = await fetch(GITHUB_DATA_URL + '?t=' + Date.now());
-                if (!response.ok) throw new Error('Failed to fetch data');
                 
-                adminData = await response.json();
-                
-                console.log('=== RESELLER LOGIN DEBUG ===');
-                console.log('adminData keys:', Object.keys(adminData));
-                console.log('Has resellerGithubToken:', 'resellerGithubToken' in adminData);
+                if (response.ok) {
+                    adminData = await response.json();
+                    console.log('=== RESELLER LOGIN DEBUG ===');
+                    console.log('adminData keys:', Object.keys(adminData));
+                    console.log('Has resellerGithubToken:', 'resellerGithubToken' in adminData);
+                    
+                    // Save to localStorage as backup after loading from GitHub
+                    saveAdminDataToLocalStorage();
+                } else {
+                    // GitHub failed, try to load from localStorage
+                    console.log('⚠️ GitHub fetch failed, trying localStorage backup...');
+                    loadFromLocalStorageBackup();
+                }
+            } catch (error) {
+                // GitHub error, try localStorage backup
+                console.log('⚠️ Error fetching from GitHub:', error.message);
+                console.log('Trying localStorage backup...');
+                loadFromLocalStorageBackup();
+            }
+            
+            // Continue with data loading...
+            console.log('Has resellerGithubToken:', 'resellerGithubToken' in adminData);
                 console.log('resellerGithubToken value:', adminData.resellerGithubToken ? 'exists' : 'missing');
                 
                 // Get reseller GitHub token from admin_data (for saving customers)
@@ -2188,8 +2221,12 @@
                 adminData.customers = adminData.customers || [];
                 adminData.customers.push(newCustomer);
                 
-                // Deduct from wallet
-                adminData.resellers[currentReseller.id].walletBalance = walletBalance - total;
+                // Get current wallet balance from adminData
+                const currentWalletBalance = adminData.resellers[currentReseller.id].walletBalance || 0;
+                adminData.resellers[currentReseller.id].walletBalance = currentWalletBalance - total;
+                
+                // Update local wallet variable for display
+                walletBalance = currentWalletBalance - total;
                 
                 // Add transaction record
                 adminData.resellerTransactions = adminData.resellerTransactions || [];
@@ -2415,6 +2452,29 @@
             }
         }
         
+        // Save adminData to localStorage as backup
+        function saveAdminDataToLocalStorage() {
+            try {
+                if (!adminData) {
+                    console.log('⚠️ No adminData to save');
+                    return;
+                }
+                
+                // Save full adminData object
+                localStorage.setItem('resellerAdminData', JSON.stringify(adminData));
+                
+                // Also save wallet balance specifically for easy access
+                if (currentReseller && adminData.resellers && adminData.resellers[currentReseller.id]) {
+                    const walletBalance = adminData.resellers[currentReseller.id].walletBalance || 0;
+                    localStorage.setItem('resellerWallet_' + currentReseller.id, walletBalance);
+                }
+                
+                console.log('✅ Saved adminData to localStorage (including wallet balances)');
+            } catch (error) {
+                console.error('❌ Error saving to localStorage:', error);
+            }
+        }
+        
         // Save to GitHub
         async function saveToGitHub() {
             try {
@@ -2431,6 +2491,9 @@
                 if (!GITHUB_TOKEN) {
                     throw new Error('No GitHub token available');
                 }
+
+                // CRITICAL: Save to localStorage FIRST as backup before trying GitHub
+                saveAdminDataToLocalStorage();
                 
                 // Get current file SHA
                 const getResponse = await fetch(GITHUB_API_URL, {
