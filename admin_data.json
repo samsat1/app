@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-10T00:30:13.212Z",
+  "exportDate": "2026-03-10T00:39:51.478Z",
   "customers": [],
   "packages": [
     {
@@ -22,6 +22,65 @@
       "rejectionReason": null,
       "createdAt": "2026-03-10T00:26:11.284Z",
       "id": "PKG_1773102371284"
+    },
+    {
+      "name": "Sport",
+      "price": 6,
+      "duration": "1 Month",
+      "features": "",
+      "secondTVPrice": 5,
+      "thirdTVPrice": 5,
+      "sportsPrice": 4,
+      "moviesPrice": 0,
+      "isAdult": "",
+      "adultPackagePrice": 0,
+      "approved": true,
+      "approvedDate": "2026-03-10T00:37:57.841Z",
+      "approvedBy": "admin",
+      "rejectedDate": null,
+      "rejectedBy": null,
+      "rejectionReason": null,
+      "createdAt": "2026-03-10T00:37:57.841Z",
+      "id": "PKG_1773103077841"
+    },
+    {
+      "name": "Movies",
+      "price": 6,
+      "duration": "1 Month",
+      "features": "",
+      "secondTVPrice": 5,
+      "thirdTVPrice": 5,
+      "sportsPrice": 0,
+      "moviesPrice": 6,
+      "isAdult": "",
+      "adultPackagePrice": 0,
+      "approved": true,
+      "approvedDate": "2026-03-10T00:38:17.606Z",
+      "approvedBy": "admin",
+      "rejectedDate": null,
+      "rejectedBy": null,
+      "rejectionReason": null,
+      "createdAt": "2026-03-10T00:38:17.606Z",
+      "id": "PKG_1773103097606"
+    },
+    {
+      "name": "Adult",
+      "price": 5,
+      "duration": "1 Month",
+      "features": "+18",
+      "secondTVPrice": 5,
+      "thirdTVPrice": 5,
+      "sportsPrice": 0,
+      "moviesPrice": 0,
+      "isAdult": true,
+      "adultPackagePrice": 5,
+      "approved": true,
+      "approvedDate": "2026-03-10T00:39:25.532Z",
+      "approvedBy": "admin",
+      "rejectedDate": null,
+      "rejectedBy": null,
+      "rejectionReason": null,
+      "createdAt": "2026-03-10T00:39:25.532Z"
     }
   ],
   "resellers": {
