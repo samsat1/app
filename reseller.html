@@ -1146,15 +1146,9 @@
                     console.log('⚠️ GitHub fetch failed, trying localStorage backup...');
                     loadFromLocalStorageBackup();
                 }
-            } catch (error) {
-                // GitHub error, try localStorage backup
-                console.log('⚠️ Error fetching from GitHub:', error.message);
-                console.log('Trying localStorage backup...');
-                loadFromLocalStorageBackup();
-            }
-            
-            // Continue with data loading...
-            console.log('Has resellerGithubToken:', 'resellerGithubToken' in adminData);
+                
+                // Continue with data loading...
+                console.log('Has resellerGithubToken:', 'resellerGithubToken' in adminData);
                 console.log('resellerGithubToken value:', adminData.resellerGithubToken ? 'exists' : 'missing');
                 
                 // Get reseller GitHub token from admin_data (for saving customers)
@@ -1191,7 +1185,8 @@
                 
             } catch (error) {
                 console.error('Load data error:', error);
-                showNotification('Failed to load data', 'error');
+                // Try to load from localStorage as fallback
+                loadFromLocalStorageBackup();
             }
         }
         
