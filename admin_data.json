@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-12T02:50:53.473Z",
+  "exportDate": "2026-03-12T03:21:46.937Z",
   "customers": [
     {
       "password": "123456",
@@ -119,26 +119,6 @@
       "resetDeviceLock": 0,
       "username": "sam9",
       "durationMonths": 6
-    },
-    {
-      "id": "cust_1773284718958",
-      "name": "sam",
-      "username": "anthony",
-      "password": "123456",
-      "phone": "98989898",
-      "email": "sam-sat@hotmail.com",
-      "packageId": ",,",
-      "packageName": ", , ",
-      "packages": [
-        {},
-        {},
-        {}
-      ],
-      "packagePrice": 26,
-      "expiryDate": "2026-04-12",
-      "resellerId": "reseller001",
-      "createdAt": "2026-03-12T03:05:18.959Z",
-      "status": "active"
     }
   ],
   "packages": [
@@ -232,7 +212,7 @@
       "status": "active",
       "commissionRate": 20,
       "updatedAt": "2026-03-12T02:46:05.643Z",
-      "walletBalance": 8
+      "walletBalance": 38
     },
     "reseller002": {
       "name": "Reseller 002",
@@ -356,20 +336,20 @@
       "timestamp": 1773183017158,
       "previousBalance": 50,
       "newBalance": 60
-    }
-  ],
-  "resellerTransactions": [
+    },
     {
-      "id": "txn_1773284718959",
+      "id": "credit_1773285696918",
       "resellerId": "reseller001",
-      "type": "sale",
-      "amount": -26,
-      "customerId": "cust_1773284718958",
-      "customerName": "sam",
-      "packageName": ", , ",
-      "date": "2026-03-12T03:05:18.959Z"
+      "amount": 30,
+      "type": "credit",
+      "date": "2026-03-12T03:21:36.918Z",
+      "note": "Admin credit transfer",
+      "timestamp": 1773285696918,
+      "previousBalance": 8,
+      "newBalance": 38
     }
   ],
+  "resellerTransactions": [],
   "plexServerUrl": "http://192.168.1.100:32400",
   "plexLocalUrl": "http://192.168.1.100:32400",
   "plexToken": "s9HUT7z3jba63ByZBe63",
