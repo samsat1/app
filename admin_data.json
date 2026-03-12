@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-12T03:21:46.937Z",
+  "exportDate": "2026-03-12T03:24:09.615Z",
   "customers": [
     {
       "password": "123456",
@@ -212,7 +212,7 @@
       "status": "active",
       "commissionRate": 20,
       "updatedAt": "2026-03-12T02:46:05.643Z",
-      "walletBalance": 38
+      "walletBalance": 28
     },
     "reseller002": {
       "name": "Reseller 002",
@@ -347,6 +347,17 @@
       "timestamp": 1773285696918,
       "previousBalance": 8,
       "newBalance": 38
+    },
+    {
+      "id": "credit_1773285844552",
+      "resellerId": "reseller001",
+      "amount": 20,
+      "type": "credit",
+      "date": "2026-03-12T03:24:04.552Z",
+      "note": "Admin credit transfer",
+      "timestamp": 1773285844552,
+      "previousBalance": 8,
+      "newBalance": 28
     }
   ],
   "resellerTransactions": [],
