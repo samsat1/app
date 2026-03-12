@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-12T03:24:09.615Z",
+  "exportDate": "2026-03-12T22:15:43.763Z",
   "customers": [
     {
       "password": "123456",
@@ -119,42 +119,6 @@
       "resetDeviceLock": 0,
       "username": "sam9",
       "durationMonths": 6
-    },
-    {
-      "id": "cust_1773286013021",
-      "name": "salame abdul khalek",
-      "username": "anthony",
-      "password": "shadi123",
-      "phone": "76755399",
-      "email": "sam-sat@hotmail.com",
-      "packageId": "",
-      "packageName": "",
-      "packages": [
-        {}
-      ],
-      "packagePrice": 10,
-      "expiryDate": "2026-04-12",
-      "resellerId": "reseller001",
-      "createdAt": "2026-03-12T03:26:53.022Z",
-      "status": "active"
-    },
-    {
-      "id": "cust_1773353695710",
-      "name": "salame abdul khalek",
-      "username": "sam9",
-      "password": "123456",
-      "phone": "76755399",
-      "email": "sam-sat@hotmail.com",
-      "packageId": "",
-      "packageName": "",
-      "packages": [
-        {}
-      ],
-      "packagePrice": 10,
-      "expiryDate": "2026-04-12",
-      "resellerId": "reseller001",
-      "createdAt": "2026-03-12T22:14:55.710Z",
-      "status": "active"
     }
   ],
   "packages": [
@@ -248,7 +212,7 @@
       "status": "active",
       "commissionRate": 20,
       "updatedAt": "2026-03-12T02:46:05.643Z",
-      "walletBalance": 8
+      "walletBalance": 18
     },
     "reseller002": {
       "name": "Reseller 002",
@@ -396,28 +360,7 @@
       "newBalance": 28
     }
   ],
-  "resellerTransactions": [
-    {
-      "id": "txn_1773286013022",
-      "resellerId": "reseller001",
-      "type": "sale",
-      "amount": -10,
-      "customerId": "cust_1773286013021",
-      "customerName": "salame abdul khalek",
-      "packageName": "",
-      "date": "2026-03-12T03:26:53.022Z"
-    },
-    {
-      "id": "txn_1773353695710",
-      "resellerId": "reseller001",
-      "type": "sale",
-      "amount": -10,
-      "customerId": "cust_1773353695710",
-      "customerName": "salame abdul khalek",
-      "packageName": "",
-      "date": "2026-03-12T22:14:55.710Z"
-    }
-  ],
+  "resellerTransactions": [],
   "plexServerUrl": "http://192.168.1.100:32400",
   "plexLocalUrl": "http://192.168.1.100:32400",
   "plexToken": "s9HUT7z3jba63ByZBe63",
