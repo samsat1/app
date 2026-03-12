@@ -879,25 +879,6 @@
         // Initialize packages from localStorage or create clean 4-package structure
         let packages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
         
-        // CRITICAL: Load ALL data from localStorage on startup - DON'T initialize defaults if data exists
-        // This ensures data persists even after updating admin.html file
-        const savedRESELLER_ACCOUNTS = localStorage.getItem('RESELLER_ACCOUNTS');
-        if (savedRESELLER_ACCOUNTS) {
-            try {
-                RESELLER_ACCOUNTS = JSON.parse(savedRESELLER_ACCOUNTS);
-                console.log('✅ Loaded RESELLER_ACCOUNTS from localStorage:', Object.keys(RESELLER_ACCOUNTS).length, 'resellers');
-            } catch (e) {
-                console.error('Failed to parse RESELLER_ACCOUNTS:', e);
-                initializeDefaultAccounts();
-            }
-        } else {
-            // Try to restore from GitHub first before initializing defaults
-            initializeDefaultAccounts(); // Temporary initialize, will try to restore
-            setTimeout(async () => {
-                await tryRestoreFromGitHub();
-            }, 1000);
-        }
-        
         // Only initialize default packages if localStorage is completely empty (first time)
         // Don't overwrite existing packages!
         if (!localStorage.getItem('adminPackages') && !localStorage.getItem('packages')) {
@@ -905,104 +886,6 @@
             packages = [];
             localStorage.setItem('adminPackages', JSON.stringify(packages));
         }
-        
-        // BACKUP: Try to restore from GitHub if localStorage is empty but GitHub has data
-        async function tryRestoreFromGitHub() {
-            const username = localStorage.getItem('githubUsername');
-            const repo = localStorage.getItem('githubRepo');
-            const token = localStorage.getItem('githubToken');
-            
-            if (!username || !repo || !token) {
-                console.log('⚠️ GitHub not configured, cannot restore - keeping local data');
-                return false;
-            }
-            
-            try {
-                console.log('🔄 Attempting to restore data from GitHub...');
-                const response = await fetch(`https://raw.githubusercontent.com/${username}/${repo}/main/admin_data.json`);
-                if (!response.ok) {
-                    console.log('⚠️ Could not restore from GitHub, keeping local data');
-                    return false;
-                }
-                
-                const data = await response.json();
-                console.log('📥 Found data on GitHub, restoring...');
-                
-                // Check if GitHub data has more recent data than local
-                const localPackages = localStorage.getItem('adminPackages');
-                if (!localPackages || localPackages === '[]') {
-                    // Restore packages from GitHub
-                    if (data.packages && Array.isArray(data.packages)) {
-                        localStorage.setItem('adminPackages', JSON.stringify(data.packages));
-                        packages = data.packages;
-                        console.log('✅ Restored packages:', packages.length);
-                    }
-                }
-                
-                // Restore resellers from GitHub
-                if (data.resellers) {
-                    localStorage.setItem('RESELLER_ACCOUNTS', JSON.stringify(data.resellers));
-                    RESELLER_ACCOUNTS = data.resellers;
-                    console.log('✅ Restored resellers from GitHub');
-                }
-                
-                // Restore customers from GitHub
-                if (data.customers) {
-                    localStorage.setItem('adminCustomers', JSON.stringify(data.customers));
-                    console.log('✅ Restored customers:', data.customers.length);
-                }
-                
-                // Restore wallet balances
-                if (data.resellers) {
-                    Object.keys(data.resellers).forEach(resellerId => {
-                        if (data.resellers[resellerId].walletBalance !== undefined) {
-                            localStorage.setItem(`resellerWallet_${resellerId}`, data.resellers[resellerId].walletBalance);
-                        }
-                    });
-                    console.log('✅ Restored wallet balances');
-                }
-                
-                showNotification('📥 Data restored from GitHub backup!', 'success');
-                return true;
-            } catch (error) {
-                console.log('⚠️ Could not restore from GitHub, keeping local data:', error.message);
-                return false;
-            }
-        }
-        
-        // Auto-restore on load if data is empty
-        window.addEventListener('DOMContentLoaded', async function() {
-            // Check if we need to restore data
-            const hasPackages = localStorage.getItem('adminPackages');
-            const hasResellers = localStorage.getItem('RESELLER_ACCOUNTS');
-            
-            if ((!hasPackages || !hasResellers) && localStorage.getItem('githubToken')) {
-                console.log('⚠️ Data appears empty, attempting restore from GitHub...');
-                await tryRestoreFromGitHub();
-            }
-        });
-        
-        // Auto-save function to ensure data is always saved
-        function autoSaveAllData() {
-            try {
-                // Save packages
-                if (packages.length > 0) {
-                    localStorage.setItem('adminPackages', JSON.stringify(packages));
-                }
-                
-                // Save customers
-                if (typeof customers !== 'undefined' && customers.length > 0) {
-                    localStorage.setItem('adminCustomers', JSON.stringify(customers));
-                }
-                
-                console.log('✅ Auto-saved all data to localStorage');
-            } catch (error) {
-                console.error('Auto-save error:', error);
-            }
-        }
-        
-        // Auto-save every 30 seconds
-        setInterval(autoSaveAllData, 30000);
         
         // Auto-create content mappings for packages
         function autoCreatePackageMappings(packages) {
@@ -3517,7 +3400,8 @@
                     plexAdultSection: localStorage.getItem('plexAdultSection') || '',
                     tvSyncUrl: `https://raw.githubusercontent.com/${username}/${repo}/main/admin_data.json`,
                     githubUsername: username,
-                    githubRepo: repo
+                    githubRepo: repo,
+                    githubToken: token
                 };
                 
                 // Use mobile-compatible base64 encoding
@@ -3546,6 +3430,8 @@
                         } else if (checkRes.status === 404) {
                             console.log('File does not exist');
                             return null;
+                        } else if (checkRes.status === 401) {
+                            throw new Error('Error 401: Bad credentials - Token is invalid or expired');
                         } else {
                             console.log('Unexpected status:', checkRes.status);
                             const text = await checkRes.text();
@@ -3553,6 +3439,9 @@
                         }
                     } catch (e) {
                         console.log('Exception getting SHA:', e.message);
+                        if (e.message.includes('401')) {
+                            throw e; // Re-throw 401 errors
+                        }
                     }
                     return null;
                 };
@@ -3602,6 +3491,10 @@
                             
                             const errorData = await response.json().catch(() => ({}));
                             console.log('Error response:', response.status, errorData);
+                            
+                            if (response.status === 401) {
+                                throw new Error('Error 401: Bad credentials - Your GitHub token is invalid, expired, or doesn\'t have permission. Please check: 1) Token hasn\'t expired, 2) Token has "repo" scope, 3) Username and repo name are correct in settings.');
+                            }
                             
                             // Retry on 409 (conflict) or 422 (validation error)
                             // Check if it's a SHA error
@@ -8328,7 +8221,7 @@ Network: Always Streaming → Optimized for instant access`;
         // Service Worker Registration
         if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
             window.addEventListener('load', function() {
-                navigator.serviceWorker.register('service-worker.js')
+                navigator.serviceWorker.register('sw.js')
                     .then(function(registration) {
                         console.log('ServiceWorker registration successful');
                     })

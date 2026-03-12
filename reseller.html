@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>iWatch TV - Reseller Panel</title>
-    <!-- VERSION 6.2 - Reseller Panel 2025-12-05 -->
+    <!-- VERSION 7.0 - Fresh Reseller Panel 2025-03-13 -->
     <style>
         * {
             margin: 0;
@@ -79,7 +79,6 @@
             background: rgba(0, 0, 0, 0.3);
             color: #fff;
             font-size: 16px;
-            transition: all 0.3s;
         }
         
         .form-group input:focus {
@@ -98,84 +97,89 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(0, 245, 160, 0.3);
         }
         
         .login-error {
-            background: rgba(255, 0, 0, 0.2);
-            border: 1px solid rgba(255, 0, 0, 0.5);
-            color: #ff6b6b;
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            color: #f44336;
             padding: 12px;
             border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
+            margin-bottom: 15px;
             display: none;
+            text-align: center;
         }
         
         /* Main Panel */
-        .panel-container {
+        #mainPanel {
             display: none;
-            min-height: 100vh;
+            padding: 15px;
+            padding-bottom: 80px;
         }
         
         /* Header */
         .header {
             background: rgba(30, 30, 50, 0.95);
-            padding: 15px 20px;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .header-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 15px;
         }
         
-        .header-left h1 {
-            font-size: 18px;
-            color: #00F5A0;
-        }
-        
-        .header-left p {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
-        }
-        
-        .wallet-badge {
+        .header h1 {
+            font-size: 20px;
             background: linear-gradient(135deg, #00F5A0, #00D9F5);
-            color: #000;
-            padding: 10px 16px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 16px;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .logout-btn {
-            background: rgba(255, 0, 0, 0.2);
-            border: 1px solid rgba(255, 0, 0, 0.5);
-            color: #ff6b6b;
-            padding: 8px 16px;
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            color: #f44336;
+            padding: 8px 15px;
             border-radius: 8px;
             cursor: pointer;
             font-size: 12px;
-            margin-left: 10px;
         }
         
-        /* Stats Cards */
+        /* Wallet */
+        .wallet-card {
+            background: linear-gradient(135deg, #00F5A0, #00D9F5);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            color: #000;
+        }
+        
+        .wallet-label {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+        
+        .wallet-amount {
+            font-size: 32px;
+            font-weight: bold;
+        }
+        
+        /* Stats */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
-            padding: 15px;
+            margin-bottom: 20px;
         }
         
         .stat-card {
-            background: rgba(30, 30, 50, 0.8);
+            background: rgba(30, 30, 50, 0.95);
             border-radius: 12px;
             padding: 15px;
             text-align: center;
@@ -194,45 +198,41 @@
             margin-top: 5px;
         }
         
-        /* Navigation Tabs */
+        /* Navigation */
         .nav-tabs {
             display: flex;
-            background: rgba(30, 30, 50, 0.8);
-            margin: 0 15px;
-            border-radius: 12px;
-            overflow: hidden;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 5px;
         }
         
         .nav-tab {
-            flex: 1;
-            padding: 14px 10px;
-            text-align: center;
-            cursor: pointer;
+            background: rgba(30, 30, 50, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             color: rgba(255, 255, 255, 0.6);
-            font-size: 12px;
-            transition: all 0.3s;
-            border: none;
-            background: transparent;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
         .nav-tab.active {
             background: linear-gradient(135deg, #00F5A0, #00D9F5);
             color: #000;
-            font-weight: 600;
+            border: none;
         }
         
         .nav-tab svg {
-            width: 20px;
-            height: 20px;
-            display: block;
-            margin: 0 auto 4px;
+            width: 18px;
+            height: 18px;
         }
         
-        /* Content Sections */
-        .content {
-            padding: 15px;
-        }
-        
+        /* Sections */
         .section {
             display: none;
         }
@@ -241,21 +241,30 @@
             display: block;
         }
         
-        .section-title {
-            font-size: 18px;
-            color: #00F5A0;
-            margin-bottom: 15px;
+        /* Add Customer Button */
+        .add-customer-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #00F5A0, #00D9F5);
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 10px;
         }
         
-        /* Customer Cards */
+        /* Customer Card */
         .customer-card {
-            background: rgba(30, 30, 50, 0.8);
+            background: rgba(30, 30, 50, 0.95);
             border-radius: 12px;
             padding: 15px;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
@@ -273,64 +282,239 @@
         
         .customer-status {
             padding: 4px 10px;
-            border-radius: 12px;
+            border-radius: 20px;
             font-size: 11px;
             font-weight: 600;
         }
         
         .status-active {
-            background: rgba(0, 245, 160, 0.2);
-            color: #00F5A0;
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
         }
         
         .status-expired {
-            background: rgba(255, 0, 0, 0.2);
-            color: #ff6b6b;
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
         }
         
-        .status-expiring {
-            background: rgba(255, 165, 0, 0.2);
-            color: #ffa500;
-        }
-        
-        .customer-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
+        .customer-details {
             font-size: 13px;
             color: rgba(255, 255, 255, 0.7);
         }
         
+        .customer-details div {
+            margin-bottom: 5px;
+        }
+        
         .customer-actions {
             display: flex;
-            gap: 8px;
+            gap: 10px;
             margin-top: 12px;
         }
         
-        .action-btn {
-            flex: 1;
-            padding: 10px;
+        .btn {
+            padding: 10px 15px;
             border: none;
             border-radius: 8px;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            flex: 1;
         }
         
         .btn-renew {
-            background: linear-gradient(135deg, #00F5A0, #00D9F5);
-            color: #000;
+            background: #ff9800;
+            color: white;
         }
         
         .btn-edit {
-            background: rgba(255, 165, 0, 0.2);
-            color: #ffa500;
-            border: 1px solid rgba(255, 165, 0, 0.5);
+            background: #2196f3;
+            color: white;
         }
         
-        /* Add Customer Button */
-        .add-customer-btn {
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .modal.active {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: rgba(30, 30, 50, 0.98);
+            border-radius: 20px;
+            padding: 25px;
+            width: 100%;
+            max-width: 500px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-header h2 {
+            font-size: 20px;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+        }
+        
+        /* Form Elements */
+        .form-row {
+            margin-bottom: 15px;
+        }
+        
+        .form-row label {
+            display: block;
+            margin-bottom: 8px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
+        
+        .form-row input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 14px;
+        }
+        
+        /* Package Selection */
+        .package-section {
+            margin-bottom: 20px;
+        }
+        
+        .package-section h3 {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 10px;
+        }
+        
+        .package-option {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+        }
+        
+        .package-option.selected {
+            border-color: #00F5A0;
+            background: rgba(0, 245, 160, 0.1);
+        }
+        
+        .package-option.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .package-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .package-option.selected .package-checkbox {
+            background: #00F5A0;
+            border-color: #00F5A0;
+        }
+        
+        .package-info {
+            flex: 1;
+        }
+        
+        .package-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .package-price {
+            font-size: 13px;
+            color: #00F5A0;
+        }
+        
+        /* Duration */
+        .duration-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .duration-btn {
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            text-align: center;
+        }
+        
+        .duration-btn.selected {
+            background: #00F5A0;
+            color: #000;
+            border-color: #00F5A0;
+        }
+        
+        /* Total Price */
+        .total-price {
+            background: rgba(0, 245, 160, 0.1);
+            border: 2px solid #00F5A0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .total-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .total-amount {
+            font-size: 32px;
+            font-weight: bold;
+            color: #00F5A0;
+        }
+        
+        .submit-btn {
             width: 100%;
             padding: 16px;
             background: linear-gradient(135deg, #00F5A0, #00D9F5);
@@ -340,20 +524,20 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+        }
+        
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         
         /* Credit History */
         .credit-item {
-            background: rgba(30, 30, 50, 0.8);
+            background: rgba(30, 30, 50, 0.95);
             border-radius: 12px;
             padding: 15px;
             margin-bottom: 10px;
-            border-left: 4px solid #00F5A0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .credit-amount {
@@ -371,257 +555,46 @@
         .credit-note {
             font-size: 13px;
             color: rgba(255, 255, 255, 0.7);
-            margin-top: 8px;
+            margin-top: 5px;
         }
         
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 200;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .modal.active {
-            display: flex;
-        }
-        
-        .modal-content {
-            background: rgba(30, 30, 50, 0.98);
-            border-radius: 20px;
-            width: 100%;
-            max-width: 500px;
-            max-height: 90vh;
-            overflow-y: auto;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            position: sticky;
-            top: 0;
-            background: rgba(30, 30, 50, 0.98);
-        }
-        
-        .modal-title {
-            font-size: 18px;
-            color: #00F5A0;
-        }
-        
-        .modal-close {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 28px;
-            cursor: pointer;
-            padding: 0;
-            line-height: 1;
-        }
-        
-        .modal-body {
-            padding: 20px;
-        }
-        
-        /* Package Selection */
-        .package-option {
-            background: rgba(0, 0, 0, 0.3);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .package-option.selected {
-            border-color: #00F5A0;
-            background: rgba(0, 245, 160, 0.1);
-        }
-        
-        .package-name {
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-        
-        .package-price {
-            color: #00F5A0;
-            font-size: 18px;
-            font-weight: bold;
-        }
-        
-        .package-features {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
-            margin-top: 8px;
-        }
-        
-        /* Submit Button */
-        .submit-btn {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #00F5A0, #00D9F5);
-            border: none;
-            border-radius: 12px;
-            color: #000;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-        
-        .submit-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        /* Duration Selection */
-        .duration-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            margin-top: 10px;
-        }
-        
-        .duration-btn {
-            padding: 12px 8px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            color: #fff;
-            font-size: 12px;
-            cursor: pointer;
+        .empty-state {
             text-align: center;
-            transition: all 0.3s;
-        }
-        
-        .duration-btn.selected {
-            border-color: #00F5A0;
-            background: rgba(0, 245, 160, 0.1);
-        }
-        
-        /* Total Display */
-        .total-display {
-            background: rgba(0, 245, 160, 0.1);
-            border: 2px solid #00F5A0;
-            border-radius: 12px;
-            padding: 15px;
-            text-align: center;
-            margin-top: 15px;
-        }
-        
-        .total-label {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.7);
-        }
-        
-        .total-amount {
-            font-size: 28px;
-            font-weight: bold;
-            color: #00F5A0;
-        }
-        
-        .wallet-warning {
-            color: #ff6b6b;
-            font-size: 12px;
-            margin-top: 8px;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.5);
         }
         
         /* Notification */
         .notification {
             position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            padding: 16px;
-            border-radius: 12px;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: rgba(30, 30, 50, 0.98);
+            border: 1px solid #00F5A0;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            z-index: 2000;
+            transition: transform 0.3s;
             text-align: center;
-            font-weight: 600;
-            z-index: 300;
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all 0.3s;
+            max-width: 90%;
         }
         
         .notification.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
-        
-        .notification.success {
-            background: rgba(0, 245, 160, 0.9);
-            color: #000;
+            transform: translateX(-50%) translateY(0);
         }
         
         .notification.error {
-            background: rgba(255, 0, 0, 0.9);
-            color: #fff;
+            border-color: #f44336;
+            background: rgba(244, 67, 54, 0.2);
         }
         
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: rgba(255, 255, 255, 0.5);
-        }
-        
-        .empty-state svg {
-            width: 60px;
-            height: 60px;
-            margin-bottom: 15px;
-            opacity: 0.3;
-        }
-        
-        /* Loading */
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-        }
-        
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            border-top-color: #00F5A0;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        /* Responsive */
-        @media (max-width: 400px) {
-            .stats-grid {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 8px;
-            }
-            
-            .stat-number {
-                font-size: 18px;
-            }
-            
-            .wallet-badge {
-                font-size: 14px;
-                padding: 8px 12px;
-            }
-            
-            .duration-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        /* Error messages */
+        .error-msg {
+            color: #f44336;
+            font-size: 12px;
+            margin-top: 5px;
         }
     </style>
 </head>
@@ -655,42 +628,26 @@
                     <label>Username</label>
                     <input type="text" id="loginUsername" placeholder="Enter username" required>
                 </div>
-                
                 <div class="form-group">
                     <label>Password</label>
                     <input type="password" id="loginPassword" placeholder="Enter password" required>
                 </div>
-                
                 <button type="submit" class="login-btn">Login</button>
             </form>
         </div>
     </div>
-    
+
     <!-- Main Panel -->
-    <div class="panel-container" id="mainPanel">
+    <div id="mainPanel">
         <!-- Header -->
         <div class="header">
-            <div class="header-left" style="display: flex; align-items: center; gap: 12px;">
-                <svg width="40" height="40" viewBox="0 0 100 100">
-                    <defs>
-                        <linearGradient id="headerLogoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style="stop-color:#00F5A0"/>
-                            <stop offset="100%" style="stop-color:#00D9F5"/>
-                        </linearGradient>
-                    </defs>
-                    <circle cx="50" cy="50" r="45" fill="url(#headerLogoGradient)" opacity="0.3"/>
-                    <path d="M35 30 L35 70 L70 50 Z" fill="url(#headerLogoGradient)"/>
-                </svg>
-                <div>
-                    <h1>iWatch TV</h1>
-                    <p id="resellerName">Reseller Panel</p>
-                </div>
-            </div>
-            <div style="display: flex; align-items: center;">
-                <!-- Settings button - click wallet 3 times to show/hide -->
-                <button class="logout-btn" onclick="showTokenSettings()" id="settingsBtn" style="margin-right: 8px; background: #00D9F5; color: #0D1117; display: none;">Settings</button>
-                <div class="wallet-badge" id="walletBalance" onclick="toggleSettingsVisibility()" title="Click 3 times to show/hide Settings">$0.00</div>
+            <div class="header-top">
+                <h1>iWatch TV</h1>
                 <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+            <div class="wallet-card">
+                <div class="wallet-label">Wallet Balance</div>
+                <div class="wallet-amount">$<span id="walletBalance">0.00</span></div>
             </div>
         </div>
         
@@ -721,247 +678,190 @@
                 </svg>
                 Customers
             </button>
-            <button class="nav-tab" onclick="showTab('packages')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                </svg>
-                Packages
-            </button>
             <button class="nav-tab" onclick="showTab('credits')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-                    <line x1="1" y1="10" x2="23" y2="10"/>
+                    <line x1="12" y1="1" x2="12" y2="23"/>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                 </svg>
                 Credits
             </button>
         </div>
         
-        <!-- Content -->
-        <div class="content">
-            <!-- Customers Section -->
-            <div class="section active" id="customersSection">
-                <button class="add-customer-btn" onclick="showAddCustomerModal()">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="12" y1="5" x2="12" y2="19"/>
-                        <line x1="5" y1="12" x2="19" y2="12"/>
-                    </svg>
-                    Add New Customer
-                </button>
-                
-                <div id="customersList">
-                    <div class="loading">
-                        <div class="spinner"></div>
-                    </div>
+        <!-- Customers Section -->
+        <div class="section active" id="customersSection">
+            <button class="add-customer-btn" onclick="openAddCustomerModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Add New Customer
+            </button>
+            
+            <div id="customersList">
+                <div class="empty-state">
+                    <p>No customers yet</p>
                 </div>
             </div>
-            
-            <!-- Packages Section -->
-            <div class="section" id="packagesSection">
-                <h2 class="section-title">Available Packages</h2>
-                <div id="packagesList">
-                    <div class="loading">
-                        <div class="spinner"></div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Credits Section -->
-            <div class="section" id="creditsSection">
-                <h2 class="section-title">Credit History</h2>
-                <div id="creditsList">
-                    <div class="loading">
-                        <div class="spinner"></div>
-                    </div>
+        </div>
+        
+        <!-- Credits Section -->
+        <div class="section" id="creditsSection">
+            <div id="creditsList">
+                <div class="empty-state">
+                    <p>No credit history</p>
+                    <p style="font-size: 12px; margin-top: 5px;">Credits from admin will appear here</p>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Token Settings Modal (Hidden - Admin Only) -->
-    <div class="modal" id="tokenModal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Token Settings</h3>
-                <button class="modal-close" onclick="closeTokenModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p style="margin-bottom: 15px; color: rgba(255,255,255,0.7);">
-                    Enter GitHub token for saving customers. This is hidden from reseller.
-                </p>
-                <div class="form-group">
-                    <label>GitHub Token</label>
-                    <input type="password" id="resellerGitHubToken" placeholder="ghp_xxxxxxxxxxxx">
-                </div>
-                <button type="button" class="btn-primary" onclick="saveResellerToken()" style="width: 100%;">Save Token</button>
-            </div>
-        </div>
-    </div>
-    
+
     <!-- Add/Edit Customer Modal -->
     <div class="modal" id="customerModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title" id="modalTitle">Add New Customer</h3>
+                <h2 id="modalTitle">Add New Customer</h2>
                 <button class="modal-close" onclick="closeModal()">&times;</button>
             </div>
-            <div class="modal-body">
-                <form id="customerForm">
-                    <input type="hidden" id="customerId">
-                    <input type="hidden" id="editMode" value="false">
+            
+            <form id="customerForm">
+                <input type="hidden" id="editMode" value="false">
+                <input type="hidden" id="customerId" value="">
+                
+                <div class="form-row">
+                    <label>Customer Name *</label>
+                    <input type="text" id="customerName" required>
+                </div>
+                
+                <div class="form-row">
+                    <label>Username *</label>
+                    <input type="text" id="customerUsername" required>
+                </div>
+                
+                <div class="form-row">
+                    <label>Password *</label>
+                    <input type="text" id="customerPassword" required>
+                </div>
+                
+                <div class="form-row">
+                    <label>Phone (optional)</label>
+                    <input type="tel" id="customerPhone">
+                </div>
+                
+                <!-- Package Selection -->
+                <div class="package-section" id="packageSelection" style="display: none;">
+                    <h3>Select Packages *</h3>
                     
-                    <div class="form-group">
-                        <label>Customer Name *</label>
-                        <input type="text" id="customerName" placeholder="Full name" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Username *</label>
-                        <input type="text" id="customerUsername" placeholder="Login username" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Password *</label>
-                        <input type="password" id="customerPassword" placeholder="Login password" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Phone</label>
-                        <input type="tel" id="customerPhone" placeholder="Phone number">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Email (Optional)</label>
-                        <input type="email" id="customerEmail" placeholder="Email address (optional)">
-                    </div>
-                    
-                    <!-- Device Selection - MANDATORY ORDER (like admin panel) -->
-                    <div class="form-group" id="deviceSelection">
-                        <label>📺 Device Selection * - MANDATORY ORDER</label>
-                        <div id="deviceSelectionBox" style="background: rgba(255,255,255,0.05); border: 2px solid rgba(244,67,54,0.4); border-radius: 12px; padding: 15px; margin-top: 10px;">
-                            <div style="font-size: 12px; color: #ff9800; margin-bottom: 12px; background: rgba(255,152,0,0.15); padding: 8px; border-radius: 6px;">
-                                ⚠️ MANDATORY: Select Basic TV Package FIRST before any other devices!
-                            </div>
-                            
-                            <!-- Basic TV - Always available -->
-                            <label style="display: flex; align-items: center; cursor: pointer; margin-bottom: 10px; padding: 10px; background: rgba(76,175,80,0.15); border-radius: 6px; border: 2px solid #4caf50;">
-                                <input type="checkbox" name="customerDevices" value="basicTV" id="basicTVCheckbox" style="margin-right: 10px; transform: scale(1.2);" onchange="updateResellerDeviceSelection()">
-                                <span style="color: #4caf50; font-weight: 600;">📺 Basic TV Package</span>
-                            </label>
-                            
-                            <!-- 2nd TV - Locked until Basic TV selected -->
-                            <label style="display: flex; align-items: center; cursor: not-allowed; margin-bottom: 10px; padding: 10px; border-radius: 6px; opacity: 0.5;" id="secondTVLabelContainer">
-                                <input type="checkbox" name="customerDevices" value="secondTV" id="secondTVCheckbox" style="margin-right: 10px; transform: scale(1.2);" onchange="updateResellerDeviceSelection()" disabled>
-                                <span id="secondTVLabel" style="color: rgba(255,255,255,0.3);">🔒 2nd TV - Select Basic TV First</span>
-                            </label>
-                            
-                            <!-- 3rd TV - Locked until 2nd TV selected -->
-                            <label style="display: flex; align-items: center; cursor: not-allowed; padding: 10px; border-radius: 6px; opacity: 0.5;" id="thirdTVLabelContainer">
-                                <input type="checkbox" name="customerDevices" value="thirdTV" id="thirdTVCheckbox" style="margin-right: 10px; transform: scale(1.2);" onchange="updateResellerDeviceSelection()" disabled>
-                                <span id="thirdTVLabel" style="color: rgba(255,255,255,0.3);">🔒 3rd TV - Select 2nd TV First</span>
-                            </label>
-                        </div>
-                        <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 8px;">
-                            📋 Order: Basic TV → 2nd TV → 3rd TV
+                    <!-- Basic TV - Required First -->
+                    <div class="package-option" id="basicTVOption" onclick="togglePackage('basic')">
+                        <div class="package-checkbox">✓</div>
+                        <div class="package-info">
+                            <div class="package-name">📺 Basic TV Package</div>
+                            <div class="package-price" id="basicPrice">$25/month</div>
                         </div>
                     </div>
                     
-                    <!-- Addon Selection -->
-                    <div class="form-group" id="addonSelection">
-                        <label>🎯 Additional Addons (After Basic TV Selection)</label>
-                        <div id="addonSelectionBox" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 12px; margin-top: 8px;">
-                            <div id="addonStatusMessage" style="background: rgba(255,193,7,0.2); border: 1px solid rgba(255,193,7,0.4); border-radius: 6px; padding: 8px; margin-bottom: 10px; color: #ffc107; font-size: 12px; text-align: center;">
-                                🔒 Addons are LOCKED - Select Basic TV Package First
-                            </div>
-                            
-                            <!-- Sports Addon -->
-                            <label id="sportsAddonContainer" style="display: flex; align-items: center; cursor: not-allowed; margin-bottom: 8px; opacity: 0.5;">
-                                <input type="checkbox" name="customerAddons" value="sports" id="sportsAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="calculateTotal()" disabled>
-                                <span id="sportsAddonLabelText" style="color: rgba(255,255,255,0.3);">🔒 Sports Package - LOCKED</span>
-                            </label>
-                            
-                            <!-- Movies Addon -->
-                            <label id="moviesAddonContainer" style="display: flex; align-items: center; cursor: not-allowed; margin-bottom: 8px; opacity: 0.5;">
-                                <input type="checkbox" name="customerAddons" value="movies" id="moviesAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="calculateTotal()" disabled>
-                                <span id="moviesAddonLabelText" style="color: rgba(255,255,255,0.3);">🔒 Movies Package - LOCKED</span>
-                            </label>
-                            
-                            <!-- Adult Addon -->
-                            <label id="adultAddonContainer" style="display: flex; align-items: center; cursor: not-allowed; opacity: 0.5;">
-                                <input type="checkbox" name="customerAddons" value="adult" id="adultAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="calculateTotal()" disabled>
-                                <span id="adultAddonLabelText" style="color: rgba(255,255,255,0.3);">🔞 Adult Content - LOCKED</span>
-                            </label>
+                    <!-- Second TV -->
+                    <div class="package-option disabled" id="secondTVOption" onclick="togglePackage('second')">
+                        <div class="package-checkbox">✓</div>
+                        <div class="package-info">
+                            <div class="package-name">📱 2nd TV</div>
+                            <div class="package-price" id="secondTVPrice">+$15/month</div>
                         </div>
                     </div>
                     
-                    <div class="form-group" id="packageSelection">
-                        <label>Select Packages * (Click to select multiple)</label>
-                        <div id="packagesOptions"></div>
-                        <button type="button" class="clear-btn" onclick="clearPackageSelection()" style="margin-top: 10px; padding: 8px 16px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; cursor: pointer;">Clear Selection</button>
-                    </div>
-                    
-                    <div class="form-group" id="durationSelection">
-                        <label>Duration</label>
-                        <div class="duration-grid">
-                            <button type="button" class="duration-btn selected" data-months="1">1 Month</button>
-                            <button type="button" class="duration-btn" data-months="3">3 Months</button>
-                            <button type="button" class="duration-btn" data-months="6">6 Months</button>
-                            <button type="button" class="duration-btn" data-months="12">12 Months</button>
+                    <!-- Third TV -->
+                    <div class="package-option disabled" id="thirdTVOption" onclick="togglePackage('third')">
+                        <div class="package-checkbox">✓</div>
+                        <div class="package-info">
+                            <div class="package-name">📱 3rd TV</div>
+                            <div class="package-price" id="thirdTVPrice">+$10/month</div>
                         </div>
                     </div>
                     
-                    <div class="total-display" id="totalDisplay">
-                        <div class="total-label">Total Cost</div>
-                        <div class="total-amount" id="totalAmount">$0.00</div>
-                        <div class="wallet-warning" id="walletWarning" style="display: none;">
-                            Insufficient wallet balance!
+                    <!-- Sports -->
+                    <div class="package-option disabled" id="sportsOption" onclick="togglePackage('sports')">
+                        <div class="package-checkbox">✓</div>
+                        <div class="package-info">
+                            <div class="package-name">⚽ Sports Package</div>
+                            <div class="package-price" id="sportsPrice">+$8/month</div>
                         </div>
                     </div>
                     
-                    <button type="submit" class="submit-btn" id="submitBtn">Create Customer</button>
-                </form>
-            </div>
+                    <!-- Movies -->
+                    <div class="package-option disabled" id="moviesOption" onclick="togglePackage('movies')">
+                        <div class="package-checkbox">✓</div>
+                        <div class="package-info">
+                            <div class="package-name">🎬 Movies Package</div>
+                            <div class="package-price" id="moviesPrice">+$8/month</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Adult -->
+                    <div class="package-option disabled" id="adultOption" onclick="togglePackage('adult')">
+                        <div class="package-checkbox">✓</div>
+                        <div class="package-info">
+                            <div class="package-name">🔞 Adult Package</div>
+                            <div class="package-price" id="adultPrice">+$0/month</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Duration -->
+                <div class="form-row">
+                    <label>Subscription Duration *</label>
+                    <div class="duration-options">
+                        <div class="duration-btn selected" data-months="1" onclick="selectDuration(1)">1 Month</div>
+                        <div class="duration-btn" data-months="3" onclick="selectDuration(3)">3 Months</div>
+                        <div class="duration-btn" data-months="6" onclick="selectDuration(6)">6 Months</div>
+                        <div class="duration-btn" data-months="12" onclick="selectDuration(12)">12 Months</div>
+                    </div>
+                </div>
+                
+                <!-- Total Price -->
+                <div class="total-price">
+                    <div class="total-label">Total Price</div>
+                    <div class="total-amount" id="totalAmount">$0.00</div>
+                </div>
+                
+                <button type="submit" class="submit-btn" id="submitBtn">Create Customer</button>
+            </form>
         </div>
     </div>
     
-    <!-- Renew Modal -->
     <!-- Renew Modal -->
     <div class="modal" id="renewModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">Renew Subscription</h3>
+                <h2>Renew Customer</h2>
                 <button class="modal-close" onclick="closeRenewModal()">&times;</button>
             </div>
-            <div class="modal-body">
-                <input type="hidden" id="renewCustomerId">
-                
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <div style="font-size: 16px; color: rgba(255,255,255,0.7);">Renewing for</div>
-                    <div style="font-size: 22px; font-weight: bold; color: #00F5A0;" id="renewCustomerName">Customer</div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Duration</label>
-                    <div class="duration-grid" id="renewDurationGrid">
-                        <button type="button" class="duration-btn selected" data-months="1" onclick="selectRenewDuration(this, 1)">1 Month</button>
-                        <button type="button" class="duration-btn" data-months="3" onclick="selectRenewDuration(this, 3)">3 Months</button>
-                        <button type="button" class="duration-btn" data-months="6" onclick="selectRenewDuration(this, 6)">6 Months</button>
-                        <button type="button" class="duration-btn" data-months="12" onclick="selectRenewDuration(this, 12)">12 Months</button>
-                    </div>
-                </div>
-                
-                <div class="total-display">
-                    <div class="total-label">Renewal Cost</div>
-                    <div class="total-amount" id="renewTotalAmount">$0.00</div>
-                    <div class="wallet-warning" id="renewWalletWarning" style="display: none;">
-                        Insufficient wallet balance!
-                    </div>
-                </div>
-                
-                <button class="submit-btn" id="renewSubmitBtn" onclick="processRenewal()">Renew Now</button>
+            
+            <div class="customer-details" id="renewCustomerDetails" style="margin-bottom: 20px;"></div>
+            
+            <div class="form-row">
+                <label>Select Packages to Renew</label>
+                <div id="renewPackageSelection"></div>
             </div>
+            
+            <div class="form-row">
+                <label>Duration *</label>
+                <div class="duration-options">
+                    <div class="duration-btn selected" data-months="1" onclick="selectRenewDuration(1)">1 Month</div>
+                    <div class="duration-btn" data-months="3" onclick="selectRenewDuration(3)">3 Months</div>
+                    <div class="duration-btn" data-months="6" onclick="selectRenewDuration(6)">6 Months</div>
+                    <div class="duration-btn" data-months="12" onclick="selectRenewDuration(12)">12 Months</div>
+                </div>
+            </div>
+            
+            <div class="total-price">
+                <div class="total-label">Renewal Price</div>
+                <div class="total-amount" id="renewTotalAmount">$0.00</div>
+            </div>
+            
+            <button class="submit-btn" onclick="processRenewal()">Renew Now</button>
         </div>
     </div>
-    
+
     <!-- Notification -->
     <div class="notification" id="notification"></div>
 
@@ -972,19 +872,38 @@
         const GITHUB_DATA_URL = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${GITHUB_REPO}/main/admin_data.json`;
         const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/admin_data.json`;
         
-        // Token retrieved from localStorage (set by admin) or from admin_data.json
-        let GITHUB_TOKEN = localStorage.getItem('resellerGithubToken') || '';
-        
         // State
+        let GITHUB_TOKEN = '';
         let currentReseller = null;
         let packages = [];
         let customers = [];
-        let selectedPackages = [];
-        let selectedDuration = 1;
-        let renewSelectedDuration = 1;
         let walletBalance = 0;
         let creditHistory = [];
         let adminData = null;
+        
+        // Package prices (loaded from admin)
+        let packagePrices = {
+            basic: 25,
+            secondTV: 15,
+            thirdTV: 10,
+            sports: 8,
+            movies: 8,
+            adult: 0
+        };
+        
+        // Selected packages for customer creation
+        let selectedPackages = {
+            basic: false,
+            second: false,
+            third: false,
+            sports: false,
+            movies: false,
+            adult: false
+        };
+        
+        let selectedDuration = 1;
+        let renewDuration = 1;
+        let renewCustomerId = null;
         
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
@@ -1004,16 +923,6 @@
             
             // Customer form
             document.getElementById('customerForm').addEventListener('submit', handleCustomerSubmit);
-            
-            // Duration buttons
-            document.querySelectorAll('#durationSelection .duration-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('#durationSelection .duration-btn').forEach(b => b.classList.remove('selected'));
-                    this.classList.add('selected');
-                    selectedDuration = parseInt(this.dataset.months);
-                    calculateTotal();
-                });
-            });
         });
         
         // Login Handler
@@ -1025,97 +934,36 @@
             document.getElementById('loginError').style.display = 'none';
             
             try {
-                // Fetch admin data from GitHub
-                console.log('=== LOGIN DEBUG START ===');
-                console.log('Attempting login with username:', username);
-                
                 const response = await fetch(GITHUB_DATA_URL + '?t=' + Date.now());
-                console.log('GitHub fetch response status:', response.status);
-                
-                if (!response.ok) {
-                    console.error('Failed to fetch data, status:', response.status);
-                    throw new Error('Failed to fetch data');
-                }
+                if (!response.ok) throw new Error('Failed to fetch data');
                 
                 adminData = await response.json();
-                console.log('Admin data received, keys:', Object.keys(adminData));
                 
-                // Check if resellers object exists
-                if (!adminData.resellers) {
-                    console.error('NO resellers object in adminData!');
-                    document.getElementById('loginError').textContent = 'No resellers found in data. Please contact admin.';
-                    document.getElementById('loginError').style.display = 'block';
-                    return;
+                // Get GitHub token from admin_data if available
+                if (adminData.githubToken) {
+                    GITHUB_TOKEN = adminData.githubToken;
+                    localStorage.setItem('resellerGithubToken', GITHUB_TOKEN);
                 }
                 
-                console.log('Resellers object exists, keys:', Object.keys(adminData.resellers));
-                
-                // Check reseller credentials - search through all resellers by username property
-                const resellers = adminData.resellers;
-                let reseller = null;
-                let resellerId = null;
-                
-                // Search through all resellers to find matching username
-                for (const [id, data] of Object.entries(resellers)) {
-                    console.log('Checking reseller ID:', id, '| username:', data.username, '| password exists:', !!data.password);
-                    if (data.username === username) {
-                        reseller = data;
-                        resellerId = id;
-                        console.log('FOUND MATCHING RESELLER!');
-                        break;
-                    }
-                }
-                
-                if (!reseller) {
-                    console.log('=== LOGIN DEBUG END ===');
-                    console.log('ERROR: No reseller found with username:', username);
-                    document.getElementById('loginError').textContent = 'Invalid username or password';
-                    document.getElementById('loginError').style.display = 'block';
-                    return;
-                }
-                
-                console.log('Reseller found, checking credentials...');
-                console.log('Stored password:', reseller.password);
-                console.log('Entered password:', password);
-                console.log('Password match:', reseller.password === password);
-                console.log('Reseller status:', reseller.status);
+                // Check reseller credentials
+                const resellers = adminData.resellers || {};
+                const reseller = resellers[username];
                 
                 if (reseller && reseller.password === password && reseller.status === 'active') {
-                    console.log('Login successful!');
                     currentReseller = {
-                        id: resellerId,
+                        id: username,
                         name: reseller.name || username,
                         ...reseller
                     };
                     localStorage.setItem('currentReseller', JSON.stringify(currentReseller));
                     showMainPanel();
                 } else {
-                    console.log('Login failed - password mismatch or inactive status');
-                    document.getElementById('loginError').textContent = 'Invalid username or password';
                     document.getElementById('loginError').style.display = 'block';
                 }
-                console.log('=== LOGIN DEBUG END ===');
             } catch (error) {
                 console.error('Login error:', error);
                 document.getElementById('loginError').textContent = 'Connection error. Please try again.';
                 document.getElementById('loginError').style.display = 'block';
-            }
-        }
-        
-        // Load adminData from localStorage backup
-        function loadFromLocalStorageBackup() {
-            try {
-                const savedData = localStorage.getItem('resellerAdminData');
-                if (savedData) {
-                    adminData = JSON.parse(savedData);
-                    console.log('✅ Loaded adminData from localStorage backup');
-                    showNotification('📥 Loaded data from local backup', 'info');
-                } else {
-                    console.log('⚠️ No localStorage backup found');
-                    showNotification('⚠️ No data available. Please check internet connection.', 'error');
-                }
-            } catch (error) {
-                console.error('❌ Error loading from localStorage:', error);
             }
         }
         
@@ -1130,49 +978,31 @@
         // Load Data
         async function loadData() {
             try {
-                // Try to fetch from GitHub first
                 const response = await fetch(GITHUB_DATA_URL + '?t=' + Date.now());
+                if (!response.ok) throw new Error('Failed to fetch data');
                 
-                if (response.ok) {
-                    adminData = await response.json();
-                    console.log('=== RESELLER LOGIN DEBUG ===');
-                    console.log('adminData keys:', Object.keys(adminData));
-                    console.log('Has resellerGithubToken:', 'resellerGithubToken' in adminData);
-                    
-                    // Save to localStorage as backup after loading from GitHub
-                    saveAdminDataToLocalStorage();
+                adminData = await response.json();
+                
+                // Get GitHub token
+                if (adminData.githubToken) {
+                    GITHUB_TOKEN = adminData.githubToken;
                 } else {
-                    // GitHub failed, try to load from localStorage
-                    console.log('⚠️ GitHub fetch failed, trying localStorage backup...');
-                    loadFromLocalStorageBackup();
+                    GITHUB_TOKEN = localStorage.getItem('resellerGithubToken') || '';
                 }
                 
-                // Continue with data loading...
-                console.log('Has resellerGithubToken:', 'resellerGithubToken' in adminData);
-                console.log('resellerGithubToken value:', adminData.resellerGithubToken ? 'exists' : 'missing');
-                
-                // Get reseller GitHub token from admin_data (for saving customers)
-                if (adminData.resellerGithubToken && !GITHUB_TOKEN) {
-                    GITHUB_TOKEN = adminData.resellerGithubToken;
-                    localStorage.setItem('resellerGithubToken', GITHUB_TOKEN);
-                    console.log('Token set from adminData');
-                } else {
-                    console.log('Token NOT set - checking conditions:');
-                    console.log('  - resellerGithubToken in adminData:', !!adminData.resellerGithubToken);
-                    console.log('  - GITHUB_TOKEN currently:', GITHUB_TOKEN ? 'exists' : 'empty');
-                }
+                // Get package prices from admin
+                loadPackagePrices();
                 
                 // Get reseller's wallet balance
                 const reseller = adminData.resellers?.[currentReseller.id];
                 walletBalance = parseFloat(reseller?.walletBalance || 0);
-                document.getElementById('walletBalance').textContent = '$' + walletBalance.toFixed(2);
+                document.getElementById('walletBalance').textContent = walletBalance.toFixed(2);
                 
                 // Get credit history
                 creditHistory = (adminData.creditTransfers || []).filter(t => t.resellerId === currentReseller.id);
                 
                 // Get packages
                 packages = adminData.packages || [];
-                console.log('Loaded packages:', packages.map(p => p.name + ' (requires: ' + (p.requiresPackage || 'none') + ')'));
                 
                 // Get customers for this reseller
                 customers = (adminData.customers || []).filter(c => c.resellerId === currentReseller.id);
@@ -1180,14 +1010,39 @@
                 // Update UI
                 updateStats();
                 renderCustomers();
-                renderPackages();
                 renderCredits();
                 
             } catch (error) {
                 console.error('Load data error:', error);
-                // Try to load from localStorage as fallback
-                loadFromLocalStorageBackup();
+                showNotification('Failed to load data', 'error');
             }
+        }
+        
+        // Load package prices from admin data
+        function loadPackagePrices() {
+            // Try to get prices from admin packages
+            if (adminData.packages && adminData.packages.length > 0) {
+                const firstPkg = adminData.packages[0];
+                packagePrices.basic = firstPkg.price || 25;
+                packagePrices.secondTV = firstPkg.secondTVPrice || 15;
+                packagePrices.thirdTV = firstPkg.thirdTVPrice || 10;
+                packagePrices.sports = firstPkg.sportsPrice || 8;
+                packagePrices.movies = firstPkg.moviesPrice || 8;
+                
+                // Get adult price from adult packages
+                const adultPkg = adminData.packages.find(p => p.isAdult || p.name.toLowerCase().includes('adult'));
+                if (adultPkg) {
+                    packagePrices.adult = adultPkg.adultPackagePrice || 0;
+                }
+            }
+            
+            // Update UI with prices
+            document.getElementById('basicPrice').textContent = '$' + packagePrices.basic + '/month';
+            document.getElementById('secondTVPrice').textContent = '+$' + packagePrices.secondTV + '/month';
+            document.getElementById('thirdTVPrice').textContent = '+$' + packagePrices.thirdTV + '/month';
+            document.getElementById('sportsPrice').textContent = '+$' + packagePrices.sports + '/month';
+            document.getElementById('moviesPrice').textContent = '+$' + packagePrices.movies + '/month';
+            document.getElementById('adultPrice').textContent = '+$' + packagePrices.adult + '/month';
         }
         
         // Update Stats
@@ -1201,7 +1056,7 @@
             // Calculate total sales
             let totalSales = 0;
             customers.forEach(c => {
-                if (c.packagePrice) totalSales += parseFloat(c.packagePrice);
+                if (c.totalPrice) totalSales += parseFloat(c.totalPrice);
             });
             document.getElementById('totalSales').textContent = '$' + totalSales.toFixed(0);
         }
@@ -1211,77 +1066,37 @@
             const container = document.getElementById('customersList');
             
             if (customers.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                        </svg>
-                        <p>No customers yet</p>
-                        <p style="font-size: 12px; margin-top: 5px;">Click "Add New Customer" to get started</p>
-                    </div>
-                `;
+                container.innerHTML = '<div class="empty-state"><p>No customers yet</p></div>';
                 return;
             }
             
             const now = new Date();
+            
             container.innerHTML = customers.map(customer => {
-                const expiry = new Date(customer.expiryDate);
-                const daysLeft = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
-                
-                let statusClass = 'status-active';
-                let statusText = 'Active';
-                
-                if (daysLeft <= 0) {
-                    statusClass = 'status-expired';
-                    statusText = 'Expired';
-                } else if (daysLeft <= 7) {
-                    statusClass = 'status-expiring';
-                    statusText = daysLeft + ' days left';
-                }
+                const expiryDate = new Date(customer.expiryDate);
+                const isActive = expiryDate > now;
                 
                 return `
                     <div class="customer-card">
                         <div class="customer-header">
                             <div class="customer-name">${customer.name}</div>
-                            <span class="customer-status ${statusClass}">${statusText}</span>
+                            <div class="customer-status ${isActive ? 'status-active' : 'status-expired'}">
+                                ${isActive ? 'Active' : 'Expired'}
+                            </div>
                         </div>
-                        <div class="customer-info">
-                            <div>Username: ${customer.username}</div>
-                            <div>Packages: ${customer.packageName || 'Basic'}</div>
-                            <div>Price: $${parseFloat(customer.packagePrice || 0).toFixed(2)}/month</div>
-                            <div>Phone: ${customer.phone || '-'}</div>
-                            <div>Expiry: ${expiry.toLocaleDateString()}</div>
+                        <div class="customer-details">
+                            <div>📦 ${customer.plan || 'N/A'}</div>
+                            <div>💰 $${customer.totalPrice || '0'} (${customer.duration || '1 month'})</div>
+                            <div>📅 Expires: ${expiryDate.toLocaleDateString()}</div>
+                            <div>👤 ${customer.username}</div>
                         </div>
                         <div class="customer-actions">
-                            <button class="action-btn btn-renew" onclick="showRenewModal('${customer.id}')">Renew</button>
-                            <button class="action-btn btn-edit" onclick="editCustomer('${customer.id}')">Edit</button>
+                            <button class="btn btn-renew" onclick="showRenewModal('${customer.id}')">Renew</button>
+                            <button class="btn btn-edit" onclick="editCustomer('${customer.id}')">Edit</button>
                         </div>
                     </div>
                 `;
             }).join('');
-        }
-        
-        // Render Packages
-        function renderPackages() {
-            const container = document.getElementById('packagesList');
-            
-            if (packages.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <p>No packages available</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            container.innerHTML = packages.map(pkg => `
-                <div class="package-option" style="margin-bottom: 12px;">
-                    <div class="package-name">${pkg.name}</div>
-                    <div class="package-price">$${parseFloat(pkg.price || 0).toFixed(2)}/month</div>
-                    <div class="package-features">${pkg.features || pkg.description || ''}</div>
-                </div>
-            `).join('');
         }
         
         // Render Credits
@@ -1289,27 +1104,17 @@
             const container = document.getElementById('creditsList');
             
             if (creditHistory.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-                            <line x1="1" y1="10" x2="23" y2="10"/>
-                        </svg>
-                        <p>No credit history</p>
-                        <p style="font-size: 12px; margin-top: 5px;">Credits from admin will appear here</p>
-                    </div>
-                `;
+                container.innerHTML = '<div class="empty-state"><p>No credit history</p><p style="font-size: 12px; margin-top: 5px;">Credits from admin will appear here</p></div>';
                 return;
             }
             
-            // Sort by date descending
             const sorted = [...creditHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
             
             container.innerHTML = sorted.map(credit => {
                 const date = new Date(credit.date);
                 return `
                     <div class="credit-item">
-                        <div class="credit-amount">+$${parseFloat(credit.amount).toFixed(2)}</div>
+                        <div class="credit-amount">${credit.amount >= 0 ? '+' : ''}$${parseFloat(credit.amount).toFixed(2)}</div>
                         <div class="credit-date">${date.toLocaleDateString()} ${date.toLocaleTimeString()}</div>
                         ${credit.note ? `<div class="credit-note">${credit.note}</div>` : ''}
                     </div>
@@ -1326,744 +1131,246 @@
             document.getElementById(tabName + 'Section').classList.add('active');
         }
         
-        // Show Add Customer Modal
-        function showAddCustomerModal() {
+        // Open Add Customer Modal
+        function openAddCustomerModal() {
             document.getElementById('modalTitle').textContent = 'Add New Customer';
             document.getElementById('editMode').value = 'false';
             document.getElementById('customerId').value = '';
             document.getElementById('customerForm').reset();
             document.getElementById('submitBtn').textContent = 'Create Customer';
+            document.getElementById('packageSelection').style.display = 'block';
             
-            // Show device and addon selection (new sections)
-            const deviceSelection = document.getElementById('deviceSelection');
-            const addonSelection = document.getElementById('addonSelection');
-            const packageSelection = document.getElementById('packageSelection');
-            
-            if (deviceSelection) deviceSelection.style.display = 'block';
-            if (addonSelection) addonSelection.style.display = 'block';
-            if (packageSelection) packageSelection.style.display = 'block';
-            
-            document.getElementById('durationSelection').style.display = 'block';
-            document.getElementById('totalDisplay').style.display = 'block';
-            
-            // Initialize device selection (Basic TV starts enabled, others locked)
-            setTimeout(() => {
-                updateResellerDeviceSelection();
-                calculateTotal();
-            }, 100);
-            
-            // Render package options
-            renderPackageOptions();
-            
-            // Clear selected packages
-            selectedPackages = [];
+            // Reset packages
+            selectedPackages = {
+                basic: false,
+                second: false,
+                third: false,
+                sports: false,
+                movies: false,
+                adult: false
+            };
             selectedDuration = 1;
-            document.querySelectorAll('#durationSelection .duration-btn').forEach((b, i) => {
-                b.classList.toggle('selected', i === 0);
+            
+            // Reset UI
+            document.querySelectorAll('.package-option').forEach(el => {
+                el.classList.remove('selected');
+                el.classList.add('disabled');
+            });
+            document.querySelectorAll('.duration-btn').forEach((btn, i) => {
+                btn.classList.toggle('selected', i === 0);
             });
             
-            calculateTotal();
-            
+            updateTotalPrice();
             document.getElementById('customerModal').classList.add('active');
         }
         
-        // Device Selection Logic (matches admin panel)
-        function updateResellerDeviceSelection() {
-            const basicTV = document.getElementById('basicTVCheckbox');
-            const secondTV = document.getElementById('secondTVCheckbox');
-            const thirdTV = document.getElementById('thirdTVCheckbox');
-            const secondTVLabel = document.getElementById('secondTVLabel');
-            const thirdTVLabel = document.getElementById('thirdTVLabel');
-            const secondTVLabelContainer = document.getElementById('secondTVLabelContainer');
-            const thirdTVLabelContainer = document.getElementById('thirdTVLabelContainer');
+        // Toggle Package
+        function togglePackage(type) {
+            const option = document.getElementById(type + 'TVOption') || document.getElementById(type + 'Option');
             
-            // Return early if elements don't exist
-            if (!basicTV || !secondTV || !thirdTV) {
-                return;
+            if (option.classList.contains('disabled')) {
+                return; // Can't select disabled packages
             }
             
-            // Enable/disable 2nd TV based on Basic TV selection
-            if (!basicTV.checked) {
-                secondTV.disabled = true;
-                secondTV.checked = false;
-                if (secondTVLabel) {
-                    secondTVLabel.textContent = '🔒 2nd TV - Select Basic TV First';
-                    secondTVLabel.style.color = 'rgba(255,255,255,0.3)';
-                }
-                if (secondTVLabelContainer) {
-                    secondTVLabelContainer.style.cursor = 'not-allowed';
-                    secondTVLabelContainer.style.opacity = '0.5';
-                }
-                
-                // Disable 3rd TV if 2nd TV is disabled
-                thirdTV.disabled = true;
-                thirdTV.checked = false;
-                if (thirdTVLabel) {
-                    thirdTVLabel.textContent = '🔒 3rd TV - Select 2nd TV First';
-                    thirdTVLabel.style.color = 'rgba(255,255,255,0.3)';
-                }
-                if (thirdTVLabelContainer) {
-                    thirdTVLabelContainer.style.cursor = 'not-allowed';
-                    thirdTVLabelContainer.style.opacity = '0.5';
-                }
-            } else {
-                // Enable 2nd TV when Basic TV is selected
-                secondTV.disabled = false;
-                if (secondTVLabel) {
-                    secondTVLabel.textContent = '📺 2nd TV Package';
-                    secondTVLabel.style.color = '#4caf50';
-                }
-                if (secondTVLabelContainer) {
-                    secondTVLabelContainer.style.cursor = 'pointer';
-                    secondTVLabelContainer.style.opacity = '1';
-                }
-            }
+            selectedPackages[type] = !selectedPackages[type];
+            option.classList.toggle('selected');
             
-            // Enable/disable 3rd TV based on 2nd TV selection
-            if (basicTV.checked && secondTV.checked) {
-                thirdTV.disabled = false;
-                if (thirdTVLabel) {
-                    thirdTVLabel.textContent = '📺 3rd TV Package';
-                    thirdTVLabel.style.color = '#4caf50';
-                }
-                if (thirdTVLabelContainer) {
-                    thirdTVLabelContainer.style.cursor = 'pointer';
-                    thirdTVLabelContainer.style.opacity = '1';
-                }
-            } else {
-                thirdTV.disabled = true;
-                thirdTV.checked = false;
-                if (thirdTVLabel) {
-                    thirdTVLabel.textContent = '🔒 3rd TV - Select 2nd TV First';
-                    thirdTVLabel.style.color = 'rgba(255,255,255,0.3)';
-                }
-                if (thirdTVLabelContainer) {
-                    thirdTVLabelContainer.style.cursor = 'not-allowed';
-                    thirdTVLabelContainer.style.opacity = '0.5';
-                }
-            }
-            
-            // Update addon availability
-            updateResellerAddonAvailability();
-            
-            // Update price calculation
-            calculateTotal();
-        }
-        
-        // Update Addon Availability in Reseller Panel
-        function updateResellerAddonAvailability() {
-            const basicTV = document.getElementById('basicTVCheckbox');
-            const secondTV = document.getElementById('secondTVCheckbox');
-            const thirdTV = document.getElementById('thirdTVCheckbox');
-            const sportsAddon = document.getElementById('sportsAddon');
-            const moviesAddon = document.getElementById('moviesAddon');
-            const adultAddon = document.getElementById('adultAddon');
-            const sportsAddonContainer = document.getElementById('sportsAddonContainer');
-            const moviesAddonContainer = document.getElementById('moviesAddonContainer');
-            const adultAddonContainer = document.getElementById('adultAddonContainer');
-            const addonStatusMessage = document.getElementById('addonStatusMessage');
-            
-            // Regular addons (Sports, Movies) - require Basic TV
-            if (basicTV?.checked) {
-                if (sportsAddon) {
-                    sportsAddon.disabled = false;
-                    const sportsLabel = document.getElementById('sportsAddonLabelText');
-                    if (sportsLabel) {
-                        sportsLabel.textContent = '🏆 Sports Package';
-                        sportsLabel.style.color = '#4caf50';
-                    }
-                    if (sportsAddonContainer) {
-                        sportsAddonContainer.style.cursor = 'pointer';
-                        sportsAddonContainer.style.opacity = '1';
-                    }
-                }
-                if (moviesAddon) {
-                    moviesAddon.disabled = false;
-                    const moviesLabel = document.getElementById('moviesAddonLabelText');
-                    if (moviesLabel) {
-                        moviesLabel.textContent = '🎬 Movies Package';
-                        moviesLabel.style.color = '#4caf50';
-                    }
-                    if (moviesAddonContainer) {
-                        moviesAddonContainer.style.cursor = 'pointer';
-                        moviesAddonContainer.style.opacity = '1';
-                    }
-                }
-                if (addonStatusMessage) {
-                    addonStatusMessage.textContent = '✅ Addons are now available!';
-                    addonStatusMessage.style.background = 'rgba(76,175,80,0.2)';
-                    addonStatusMessage.style.borderColor = 'rgba(76,175,80,0.4)';
-                    addonStatusMessage.style.color = '#4caf50';
-                }
-            } else {
-                // Disable regular addons
-                if (sportsAddon) {
-                    sportsAddon.disabled = true;
-                    sportsAddon.checked = false;
-                    const sportsLabel = document.getElementById('sportsAddonLabelText');
-                    if (sportsLabel) {
-                        sportsLabel.textContent = '🔒 Sports Package - LOCKED';
-                        sportsLabel.style.color = 'rgba(255,255,255,0.3)';
-                    }
-                    if (sportsAddonContainer) {
-                        sportsAddonContainer.style.cursor = 'not-allowed';
-                        sportsAddonContainer.style.opacity = '0.5';
-                    }
-                }
-                if (moviesAddon) {
-                    moviesAddon.disabled = true;
-                    moviesAddon.checked = false;
-                    const moviesLabel = document.getElementById('moviesAddonLabelText');
-                    if (moviesLabel) {
-                        moviesLabel.textContent = '🔒 Movies Package - LOCKED';
-                        moviesLabel.style.color = 'rgba(255,255,255,0.3)';
-                    }
-                    if (moviesAddonContainer) {
-                        moviesAddonContainer.style.cursor = 'not-allowed';
-                        moviesAddonContainer.style.opacity = '0.5';
-                    }
-                }
-                if (addonStatusMessage) {
-                    addonStatusMessage.textContent = '🔒 Addons are LOCKED - Select Basic TV Package First';
-                    addonStatusMessage.style.background = 'rgba(255,193,7,0.2)';
-                    addonStatusMessage.style.borderColor = 'rgba(255,193,7,0.4)';
-                    addonStatusMessage.style.color = '#ffc107';
-                }
-            }
-            
-            // Adult addon - can be selected with ANY TV package (Basic, 2nd, or 3rd)
-            const hasAnyTV = basicTV?.checked || secondTV?.checked || thirdTV?.checked;
-            if (adultAddon) {
-                if (hasAnyTV) {
-                    adultAddon.disabled = false;
-                    const adultLabel = document.getElementById('adultAddonLabelText');
-                    if (adultLabel) {
-                        adultLabel.textContent = '🔞 Adult Content Package';
-                        adultLabel.style.color = '#ff4757';
-                    }
-                    if (adultAddonContainer) {
-                        adultAddonContainer.style.cursor = 'pointer';
-                        adultAddonContainer.style.opacity = '1';
-                    }
-                } else {
-                    adultAddon.disabled = true;
-                    adultAddon.checked = false;
-                    const adultLabel = document.getElementById('adultAddonLabelText');
-                    if (adultLabel) {
-                        adultLabel.textContent = '🔞 Adult Content - LOCKED';
-                        adultLabel.style.color = 'rgba(255,255,255,0.3)';
-                    }
-                    if (adultAddonContainer) {
-                        adultAddonContainer.style.cursor = 'not-allowed';
-                        adultAddonContainer.style.opacity = '0.5';
-                    }
-                }
-            }
-        }
-        
-        // Render Package Options
-        function renderPackageOptions() {
-            const container = document.getElementById('packagesOptions');
-            
-            // First update availability based on current selections
-            updatePackageAvailability();
-            
-            container.innerHTML = packages.map(pkg => {
-                const isSelected = selectedPackages.some(p => p.id === pkg.id);
-                
-                // Determine if package is locked
-                const isLocked = isPackageLocked(pkg);
-                const lockedClass = isLocked ? 'package-locked' : '';
-                const lockedStyle = isLocked ? 'opacity: 0.5; cursor: not-allowed; border-color: rgba(255,255,255,0.1);' : '';
-                const lockedCursor = isLocked ? 'not-allowed' : 'pointer';
-                
-                // Determine package type for display
-                let packageTypeIcon = '';
-                let packageTypeLabel = '';
-                
-                if (pkg.isSecondTV || pkg.id === 'PKG_2NDTV' || pkg.name.toLowerCase().includes('2nd tv')) {
-                    packageTypeIcon = '📺';
-                    packageTypeLabel = '2nd TV';
-                } else if (pkg.isThirdTV || pkg.id === 'PKG_3RDTV' || pkg.name.toLowerCase().includes('3rd tv')) {
-                    packageTypeIcon = '📺';
-                    packageTypeLabel = '3rd TV';
-                } else if (pkg.isAddOn || pkg.name.toLowerCase().includes('sport')) {
-                    packageTypeIcon = '🏆';
-                    packageTypeLabel = 'Sports';
-                } else if (pkg.name.toLowerCase().includes('movie')) {
-                    packageTypeIcon = '🎬';
-                    packageTypeLabel = 'Movies';
-                } else if (pkg.adultPackagePrice || pkg.name.toLowerCase().includes('adult')) {
-                    packageTypeIcon = '🔞';
-                    packageTypeLabel = 'Adult';
-                } else if (pkg.name.toLowerCase().includes('basic')) {
-                    packageTypeIcon = '📺';
-                    packageTypeLabel = 'Basic TV';
-                }
-                
-                // Locked message
-                let lockedMessage = '';
-                if (isLocked) {
-                    const lockReason = getPackageLockReason(pkg);
-                    lockedMessage = `<div style="font-size: 11px; color: #ff9800; margin-top: 4px;">🔒 ${lockReason}</div>`;
-                }
-                
-                return `
-                    <div class="package-option ${isSelected ? 'selected' : ''} ${lockedClass}" 
-                         data-id="${pkg.id}" 
-                         data-price="${pkg.price}" 
-                         onclick="${isLocked ? '' : 'selectPackage(this)'}"
-                         style="${lockedStyle} cursor: ${lockedCursor};">
-                        <div class="package-name">${packageTypeIcon} ${pkg.name}</div>
-                        <div class="package-price">$${parseFloat(pkg.price || 0).toFixed(2)}/month</div>
-                        ${lockedMessage}
-                        ${!isLocked && pkg.requiresPackage ? `<div style="font-size: 11px; color: #4caf50; margin-top: 4px;">✓ Available</div>` : ''}
-                    </div>
-                `;
-            }).join('');
-            
-            // Add status message
-            const statusDiv = document.createElement('div');
-            statusDiv.id = 'packageStatusMessage';
-            statusDiv.style.cssText = 'background: rgba(255,193,7,0.2); border: 1px solid rgba(255,193,7,0.4); border-radius: 6px; padding: 10px; margin-bottom: 15px; color: #ffc107; font-size: 13px; text-align: center;';
-            statusDiv.innerHTML = getPackageStatusMessage();
-            container.insertBefore(statusDiv, container.firstChild);
-        }
-        
-        // Check if a package is currently locked
-        function isPackageLocked(pkg) {
-            const pkgNameLower = (pkg.name || '').toLowerCase();
-            const pkgIdLower = (pkg.id || '').toLowerCase();
-            
-            // Check if this is Basic TV - always unlocked (it must be selected first)
-            if (pkgNameLower.includes('basic') || pkgIdLower === 'pkg_basic' || pkg.isBasicTV) {
-                return false;
-            }
-            
-            // Check if this is 2nd TV - locked if Basic TV not selected
-            if (pkgNameLower.includes('2nd') || pkgNameLower.includes('2nd tv') || pkgNameLower.includes('second tv') || 
-                pkgIdLower.includes('2ndtv') || pkgIdLower === 'pkg_2ndtv' || pkg.isSecondTV) {
-                const hasBasicTV = selectedPackages.some(p => 
-                    (p.name || '').toLowerCase().includes('basic') || 
-                    (p.id || '').toLowerCase() === 'pkg_basic' ||
-                    p.isBasicTV
-                );
-                return !hasBasicTV;
-            }
-            
-            // Check if this is 3rd TV - locked if 2nd TV not selected
-            if (pkgNameLower.includes('3rd') || pkgNameLower.includes('3rd tv') || pkgNameLower.includes('third tv') || 
-                pkgIdLower.includes('3rdtv') || pkgIdLower === 'pkg_3rdtv' || pkg.isThirdTV) {
-                const hasSecondTV = selectedPackages.some(p => 
-                    (p.name || '').toLowerCase().includes('2nd') ||
-                    (p.name || '').toLowerCase().includes('second') ||
-                    (p.id || '').toLowerCase().includes('2nd') ||
-                    p.isSecondTV
-                );
-                return !hasSecondTV;
-            }
-            
-            // Check if this is Sports or Movies addon - locked if Basic TV not selected
-            if (pkgNameLower.includes('sport') || pkgNameLower.includes('movie')) {
-                const hasBasicTV = selectedPackages.some(p => 
-                    (p.name || '').toLowerCase().includes('basic') || 
-                    (p.id || '').toLowerCase() === 'pkg_basic' ||
-                    p.isBasicTV
-                );
-                return !hasBasicTV;
-            }
-            
-            // Adult content - can be selected with any TV package (Basic, 2nd, or 3rd)
-            if (pkg.adultPackagePrice || pkgNameLower.includes('adult') || pkg.isAdult) {
-                const hasAnyTV = selectedPackages.some(p => 
-                    (p.name || '').toLowerCase().includes('basic') || 
-                    (p.name || '').toLowerCase().includes('2nd') ||
-                    (p.name || '').toLowerCase().includes('3rd') ||
-                    (p.name || '').toLowerCase().includes('second') ||
-                    (p.name || '').toLowerCase().includes('third') ||
-                    (p.id || '').toLowerCase() === 'pkg_basic' ||
-                    (p.id || '').toLowerCase().includes('2nd') ||
-                    (p.id || '').toLowerCase().includes('3rd') ||
-                    p.isBasicTV || p.isSecondTV || p.isThirdTV
-                );
-                return !hasAnyTV;
-            }
-            
-            // For packages with explicit flags
-            if (pkg.isAddOn) {
-                const hasBasicTV = selectedPackages.some(p => 
-                    (p.name || '').toLowerCase().includes('basic') || 
-                    (p.id || '').toLowerCase() === 'pkg_basic' ||
-                    p.isBasicTV
-                );
-                return !hasBasicTV;
-            }
-            
-            // Default: not locked (allow selection)
-            return false;
-        }
-        
-        // Get the reason why a package is locked
-        function getPackageLockReason(pkg) {
-            const pkgNameLower = (pkg.name || '').toLowerCase();
-            const pkgIdLower = (pkg.id || '').toLowerCase();
-            
-            // 2nd TV
-            if (pkgNameLower.includes('2nd') || pkgNameLower.includes('second') || pkgIdLower.includes('2nd') || pkg.isSecondTV) {
-                return 'Select Basic TV First';
-            }
-            
-            // 3rd TV
-            if (pkgNameLower.includes('3rd') || pkgNameLower.includes('third') || pkgIdLower.includes('3rd') || pkg.isThirdTV) {
-                return 'Select 2nd TV First';
-            }
-            
-            // Sports/Movies addons
-            if (pkgNameLower.includes('sport') || pkgNameLower.includes('movie')) {
-                return 'Select Basic TV First';
-            }
-            
-            // Adult content
-            if (pkg.adultPackagePrice || pkgNameLower.includes('adult') || pkg.isAdult) {
-                return 'Select a TV Package First';
-            }
-            
-            // Addons
-            if (pkg.isAddOn) {
-                return 'Select Basic TV First';
-            }
-            
-            return 'Required package not selected';
-        }
-        
-        // Get status message based on current selection
-        function getPackageStatusMessage() {
-            const hasBasicTV = selectedPackages.some(p => 
-                p.name.toLowerCase().includes('basic') || p.id === 'PKG_BASIC'
-            );
-            const hasSecondTV = selectedPackages.some(p => 
-                p.name.toLowerCase().includes('2nd') || p.id === 'PKG_2NDTV'
-            );
-            
-            if (!hasBasicTV) {
-                return '🔒 <strong>MANDATORY:</strong> Select Basic TV Package FIRST to unlock other options';
-            }
-            
-            if (hasBasicTV && !hasSecondTV) {
-                return '✅ Basic TV selected! Now you can select 2nd TV and addons (Sports, Movies, Adult)';
-            }
-            
-            if (hasBasicTV && hasSecondTV) {
-                return '✅ 2nd TV selected! Now you can select 3rd TV and all addons';
-            }
-            
-            return '📋 Select packages in order: Basic TV → 2nd TV → 3rd TV';
-        }
-        
-        // Update package availability (called when selections change)
-        function updatePackageAvailability() {
-            // This function is called to refresh the UI - actual logic is in renderPackageOptions
-            console.log('Updating package availability, selected packages:', selectedPackages.map(p => p.name));
-        }
-        
-        // Check if package has required dependencies
-        function checkPackageDependency(pkgId, currentSelections) {
-            const pkg = packages.find(p => p.id === pkgId);
-            if (!pkg) return { valid: false, message: 'Package not found' };
-            
-            const pkgNameLower = (pkg.name || '').toLowerCase();
-            const pkgIdLower = (pkg.id || '').toLowerCase();
-            
-            console.log('Checking dependency for:', pkg.name, 'requiresPackage:', pkg.requiresPackage);
-            console.log('Current selections:', currentSelections.map(p => p.name));
-            
-            // CRITICAL: Check if Basic TV is selected first - this is MANDATORY
-            const hasBasicTV = currentSelections.some(p => 
-                (p.name || '').toLowerCase().includes('basic') || 
-                (p.id || '').toLowerCase() === 'pkg_basic' ||
-                p.isBasicTV
-            );
-            
-            // Check if this package requires another package
-            if (pkg.requiresPackage) {
-                // Normalize the required package name for comparison
-                const requiredName = pkg.requiresPackage.toLowerCase().trim();
-                
-                // Check if required package is already selected (compare by name or ID)
-                const hasRequired = currentSelections.some(p => 
-                    (p.name || '').toLowerCase().trim() === requiredName ||
-                    (p.id || '').toLowerCase().trim() === requiredName.toLowerCase().replace(/\s+/g, '_') ||
-                    pkg.requiresPackage.includes(p.name || '')
-                );
-                
-                console.log('Has required package:', hasRequired);
-                
-                if (!hasRequired) {
-                    return { 
-                        valid: false, 
-                        message: `${pkg.name} requires "${pkg.requiresPackage}" to be selected first` 
-                    };
-                }
-            }
-            
-            // Check if trying to select 2nd TV without Basic TV
-            if (pkgNameLower.includes('2nd') || pkgNameLower.includes('second') || pkgIdLower.includes('2nd') || pkg.isSecondTV) {
-                if (!hasBasicTV) {
-                    return { 
-                        valid: false, 
-                        message: '2nd TV requires "Basic TV" to be selected first' 
-                    };
-                }
-            }
-            
-            // Check if trying to select 3rd TV without 2nd TV
-            if (pkgNameLower.includes('3rd') || pkgNameLower.includes('third') || pkgIdLower.includes('3rd') || pkg.isThirdTV) {
-                const hasSecondTV = currentSelections.some(p => 
-                    (p.name || '').toLowerCase().includes('2nd') ||
-                    (p.name || '').toLowerCase().includes('second') ||
-                    (p.id || '').toLowerCase().includes('2nd') ||
-                    p.isSecondTV
-                );
-                if (!hasSecondTV) {
-                    return { 
-                        valid: false, 
-                        message: '3rd TV requires "2nd TV" to be selected first' 
-                    };
-                }
-            }
-            
-            // Check if trying to select Sports/Movies without Basic TV
-            if (pkgNameLower.includes('sport') || pkgNameLower.includes('movie')) {
-                if (!hasBasicTV) {
-                    return { 
-                        valid: false, 
-                        message: `${pkg.name} requires "Basic TV" to be selected first` 
-                    };
-                }
-            }
-            
-            // Check if trying to select Adult without any TV package
-            if (pkg.adultPackagePrice || pkgNameLower.includes('adult') || pkg.isAdult) {
-                const hasAnyTV = currentSelections.some(p => 
-                    (p.name || '').toLowerCase().includes('basic') || 
-                    (p.name || '').toLowerCase().includes('2nd') ||
-                    (p.name || '').toLowerCase().includes('3rd') ||
-                    (p.name || '').toLowerCase().includes('second') ||
-                    (p.name || '').toLowerCase().includes('third') ||
-                    (p.id || '').toLowerCase().includes('2nd') ||
-                    (p.id || '').toLowerCase().includes('3rd') ||
-                    p.isBasicTV || p.isSecondTV || p.isThirdTV
-                );
-                if (!hasAnyTV) {
-                    return { 
-                        valid: false, 
-                        message: 'Adult content requires a TV package to be selected first' 
-                    };
-                }
-            }
-            
-            // Check if addon without Basic TV
-            if (pkg.isAddOn && !hasBasicTV) {
-                return {
-                    valid: false,
-                    message: `${pkg.name} requires "Basic TV" to be selected first`
-                };
-            }
-            
-            return { valid: true, message: 'OK' };
-        }
-        
-        // Check if removing a package would break dependencies for other selected packages
-        function canRemovePackage(pkgId, currentSelections) {
-            const pkg = packages.find(p => p.id === pkgId);
-            if (!pkg) return { canRemove: false, message: 'Package not found' };
-            
-            const pkgNameLower = (pkg.name || '').toLowerCase();
-            const pkgIdLower = (pkg.id || '').toLowerCase();
-            
-            // Special case: Cannot remove Basic TV if any addons or TV packages are selected
-            if (pkgNameLower.includes('basic') || pkgIdLower === 'pkg_basic' || pkg.isBasicTV) {
-                const hasAddons = currentSelections.some(p => 
-                    p.isAddOn || p.isSecondTV || p.isThirdTV ||
-                    (p.name || '').toLowerCase().includes('sport') ||
-                    (p.name || '').toLowerCase().includes('movie') ||
-                    (p.name || '').toLowerCase().includes('adult') ||
-                    (p.name || '').toLowerCase().includes('2nd') ||
-                    (p.name || '').toLowerCase().includes('3rd') ||
-                    (p.name || '').toLowerCase().includes('second') ||
-                    (p.name || '').toLowerCase().includes('third')
-                );
-                if (hasAddons) {
-                    return { 
-                        canRemove: false, 
-                        message: 'Cannot remove Basic TV because other selected packages depend on it' 
-                    };
-                }
-            }
-            
-            // Special case: Cannot remove 2nd TV if 3rd TV is selected
-            if (pkgNameLower.includes('2nd') || pkgNameLower.includes('second') || pkgIdLower.includes('2nd') || pkg.isSecondTV) {
-                const hasThirdTV = currentSelections.some(p => 
-                    p.isThirdTV || 
-                    (p.name || '').toLowerCase().includes('3rd') ||
-                    (p.name || '').toLowerCase().includes('third') ||
-                    (p.id || '').toLowerCase().includes('3rd')
-                );
-                if (hasThirdTV) {
-                    return { 
-                        canRemove: false, 
-                        message: 'Cannot remove 2nd TV because 3rd TV depends on it' 
-                    };
-                }
-            }
-            
-            return { canRemove: true, message: 'OK' };
-        }
-        
-        // Select Package (supports multiple selection with dependency checking)
-        function selectPackage(element) {
-            const pkgId = element.dataset.id;
-            const pkg = packages.find(p => p.id === pkgId);
-            if (!pkg) return;
-            
-            // Check if already selected - if so, try to remove it
-            const existingIndex = selectedPackages.findIndex(p => p.id === pkgId);
-            
-            if (existingIndex >= 0) {
-                // Try to remove the package
-                const removeCheck = canRemovePackage(pkgId, selectedPackages);
-                if (!removeCheck.canRemove) {
-                    showNotification(removeCheck.message, 'error');
+            // Enforce hierarchy: basic first, then second, then third
+            if (type === 'basic' && !selectedPackages.basic) {
+                // Can't uncheck basic if other packages are selected
+                if (selectedPackages.second || selectedPackages.third) {
+                    showNotification('Cannot remove Basic TV while other packages are selected', 'error');
+                    selectedPackages.basic = true;
+                    option.classList.add('selected');
                     return;
                 }
-                
-                // Remove the package
-                selectedPackages.splice(existingIndex, 1);
+            }
+            
+            if (type === 'second' && selectedPackages.second) {
+                // Enable third TV when second is selected
+                document.getElementById('thirdTVOption').classList.remove('disabled');
+            } else if (type === 'second' && !selectedPackages.second) {
+                // Disable third TV when second is unchecked
+                selectedPackages.third = false;
+                document.getElementById('thirdTVOption').classList.remove('selected');
+                document.getElementById('thirdTVOption').classList.add('disabled');
+            }
+            
+            // Enable addons when basic is selected
+            if (selectedPackages.basic) {
+                document.getElementById('sportsOption').classList.remove('disabled');
+                document.getElementById('moviesOption').classList.remove('disabled');
+                document.getElementById('adultOption').classList.remove('disabled');
             } else {
-                // Try to add the package - check dependencies
-                const depCheck = checkPackageDependency(pkgId, selectedPackages);
-                if (!depCheck.valid) {
-                    showNotification(depCheck.message, 'error');
-                    return;
-                }
-                
-                // Determine package type flags based on name/ID
-                const pkgNameLower = (pkg.name || '').toLowerCase();
-                const pkgIdLower = (pkg.id || '').toLowerCase();
-                
-                const isBasic = pkgNameLower.includes('basic') || pkgIdLower === 'pkg_basic' || pkg.isBasicTV;
-                const isSecond = pkgNameLower.includes('2nd') || pkgNameLower.includes('second') || pkgIdLower.includes('2nd') || pkg.isSecondTV;
-                const isThird = pkgNameLower.includes('3rd') || pkgNameLower.includes('third') || pkgIdLower.includes('3rd') || pkg.isThirdTV;
-                
-                // Add the package
-                selectedPackages.push({
-                    id: pkg.id,
-                    name: pkg.name,
-                    price: parseFloat(pkg.price) || 0,
-                    isAddOn: pkg.isAddOn,
-                    isSecondTV: isSecond,
-                    isThirdTV: isThird,
-                    isBasicTV: isBasic
-                });
+                // Disable addons when basic is unchecked
+                selectedPackages.sports = false;
+                selectedPackages.movies = false;
+                selectedPackages.adult = false;
+                document.getElementById('sportsOption').classList.remove('selected');
+                document.getElementById('moviesOption').classList.remove('selected');
+                document.getElementById('adultOption').classList.remove('selected');
+                document.getElementById('sportsOption').classList.add('disabled');
+                document.getElementById('moviesOption').classList.add('disabled');
+                document.getElementById('adultOption').classList.add('disabled');
             }
             
-            // Re-render to show selection state
-            renderPackageOptions();
-            calculateTotal();
+            updateTotalPrice();
         }
         
-        // Clear all selected packages
-        function clearPackageSelection() {
-            selectedPackages = [];
-            renderPackageOptions();
-            calculateTotal();
+        // Select Duration
+        function selectDuration(months) {
+            selectedDuration = months;
+            document.querySelectorAll('#customerForm .duration-btn').forEach(btn => {
+                btn.classList.toggle('selected', parseInt(btn.dataset.months) === months);
+            });
+            updateTotalPrice();
         }
         
-        // Calculate Total - includes device selection and addon prices
-        function calculateTotal() {
-            const totalElement = document.getElementById('totalAmount');
-            const warningElement = document.getElementById('walletWarning');
-            const submitBtn = document.getElementById('submitBtn');
-            
-            // Get device selections
-            const basicTV = document.getElementById('basicTVCheckbox');
-            const secondTV = document.getElementById('secondTVCheckbox');
-            const thirdTV = document.getElementById('thirdTVCheckbox');
-            const sportsAddon = document.getElementById('sportsAddon');
-            const moviesAddon = document.getElementById('moviesAddon');
-            const adultAddon = document.getElementById('adultAddon');
-            
-            // Get prices from packages array
-            let basePrice = 25; // Default
-            let secondTVPrice = 15; // Default
-            let thirdTVPrice = 10; // Default
-            let sportsPrice = 8; // Default
-            let moviesPrice = 8; // Default
-            let adultPrice = 0; // Default
-            
-            // Try to get actual prices from packages
-            if (packages.length > 0) {
-                const firstPkg = packages[0];
-                basePrice = firstPkg.price || basePrice;
-                secondTVPrice = firstPkg.secondTVPrice || secondTVPrice;
-                thirdTVPrice = firstPkg.thirdTVPrice || thirdTVPrice;
-                sportsPrice = firstPkg.sportsPrice || sportsPrice;
-                moviesPrice = firstPkg.moviesPrice || moviesPrice;
-                adultPrice = firstPkg.adultPackagePrice || adultPrice;
-            }
-            
-            // Calculate total
+        // Update Total Price
+        function updateTotalPrice() {
             let total = 0;
-            const selectedItems = [];
             
-            // Add device prices
-            if (basicTV?.checked) {
-                total += basePrice;
-                selectedItems.push('Basic TV ($' + basePrice + ')');
+            if (selectedPackages.basic) {
+                total += packagePrices.basic;
             }
-            if (secondTV?.checked) {
-                total += secondTVPrice;
-                selectedItems.push('2nd TV ($' + secondTVPrice + ')');
+            if (selectedPackages.second) {
+                total += packagePrices.secondTV;
             }
-            if (thirdTV?.checked) {
-                total += thirdTVPrice;
-                selectedItems.push('3rd TV ($' + thirdTVPrice + ')');
+            if (selectedPackages.third) {
+                total += packagePrices.thirdTV;
             }
-            
-            // Add addon prices
-            if (sportsAddon?.checked) {
-                total += sportsPrice;
-                selectedItems.push('Sports ($' + sportsPrice + ')');
+            if (selectedPackages.sports) {
+                total += packagePrices.sports;
             }
-            if (moviesAddon?.checked) {
-                total += moviesPrice;
-                selectedItems.push('Movies ($' + moviesPrice + ')');
+            if (selectedPackages.movies) {
+                total += packagePrices.movies;
             }
-            if (adultAddon?.checked) {
-                total += adultPrice;
-                selectedItems.push('Adult ($' + adultPrice + ')');
+            if (selectedPackages.adult) {
+                total += packagePrices.adult;
             }
             
             // Apply duration multiplier
             total = total * selectedDuration;
             
-            // Update display
-            if (selectedItems.length === 0) {
-                totalElement.textContent = '$0.00';
-                warningElement.style.display = 'none';
-                submitBtn.disabled = true;
+            document.getElementById('totalAmount').textContent = '$' + total.toFixed(2);
+            
+            // Enable/disable submit button
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = !selectedPackages.basic || total <= 0 || total > walletBalance;
+            
+            if (total > walletBalance) {
+                showNotification('Insufficient wallet balance', 'error');
+            }
+        }
+        
+        // Handle Customer Submit
+        async function handleCustomerSubmit(e) {
+            e.preventDefault();
+            
+            const isEdit = document.getElementById('editMode').value === 'true';
+            const customerId = document.getElementById('customerId').value;
+            
+            // Validate basic package is selected
+            if (!selectedPackages.basic) {
+                showNotification('Basic TV Package is required!', 'error');
                 return;
             }
             
-            totalElement.textContent = '$' + total.toFixed(2);
+            // Calculate total price
+            let total = 0;
+            if (selectedPackages.basic) total += packagePrices.basic;
+            if (selectedPackages.second) total += packagePrices.secondTV;
+            if (selectedPackages.third) total += packagePrices.thirdTV;
+            if (selectedPackages.sports) total += packagePrices.sports;
+            if (selectedPackages.movies) total += packagePrices.movies;
+            if (selectedPackages.adult) total += packagePrices.adult;
+            total = total * selectedDuration;
             
+            // Check wallet balance
             if (total > walletBalance) {
-                warningElement.style.display = 'block';
-                warningElement.textContent = `Insufficient wallet balance. Required: $${total.toFixed(2)}, Available: $${walletBalance.toFixed(2)}`;
-                submitBtn.disabled = true;
+                showNotification('Insufficient wallet balance!', 'error');
+                return;
+            }
+            
+            const customerData = {
+                name: document.getElementById('customerName').value.trim(),
+                username: document.getElementById('customerUsername').value.trim(),
+                password: document.getElementById('customerPassword').value,
+                phone: document.getElementById('customerPhone').value.trim()
+            };
+            
+            // Build plan string
+            const plan = [];
+            if (selectedPackages.basic) plan.push('Basic TV');
+            if (selectedPackages.second) plan.push('2nd TV');
+            if (selectedPackages.third) plan.push('3rd TV');
+            
+            const addons = [];
+            if (selectedPackages.sports) addons.push('Sports');
+            if (selectedPackages.movies) addons.push('Movies');
+            if (selectedPackages.adult) addons.push('Adult');
+            
+            if (isEdit) {
+                await updateCustomer(customerId, customerData, plan, addons);
             } else {
-                warningElement.style.display = 'none';
-                submitBtn.disabled = false;
+                await createCustomer(customerData, plan, addons, total);
+            }
+        }
+        
+        // Create Customer
+        async function createCustomer(customerData, plan, addons, total) {
+            try {
+                showNotification('Creating customer...', 'info');
+                
+                // Calculate expiry date
+                const expiryDate = new Date();
+                expiryDate.setMonth(expiryDate.getMonth() + selectedDuration);
+                
+                // Create customer object
+                const newCustomer = {
+                    id: 'CUST_' + Date.now(),
+                    ...customerData,
+                    plan: plan.join(', '),
+                    addons: addons.join(', '),
+                    totalPrice: total,
+                    monthlyPrice: total / selectedDuration,
+                    expiryDate: expiryDate.toISOString().split('T')[0],
+                    duration: selectedDuration + ' month' + (selectedDuration > 1 ? 's' : ''),
+                    durationMonths: selectedDuration,
+                    resellerId: currentReseller.id,
+                    createdAt: new Date().toISOString(),
+                    status: 'active'
+                };
+                
+                // Update admin data
+                adminData.customers = adminData.customers || [];
+                adminData.customers.push(newCustomer);
+                
+                // Deduct from wallet
+                adminData.resellers[currentReseller.id].walletBalance = walletBalance - total;
+                walletBalance = walletBalance - total;
+                
+                // Add transaction record
+                adminData.creditTransfers = adminData.creditTransfers || [];
+                adminData.creditTransfers.push({
+                    id: 'TXN_' + Date.now(),
+                    resellerId: currentReseller.id,
+                    amount: -total,
+                    type: 'sale',
+                    note: `Sale: ${customerData.name} - ${plan.join(', ')}`,
+                    date: new Date().toISOString()
+                });
+                
+                // Save to GitHub
+                await saveToGitHub();
+                
+                closeModal();
+                showNotification('Customer created successfully!', 'success');
+                await loadData();
+                
+            } catch (error) {
+                console.error('Create customer error:', error);
+                showNotification('Failed to create customer: ' + error.message, 'error');
             }
         }
         
@@ -2079,221 +1386,31 @@
             document.getElementById('customerUsername').value = customer.username || '';
             document.getElementById('customerPassword').value = customer.password || '';
             document.getElementById('customerPhone').value = customer.phone || '';
-            document.getElementById('customerEmail').value = customer.email || '';
             document.getElementById('submitBtn').textContent = 'Save Changes';
-            
-            // Hide package/duration selection for edit (use Renew for that)
             document.getElementById('packageSelection').style.display = 'none';
-            document.getElementById('durationSelection').style.display = 'none';
-            document.getElementById('totalDisplay').style.display = 'none';
             
             document.getElementById('customerModal').classList.add('active');
         }
         
-        // Handle Customer Submit
-        async function handleCustomerSubmit(e) {
-            e.preventDefault();
-            
-            const isEdit = document.getElementById('editMode').value === 'true';
-            const customerId = document.getElementById('customerId').value;
-            
-            const customerData = {
-                name: document.getElementById('customerName').value.trim(),
-                username: document.getElementById('customerUsername').value.trim(),
-                password: document.getElementById('customerPassword').value,
-                phone: document.getElementById('customerPhone').value.trim(),
-                email: document.getElementById('customerEmail').value.trim()
-            };
-            
-            if (isEdit) {
-                // Update existing customer
-                await updateCustomer(customerId, customerData);
-            } else {
-                // Create new customer - check device selection
-                const basicTV = document.getElementById('basicTVCheckbox');
-                const secondTV = document.getElementById('secondTVCheckbox');
-                const thirdTV = document.getElementById('thirdTVCheckbox');
-                const sportsAddon = document.getElementById('sportsAddon');
-                const moviesAddon = document.getElementById('moviesAddon');
-                const adultAddon = document.getElementById('adultAddon');
-                
-                // CRITICAL: Validate Basic TV is selected (MANDATORY)
-                if (!basicTV || !basicTV.checked) {
-                    showNotification('🚨 ERROR: Basic TV Package is MANDATORY FIRST! You cannot proceed without selecting Basic TV Package first!', 'error');
-                    return;
-                }
-                
-                // Get prices from packages array
-                let basePrice = 25;
-                let secondTVPrice = 15;
-                let thirdTVPrice = 10;
-                let sportsPrice = 8;
-                let moviesPrice = 8;
-                let adultPrice = 0;
-                
-                if (packages.length > 0) {
-                    const firstPkg = packages[0];
-                    basePrice = firstPkg.price || basePrice;
-                    secondTVPrice = firstPkg.secondTVPrice || secondTVPrice;
-                    thirdTVPrice = firstPkg.thirdTVPrice || thirdTVPrice;
-                    sportsPrice = firstPkg.sportsPrice || sportsPrice;
-                    moviesPrice = firstPkg.moviesPrice || moviesPrice;
-                    adultPrice = firstPkg.adultPackagePrice || adultPrice;
-                }
-                
-                // Calculate total based on device and addon selections
-                let total = 0;
-                const selectedItems = [];
-                
-                // Add device prices
-                if (basicTV?.checked) {
-                    total += basePrice;
-                    selectedItems.push('Basic TV');
-                }
-                if (secondTV?.checked) {
-                    total += secondTVPrice;
-                    selectedItems.push('2nd TV');
-                }
-                if (thirdTV?.checked) {
-                    total += thirdTVPrice;
-                    selectedItems.push('3rd TV');
-                }
-                
-                // Add addon prices
-                if (sportsAddon?.checked) {
-                    total += sportsPrice;
-                    selectedItems.push('Sports');
-                }
-                if (moviesAddon?.checked) {
-                    total += moviesPrice;
-                    selectedItems.push('Movies');
-                }
-                if (adultAddon?.checked) {
-                    total += adultPrice;
-                    selectedItems.push('Adult');
-                }
-                
-                // Apply duration multiplier
-                total = total * selectedDuration;
-                
-                if (total > walletBalance) {
-                    showNotification('Insufficient wallet balance', 'error');
-                    return;
-                }
-                
-                await createCustomer(customerData, selectedItems, selectedDuration, total);
-            }
-        }
-        
-        // Create Customer
-        async function createCustomer(customerData, pkgs, duration, total) {
-            try {
-                showNotification('Creating customer...', 'success');
-                
-                // Calculate expiry date
-                const expiryDate = new Date();
-                expiryDate.setMonth(expiryDate.getMonth() + duration);
-                
-                // Get package names for display
-                const packageNames = pkgs.map(p => p.name).join(', ');
-                const packageIds = pkgs.map(p => p.id).join(',');
-                
-                // Create new customer object
-                const newCustomer = {
-                    id: 'cust_' + Date.now(),
-                    ...customerData,
-                    packageId: packageIds,
-                    packageName: packageNames,
-                    packages: pkgs.map(p => ({ id: p.id, name: p.name, price: p.price })),
-                    packagePrice: total,
-                    expiryDate: expiryDate.toISOString().split('T')[0],
-                    resellerId: currentReseller.id,
-                    createdAt: new Date().toISOString(),
-                    status: 'active'
-                };
-                
-                // Update admin data
-                adminData.customers = adminData.customers || [];
-                adminData.customers.push(newCustomer);
-                
-                // Get current wallet balance from adminData
-                const currentWalletBalance = adminData.resellers[currentReseller.id].walletBalance || 0;
-                adminData.resellers[currentReseller.id].walletBalance = currentWalletBalance - total;
-                
-                // Update local wallet variable for display
-                walletBalance = currentWalletBalance - total;
-                
-                // Add transaction record
-                adminData.resellerTransactions = adminData.resellerTransactions || [];
-                adminData.resellerTransactions.push({
-                    id: 'txn_' + Date.now(),
-                    resellerId: currentReseller.id,
-                    type: 'sale',
-                    amount: -total,
-                    customerId: newCustomer.id,
-                    customerName: customerData.name,
-                    packageName: packageNames,
-                    date: new Date().toISOString()
-                });
-                
-                // Try to save to GitHub
-                let savedToGithub = false;
-                try {
-                    await saveToGitHub();
-                    savedToGithub = true;
-                } catch (error) {
-                    console.log('GitHub save failed, saving locally only');
-                    // Save locally as backup
-                    localStorage.setItem('resellerPendingCustomers', JSON.stringify(adminData.customers));
-                    localStorage.setItem('resellerPendingTransactions', JSON.stringify(adminData.resellerTransactions));
-                }
-                
-                if (savedToGithub) {
-                    closeModal();
-                    showNotification('Customer created successfully!', 'success');
-                } else {
-                    closeModal();
-                    showNotification('Customer saved locally. Will sync when admin uploads.', 'warning');
-                }
-                await loadData();
-                
-            } catch (error) {
-                console.error('Create customer error:', error);
-                showNotification('Failed to create customer', 'error');
-            }
-        }
-        
         // Update Customer
-        async function updateCustomer(customerId, customerData) {
+        async function updateCustomer(customerId, customerData, plan, addons) {
             try {
-                showNotification('Saving changes...', 'success');
-                
                 // Find and update customer
                 const index = adminData.customers.findIndex(c => c.id === customerId);
                 if (index === -1) throw new Error('Customer not found');
                 
                 adminData.customers[index] = {
                     ...adminData.customers[index],
-                    ...customerData
+                    ...customerData,
+                    plan: plan.join(', '),
+                    addons: addons.join(', '),
+                    updatedAt: new Date().toISOString()
                 };
                 
-                // Try to save to GitHub
-                let savedToGithub = false;
-                try {
-                    await saveToGitHub();
-                    savedToGithub = true;
-                } catch (error) {
-                    console.log('GitHub save failed, saving locally only');
-                    localStorage.setItem('resellerPendingCustomers', JSON.stringify(adminData.customers));
-                }
+                await saveToGitHub();
                 
-                if (savedToGithub) {
-                    closeModal();
-                    showNotification('Customer updated successfully!', 'success');
-                } else {
-                    closeModal();
-                    showNotification('Customer updated locally. Will sync when admin uploads.', 'warning');
-                }
+                closeModal();
+                showNotification('Customer updated successfully!', 'success');
                 await loadData();
                 
             } catch (error) {
@@ -2307,188 +1424,186 @@
             const customer = customers.find(c => c.id === customerId);
             if (!customer) return;
             
-            document.getElementById('renewCustomerId').value = customerId;
-            document.getElementById('renewCustomerName').textContent = customer.name;
+            renewCustomerId = customerId;
             
-            // Handle both single package and multiple packages (comma-separated)
-            let price = 0;
-            if (customer.packages && Array.isArray(customer.packages)) {
-                // Multiple packages stored in new format
-                price = customer.packages.reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0);
-            } else if (customer.packageId && customer.packageId.includes(',')) {
-                // Multiple packages in old comma-separated format
-                const pkgIds = customer.packageId.split(',');
-                price = pkgIds.reduce((sum, pkgId) => {
-                    const pkg = packages.find(p => p.id === pkgId.trim());
-                    return sum + (pkg ? parseFloat(pkg.price) || 0 : 0);
-                }, 0);
-            } else {
-                // Single package (old format)
-                const pkg = packages.find(p => p.id === customer.packageId);
-                price = pkg ? parseFloat(pkg.price) : parseFloat(customer.packagePrice) || 25;
-            }
+            // Display customer info
+            document.getElementById('renewCustomerDetails').innerHTML = `
+                <div><strong>${customer.name}</strong></div>
+                <div style="color: rgba(255,255,255,0.6); font-size: 13px;">
+                    Current: ${customer.plan} - Expires: ${new Date(customer.expiryDate).toLocaleDateString()}
+                </div>
+            `;
             
-            document.getElementById('renewCustomerId').dataset.price = price;
-            document.getElementById('renewCustomerId').dataset.packageName = customer.packageName || 'Basic';
+            // Reset packages for renewal
+            selectedPackages = {
+                basic: true, // Assume they want to renew basic
+                second: false,
+                third: false,
+                sports: false,
+                movies: false,
+                adult: false
+            };
             
-            renewSelectedDuration = 1;
-            document.querySelectorAll('#renewDurationGrid .duration-btn').forEach((b, i) => {
-                b.classList.toggle('selected', i === 0);
-            });
+            // Check what they currently have
+            if (customer.plan && customer.plan.includes('2nd TV')) selectedPackages.second = true;
+            if (customer.plan && customer.plan.includes('3rd TV')) selectedPackages.third = true;
+            if (customer.addons && customer.addons.includes('Sports')) selectedPackages.sports = true;
+            if (customer.addons && customer.addons.includes('Movies')) selectedPackages.movies = true;
+            if (customer.addons && customer.addons.includes('Adult')) selectedPackages.adult = true;
             
-            calculateRenewTotal();
+            renewDuration = 1;
             
+            // Enable packages based on current selection
+            document.getElementById('secondTVOption').classList.toggle('disabled', !selectedPackages.basic);
+            document.getElementById('thirdTVOption').classList.toggle('disabled', !selectedPackages.second);
+            document.getElementById('sportsOption').classList.toggle('disabled', !selectedPackages.basic);
+            document.getElementById('moviesOption').classList.toggle('disabled', !selectedPackages.basic);
+            document.getElementById('adultOption').classList.toggle('disabled', !selectedPackages.basic);
+            
+            // Update selected states
+            document.getElementById('basicTVOption').classList.toggle('selected', selectedPackages.basic);
+            document.getElementById('secondTVOption').classList.toggle('selected', selectedPackages.second);
+            document.getElementById('thirdTVOption').classList.toggle('selected', selectedPackages.third);
+            document.getElementById('sportsOption').classList.toggle('selected', selectedPackages.sports);
+            document.getElementById('moviesOption').classList.toggle('selected', selectedPackages.movies);
+            document.getElementById('adultOption').classList.toggle('selected', selectedPackages.adult);
+            
+            // Show modal
             document.getElementById('renewModal').classList.add('active');
+            updateRenewTotal();
         }
         
         // Select Renew Duration
-        function selectRenewDuration(element, months) {
-            document.querySelectorAll('#renewDurationGrid .duration-btn').forEach(b => b.classList.remove('selected'));
-            element.classList.add('selected');
-            renewSelectedDuration = months;
-            calculateRenewTotal();
+        function selectRenewDuration(months) {
+            renewDuration = months;
+            document.querySelectorAll('#renewModal .duration-btn').forEach(btn => {
+                btn.classList.toggle('selected', parseInt(btn.dataset.months) === months);
+            });
+            updateRenewTotal();
         }
         
-        // Calculate Renew Total
-        function calculateRenewTotal() {
-            const price = parseFloat(document.getElementById('renewCustomerId').dataset.price) || 25;
-            const total = price * renewSelectedDuration;
+        // Update Renew Total
+        function updateRenewTotal() {
+            let total = 0;
+            
+            if (selectedPackages.basic) total += packagePrices.basic;
+            if (selectedPackages.second) total += packagePrices.secondTV;
+            if (selectedPackages.third) total += packagePrices.thirdTV;
+            if (selectedPackages.sports) total += packagePrices.sports;
+            if (selectedPackages.movies) total += packagePrices.movies;
+            if (selectedPackages.adult) total += packagePrices.adult;
+            
+            total = total * renewDuration;
             
             document.getElementById('renewTotalAmount').textContent = '$' + total.toFixed(2);
-            
-            const warningElement = document.getElementById('renewWalletWarning');
-            const submitBtn = document.getElementById('renewSubmitBtn');
-            
-            if (total > walletBalance) {
-                warningElement.style.display = 'block';
-                submitBtn.disabled = true;
-            } else {
-                warningElement.style.display = 'none';
-                submitBtn.disabled = false;
-            }
         }
         
         // Process Renewal
         async function processRenewal() {
-            const customerId = document.getElementById('renewCustomerId').value;
-            const price = parseFloat(document.getElementById('renewCustomerId').dataset.price) || 25;
-            const packageName = document.getElementById('renewCustomerId').dataset.packageName;
-            const total = price * renewSelectedDuration;
+            if (!renewCustomerId) return;
             
+            // Calculate total
+            let total = 0;
+            if (selectedPackages.basic) total += packagePrices.basic;
+            if (selectedPackages.second) total += packagePrices.secondTV;
+            if (selectedPackages.third) total += packagePrices.thirdTV;
+            if (selectedPackages.sports) total += packagePrices.sports;
+            if (selectedPackages.movies) total += packagePrices.movies;
+            if (selectedPackages.adult) total += packagePrices.adult;
+            total = total * renewDuration;
+            
+            // Check wallet
             if (total > walletBalance) {
-                showNotification('Insufficient wallet balance', 'error');
+                showNotification('Insufficient wallet balance!', 'error');
                 return;
             }
             
             try {
-                showNotification('Processing renewal...', 'success');
-                
                 // Find customer
-                const index = adminData.customers.findIndex(c => c.id === customerId);
-                if (index === -1) throw new Error('Customer not found');
+                const customerIndex = adminData.customers.findIndex(c => c.id === renewCustomerId);
+                if (customerIndex === -1) throw new Error('Customer not found');
                 
-                const customer = adminData.customers[index];
+                const customer = adminData.customers[customerIndex];
                 
-                // Calculate new expiry date
-                let currentExpiry = new Date(customer.expiryDate);
+                // Calculate new expiry
+                let newExpiryDate;
+                const currentExpiry = new Date(customer.expiryDate);
                 const now = new Date();
                 
-                // If expired, start from today
-                if (currentExpiry < now) {
-                    currentExpiry = now;
+                if (currentExpiry > now) {
+                    // Extend from current expiry
+                    newExpiryDate = new Date(currentExpiry);
+                } else {
+                    // Start from today
+                    newExpiryDate = new Date();
                 }
-                
-                currentExpiry.setMonth(currentExpiry.getMonth() + renewSelectedDuration);
+                newExpiryDate.setMonth(newExpiryDate.getMonth() + renewDuration);
                 
                 // Update customer
-                adminData.customers[index].expiryDate = currentExpiry.toISOString().split('T')[0];
-                adminData.customers[index].packagePrice = (parseFloat(customer.packagePrice) || 0) + total;
+                const plan = [];
+                if (selectedPackages.basic) plan.push('Basic TV');
+                if (selectedPackages.second) plan.push('2nd TV');
+                if (selectedPackages.third) plan.push('3rd TV');
+                
+                const addons = [];
+                if (selectedPackages.sports) addons.push('Sports');
+                if (selectedPackages.movies) addons.push('Movies');
+                if (selectedPackages.adult) addons.push('Adult');
+                
+                adminData.customers[customerIndex] = {
+                    ...customer,
+                    plan: plan.join(', '),
+                    addons: addons.join(', '),
+                    totalPrice: total,
+                    monthlyPrice: total / renewDuration,
+                    expiryDate: newExpiryDate.toISOString().split('T')[0],
+                    duration: renewDuration + ' month' + (renewDuration > 1 ? 's' : ''),
+                    durationMonths: renewDuration,
+                    status: 'active',
+                    renewedAt: new Date().toISOString()
+                };
                 
                 // Deduct from wallet
                 adminData.resellers[currentReseller.id].walletBalance = walletBalance - total;
+                walletBalance = walletBalance - total;
                 
-                // Add transaction record
-                adminData.resellerTransactions = adminData.resellerTransactions || [];
-                adminData.resellerTransactions.push({
-                    id: 'txn_' + Date.now(),
+                // Add transaction
+                adminData.creditTransfers = adminData.creditTransfers || [];
+                adminData.creditTransfers.push({
+                    id: 'TXN_' + Date.now(),
                     resellerId: currentReseller.id,
-                    type: 'renewal',
                     amount: -total,
-                    customerId: customerId,
-                    customerName: customer.name,
-                    packageName: packageName,
-                    duration: renewSelectedDuration,
+                    type: 'renewal',
+                    note: `Renewal: ${customer.name}`,
                     date: new Date().toISOString()
                 });
                 
-                // Try to save to GitHub
-                let savedToGithub = false;
-                try {
-                    await saveToGitHub();
-                    savedToGithub = true;
-                } catch (error) {
-                    console.log('GitHub save failed, saving locally only');
-                    localStorage.setItem('resellerPendingCustomers', JSON.stringify(adminData.customers));
-                    localStorage.setItem('resellerPendingTransactions', JSON.stringify(adminData.resellerTransactions));
-                }
+                await saveToGitHub();
                 
-                if (savedToGithub) {
-                    closeRenewModal();
-                    showNotification('Subscription renewed successfully!', 'success');
-                } else {
-                    closeRenewModal();
-                    showNotification('Renewed locally. Will sync when admin uploads.', 'warning');
-                }
+                closeRenewModal();
+                showNotification('Customer renewed successfully!', 'success');
                 await loadData();
                 
             } catch (error) {
                 console.error('Renewal error:', error);
-                showNotification('Failed to renew subscription', 'error');
-            }
-        }
-        
-        // Save adminData to localStorage as backup
-        function saveAdminDataToLocalStorage() {
-            try {
-                if (!adminData) {
-                    console.log('⚠️ No adminData to save');
-                    return;
-                }
-                
-                // Save full adminData object
-                localStorage.setItem('resellerAdminData', JSON.stringify(adminData));
-                
-                // Also save wallet balance specifically for easy access
-                if (currentReseller && adminData.resellers && adminData.resellers[currentReseller.id]) {
-                    const walletBalance = adminData.resellers[currentReseller.id].walletBalance || 0;
-                    localStorage.setItem('resellerWallet_' + currentReseller.id, walletBalance);
-                }
-                
-                console.log('✅ Saved adminData to localStorage (including wallet balances)');
-            } catch (error) {
-                console.error('❌ Error saving to localStorage:', error);
+                showNotification('Failed to renew: ' + error.message, 'error');
             }
         }
         
         // Save to GitHub
         async function saveToGitHub() {
             try {
-                console.log('=== SAVE TO GITHUB DEBUG ===');
-                console.log('GITHUB_TOKEN:', GITHUB_TOKEN ? 'exists (' + GITHUB_TOKEN.length + ' chars)' : 'EMPTY');
-                console.log('GITHUB_API_URL:', GITHUB_API_URL);
-                
                 if (!GITHUB_TOKEN) {
-                    // Try to get token from localStorage
+                    // Try to get token
                     GITHUB_TOKEN = localStorage.getItem('resellerGithubToken') || '';
-                    console.log('Loaded token from localStorage:', GITHUB_TOKEN ? 'yes' : 'no');
+                    if (!GITHUB_TOKEN && adminData && adminData.githubToken) {
+                        GITHUB_TOKEN = adminData.githubToken;
+                    }
+                    
+                    if (!GITHUB_TOKEN) {
+                        throw new Error('No GitHub token. Please contact admin.');
+                    }
                 }
-                
-                if (!GITHUB_TOKEN) {
-                    throw new Error('No GitHub token available');
-                }
-
-                // CRITICAL: Save to localStorage FIRST as backup before trying GitHub
-                saveAdminDataToLocalStorage();
                 
                 // Get current file SHA
                 const getResponse = await fetch(GITHUB_API_URL, {
@@ -2498,12 +1613,8 @@
                     }
                 });
                 
-                console.log('Get file response status:', getResponse.status);
-                
                 if (!getResponse.ok) {
-                    const errorText = await getResponse.text();
-                    console.log('Get file error:', errorText);
-                    throw new Error('Failed to get file info - Token may be invalid or expired');
+                    throw new Error('Failed to connect to GitHub. Status: ' + getResponse.status);
                 }
                 
                 const fileInfo = await getResponse.json();
@@ -2526,43 +1637,17 @@
                     })
                 });
                 
-                console.log('Update response status:', updateResponse.status);
-                
                 if (!updateResponse.ok) {
                     const errorText = await updateResponse.text();
-                    console.log('Update error:', errorText);
-                    throw new Error('Failed to save data');
+                    throw new Error('Failed to upload. Status: ' + updateResponse.status);
                 }
                 
-                console.log('=== SAVE COMPLETE ===');
-                return true;
+                console.log('✅ Saved to GitHub successfully');
+                
             } catch (error) {
-                console.error('Save to GitHub error:', error);
+                console.error('GitHub save error:', error);
                 throw error;
             }
-        }
-        
-        // Token Settings Functions
-        function showTokenSettings() {
-            const savedToken = localStorage.getItem('resellerGithubToken') || '';
-            document.getElementById('resellerGitHubToken').value = savedToken;
-            document.getElementById('tokenModal').style.display = 'flex';
-        }
-        
-        function closeTokenModal() {
-            document.getElementById('tokenModal').style.display = 'none';
-        }
-        
-        function saveResellerToken() {
-            const token = document.getElementById('resellerGitHubToken').value.trim();
-            if (!token) {
-                alert('Please enter a token');
-                return;
-            }
-            GITHUB_TOKEN = token;
-            localStorage.setItem('resellerGithubToken', token);
-            closeTokenModal();
-            alert('Token saved! Customers can now be saved to GitHub.');
         }
         
         // Close Modal
@@ -2573,23 +1658,7 @@
         // Close Renew Modal
         function closeRenewModal() {
             document.getElementById('renewModal').classList.remove('active');
-        }
-        
-        // Toggle Settings button visibility (click wallet 3 times)
-        let walletClickCount = 0;
-        function toggleSettingsVisibility() {
-            walletClickCount++;
-            if (walletClickCount >= 3) {
-                walletClickCount = 0;
-                const settingsBtn = document.getElementById('settingsBtn');
-                if (settingsBtn.style.display === 'none') {
-                    settingsBtn.style.display = 'inline-block';
-                    showNotification('Settings button visible - click wallet 3 times again to hide', 'success');
-                } else {
-                    settingsBtn.style.display = 'none';
-                    showNotification('Settings button hidden', 'success');
-                }
-            }
+            renewCustomerId = null;
         }
         
         // Logout
