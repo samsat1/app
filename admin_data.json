@@ -119,6 +119,24 @@
       "resetDeviceLock": 0,
       "username": "sam9",
       "durationMonths": 6
+    },
+    {
+      "id": "cust_1773286013021",
+      "name": "salame abdul khalek",
+      "username": "anthony",
+      "password": "shadi123",
+      "phone": "76755399",
+      "email": "sam-sat@hotmail.com",
+      "packageId": "",
+      "packageName": "",
+      "packages": [
+        {}
+      ],
+      "packagePrice": 10,
+      "expiryDate": "2026-04-12",
+      "resellerId": "reseller001",
+      "createdAt": "2026-03-12T03:26:53.022Z",
+      "status": "active"
     }
   ],
   "packages": [
@@ -212,7 +230,7 @@
       "status": "active",
       "commissionRate": 20,
       "updatedAt": "2026-03-12T02:46:05.643Z",
-      "walletBalance": 28
+      "walletBalance": 18
     },
     "reseller002": {
       "name": "Reseller 002",
@@ -360,7 +378,18 @@
       "newBalance": 28
     }
   ],
-  "resellerTransactions": [],
+  "resellerTransactions": [
+    {
+      "id": "txn_1773286013022",
+      "resellerId": "reseller001",
+      "type": "sale",
+      "amount": -10,
+      "customerId": "cust_1773286013021",
+      "customerName": "salame abdul khalek",
+      "packageName": "",
+      "date": "2026-03-12T03:26:53.022Z"
+    }
+  ],
   "plexServerUrl": "http://192.168.1.100:32400",
   "plexLocalUrl": "http://192.168.1.100:32400",
   "plexToken": "s9HUT7z3jba63ByZBe63",
