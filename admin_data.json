@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-13T22:38:48.164Z",
+  "exportDate": "2026-03-13T22:44:55.784Z",
   "customers": [],
   "packages": [
     {
@@ -72,7 +72,7 @@
       "password": "shadi123",
       "status": "active",
       "commissionRate": 20,
-      "updatedAt": "2026-03-13T22:04:12.841Z",
+      "updatedAt": "2026-03-13T22:40:51.170Z",
       "walletBalance": 100
     },
     "reseller002": {
@@ -197,5 +197,5 @@
   "tvSyncUrl": "https://raw.githubusercontent.com/samsat1/app/main/admin_data.json",
   "githubUsername": "samsat1",
   "githubRepo": "app",
-  "githubToken": "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"
+  "githubToken": "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"
 }
