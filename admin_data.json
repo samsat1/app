@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-13T00:00:20.917Z",
+  "exportDate": "2026-03-13T00:07:20.263Z",
   "customers": [],
   "packages": [
     {
@@ -15,13 +15,13 @@
       "isAdult": "",
       "adultPackagePrice": 0,
       "approved": true,
-      "approvedDate": "2026-03-12T23:56:15.399Z",
+      "approvedDate": "2026-03-13T00:03:32.785Z",
       "approvedBy": "admin",
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-03-12T23:56:15.400Z",
-      "id": "PKG_1773359775400"
+      "createdAt": "2026-03-13T00:03:32.786Z",
+      "id": "PKG_1773360212786"
     },
     {
       "name": "Sports",
@@ -35,13 +35,12 @@
       "isAdult": "",
       "adultPackagePrice": 0,
       "approved": true,
-      "approvedDate": "2026-03-12T23:56:37.989Z",
+      "approvedDate": "2026-03-13T00:04:40.080Z",
       "approvedBy": "admin",
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-03-12T23:56:37.989Z",
-      "id": "PKG_1773359797989"
+      "createdAt": "2026-03-13T00:04:40.080Z"
     },
     {
       "name": "Adult",
@@ -55,24 +54,24 @@
       "isAdult": true,
       "adultPackagePrice": 4,
       "approved": true,
-      "approvedDate": "2026-03-12T23:57:49.646Z",
+      "approvedDate": "2026-03-13T00:04:21.223Z",
       "approvedBy": "admin",
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-03-12T23:57:49.646Z",
-      "id": "PKG_1773359869646"
+      "createdAt": "2026-03-13T00:04:21.223Z",
+      "id": "PKG_1773360261223"
     }
   ],
   "resellers": {
     "reseller001": {
       "name": "Reseller 001",
       "id": "reseller001",
-      "username": "sam",
-      "password": "123456",
+      "username": "samoo1",
+      "password": "sam123",
       "status": "active",
       "commissionRate": 20,
-      "updatedAt": "2026-03-12T23:58:29.398Z",
+      "updatedAt": "2026-03-13T00:05:06.419Z",
       "walletBalance": 100
     },
     "reseller002": {
@@ -177,13 +176,13 @@
   },
   "creditTransfers": [
     {
-      "id": "credit_1773359919276",
+      "id": "credit_1773360315168",
       "resellerId": "reseller001",
       "amount": 100,
       "type": "credit",
-      "date": "2026-03-12T23:58:39.276Z",
+      "date": "2026-03-13T00:05:15.168Z",
       "note": "Admin credit transfer",
-      "timestamp": 1773359919276,
+      "timestamp": 1773360315168,
       "previousBalance": 0,
       "newBalance": 100
     }
@@ -197,5 +196,5 @@
   "tvSyncUrl": "https://raw.githubusercontent.com/samsat1/app/main/admin_data.json",
   "githubUsername": "samsat1",
   "githubRepo": "app",
-  "githubToken": "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"
+  "githubToken": "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"
 }
