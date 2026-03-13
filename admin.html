@@ -3348,9 +3348,25 @@
         
         // Upload to GitHub with one click
         window.uploadToGithub = async function() {
-            const username = localStorage.getItem('githubUsername');
-            const repo = localStorage.getItem('githubRepo');
-            const token = localStorage.getItem('githubToken');
+            // First save the current input values to localStorage
+            const usernameInput = document.getElementById('githubUsername');
+            const repoInput = document.getElementById('githubRepo');
+            const tokenInput = document.getElementById('githubToken');
+            
+            const username = usernameInput ? usernameInput.value.trim() : localStorage.getItem('githubUsername');
+            const repo = repoInput ? repoInput.value.trim() : localStorage.getItem('githubRepo');
+            const token = tokenInput ? tokenInput.value.trim() : localStorage.getItem('githubToken');
+            
+            // Save to localStorage if they were just entered
+            if (username && !localStorage.getItem('githubUsername')) {
+                localStorage.setItem('githubUsername', username);
+            }
+            if (repo && !localStorage.getItem('githubRepo')) {
+                localStorage.setItem('githubRepo', repo);
+            }
+            if (token && !localStorage.getItem('githubToken')) {
+                localStorage.setItem('githubToken', token);
+            }
             
             if (!username || !repo || !token) {
                 showNotification('⚠️ Please configure GitHub settings first!', 'error');
@@ -3385,6 +3401,7 @@
                 const resellerTransactions = JSON.parse(localStorage.getItem('resellerTransactions') || '[]');
                 
                 // Prepare data (clean JSON without special characters)
+                // NOTE: Don't include githubToken in the export - GitHub will revoke it from public repos!
                 const exportData = {
                     version: '1.0',
                     exportDate: new Date().toISOString(),
@@ -3400,8 +3417,8 @@
                     plexAdultSection: localStorage.getItem('plexAdultSection') || '',
                     tvSyncUrl: `https://raw.githubusercontent.com/${username}/${repo}/main/admin_data.json`,
                     githubUsername: username,
-                    githubRepo: repo,
-                    githubToken: token
+                    githubRepo: repo
+                    // githubToken removed - GitHub revokes tokens in public repos!
                 };
                 
                 // Use mobile-compatible base64 encoding
