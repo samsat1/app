@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-13T22:56:37.236Z",
+  "exportDate": "2026-03-13T23:24:42.828Z",
   "customers": [],
   "packages": [
     {
@@ -197,5 +197,5 @@
   "tvSyncUrl": "https://raw.githubusercontent.com/samsat1/app/main/admin_data.json",
   "githubUsername": "samsat1",
   "githubRepo": "app",
-  "githubToken": "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"
+  "githubToken": "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"
 }
