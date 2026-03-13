@@ -949,7 +949,13 @@
                 const resellers = adminData.resellers || {};
                 const reseller = resellers[username];
                 
-                if (reseller && reseller.password === password && reseller.status === 'active') {
+                if (reseller && reseller.password === password) {
+                    // Check status only if it exists, otherwise allow login
+                    if (reseller.status && reseller.status !== 'active') {
+                        document.getElementById('loginError').textContent = 'Reseller account is not active';
+                        document.getElementById('loginError').style.display = 'block';
+                        return;
+                    }
                     currentReseller = {
                         id: username,
                         name: reseller.name || username,
