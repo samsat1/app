@@ -7793,6 +7793,30 @@ Network: Always Streaming → Optimized for instant access`;
             // Load packages from localStorage
             packages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
             
+            // Load GitHub settings from localStorage
+            const savedGithubUsername = localStorage.getItem('githubUsername');
+            const savedGithubRepo = localStorage.getItem('githubRepo');
+            const savedGithubToken = localStorage.getItem('githubToken');
+            
+            // Populate GitHub fields if saved settings exist
+            setTimeout(() => {
+                const githubUsernameInput = document.getElementById('githubUsername');
+                const githubRepoInput = document.getElementById('githubRepo');
+                const githubTokenInput = document.getElementById('githubToken');
+                
+                if (githubUsernameInput && savedGithubUsername) {
+                    githubUsernameInput.value = savedGithubUsername;
+                }
+                if (githubRepoInput && savedGithubRepo) {
+                    githubRepoInput.value = savedGithubRepo;
+                }
+                if (githubTokenInput && savedGithubToken) {
+                    githubTokenInput.value = savedGithubToken;
+                }
+                
+                console.log('📂 Loaded GitHub settings from localStorage');
+            }, 500);
+            
             // Load customers from localStorage
             loadCustomersFromStorage();
             
