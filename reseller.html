@@ -643,7 +643,10 @@
         <div class="header">
             <div class="header-top">
                 <h1>iWatch TV</h1>
-                <button class="logout-btn" onclick="logout()">Logout</button>
+                <div>
+                    <button class="logout-btn" onclick="loadData()" style="margin-right: 10px; background: #2196f3;">🔄 Refresh</button>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                </div>
             </div>
             <div class="wallet-card">
                 <div class="wallet-label">Wallet Balance</div>
@@ -934,41 +937,47 @@
             document.getElementById('loginError').style.display = 'none';
             
             try {
+                // Read resellers from GitHub (admin auto-syncs here)
                 const response = await fetch(GITHUB_DATA_URL + '?t=' + Date.now());
                 if (!response.ok) throw new Error('Failed to fetch data');
                 
-                adminData = await response.json();
+                const adminData = await response.json();
+                const resellers = adminData.resellers || {};
                 
-                // Get GitHub token from admin_data if available
-                if (adminData.githubToken) {
-                    GITHUB_TOKEN = adminData.githubToken;
-                    localStorage.setItem('resellerGithubToken', GITHUB_TOKEN);
+                // Find reseller by username
+                let reseller = resellers[username];
+                
+                // If not found by key, search through all resellers
+                if (!reseller) {
+                    for (const [id, res] of Object.entries(resellers)) {
+                        if (res.username === username) {
+                            reseller = res;
+                            reseller.id = id;
+                            break;
+                        }
+                    }
                 }
                 
-                // Check reseller credentials
-                const resellers = adminData.resellers || {};
-                const reseller = resellers[username];
-                
                 if (reseller && reseller.password === password) {
-                    // Check status only if it exists, otherwise allow login
                     if (reseller.status && reseller.status !== 'active') {
                         document.getElementById('loginError').textContent = 'Reseller account is not active';
                         document.getElementById('loginError').style.display = 'block';
                         return;
                     }
                     currentReseller = {
-                        id: username,
+                        id: reseller.id || username,
                         name: reseller.name || username,
                         ...reseller
                     };
                     localStorage.setItem('currentReseller', JSON.stringify(currentReseller));
                     showMainPanel();
                 } else {
+                    document.getElementById('loginError').textContent = 'Invalid username or password';
                     document.getElementById('loginError').style.display = 'block';
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                document.getElementById('loginError').textContent = 'Connection error. Please try again.';
+                document.getElementById('loginError').textContent = 'Error loading data. Please try again. Make sure admin synced data to GitHub.';
                 document.getElementById('loginError').style.display = 'block';
             }
         }
@@ -984,17 +993,18 @@
         // Load Data
         async function loadData() {
             try {
+                // Read data from GitHub (admin auto-syncs here)
                 const response = await fetch(GITHUB_DATA_URL + '?t=' + Date.now());
                 if (!response.ok) throw new Error('Failed to fetch data');
                 
                 adminData = await response.json();
                 
-                // Get GitHub token
-                if (adminData.githubToken) {
-                    GITHUB_TOKEN = adminData.githubToken;
-                } else {
-                    GITHUB_TOKEN = localStorage.getItem('resellerGithubToken') || '';
-                }
+                console.log('📊 Loaded data from GitHub:', {
+                    resellers: Object.keys(adminData.resellers || {}).length,
+                    credits: (adminData.creditTransfers || []).length,
+                    customers: (adminData.customers || []).length,
+                    packages: (adminData.packages || []).length
+                });
                 
                 // Get package prices from admin
                 loadPackagePrices();

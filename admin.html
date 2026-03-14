@@ -3848,6 +3848,16 @@
                 
                 console.log('✅ Credit transfer completed successfully');
                 
+                // AUTO-SYNC to GitHub after credit transfer
+                console.log('🔄 Auto-syncing to GitHub...');
+                if (typeof uploadToGithub === 'function') {
+                    uploadToGithub().then(() => {
+                        console.log('✅ Auto-sync to GitHub completed');
+                    }).catch(err => {
+                        console.error('❌ Auto-sync failed:', err);
+                    });
+                }
+                
             } catch (error) {
                 console.error('❌ Credit transfer failed:', error);
                 showNotification('❌ Credit transfer failed. Please try again.', 'error');
@@ -4003,6 +4013,16 @@
                 // Update package statistics and list
                 updatePackageStats();
                 updatePackagesList();
+                
+                // AUTO-SYNC to GitHub after package created/updated
+                console.log('🔄 Auto-syncing to GitHub after package change...');
+                if (typeof uploadToGithub === 'function') {
+                    uploadToGithub().then(() => {
+                        console.log('✅ Auto-sync to GitHub completed');
+                    }).catch(err => {
+                        console.error('❌ Auto-sync failed:', err);
+                    });
+                }
             }, 2000);
         }
         
