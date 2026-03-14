@@ -644,7 +644,7 @@
             <div class="header-top">
                 <h1>iWatch TV <span id="resellerName" style="font-size: 14px; opacity: 0.7;"></span></h1>
                 <div>
-                    <button class="logout-btn" onclick="loadData()" style="margin-right: 10px; background: #2196f3;">🔄 Refresh</button>
+                    <button class="logout-btn" onclick="refreshData()" style="margin-right: 10px; background: #2196f3;">🔄 Refresh</button>
                     <button class="logout-btn" onclick="logout()">Logout</button>
                 </div>
             </div>
@@ -979,11 +979,32 @@
         }
         
         // Show Main Panel
+        let autoRefreshInterval = null;
+        
         function showMainPanel() {
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('mainPanel').style.display = 'block';
             document.getElementById('resellerName').textContent = currentReseller.name || currentReseller.id;
             loadData();
+            
+            // Auto-refresh every 30 seconds to get latest prices
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+            autoRefreshInterval = setInterval(() => {
+                console.log('Auto-refreshing data...');
+                loadData();
+            }, 30000);
+        }
+        
+        // Refresh button handler
+        async function refreshData() {
+            try {
+                showNotification('Refreshing data...', 'info');
+                await loadData();
+                showNotification('Data refreshed!', 'success');
+            } catch (error) {
+                console.error('Refresh error:', error);
+                showNotification('Failed to refresh: ' + error.message, 'error');
+            }
         }
         
         // Load Data
@@ -1002,9 +1023,6 @@
                     packages: (adminData.packages || []).length
                 });
                 
-                // Get package prices from admin
-                loadPackagePrices();
-                
                 // Get reseller's wallet balance
                 const reseller = adminData.resellers?.[currentReseller.id];
                 walletBalance = parseFloat(reseller?.walletBalance || 0);
@@ -1015,6 +1033,9 @@
                 
                 // Get packages
                 packages = adminData.packages || [];
+                
+                // Load package prices from admin data
+                loadPackagePrices();
                 
                 // Get customers for this reseller
                 customers = (adminData.customers || []).filter(c => c.resellerId === currentReseller.id);
@@ -1381,20 +1402,24 @@
                     status: 'active'
                 };
                 
-                // Update admin data
-                adminData.customers = adminData.customers || [];
-                adminData.customers.push(newCustomer);
+                // Add to local customers array immediately
+                customers.push(newCustomer);
                 
                 // Deduct from wallet (save locally)
                 walletBalance = walletBalance - total;
                 
                 // Update local adminData
-                adminData.resellers[currentReseller.id].walletBalance = walletBalance;
+                if (adminData.resellers && adminData.resellers[currentReseller.id]) {
+                    adminData.resellers[currentReseller.id].walletBalance = walletBalance;
+                }
+                
+                // Update wallet display immediately
+                document.getElementById('walletBalance').textContent = walletBalance.toFixed(2);
                 
                 // Save locally
                 localStorage.setItem('resellerWallet_' + currentReseller.id, walletBalance.toString());
                 
-                // Add transaction record
+                // Add transaction record locally
                 const pendingTransactions = JSON.parse(localStorage.getItem('pendingTransactions') || '[]');
                 pendingTransactions.push({
                     id: 'TXN_' + Date.now(),
@@ -1407,9 +1432,8 @@
                 });
                 localStorage.setItem('pendingTransactions', JSON.stringify(pendingTransactions));
                 
-                // Add to creditTransfers
-                adminData.creditTransfers = adminData.creditTransfers || [];
-                adminData.creditTransfers.push({
+                // Add to credit history
+                creditHistory.push({
                     id: 'TXN_' + Date.now(),
                     resellerId: currentReseller.id,
                     amount: -total,
@@ -1418,21 +1442,21 @@
                     date: new Date().toISOString()
                 });
                 
-                // Add customer
-                adminData.customers = adminData.customers || [];
-                adminData.customers.push(newCustomer);
+                // Render customers and credits immediately
+                renderCustomers();
+                renderCredits();
+                updateStats();
                 
-                // Try to auto-sync to GitHub
+                closeModal();
+                showNotification('Customer created! Credit deducted: $' + total.toFixed(2), 'success');
+                
+                // Try to sync to GitHub in background (don't block)
                 try {
                     await saveToGitHub();
-                    closeModal();
-                    showNotification('Customer created and synced!', 'success');
+                    console.log('Synced to GitHub');
                 } catch (e) {
-                    console.log('Sync failed, saving locally');
-                    closeModal();
-                    showNotification('Customer created! Will sync when online.', 'success');
+                    console.log('Sync failed, will try later');
                 }
-                await loadData();
                 
             } catch (error) {
                 console.error('Create customer error:', error);
@@ -1731,6 +1755,11 @@
         
         // Logout
         function logout() {
+            // Clear auto-refresh interval
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
             localStorage.removeItem('currentReseller');
             currentReseller = null;
             document.getElementById('mainPanel').style.display = 'none';
