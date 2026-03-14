@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-14T01:47:27.778Z",
+  "exportDate": "2026-03-14T01:49:33.593Z",
   "customers": [
     {
       "plan": "Basic Package",
@@ -164,7 +164,7 @@
     },
     {
       "name": "Adult",
-      "price": 4,
+      "price": 5,
       "duration": "1 Month",
       "features": "+18",
       "secondTVPrice": 5,
@@ -172,15 +172,14 @@
       "sportsPrice": 6,
       "moviesPrice": 0,
       "isAdult": true,
-      "adultPackagePrice": 4,
+      "adultPackagePrice": 5,
       "approved": true,
-      "approvedDate": "2026-03-14T00:26:34.074Z",
+      "approvedDate": "2026-03-14T01:49:27.208Z",
       "approvedBy": "admin",
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-03-14T00:26:34.074Z",
-      "id": "PKG_1773447994074"
+      "createdAt": "2026-03-14T01:49:27.208Z"
     }
   ],
   "resellers": {
