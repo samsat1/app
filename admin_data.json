@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-14T20:52:59.732Z",
+  "exportDate": "2026-03-14T21:04:00.470Z",
   "customers": [
     {
       "plan": "Basic Package",
@@ -312,26 +312,6 @@
       "status": "active",
       "commissionRate": 20,
       "walletBalance": 0
-    },
-    "reselles": {
-      "name": "Reseller reselles",
-      "id": "reselles",
-      "username": "shadi1",
-      "password": "shadi12",
-      "status": "active",
-      "walletBalance": 0,
-      "commissionRate": 20,
-      "createdAt": "2026-03-12T02:59:38.912Z"
-    },
-    "shadi321": {
-      "name": "shadi321",
-      "id": "shadi321",
-      "username": "shadi321",
-      "password": "shadi123",
-      "status": "active",
-      "walletBalance": 0,
-      "commissionRate": 20,
-      "createdAt": "2026-03-13T23:54:21.067Z"
     }
   },
   "creditTransfers": [
