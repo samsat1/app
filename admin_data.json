@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-14T02:48:08.879Z",
+  "exportDate": "2026-03-14T02:52:54.976Z",
   "customers": [
     {
       "plan": "Basic Package",
@@ -123,24 +123,23 @@
   ],
   "packages": [
     {
-      "name": "Basic",
-      "price": 10,
+      "name": "Movies",
+      "price": 0.1,
       "duration": "1 Month",
       "features": "",
-      "secondTVPrice": 5,
-      "thirdTVPrice": 5,
+      "secondTVPrice": 0.1,
+      "thirdTVPrice": 0.1,
       "sportsPrice": 0,
-      "moviesPrice": 0,
+      "moviesPrice": 0.1,
       "isAdult": "",
       "adultPackagePrice": 0,
       "approved": true,
-      "approvedDate": "2026-03-14T00:25:54.128Z",
+      "approvedDate": "2026-03-14T02:52:46.998Z",
       "approvedBy": "admin",
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-03-14T00:25:54.128Z",
-      "id": "PKG_1773447954128"
+      "createdAt": "2026-03-14T02:52:46.998Z"
     },
     {
       "name": "Sports",
@@ -154,13 +153,12 @@
       "isAdult": "",
       "adultPackagePrice": 0,
       "approved": true,
-      "approvedDate": "2026-03-14T00:26:12.346Z",
+      "approvedDate": "2026-03-14T02:51:23.006Z",
       "approvedBy": "admin",
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-03-14T00:26:12.346Z",
-      "id": "PKG_1773447972346"
+      "createdAt": "2026-03-14T02:51:23.006Z"
     },
     {
       "name": "Adult",
