@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-14T14:32:00.334Z",
+  "exportDate": "2026-03-14T20:21:34.034Z",
   "customers": [
     {
       "plan": "Basic Package",
@@ -212,7 +212,7 @@
       "status": "active",
       "commissionRate": 20,
       "updatedAt": "2026-03-14T00:00:28.460Z",
-      "walletBalance": 85.5
+      "walletBalance": 110
     },
     "reseller002": {
       "name": "Reseller 002",
@@ -336,24 +336,24 @@
   },
   "creditTransfers": [
     {
-      "id": "credit_1773448020729",
+      "id": "credit_1773439463889",
       "resellerId": "reseller001",
       "amount": 100,
       "type": "credit",
-      "date": "2026-03-14T00:27:00.729Z",
+      "date": "2026-03-13T22:04:23.889Z",
       "note": "Admin credit transfer",
-      "timestamp": 1773448020729,
+      "timestamp": 1773439463889,
       "previousBalance": 0,
       "newBalance": 100
     },
     {
-      "id": "credit_1773452841611",
+      "id": "credit_1773450938300",
       "resellerId": "reseller001",
       "amount": 10,
       "type": "credit",
-      "date": "2026-03-14T01:47:21.611Z",
+      "date": "2026-03-14T01:15:38.300Z",
       "note": "Admin credit transfer",
-      "timestamp": 1773452841611,
+      "timestamp": 1773450938300,
       "previousBalance": 100,
       "newBalance": 110
     }
