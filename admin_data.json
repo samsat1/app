@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-14T02:52:54.976Z",
+  "exportDate": "2026-03-14T02:56:47.517Z",
   "customers": [
     {
       "plan": "Basic Package",
@@ -130,16 +130,16 @@
       "secondTVPrice": 0.1,
       "thirdTVPrice": 0.1,
       "sportsPrice": 0,
-      "moviesPrice": 0.1,
+      "moviesPrice": 0,
       "isAdult": "",
       "adultPackagePrice": 0,
       "approved": true,
-      "approvedDate": "2026-03-14T02:52:46.998Z",
+      "approvedDate": "2026-03-14T02:55:27.209Z",
       "approvedBy": "admin",
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-03-14T02:52:46.998Z"
+      "createdAt": "2026-03-14T02:55:27.209Z"
     },
     {
       "name": "Sports",
@@ -148,21 +148,21 @@
       "features": "",
       "secondTVPrice": 5,
       "thirdTVPrice": 5,
-      "sportsPrice": 6,
+      "sportsPrice": 0,
       "moviesPrice": 0,
       "isAdult": "",
       "adultPackagePrice": 0,
       "approved": true,
-      "approvedDate": "2026-03-14T02:51:23.006Z",
+      "approvedDate": "2026-03-14T02:55:49.757Z",
       "approvedBy": "admin",
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-03-14T02:51:23.006Z"
+      "createdAt": "2026-03-14T02:55:49.757Z"
     },
     {
       "name": "Adult",
-      "price": 4,
+      "price": 5,
       "duration": "1 Month",
       "features": "+18",
       "secondTVPrice": 5,
@@ -170,14 +170,34 @@
       "sportsPrice": 6,
       "moviesPrice": 0,
       "isAdult": true,
-      "adultPackagePrice": 4,
+      "adultPackagePrice": 5,
       "approved": true,
-      "approvedDate": "2026-03-14T02:47:56.034Z",
+      "approvedDate": "2026-03-14T02:56:18.665Z",
       "approvedBy": "admin",
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-03-14T02:47:56.035Z"
+      "createdAt": "2026-03-14T02:56:18.665Z"
+    },
+    {
+      "name": "Basic",
+      "price": 10,
+      "duration": "1 Month",
+      "features": "",
+      "secondTVPrice": 5,
+      "thirdTVPrice": 5,
+      "sportsPrice": 0,
+      "moviesPrice": 0,
+      "isAdult": "",
+      "adultPackagePrice": 0,
+      "approved": true,
+      "approvedDate": "2026-03-14T02:56:42.215Z",
+      "approvedBy": "admin",
+      "rejectedDate": null,
+      "rejectedBy": null,
+      "rejectionReason": null,
+      "createdAt": "2026-03-14T02:56:42.215Z",
+      "id": "PKG_1773457002215"
     }
   ],
   "resellers": {
