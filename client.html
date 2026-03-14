@@ -213,9 +213,9 @@
                 // AUTO-LOGIN REMOVED - Each client must enter their own credentials
                 'adminLogin': '',  // REMOVED: 'admin123'
                 'resellerLogin': '',  // REMOVED: 'reseller123'
-                'clientAdult': '1818',
+                'clientAdult': '000000',  // Customer adult password: 000000
                 'panelAccess': '000000',
-                'masterAdult': '123789' // Master password for admin emergency access to adult content
+                'masterAdult': '273972' // Master password for admin: 273972
             },
             verifyPassword: function(key, input) {
                 return this.passwords[key] === input;
@@ -2134,20 +2134,70 @@
 
             // Validate if customer has access to specific package content
             validatePackageAccess: function(customer, packageId) {
-                const mapping = this.getPackageMapping(packageId);
-                if (!mapping || !mapping.active) {
-                    return { hasAccess: false, reason: 'No content mapping configured' };
+                // If no current user, no access
+                if (!customer) {
+                    return { hasAccess: false, reason: 'No customer' };
                 }
-
-                // Check if customer has subscription to this package
+                
                 const packageData = adminPackages.find(p => p.id === packageId);
                 if (!packageData) {
+                    // If package doesn't exist in adminPackages, check by name keywords
+                    const pkgName = (packageId || '').toLowerCase();
+                    const plan = (customer.plan || '').toLowerCase();
+                    const addons = (customer.addons || '').toLowerCase();
+                    
+                    // Check by keywords in plan/addons
+                    if (pkgName.includes('sport') && (plan.includes('sport') || addons.includes('sport'))) {
+                        return { hasAccess: true, reason: 'Access via keyword' };
+                    }
+                    if (pkgName.includes('movie') && (plan.includes('movie') || addons.includes('movie'))) {
+                        return { hasAccess: true, reason: 'Access via keyword' };
+                    }
+                    if (pkgName.includes('basic') && plan.includes('basic')) {
+                        return { hasAccess: true, reason: 'Access via keyword' };
+                    }
+                    if (pkgName.includes('adult') && addons.includes('adult')) {
+                        return { hasAccess: true, reason: 'Access via keyword' };
+                    }
+                    
                     return { hasAccess: false, reason: 'Package not found' };
                 }
 
-                // Check if package is in customer's plan or addons
-                const hasInPlan = customer.plan && customer.plan.includes(packageData.name);
-                const hasInAddons = customer.addons && customer.addons.includes(packageData.name);
+                const mapping = this.getPackageMapping(packageId);
+                if (!mapping || !mapping.active) {
+                    // If no mapping, still check if customer has the package
+                    const pkgName = (packageData.name || '').toLowerCase();
+                    const plan = (customer.plan || '').toLowerCase();
+                    const addons = (customer.addons || '').toLowerCase();
+                    
+                    // Check by keywords if no mapping exists
+                    const hasAccess = plan.includes(pkgName) || addons.includes(pkgName) ||
+                                     (pkgName.includes('sport') && (plan.includes('sport') || addons.includes('sport'))) ||
+                                     (pkgName.includes('movie') && (plan.includes('movie') || addons.includes('movie'))) ||
+                                     (pkgName.includes('basic') && plan.includes('basic')) ||
+                                     (pkgName.includes('adult') && addons.includes('adult'));
+                    
+                    if (!hasAccess) {
+                        return { hasAccess: false, reason: 'No content mapping and not subscribed' };
+                    }
+                    
+                    return { hasAccess: true, reason: 'Access via subscription' };
+                }
+
+                // Check if customer has subscription to this package
+                // Check if package is in customer's plan or addons (case-insensitive)
+                const pkgName = (packageData.name || '').toLowerCase();
+                const plan = (customer.plan || '').toLowerCase();
+                const addons = (customer.addons || '').toLowerCase();
+                
+                const hasInPlan = plan.includes(pkgName) || 
+                                 (pkgName.includes('sport') && plan.includes('sport')) ||
+                                 (pkgName.includes('movie') && plan.includes('movie')) ||
+                                 (pkgName.includes('basic') && plan.includes('basic'));
+                const hasInAddons = addons.includes(pkgName) ||
+                                   (pkgName.includes('sport') && addons.includes('sport')) ||
+                                   (pkgName.includes('movie') && addons.includes('movie')) ||
+                                   (pkgName.includes('adult') && addons.includes('adult'));
 
                 if (!hasInPlan && !hasInAddons) {
                     return { hasAccess: false, reason: 'Customer not subscribed to this package' };
@@ -2602,14 +2652,43 @@
         // Load all packages from admin panel (including libraries)
         function loadAllPackagesFromAdmin() {
             try {
+                // First try to get from localStorage
                 const adminPackages = localStorage.getItem('adminPackages');
                 if (adminPackages) {
                     return JSON.parse(adminPackages);
                 }
+                
+                // Try to load from GitHub
+                return loadPackagesFromGitHub();
             } catch (e) {
-                console.error('Error loading packages from admin:', e);
+                console.error('Error loading packages:', e);
             }
             return [];
+        }
+        
+        // Load packages from GitHub
+        async function loadPackagesFromGitHub() {
+            try {
+                console.log('Loading packages from GitHub...');
+                const response = await fetch(GITHUB_CONFIG.DATA_URL + '?t=' + Date.now());
+                if (!response.ok) {
+                    console.error('Failed to fetch packages from GitHub:', response.status);
+                    return [];
+                }
+                
+                const adminData = await response.json();
+                const packages = adminData.packages || [];
+                
+                console.log('Loaded', packages.length, 'packages from GitHub');
+                
+                // Save to localStorage for offline access
+                localStorage.setItem('adminPackages', JSON.stringify(packages));
+                
+                return packages;
+            } catch (e) {
+                console.error('Error loading packages from GitHub:', e);
+                return [];
+            }
         }
 
         // Load customers from admin panel (now uses correct key)
@@ -3485,9 +3564,27 @@
         }
 
         function loginUser(username, password) {
+            // Generate device fingerprint
+            const deviceFingerprint = generateDeviceFingerprint();
+            
+            // Get customer data first to check subscription
+            const customers = loadCustomersFromAdmin();
+            const customerData = customers.find(c => c.username === username);
+            
+            // Check device authorization based on subscription
+            const deviceAuth = checkDeviceAuthorization(username, deviceFingerprint, customerData);
+            
+            if (!deviceAuth.authorized) {
+                showError(deviceAuth.message);
+                return false;
+            }
+            
             const user = passwordManager.authenticateUser(username, password);
             
             if (user) {
+                // Register this device on first login
+                registerDevice(username, deviceFingerprint, customerData);
+                
                 isLoggedIn = true;
                 currentUser = user;
                 
@@ -3495,13 +3592,14 @@
                 adminCustomers = loadCustomersFromAdmin();
                 
                 // Log login success with customer details
-                const customerData = adminCustomers.find(c => c.username === user.username);
+                const customer = adminCustomers.find(c => c.username === user.username);
                 console.log('✅ Login successful:', {
                     username: user.username,
-                    status: customerData?.status,
-                    plan: customerData?.plan,
-                    addons: customerData?.addons,
-                    expiry: customerData?.expiryDate
+                    status: customer?.status,
+                    plan: customer?.plan,
+                    addons: customer?.addons,
+                    expiry: customer?.expiryDate,
+                    device: deviceFingerprint
                 });
                 
                 updateUserInterface();
@@ -3510,7 +3608,7 @@
                 
                 // Test package authentication
                 setTimeout(() => {
-                    console.log('🔐 Testing package authentication for new user...');
+                    console.log('🔐 Testing package authentication...');
                     if (typeof debugPackageAuth === 'function') {
                         debugPackageAuth();
                     }
@@ -3520,15 +3618,11 @@
                 const rememberMe = document.getElementById('rememberMe')?.checked || false;
                 
                 if (rememberMe) {
-                    // Get customer's expiry date
-                    const customer = adminCustomers.find(c => c.username === username);
-                    const expiryDate = customer?.expiry || '2025-12-31'; // Default if not found
-                    
-                    // Store credentials for auto-login
+                    const cust = adminCustomers.find(c => c.username === username);
+                    const expiryDate = cust?.expiry || '2025-12-31';
                     storeCredentials(username, password, expiryDate, rememberMe);
                 }
                 
-                // Initialize content preloading for better UX
                 initializeContentPreloading();
                 
                 return true;
@@ -3536,7 +3630,107 @@
             
             return false;
         }
-
+        
+        // Generate device fingerprint
+        function generateDeviceFingerprint() {
+            const screen = window.screen;
+            const navigator = window.navigator;
+            
+            const fingerprintData = [
+                screen.width,
+                screen.height,
+                screen.colorDepth,
+                navigator.language,
+                navigator.platform,
+                navigator.hardwareConcurrency || 'unknown',
+                navigator.deviceMemory || 'unknown',
+                new Date().getTimezoneOffset(),
+                (function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    ctx.textBaseline = "top";
+                    ctx.font = "14px 'Arial'";
+                    ctx.textBaseline = "alphabetic";
+                    ctx.fillStyle = "#f60";
+                    ctx.fillRect(125,1,62,20);
+                    ctx.fillStyle = "#069";
+                    ctx.fillText("iWATCH", 2, 15);
+                    ctx.fillStyle = "rgba(102, 204, 0, 0.7)";
+                    ctx.fillText("TV", 4, 17);
+                    return canvas.toDataURL();
+                })()
+            ];
+            
+            let hash = 0;
+            const str = fingerprintData.join('|');
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            
+            return 'DEV_' + Math.abs(hash).toString(36).toUpperCase();
+        }
+        
+        // Check device authorization based on subscription
+        function checkDeviceAuthorization(username, fingerprint, customerData) {
+            // Get registered devices
+            const registeredDevicesKey = `iwatch_devices_${username}`;
+            const registeredDevices = JSON.parse(localStorage.getItem(registeredDevicesKey) || '[]');
+            
+            // Calculate max devices allowed based on subscription
+            let maxDevices = 1; // Default: Basic TV = 1 device
+            
+            const plan = (customerData?.plan || '').toLowerCase();
+            
+            if (plan.includes('3rd') || plan.includes('third')) {
+                maxDevices = 3; // Third TV = 3 devices
+            } else if (plan.includes('2nd') || plan.includes('second')) {
+                maxDevices = 2; // Second TV = 2 devices
+            }
+            
+            console.log('Device check - Subscription:', plan, '| Max devices:', maxDevices, '| Registered:', registeredDevices.length);
+            
+            // Same device (same fingerprint) can always login
+            if (registeredDevices.includes(fingerprint)) {
+                return { authorized: true, message: 'Device registered' };
+            }
+            
+            // Different device - check if subscription allows more devices
+            if (registeredDevices.length >= maxDevices) {
+                let deviceLimitMsg = '';
+                if (maxDevices === 1) {
+                    deviceLimitMsg = 'Basic TV allows only 1 device. Buy Second TV to add more devices.';
+                } else if (maxDevices === 2) {
+                    deviceLimitMsg = 'Second TV allows only 2 devices. Buy Third TV to add more devices.';
+                } else {
+                    deviceLimitMsg = 'Maximum 3 devices allowed.';
+                }
+                
+                return { 
+                    authorized: false, 
+                    message: `❌ ${deviceLimitMsg}` 
+                };
+            }
+            
+            // Allow new device login
+            return { authorized: true, message: 'New device allowed' };
+        }
+        
+        // Register device
+        function registerDevice(username, fingerprint, customerData) {
+            const registeredDevicesKey = `iwatch_devices_${username}`;
+            const registeredDevices = JSON.parse(localStorage.getItem(registeredDevicesKey) || '[]');
+            
+            if (!registeredDevices.includes(fingerprint)) {
+                registeredDevices.push(fingerprint);
+                localStorage.setItem(registeredDevicesKey, JSON.stringify(registeredDevices));
+                console.log('✅ Device registered:', fingerprint);
+            }
+            
+            localStorage.setItem('iwatch_current_device', fingerprint);
+        }
+        
         function logoutUser() {
             console.log('🚪 Logging out user...');
             
@@ -4635,9 +4829,12 @@
             // Setup event listeners
             setupEventListeners();
             
-            // Sync customer data from GitHub in background
-            loadCustomersFromGitHub().then(customers => {
-                console.log('Synced customers from GitHub:', customers.length);
+            // Sync customer and package data from GitHub in background
+            Promise.all([
+                loadCustomersFromGitHub(),
+                loadPackagesFromGitHub()
+            ]).then(([customers, packages]) => {
+                console.log('Synced from GitHub - Customers:', customers.length, 'Packages:', packages.length);
             }).catch(e => {
                 console.log('GitHub sync failed, using local data');
             });
