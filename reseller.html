@@ -1032,20 +1032,28 @@
         
         // Load package prices from admin data
         function loadPackagePrices() {
+            console.log('Loading package prices, packages:', adminData.packages);
+            
             // Try to get prices from admin packages
             if (adminData.packages && adminData.packages.length > 0) {
-                const firstPkg = adminData.packages[0];
-                packagePrices.basic = firstPkg.price || 25;
-                packagePrices.secondTV = firstPkg.secondTVPrice || 15;
-                packagePrices.thirdTV = firstPkg.thirdTVPrice || 10;
-                packagePrices.sports = firstPkg.sportsPrice || 8;
-                packagePrices.movies = firstPkg.moviesPrice || 8;
+                // Find the main package (non-adult)
+                const mainPkg = adminData.packages.find(p => !p.isAdult && !p.name.toLowerCase().includes('adult')) || adminData.packages[0];
+                
+                packagePrices.basic = parseFloat(mainPkg.price) || 25;
+                packagePrices.secondTV = parseFloat(mainPkg.secondTVPrice) || 15;
+                packagePrices.thirdTV = parseFloat(mainPkg.thirdTVPrice) || 10;
+                packagePrices.sports = parseFloat(mainPkg.sportsPrice) || 8;
+                packagePrices.movies = parseFloat(mainPkg.moviesPrice) || 8;
                 
                 // Get adult price from adult packages
-                const adultPkg = adminData.packages.find(p => p.isAdult || p.name.toLowerCase().includes('adult'));
+                const adultPkg = adminData.packages.find(p => p.isAdult || (p.name && p.name.toLowerCase().includes('adult')));
                 if (adultPkg) {
-                    packagePrices.adult = adultPkg.adultPackagePrice || 0;
+                    packagePrices.adult = parseFloat(adultPkg.adultPackagePrice) || 0;
                 }
+                
+                console.log('Prices loaded:', packagePrices);
+            } else {
+                console.log('No packages found, using defaults');
             }
             
             // Update UI with prices
@@ -1222,17 +1230,24 @@
             
             // Enable addons when basic is selected
             if (selectedPackages.basic) {
+                document.getElementById('secondTVOption').classList.remove('disabled');
                 document.getElementById('sportsOption').classList.remove('disabled');
                 document.getElementById('moviesOption').classList.remove('disabled');
                 document.getElementById('adultOption').classList.remove('disabled');
             } else {
                 // Disable addons when basic is unchecked
+                selectedPackages.second = false;
+                selectedPackages.third = false;
                 selectedPackages.sports = false;
                 selectedPackages.movies = false;
                 selectedPackages.adult = false;
+                document.getElementById('secondTVOption').classList.remove('selected');
+                document.getElementById('thirdTVOption').classList.remove('selected');
                 document.getElementById('sportsOption').classList.remove('selected');
                 document.getElementById('moviesOption').classList.remove('selected');
                 document.getElementById('adultOption').classList.remove('selected');
+                document.getElementById('secondTVOption').classList.add('disabled');
+                document.getElementById('thirdTVOption').classList.add('disabled');
                 document.getElementById('sportsOption').classList.add('disabled');
                 document.getElementById('moviesOption').classList.add('disabled');
                 document.getElementById('adultOption').classList.add('disabled');
