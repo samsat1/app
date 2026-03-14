@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>iWatch TV - Reseller Panel</title>
-    <!-- VERSION 7.0 - Fresh Reseller Panel 2025-03-13 -->
+    <!-- VERSION 8.0 - Fixed Credit System 2026-03-14 -->
     <style>
         * {
             margin: 0;
@@ -642,7 +642,7 @@
         <!-- Header -->
         <div class="header">
             <div class="header-top">
-                <h1>iWatch TV</h1>
+                <h1>iWatch TV <span id="resellerName" style="font-size: 14px; opacity: 0.7;"></span></h1>
                 <div>
                     <button class="logout-btn" onclick="loadData()" style="margin-right: 10px; background: #2196f3;">🔄 Refresh</button>
                     <button class="logout-btn" onclick="logout()">Logout</button>
@@ -1362,11 +1362,29 @@
                 adminData.customers = adminData.customers || [];
                 adminData.customers.push(newCustomer);
                 
-                // Deduct from wallet
-                adminData.resellers[currentReseller.id].walletBalance = walletBalance - total;
+                // Deduct from wallet (save locally)
                 walletBalance = walletBalance - total;
                 
+                // Update local adminData
+                adminData.resellers[currentReseller.id].walletBalance = walletBalance;
+                
+                // Save locally
+                localStorage.setItem('resellerWallet_' + currentReseller.id, walletBalance.toString());
+                
                 // Add transaction record
+                const pendingTransactions = JSON.parse(localStorage.getItem('pendingTransactions') || '[]');
+                pendingTransactions.push({
+                    id: 'TXN_' + Date.now(),
+                    resellerId: currentReseller.id,
+                    amount: -total,
+                    type: 'sale',
+                    note: `Sale: ${customerData.name} - ${plan.join(', ')}`,
+                    date: new Date().toISOString(),
+                    customer: newCustomer
+                });
+                localStorage.setItem('pendingTransactions', JSON.stringify(pendingTransactions));
+                
+                // Add to creditTransfers
                 adminData.creditTransfers = adminData.creditTransfers || [];
                 adminData.creditTransfers.push({
                     id: 'TXN_' + Date.now(),
@@ -1377,11 +1395,20 @@
                     date: new Date().toISOString()
                 });
                 
-                // Save to GitHub
-                await saveToGitHub();
+                // Add customer
+                adminData.customers = adminData.customers || [];
+                adminData.customers.push(newCustomer);
                 
-                closeModal();
-                showNotification('Customer created successfully!', 'success');
+                // Try to auto-sync to GitHub
+                try {
+                    await saveToGitHub();
+                    closeModal();
+                    showNotification('Customer created and synced!', 'success');
+                } catch (e) {
+                    console.log('Sync failed, saving locally');
+                    closeModal();
+                    showNotification('Customer created! Will sync when online.', 'success');
+                }
                 await loadData();
                 
             } catch (error) {
@@ -1579,13 +1606,16 @@
                     renewedAt: new Date().toISOString()
                 };
                 
-                // Deduct from wallet
-                adminData.resellers[currentReseller.id].walletBalance = walletBalance - total;
+                // Deduct from wallet (save locally)
                 walletBalance = walletBalance - total;
+                adminData.resellers[currentReseller.id].walletBalance = walletBalance;
                 
-                // Add transaction
-                adminData.creditTransfers = adminData.creditTransfers || [];
-                adminData.creditTransfers.push({
+                // Save locally
+                localStorage.setItem('resellerWallet_' + currentReseller.id, walletBalance.toString());
+                
+                // Add transaction locally
+                const pendingTransactions = JSON.parse(localStorage.getItem('pendingTransactions') || '[]');
+                pendingTransactions.push({
                     id: 'TXN_' + Date.now(),
                     resellerId: currentReseller.id,
                     amount: -total,
@@ -1593,11 +1623,10 @@
                     note: `Renewal: ${customer.name}`,
                     date: new Date().toISOString()
                 });
-                
-                await saveToGitHub();
+                localStorage.setItem('pendingTransactions', JSON.stringify(pendingTransactions));
                 
                 closeRenewModal();
-                showNotification('Customer renewed successfully!', 'success');
+                showNotification('Customer renewed! Ask admin to sync to update credit.', 'success');
                 await loadData();
                 
             } catch (error) {
