@@ -1023,13 +1023,28 @@
                     packages: (adminData.packages || []).length
                 });
                 
-                // Get reseller's wallet balance
-                const reseller = adminData.resellers?.[currentReseller.id];
-                walletBalance = parseFloat(reseller?.walletBalance || 0);
+                // Get reseller's wallet balance - PRIORITIZE LOCAL STORAGE
+                const localWalletKey = 'resellerWallet_' + currentReseller.id;
+                let localWalletBalance = localStorage.getItem(localWalletKey);
+                
+                if (localWalletBalance !== null && parseFloat(localWalletBalance) > 0) {
+                    // Use local wallet balance (from sales)
+                    walletBalance = parseFloat(localWalletBalance);
+                    console.log('Using local wallet balance:', walletBalance);
+                } else {
+                    // Use GitHub wallet balance (from admin transfer)
+                    const reseller = adminData.resellers?.[currentReseller.id];
+                    walletBalance = parseFloat(reseller?.walletBalance || 0);
+                    localStorage.setItem(localWalletKey, walletBalance.toString());
+                    console.log('Using GitHub wallet balance:', walletBalance);
+                }
+                
                 document.getElementById('walletBalance').textContent = walletBalance.toFixed(2);
                 
-                // Get credit history
-                creditHistory = (adminData.creditTransfers || []).filter(t => t.resellerId === currentReseller.id);
+                // Get credit history from GitHub + local pending transactions
+                const githubCredits = (adminData.creditTransfers || []).filter(t => t.resellerId === currentReseller.id);
+                const localTransactions = JSON.parse(localStorage.getItem('pendingTransactions') || '[]');
+                creditHistory = [...githubCredits, ...localTransactions];
                 
                 // Get packages
                 packages = adminData.packages || [];
@@ -1037,8 +1052,22 @@
                 // Load package prices from admin data
                 loadPackagePrices();
                 
-                // Get customers for this reseller
-                customers = (adminData.customers || []).filter(c => c.resellerId === currentReseller.id);
+                // Get customers - PRIORITIZE LOCAL customers
+                const localCustomersKey = 'resellerCustomers_' + currentReseller.id;
+                const localCustomers = JSON.parse(localStorage.getItem(localCustomersKey) || '[]');
+                const githubCustomers = (adminData.customers || []).filter(c => c.resellerId === currentReseller.id);
+                
+                // Merge: combine local and GitHub customers (local first, avoid duplicates)
+                const customerIds = new Set();
+                customers = [...localCustomers];
+                githubCustomers.forEach(c => {
+                    if (!customerIds.has(c.id)) {
+                        customers.push(c);
+                        customerIds.add(c.id);
+                    }
+                });
+                
+                console.log('Total customers:', customers.length, '(Local:', localCustomers.length, 'GitHub:', githubCustomers.length, ')');
                 
                 // Update UI
                 updateStats();
@@ -1053,12 +1082,30 @@
         
         // Load package prices from admin data
         function loadPackagePrices() {
-            console.log('Loading package prices, packages:', adminData.packages);
+            console.log('Loading package prices, packages:', JSON.stringify(adminData.packages, null, 2));
             
             // Try to get prices from admin packages
             if (adminData.packages && adminData.packages.length > 0) {
-                // Find the main package (non-adult)
-                const mainPkg = adminData.packages.find(p => !p.isAdult && !p.name.toLowerCase().includes('adult')) || adminData.packages[0];
+                console.log('Found', adminData.packages.length, 'packages');
+                
+                // Find the main package (non-adult, first one)
+                let mainPkg = null;
+                for (let p of adminData.packages) {
+                    console.log('Checking package:', p.name, 'isAdult:', p.isAdult);
+                    if (!p.isAdult && p.name && !p.name.toLowerCase().includes('adult')) {
+                        mainPkg = p;
+                        console.log('Selected main package:', mainPkg.name);
+                        break;
+                    }
+                }
+                
+                // If no main package found, use first one
+                if (!mainPkg) {
+                    mainPkg = adminData.packages[0];
+                    console.log('Using first package:', mainPkg.name);
+                }
+                
+                console.log('Main package data:', JSON.stringify(mainPkg));
                 
                 packagePrices.basic = parseFloat(mainPkg.price) || 25;
                 packagePrices.secondTV = parseFloat(mainPkg.secondTVPrice) || 15;
@@ -1418,6 +1465,12 @@
                 
                 // Save locally
                 localStorage.setItem('resellerWallet_' + currentReseller.id, walletBalance.toString());
+                
+                // Save customers to localStorage
+                const localCustomersKey = 'resellerCustomers_' + currentReseller.id;
+                const localCustomers = JSON.parse(localStorage.getItem(localCustomersKey) || '[]');
+                localCustomers.push(newCustomer);
+                localStorage.setItem(localCustomersKey, JSON.stringify(localCustomers));
                 
                 // Add transaction record locally
                 const pendingTransactions = JSON.parse(localStorage.getItem('pendingTransactions') || '[]');
