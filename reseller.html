@@ -1259,8 +1259,25 @@
             
             updateTotalPrice();
             
-            // Refresh prices from admin before showing modal
-            loadPackagePrices();
+            // Refresh prices from admin before showing modal - fetch fresh data from GitHub
+            async function refreshPrices() {
+                try {
+                    const response = await fetch(GITHUB_DATA_URL + '?t=' + Date.now());
+                    if (!response.ok) throw new Error('Failed to fetch data');
+                    
+                    const freshData = await response.json();
+                    adminData.packages = freshData.packages || [];
+                    console.log('🔄 Refreshed packages from GitHub:', adminData.packages.length);
+                    
+                    // Now load prices with fresh data
+                    loadPackagePrices();
+                } catch (e) {
+                    console.error('Failed to refresh prices:', e);
+                    // Fallback to cached data
+                    loadPackagePrices();
+                }
+            }
+            refreshPrices();
             
             document.getElementById('customerModal').classList.add('active');
         }

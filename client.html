@@ -1862,6 +1862,10 @@
                     <button class="source-tab" onclick="switchSource('addon')" data-source="addon">
                         📦 Addon
                     </button>
+                    <!-- Sports tab - hidden by default, appears only when customer has Sports subscription -->
+                    <button class="source-tab" onclick="switchSource('sports')" data-source="sports" id="sportsTab" style="display: none;">
+                        ⚽ Sports
+                    </button>
                 </div>
                     <!-- Adult tab - hidden by default, appears only when password is entered -->
                     <button class="source-tab adult-tab" onclick="switchSource('adult')" data-source="adult" id="adultTab" style="display: none;">
@@ -2785,6 +2789,7 @@
                             isLoggedIn = true;
                             
                             updateUserInterface();
+                            updateSportsTabVisibility(); // Update Sports tab based on subscription
                             console.log(`✅ Auto-login successful for ${customer.username}`);
                             return;
                         } else {
@@ -2830,165 +2835,18 @@
             console.log('🗑️ Stored credentials cleared');
         }
 
-        // Ensure built-in sample content exists for immediate use
+        // Ensure content exists - only use admin data, no demo content
         function ensureBuiltInContent() {
             // Check if admin data exists
             const hasAdminData = localStorage.getItem('adminPackages') || localStorage.getItem('adminCustomers');
             
             if (hasAdminData) {
                 console.log('📦 Using admin panel data');
-                return; // Admin data exists, no need for built-in content
+                return; // Admin data exists, no need for additional content
             }
             
-            console.log('🏠 No admin data found, creating built-in sample content');
-            
-            // Create built-in sample packages
-            const samplePackages = [
-                {
-                    id: 'basic_pkg',
-                    name: 'Basic Package',
-                    price: 9.99,
-                    duration: 'month',
-                    features: ['HD Quality', 'Standard Channels', 'Basic Support'],
-                    plan: 1,
-                    type: 'subscription'
-                },
-                {
-                    id: 'premium_pkg', 
-                    name: 'Premium Package',
-                    price: 19.99,
-                    duration: 'month',
-                    features: ['4K Quality', 'Premium Channels', 'Adult Content', 'Priority Support'],
-                    plan: 2,
-                    type: 'subscription'
-                },
-                {
-                    id: 'premium_plus_pkg',
-                    name: 'Premium Plus',
-                    price: 29.99,
-                    duration: 'month', 
-                    features: ['4K Quality', 'All Premium Channels', 'Adult Content', 'Exclusive Content', '24/7 Support'],
-                    plan: 3,
-                    type: 'subscription'
-                }
-            ];
-            
-            // Create built-in sample customers
-            const sampleCustomers = [
-                {
-                    id: 'customer1',
-                    username: 'demo',
-                    password: 'demo123',
-                    plan: ['Basic Package'],
-                    devices: [],
-                    expiry: '2025-12-31',
-                    duration: 'monthly'
-                },
-                {
-                    id: 'customer2', 
-                    username: 'premium',
-                    password: 'premium123',
-                    plan: ['Premium Package'],
-                    devices: [],
-                    expiry: '2025-12-31',
-                    duration: 'monthly'
-                }
-            ];
-            
-            // Save built-in content
-            localStorage.setItem('adminPackages', JSON.stringify(samplePackages));
-            localStorage.setItem('adminCustomers', JSON.stringify(sampleCustomers));
-            
-            // Also populate contentData with built-in sample content
-            // Sample movies
-            contentData.movies.content = [
-                {
-                    id: 'movie_1',
-                    name: 'The Amazing Adventure',
-                    description: 'An epic adventure story that will keep you on the edge of your seat',
-                    category: 'movie',
-                    type: 'hls',
-                    url: 'https://demo-streams.vodobox.net/skate_phantom/skate_phantom.m3u8',
-                    streamingMode: 'always-streaming'
-                },
-                {
-                    id: 'movie_2',
-                    name: 'Romantic Comedy',
-                    description: 'A heartwarming romantic comedy for the whole family',
-                    category: 'movie',
-                    type: 'hls',
-                    url: 'https://demo-streams.vodobox.net/skate_phantom/skate_phantom.m3u8',
-                    streamingMode: 'always-streaming'
-                },
-                {
-                    id: 'movie_3',
-                    name: 'Action Thriller',
-                    description: 'High-octane action thriller with stunning visuals',
-                    category: 'movie',
-                    type: 'hls',
-                    url: 'https://demo-streams.vodobox.net/skate_phantom/skate_phantom.m3u8',
-                    streamingMode: 'always-streaming'
-                }
-            ];
-            
-            // Sample live TV channels
-            contentData.live.content = [
-                {
-                    id: 'live_1',
-                    name: 'News Channel',
-                    description: '24/7 breaking news and current affairs',
-                    category: 'live',
-                    type: 'hls',
-                    url: 'https://demo-streams.vodobox.net/skate_phantom/skate_phantom.m3u8',
-                    streamingMode: 'always-streaming'
-                },
-                {
-                    id: 'live_2',
-                    name: 'Sports Network',
-                    description: 'Live sports coverage and analysis',
-                    category: 'live',
-                    type: 'hls',
-                    url: 'https://demo-streams.vodobox.net/skate_phantom/skate_phantom.m3u8',
-                    streamingMode: 'always-streaming'
-                },
-                {
-                    id: 'live_3',
-                    name: 'Entertainment TV',
-                    description: 'Popular entertainment shows and celebrity news',
-                    category: 'live',
-                    type: 'hls',
-                    url: 'https://demo-streams.vodobox.net/skate_phantom/skate_phantom.m3u8',
-                    streamingMode: 'always-streaming'
-                }
-            ];
-            
-            // Sample VOD content (additional to existing demo content)
-            contentData.vod.content = [
-                ...contentData.vod.content, // Keep existing demo content
-                {
-                    id: 'vod_4',
-                    name: 'Documentary Collection',
-                    description: 'Educational documentaries on various topics',
-                    category: 'series',
-                    type: 'mp4',
-                    url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
-                    streamingMode: 'on-demand'
-                },
-                {
-                    id: 'vod_5',
-                    name: 'Comedy Series',
-                    description: 'Hilarious comedy series episodes',
-                    category: 'series',
-                    type: 'mp4',
-                    url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
-                    streamingMode: 'on-demand'
-                }
-            ];
-            
-            // Update addon packages to use built-in packages
-            contentData.addon.content = samplePackages;
-            
-            console.log('✅ Created built-in sample content including movies, live TV, and VOD');
+            // No demo content - just use empty arrays
+            console.log('📦 Waiting for admin data...');
         }
 
         // Check if customer has access to specific package
@@ -3337,19 +3195,9 @@
             }
             
             getDefaultContent() {
-                // Fallback content when no media libraries are assigned
+                // Fallback content when no media libraries are assigned - empty
                 return {
-                    movies: [
-                        {
-                            id: 'demo_movie_1',
-                            name: 'Welcome to iWATCH TV',
-                            description: 'Enjoy your streaming experience! Contact support for premium content.',
-                            category: 'movie',
-                            type: 'mp4',
-                            url: '#',
-                            streamingMode: 'on-demand'
-                        }
-                    ],
+                    movies: [],
                     series: [],
                     vod: [],
                     live: []
@@ -3450,6 +3298,11 @@
                 content: [],
                 streamingMode: 'always-streaming' // Live TV always streams
             },
+            sports: {
+                name: 'Sports',
+                content: [],
+                streamingMode: 'always-streaming' // Sports always stream live
+            },
             movies: {
                 name: 'Movies',
                 content: [],
@@ -3457,35 +3310,7 @@
             },
             vod: {
                 name: 'VOD Library',
-                content: [
-                    {
-                        id: 'vod_demo_1',
-                        name: 'Featured TV Show 1',
-                        description: 'Premium series content - Available on-demand',
-                        category: 'series',
-                        type: 'mp4',
-                        url: '#',
-                        streamingMode: 'on-demand'
-                    },
-                    {
-                        id: 'vod_demo_2',
-                        name: 'Popular Series Episode',
-                        description: 'Latest episode from popular TV series',
-                        category: 'series',
-                        type: 'mp4',
-                        url: '#',
-                        streamingMode: 'on-demand'
-                    },
-                    {
-                        id: 'vod_demo_3',
-                        name: 'Classic Movies Collection',
-                        description: 'Timeless movies available on-demand',
-                        category: 'movie',
-                        type: 'mp4',
-                        url: '#',
-                        streamingMode: 'on-demand'
-                    }
-                ],
+                content: [],
                 streamingMode: 'on-demand' // VOD streams on-demand
             },
             basic: {
@@ -3514,6 +3339,7 @@
         function getSourceIcon(source) {
             switch(source) {
                 case 'live': return '🔴';
+                case 'sports': return '⚽';
                 case 'movies': return '🎬';
                 case 'vod': return '📀';
                 case 'basic': return '🏠';
@@ -3526,6 +3352,7 @@
         function getBadgeClass(source) {
             switch(source) {
                 case 'live': return 'badge-live';
+                case 'sports': return 'badge-live';
                 case 'movies': return 'badge-movies';
                 case 'vod': return 'badge-vod';
                 case 'basic': return 'badge-basic';
@@ -3538,6 +3365,7 @@
         function getBadgeText(source) {
             switch(source) {
                 case 'live': return 'LIVE';
+                case 'sports': return 'SPORT';
                 case 'movies': return 'MOVIE';
                 case 'vod': return 'VOD';
                 case 'basic': return 'BASIC';
@@ -3603,6 +3431,7 @@
                 });
                 
                 updateUserInterface();
+                updateSportsTabVisibility(); // Update Sports tab based on subscription
                 hideLoginModal();
                 showSuccess(`Welcome back, ${user.username}!`);
                 
@@ -3738,6 +3567,7 @@
             isLoggedIn = false;
             currentUser = null;
             adultUnlocked = false;
+            hideSportsTab(); // Hide Sports tab on logout
             
             // Stop any streaming
             if (typeof stopStream === 'function') {
@@ -4179,6 +4009,51 @@
             }
         }
 
+        // Sports Tab Management - Show/hide based on customer subscription
+        function showSportsTab() {
+            const sportsTab = document.getElementById('sportsTab');
+            if (sportsTab) {
+                sportsTab.style.display = 'block';
+            }
+        }
+
+        function hideSportsTab() {
+            const sportsTab = document.getElementById('sportsTab');
+            if (sportsTab) {
+                sportsTab.style.display = 'none';
+                // If currently viewing sports content, switch to live tab
+                if (currentSource === 'sports') {
+                    switchSource('live');
+                }
+            }
+        }
+
+        // Check and update Sports tab visibility based on customer subscription
+        function updateSportsTabVisibility() {
+            if (!currentUser) {
+                hideSportsTab();
+                return;
+            }
+
+            // Check if customer has Sports subscription
+            const customers = loadCustomersFromAdmin();
+            const customer = customers.find(c => c.id === currentUser.customerId || c.username === currentUser.username);
+
+            if (customer) {
+                const plan = customer.plan || '';
+                const addons = customer.addons || '';
+                const hasSports = plan.includes('Sports') || addons.includes('Sports');
+
+                if (hasSports) {
+                    showSportsTab();
+                } else {
+                    hideSportsTab();
+                }
+            } else {
+                hideSportsTab();
+            }
+        }
+
         // Content Management
         // Global function for source switching - defined early for onclick access
         window.switchSource = function(source) {
@@ -4247,14 +4122,14 @@
                     // Content is already filtered by updateContentByLibraries function
                     console.log(`📺 Showing content from assigned libraries for ${currentSource}`);
                 } else {
-                    // No libraries assigned, keep default content for VOD so section is visible
-                    if (currentSource === 'vod') {
-                        console.log('📀 VOD: No libraries assigned, keeping default content');
-                        console.log(`📀 VOD: Content array length: ${filteredContent.length}`);
-                        // Keep the default VOD content for demo purposes
+                    // No libraries assigned, keep default content for both VOD and Movies so sections are visible
+                    if (currentSource === 'vod' || currentSource === 'movies') {
+                        console.log(`${currentSource === 'movies' ? '🎬 Movies' : '📀 VOD'}: No libraries assigned, keeping default content`);
+                        console.log(`${currentSource}: Content array length: ${filteredContent.length}`);
+                        // Keep the default content for demo purposes
                     } else {
-                        // For movies, clear content if no libraries
-                        console.log('🎬 Movies: No libraries assigned, clearing content');
+                        // For other sources, clear content if no libraries
+                        console.log(`${currentSource}: No libraries assigned, clearing content`);
                         filteredContent = [];
                     }
                 }
@@ -4805,11 +4680,6 @@
             alert(message);
         }
 
-        function showError(message) {
-            console.log('Error:', message);
-            alert(message);
-        }
-
         function showSuccess(message) {
             console.log('Success:', message);
             alert(message);
@@ -4880,40 +4750,6 @@
             
             // Apply package-based content filtering
             filterContentByPackage();
-            
-            // Safety check: Ensure VOD always has content even if filtering failed
-            if (contentData.vod.content.length === 0) {
-                contentData.vod.content = [
-                    {
-                        id: 'vod_demo_1',
-                        name: 'Featured TV Show 1',
-                        description: 'Premium series content - Available on-demand',
-                        category: 'series',
-                        type: 'mp4',
-                        url: '#',
-                        streamingMode: 'on-demand'
-                    },
-                    {
-                        id: 'vod_demo_2',
-                        name: 'Popular Series Episode',
-                        description: 'Latest episode from popular TV series',
-                        category: 'series',
-                        type: 'mp4',
-                        url: '#',
-                        streamingMode: 'on-demand'
-                    },
-                    {
-                        id: 'vod_demo_3',
-                        name: 'Classic Movies Collection',
-                        description: 'Timeless movies available on-demand',
-                        category: 'movie',
-                        type: 'mp4',
-                        url: '#',
-                        streamingMode: 'on-demand'
-                    }
-                ];
-                console.log('🔧 VOD: Reset content with default items - safety check');
-            }
             
             // Listen for package updates from admin panel
             window.addEventListener('storage', function(e) {
