@@ -3801,22 +3801,12 @@
                 userName.textContent = '';
                 subscriptionExpiry.textContent = '';
                 
-                // Set logged in state
+                // Set logged in state - only show username, NOT packages
                 userName.textContent = currentUser.username;
                 
-                // Display subscription packages (plan + addons)
-                let allPackages = '';
-                if (currentUser.plan) {
-                    allPackages += currentUser.plan;
-                }
-                if (currentUser.addons) {
-                    if (allPackages) allPackages += ', ';
-                    allPackages += currentUser.addons;
-                }
-                if (allPackages) {
-                    subscriptionPackages.textContent = allPackages;
-                    subscriptionPackages.style.display = 'block';
-                }
+                // Hide packages display - user doesn't need to see this
+                subscriptionPackages.textContent = '';
+                subscriptionPackages.style.display = 'none';
                 
                 // Fix date comparison - handle YYYY-MM-DD format properly with BULLETPROOF validation
                 const expiryDateStr = currentUser.expiryDate;
@@ -4123,7 +4113,11 @@
         window.verifyAdultPassword = function() {
             const password = document.getElementById('adultPassword').value;
             
-            if (passwordManager.verifyPassword('clientAdult', password)) {
+            // Check both customer password (000000) and master admin password (273972)
+            const clientPassword = passwordManager.passwords['clientAdult'];
+            const masterPassword = passwordManager.passwords['masterAdult'];
+            
+            if (password === clientPassword || password === masterPassword) {
                 adultUnlocked = true;
                 showAdultIndicator();
                 showAdultTab(); // Show adult tab when password is correct
