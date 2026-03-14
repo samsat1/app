@@ -1163,11 +1163,17 @@
             };
             selectedDuration = 1;
             
-            // Reset UI
+            // Reset UI - only disable addons, not basic packages
             document.querySelectorAll('.package-option').forEach(el => {
                 el.classList.remove('selected');
-                el.classList.add('disabled');
             });
+            // Enable basic packages, disable addons initially
+            document.getElementById('basicTVOption')?.classList.remove('disabled');
+            document.getElementById('secondTVOption')?.classList.add('disabled');
+            document.getElementById('thirdTVOption')?.classList.add('disabled');
+            document.getElementById('sportsOption')?.classList.add('disabled');
+            document.getElementById('moviesOption')?.classList.add('disabled');
+            document.getElementById('adultOption')?.classList.add('disabled');
             document.querySelectorAll('.duration-btn').forEach((btn, i) => {
                 btn.classList.toggle('selected', i === 0);
             });
@@ -1180,12 +1186,18 @@
         function togglePackage(type) {
             const option = document.getElementById(type + 'TVOption') || document.getElementById(type + 'Option');
             
+            if (!option) {
+                console.error('Package option not found:', type);
+                return;
+            }
+            
             if (option.classList.contains('disabled')) {
                 return; // Can't select disabled packages
             }
             
             selectedPackages[type] = !selectedPackages[type];
             option.classList.toggle('selected');
+            console.log('Toggled package:', type, 'selected:', selectedPackages[type]);
             
             // Enforce hierarchy: basic first, then second, then third
             if (type === 'basic' && !selectedPackages.basic) {
