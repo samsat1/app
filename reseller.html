@@ -944,17 +944,13 @@
                 const adminData = await response.json();
                 const resellers = adminData.resellers || {};
                 
-                // Find reseller by username
-                let reseller = resellers[username];
-                
-                // If not found by key, search through all resellers
-                if (!reseller) {
-                    for (const [id, res] of Object.entries(resellers)) {
-                        if (res.username === username) {
-                            reseller = res;
-                            reseller.id = id;
-                            break;
-                        }
+                // Find reseller by username (search through all resellers)
+                let reseller = null;
+                for (const [id, res] of Object.entries(resellers)) {
+                    if (res.username === username) {
+                        reseller = res;
+                        reseller.id = id;
+                        break;
                     }
                 }
                 
