@@ -1088,38 +1088,32 @@
             if (adminData.packages && adminData.packages.length > 0) {
                 console.log('Found', adminData.packages.length, 'packages');
                 
-                // Find the main package (non-adult, first one)
-                let mainPkg = null;
-                for (let p of adminData.packages) {
-                    console.log('Checking package:', p.name, 'isAdult:', p.isAdult);
-                    if (!p.isAdult && p.name && !p.name.toLowerCase().includes('adult')) {
-                        mainPkg = p;
-                        console.log('Selected main package:', mainPkg.name);
-                        break;
-                    }
-                }
-                
-                // If no main package found, use first one
-                if (!mainPkg) {
-                    mainPkg = adminData.packages[0];
-                    console.log('Using first package:', mainPkg.name);
-                }
-                
-                console.log('Main package data:', JSON.stringify(mainPkg));
-                
-                // Try different field names for prices
-                packagePrices.basic = parseFloat(mainPkg.price || mainPkg.packagePrice || mainPkg.packagePrice || 25);
-                packagePrices.secondTV = parseFloat(mainPkg.secondTVPrice || mainPkg.secondTvPrice || 15);
-                packagePrices.thirdTV = parseFloat(mainPkg.thirdTVPrice || mainPkg.thirdTvPrice || 10);
-                packagePrices.sports = parseFloat(mainPkg.sportsPrice || mainPkg.sports || 8);
-                packagePrices.movies = parseFloat(mainPkg.moviesPrice || mainPkg.movies || 8);
-                
-                console.log('After parsing - sports:', mainPkg.sportsPrice, 'movies:', mainPkg.moviesPrice);
-                
-                // Get adult price from adult packages
+                // Find each package type separately
+                const basicPkg = adminData.packages.find(p => p.name && p.name.toLowerCase().includes('basic') && !p.isAdult);
+                const sportsPkg = adminData.packages.find(p => p.name && p.name.toLowerCase().includes('sport') && !p.isAdult);
+                const moviesPkg = adminData.packages.find(p => p.name && p.name.toLowerCase().includes('movie') && !p.isAdult);
                 const adultPkg = adminData.packages.find(p => p.isAdult || (p.name && p.name.toLowerCase().includes('adult')));
+                
+                // Get Basic package prices
+                if (basicPkg) {
+                    packagePrices.basic = parseFloat(basicPkg.price || basicPkg.packagePrice || 25);
+                    packagePrices.secondTV = parseFloat(basicPkg.secondTVPrice || basicPkg.secondTvPrice || 15);
+                    packagePrices.thirdTV = parseFloat(basicPkg.thirdTVPrice || basicPkg.thirdTvPrice || 10);
+                }
+                
+                // Get Sports package price
+                if (sportsPkg) {
+                    packagePrices.sports = parseFloat(sportsPkg.price || sportsPkg.sportsPrice || 8);
+                }
+                
+                // Get Movies package price  
+                if (moviesPkg) {
+                    packagePrices.movies = parseFloat(moviesPkg.price || moviesPkg.moviesPrice || 8);
+                }
+                
+                // Get Adult package price
                 if (adultPkg) {
-                    packagePrices.adult = parseFloat(adultPkg.adultPackagePrice || adultPkg.adult || 0);
+                    packagePrices.adult = parseFloat(adultPkg.adultPackagePrice || adultPkg.price || 0);
                 }
                 
                 console.log('Prices loaded:', packagePrices);
