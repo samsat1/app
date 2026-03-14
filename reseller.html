@@ -1107,16 +1107,19 @@
                 
                 console.log('Main package data:', JSON.stringify(mainPkg));
                 
-                packagePrices.basic = parseFloat(mainPkg.price) || 25;
-                packagePrices.secondTV = parseFloat(mainPkg.secondTVPrice) || 15;
-                packagePrices.thirdTV = parseFloat(mainPkg.thirdTVPrice) || 10;
-                packagePrices.sports = parseFloat(mainPkg.sportsPrice) || 8;
-                packagePrices.movies = parseFloat(mainPkg.moviesPrice) || 8;
+                // Try different field names for prices
+                packagePrices.basic = parseFloat(mainPkg.price || mainPkg.packagePrice || mainPkg.packagePrice || 25);
+                packagePrices.secondTV = parseFloat(mainPkg.secondTVPrice || mainPkg.secondTvPrice || 15);
+                packagePrices.thirdTV = parseFloat(mainPkg.thirdTVPrice || mainPkg.thirdTvPrice || 10);
+                packagePrices.sports = parseFloat(mainPkg.sportsPrice || mainPkg.sports || 8);
+                packagePrices.movies = parseFloat(mainPkg.moviesPrice || mainPkg.movies || 8);
+                
+                console.log('After parsing - sports:', mainPkg.sportsPrice, 'movies:', mainPkg.moviesPrice);
                 
                 // Get adult price from adult packages
                 const adultPkg = adminData.packages.find(p => p.isAdult || (p.name && p.name.toLowerCase().includes('adult')));
                 if (adultPkg) {
-                    packagePrices.adult = parseFloat(adultPkg.adultPackagePrice) || 0;
+                    packagePrices.adult = parseFloat(adultPkg.adultPackagePrice || adultPkg.adult || 0);
                 }
                 
                 console.log('Prices loaded:', packagePrices);
@@ -1530,7 +1533,56 @@
             document.getElementById('customerPassword').value = customer.password || '';
             document.getElementById('customerPhone').value = customer.phone || '';
             document.getElementById('submitBtn').textContent = 'Save Changes';
-            document.getElementById('packageSelection').style.display = 'none';
+            document.getElementById('packageSelection').style.display = 'block';
+            
+            // Show current packages as pre-selected
+            selectedPackages = {
+                basic: false,
+                second: false,
+                third: false,
+                sports: false,
+                movies: false,
+                adult: false
+            };
+            
+            // Check what customer currently has
+            if (customer.plan && customer.plan.includes('Basic')) selectedPackages.basic = true;
+            if (customer.plan && customer.plan.includes('2nd')) selectedPackages.second = true;
+            if (customer.plan && customer.plan.includes('3rd')) selectedPackages.third = true;
+            if (customer.addons && customer.addons.includes('Sports')) selectedPackages.sports = true;
+            if (customer.addons && customer.addons.includes('Movies')) selectedPackages.movies = true;
+            if (customer.addons && customer.addons.includes('Adult')) selectedPackages.adult = true;
+            
+            // Update UI to show current selections
+            document.getElementById('basicTVOption')?.classList.toggle('selected', selectedPackages.basic);
+            document.getElementById('secondTVOption')?.classList.toggle('selected', selectedPackages.second);
+            document.getElementById('thirdTVOption')?.classList.toggle('selected', selectedPackages.third);
+            document.getElementById('sportsOption')?.classList.toggle('selected', selectedPackages.sports);
+            document.getElementById('moviesOption')?.classList.toggle('selected', selectedPackages.movies);
+            document.getElementById('adultOption')?.classList.toggle('selected', selectedPackages.adult);
+            
+            // Enable/disable based on hierarchy
+            if (!selectedPackages.basic) {
+                document.getElementById('secondTVOption')?.classList.add('disabled');
+                document.getElementById('thirdTVOption')?.classList.add('disabled');
+                document.getElementById('sportsOption')?.classList.add('disabled');
+                document.getElementById('moviesOption')?.classList.add('disabled');
+                document.getElementById('adultOption')?.classList.add('disabled');
+            } else {
+                document.getElementById('secondTVOption')?.classList.remove('disabled');
+                document.getElementById('sportsOption')?.classList.remove('disabled');
+                document.getElementById('moviesOption')?.classList.remove('disabled');
+                document.getElementById('adultOption')?.classList.remove('disabled');
+            }
+            
+            if (!selectedPackages.second) {
+                document.getElementById('thirdTVOption')?.classList.add('disabled');
+            } else {
+                document.getElementById('thirdTVOption')?.classList.remove('disabled');
+            }
+            
+            // Calculate initial total
+            updateTotalPrice();
             
             document.getElementById('customerModal').classList.add('active');
         }
@@ -1538,23 +1590,151 @@
         // Update Customer
         async function updateCustomer(customerId, customerData, plan, addons) {
             try {
-                // Find and update customer
-                const index = adminData.customers.findIndex(c => c.id === customerId);
+                // Find existing customer
+                const index = customers.findIndex(c => c.id === customerId);
                 if (index === -1) throw new Error('Customer not found');
                 
-                adminData.customers[index] = {
-                    ...adminData.customers[index],
+                const existingCustomer = customers[index];
+                
+                // Calculate what was already there
+                const oldPlan = existingCustomer.plan || '';
+                const oldAddons = existingCustomer.addons || '';
+                
+                // Calculate what they're adding now
+                let additionalCost = 0;
+                const newPlan = [];
+                const newAddons = [];
+                
+                // Check Basic
+                if (selectedPackages.basic && !oldPlan.includes('Basic')) {
+                    additionalCost += packagePrices.basic * selectedDuration;
+                    newPlan.push('Basic TV');
+                } else if (selectedPackages.basic) {
+                    newPlan.push('Basic TV');
+                }
+                
+                // Check 2nd TV
+                if (selectedPackages.second && !oldPlan.includes('2nd')) {
+                    additionalCost += packagePrices.secondTV * selectedDuration;
+                    newPlan.push('2nd TV');
+                } else if (selectedPackages.second) {
+                    newPlan.push('2nd TV');
+                }
+                
+                // Check 3rd TV
+                if (selectedPackages.third && !oldPlan.includes('3rd')) {
+                    additionalCost += packagePrices.thirdTV * selectedDuration;
+                    newPlan.push('3rd TV');
+                } else if (selectedPackages.third) {
+                    newPlan.push('3rd TV');
+                }
+                
+                // Check Sports
+                if (selectedPackages.sports && !oldAddons.includes('Sports')) {
+                    additionalCost += packagePrices.sports * selectedDuration;
+                    newAddons.push('Sports');
+                } else if (selectedPackages.sports) {
+                    newAddons.push('Sports');
+                }
+                
+                // Check Movies
+                if (selectedPackages.movies && !oldAddons.includes('Movies')) {
+                    additionalCost += packagePrices.movies * selectedDuration;
+                    newAddons.push('Movies');
+                } else if (selectedPackages.movies) {
+                    newAddons.push('Movies');
+                }
+                
+                // Check Adult
+                if (selectedPackages.adult && !oldAddons.includes('Adult')) {
+                    additionalCost += packagePrices.adult * selectedDuration;
+                    newAddons.push('Adult');
+                } else if (selectedPackages.adult) {
+                    newAddons.push('Adult');
+                }
+                
+                console.log('Additional cost for upgrade:', additionalCost);
+                
+                // Check wallet balance
+                if (additionalCost > walletBalance) {
+                    showNotification('Insufficient wallet balance for upgrade!', 'error');
+                    return;
+                }
+                
+                // If there's additional cost, deduct from wallet
+                if (additionalCost > 0) {
+                    walletBalance = walletBalance - additionalCost;
+                    localStorage.setItem('resellerWallet_' + currentReseller.id, walletBalance.toString());
+                    document.getElementById('walletBalance').textContent = walletBalance.toFixed(2);
+                    
+                    // Add transaction record
+                    const pendingTransactions = JSON.parse(localStorage.getItem('pendingTransactions') || '[]');
+                    pendingTransactions.push({
+                        id: 'TXN_' + Date.now(),
+                        resellerId: currentReseller.id,
+                        amount: -additionalCost,
+                        type: 'upgrade',
+                        note: `Upgrade: ${customerData.name} - Added ${newPlan.join(', ')} ${newAddons.join(', ')}`,
+                        date: new Date().toISOString()
+                    });
+                    localStorage.setItem('pendingTransactions', JSON.stringify(pendingTransactions));
+                }
+                
+                // Calculate new expiry date (extend by selected duration from NOW, not from existing expiry)
+                let newExpiryDate;
+                if (additionalCost > 0) {
+                    newExpiryDate = new Date();
+                    newExpiryDate.setMonth(newExpiryDate.getMonth() + selectedDuration);
+                } else {
+                    // No cost, keep existing expiry
+                    newExpiryDate = new Date(existingCustomer.expiryDate);
+                }
+                
+                // Update customer
+                const updatedCustomer = {
+                    ...existingCustomer,
                     ...customerData,
-                    plan: plan.join(', '),
-                    addons: addons.join(', '),
+                    plan: newPlan.join(', '),
+                    addons: newAddons.join(', '),
+                    totalPrice: (existingCustomer.totalPrice || 0) + additionalCost,
+                    monthlyPrice: ((existingCustomer.totalPrice || 0) + additionalCost) / selectedDuration,
+                    expiryDate: newExpiryDate.toISOString().split('T')[0],
+                    duration: selectedDuration + ' month' + (selectedDuration > 1 ? 's' : ''),
+                    durationMonths: selectedDuration,
                     updatedAt: new Date().toISOString()
                 };
                 
-                await saveToGitHub();
+                // Update in array
+                customers[index] = updatedCustomer;
+                
+                // Save to localStorage
+                const localCustomersKey = 'resellerCustomers_' + currentReseller.id;
+                const localCustomers = JSON.parse(localStorage.getItem(localCustomersKey) || '[]');
+                const localIndex = localCustomers.findIndex(c => c.id === customerId);
+                if (localIndex !== -1) {
+                    localCustomers[localIndex] = updatedCustomer;
+                } else {
+                    localCustomers.push(updatedCustomer);
+                }
+                localStorage.setItem(localCustomersKey, JSON.stringify(localCustomers));
+                
+                // Update UI
+                renderCustomers();
+                updateStats();
                 
                 closeModal();
-                showNotification('Customer updated successfully!', 'success');
-                await loadData();
+                if (additionalCost > 0) {
+                    showNotification(`Customer upgraded! Credit deducted: $${additionalCost.toFixed(2)}`, 'success');
+                } else {
+                    showNotification('Customer updated successfully!', 'success');
+                }
+                
+                // Try to sync to GitHub
+                try {
+                    await saveToGitHub();
+                } catch (e) {
+                    console.log('Sync failed');
+                }
                 
             } catch (error) {
                 console.error('Update customer error:', error);

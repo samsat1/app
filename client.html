@@ -31,6 +31,13 @@
             UPDATE_CHECK_INTERVAL: 60000, // Check for updates every 1 minute
             AUTO_UPDATE_ENABLED: true
         };
+        
+        // GitHub Configuration for Customer Data
+        const GITHUB_CONFIG = {
+            USERNAME: 'samsat1',
+            REPO: 'app',
+            DATA_URL: 'https://raw.githubusercontent.com/samsat1/app/main/admin_data.json'
+        };
 
         // Remote Update System
         const updateSystem = {
@@ -229,8 +236,8 @@
                     };
                 }
 
-                // Load customer data
-                const customers = loadCustomersFromAdmin();
+                // Load customer data from localStorage (already synced from GitHub)
+                let customers = loadCustomersFromAdmin();
                 
                 // Find customer by username
                 const customer = customers.find(c => c.username === username);
@@ -2608,14 +2615,48 @@
         // Load customers from admin panel (now uses correct key)
         function loadCustomersFromAdmin() {
             try {
+                // First try to get from localStorage (for backward compatibility)
                 const adminCustomers = localStorage.getItem('adminCustomers');
                 if (adminCustomers) {
                     return JSON.parse(adminCustomers);
                 }
+                
+                // Try to load from GitHub
+                return loadCustomersFromGitHub();
             } catch (e) {
-                console.error('Error loading customers from admin:', e);
+                console.error('Error loading customers:', e);
             }
             return [];
+        }
+        
+        // Load customers from GitHub
+        async function loadCustomersFromGitHub() {
+            try {
+                console.log('Loading customers from GitHub...');
+                const response = await fetch(GITHUB_CONFIG.DATA_URL + '?t=' + Date.now());
+                if (!response.ok) {
+                    console.error('Failed to fetch from GitHub:', response.status);
+                    return [];
+                }
+                
+                const adminData = await response.json();
+                const customers = adminData.customers || [];
+                
+                console.log('Loaded', customers.length, 'customers from GitHub');
+                
+                // Save to localStorage for offline access
+                localStorage.setItem('adminCustomers', JSON.stringify(customers));
+                
+                return customers;
+            } catch (e) {
+                console.error('Error loading customers from GitHub:', e);
+                // Try to return cached data
+                const cached = localStorage.getItem('adminCustomers');
+                if (cached) {
+                    return JSON.parse(cached);
+                }
+                return [];
+            }
         }
 
         // Auto-login functionality for TV platform - IMPROVED
@@ -4593,6 +4634,13 @@
             
             // Setup event listeners
             setupEventListeners();
+            
+            // Sync customer data from GitHub in background
+            loadCustomersFromGitHub().then(customers => {
+                console.log('Synced customers from GitHub:', customers.length);
+            }).catch(e => {
+                console.log('GitHub sync failed, using local data');
+            });
             
             // Load customer subscription data (with built-in fallback)
             adminCustomers = loadCustomersFromAdmin();
