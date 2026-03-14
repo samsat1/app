@@ -1452,6 +1452,17 @@
             
             // Update package statistics
             updatePackageStats();
+            
+            // Auto-sync to GitHub after package changes
+            console.log('🔄 Auto-syncing packages to GitHub...');
+            if (typeof uploadToGithub === 'function') {
+                uploadToGithub().then(() => {
+                    console.log('✅ Packages synced to GitHub');
+                    showNotification('✅ Packages synced to GitHub!', 'success');
+                }).catch(err => {
+                    console.error('❌ Auto-sync failed:', err);
+                });
+            }
         };
 
         // Package Authentication Section
