@@ -2150,6 +2150,25 @@
 
 </head>
 <body onload="initApp()">
+    <!-- Quick fix: Define functions early that are called from HTML onclick -->
+    <script>
+    window.showLoginModal = function() { 
+        var m = document.getElementById('loginModal'); 
+        if (m) m.classList.add('show'); 
+        var u = document.getElementById('username'); 
+        if (u) u.focus(); 
+    };
+    window.logoutUser = function() { 
+        window.location.reload(); 
+    };
+    window.exitAdultContent = function() { 
+        window.location.reload(); 
+    };
+    window.switchSource = function(source) { 
+        console.log('switchSource called:', source); 
+    };
+    </script>
+    
     <!-- LOCAL VERSION INDICATOR -->
     <div class="local-indicator"></div>
     
