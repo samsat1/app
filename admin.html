@@ -4468,9 +4468,9 @@
         }
         
         // Fetch and cache actual video content for client interface via CORS proxy
-        async function cacheLibraryContent(serverUrl, accessToken, libraryId, isAdult) {
+        async function cacheLibraryContent(serverUrl, accessToken, libraryId, libraryType) {
             try {
-                console.log(`📦 Caching content from library ${libraryId} via CORS proxy...`);
+                console.log(`📦 Caching content from library ${libraryId} (type: ${libraryType}) via CORS proxy...`);
                 const contentUrl = `${serverUrl}/library/sections/${libraryId}/all?X-Plex-Token=${accessToken}`;
                 const response = await fetch(getProxiedUrl(contentUrl), {
                     headers: { 'Accept': 'application/json' }
@@ -4484,11 +4484,14 @@
                 const data = await response.json();
                 const items = data.MediaContainer?.Metadata || [];
                 
+                const isAdult = libraryType === 'adult';
+                const isArabic = libraryType === 'arabic';
+                
                 const content = items.map((item, index) => ({
                     id: `plex_${libraryId}_${item.ratingKey || index}`,
                     name: item.title,
                     description: item.summary || 'No description available',
-                    category: isAdult ? 'adult' : 'movie',
+                    category: isAdult ? 'adult' : (isArabic ? 'arabic' : 'movie'),
                     isAdult: isAdult,
                     adult: isAdult,
                     type: 'mp4',
@@ -4501,8 +4504,16 @@
                     ratingKey: item.ratingKey
                 }));
                 
-                // Store in localStorage for client to use
-                const cacheKey = isAdult ? 'plexAdultCache' : 'plexMoviesCache';
+                // Store in localStorage for client to use - use correct cache key
+                let cacheKey;
+                if (isAdult) {
+                    cacheKey = 'plexAdultCache';
+                } else if (isArabic) {
+                    cacheKey = 'plexArabicCache';
+                } else {
+                    cacheKey = 'plexMoviesCache';
+                }
+                
                 try {
                     localStorage.setItem(cacheKey, JSON.stringify(content));
                     console.log(`✅ Cached ${content.length} items to ${cacheKey}`);
@@ -4562,17 +4573,17 @@
                 let moviesCount = 0, arabicCount = 0, adultCount = 0;
                 
                 if (moviesLib) {
-                    const content = await cacheLibraryContent(serverUrl, accessToken, moviesLib.key, false);
+                    const content = await cacheLibraryContent(serverUrl, accessToken, moviesLib.key, 'movies');
                     moviesCount = content.length;
                 }
                 
                 if (arabicLib) {
-                    const content = await cacheLibraryContent(serverUrl, accessToken, arabicLib.key, false);
+                    const content = await cacheLibraryContent(serverUrl, accessToken, arabicLib.key, 'arabic');
                     arabicCount = content.length;
                 }
                 
                 if (adultLib) {
-                    const content = await cacheLibraryContent(serverUrl, accessToken, adultLib.key, true);
+                    const content = await cacheLibraryContent(serverUrl, accessToken, adultLib.key, 'adult');
                     adultCount = content.length;
                 }
                 
