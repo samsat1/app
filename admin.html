@@ -4676,15 +4676,18 @@
         function updateCacheCounts() {
             try {
                 const movies = JSON.parse(localStorage.getItem('plexMoviesCache')) || [];
+                const arabic = JSON.parse(localStorage.getItem('plexArabicCache')) || [];
                 const adult = JSON.parse(localStorage.getItem('plexAdultCache')) || [];
                 
                 document.getElementById('moviesCount').textContent = `Movies cached: ${movies.length}`;
+                document.getElementById('arabicCount').textContent = `Arabic videos cached: ${arabic.length}`;
                 document.getElementById('adultCount').textContent = `Adult videos cached: ${adult.length}`;
             } catch(e) {}
         }
         
         function viewCachedContent() {
             const movies = JSON.parse(localStorage.getItem('plexMoviesCache')) || [];
+            const arabic = JSON.parse(localStorage.getItem('plexArabicCache')) || [];
             const adult = JSON.parse(localStorage.getItem('plexAdultCache')) || [];
             
             let html = '<strong>🎬 Movies (' + movies.length + '):</strong><br>';
@@ -4692,12 +4695,17 @@
                 html += `${i+1}. ${m.name}<br>`;
             });
             
+            html += '<br><strong>🕌 Arabic (' + arabic.length + '):</strong><br>';
+            arabic.forEach((a, i) => {
+                html += `${i+1}. ${a.name}<br>`;
+            });
+            
             html += '<br><strong>🔞 Adult (' + adult.length + '):</strong><br>';
             adult.forEach((a, i) => {
                 html += `${i+1}. ${a.name}<br>`;
             });
             
-            if (movies.length === 0 && adult.length === 0) {
+            if (movies.length === 0 && arabic.length === 0 && adult.length === 0) {
                 html = 'No cached content. Add videos using the forms above.';
             }
             
@@ -4708,7 +4716,11 @@
         function clearCachedContent() {
             if (confirm('Are you sure you want to clear all cached videos?')) {
                 localStorage.removeItem('plexMoviesCache');
+                localStorage.removeItem('plexArabicCache');
                 localStorage.removeItem('plexAdultCache');
+                localStorage.removeItem('plexCachedMovies');
+                localStorage.removeItem('plexCachedArabic');
+                localStorage.removeItem('plexCachedAdult');
                 updateCacheCounts();
                 document.getElementById('cachedContentPreview').style.display = 'none';
                 showNotification('🗑️ All cached content cleared', 'info');
@@ -4718,10 +4730,11 @@
         // Export cache data for local client use
         function exportCacheData() {
             const movies = JSON.parse(localStorage.getItem('plexMoviesCache') || '[]');
+            const arabic = JSON.parse(localStorage.getItem('plexArabicCache') || '[]');
             const adult = JSON.parse(localStorage.getItem('plexAdultCache') || '[]');
             const plexConfig = JSON.parse(localStorage.getItem('plexConfig') || '{}');
             
-            if (movies.length === 0 && adult.length === 0) {
+            if (movies.length === 0 && arabic.length === 0 && adult.length === 0) {
                 showNotification('❌ No cached content to export', 'error');
                 return;
             }
@@ -4731,8 +4744,10 @@
                 exportDate: new Date().toISOString(),
                 plexConfig: plexConfig,
                 plexMoviesCache: movies,
+                plexArabicCache: arabic,
                 plexAdultCache: adult,
                 plexCachedMovies: movies,
+                plexCachedArabic: arabic,
                 plexCachedAdult: adult
             };
             
@@ -4744,7 +4759,7 @@
             a.click();
             URL.revokeObjectURL(url);
             
-            showNotification(`📤 Exported ${movies.length} movies + ${adult.length} adult videos`, 'success');
+            showNotification(`📤 Exported ${movies.length} movies + ${arabic.length} Arabic + ${adult.length} adult videos`, 'success');
         }
         
         // ========== IMPORT FROM PLEX XML ==========
@@ -6974,6 +6989,9 @@ Network: Always Streaming → Optimized for instant access`;
                 window.PLEX_CONFIG.serverUrl = serverUrl;
                 window.PLEX_CONFIG.localUrl = localUrl;
                 window.PLEX_CONFIG.token = token;
+                window.PLEX_CONFIG.sections.movies = moviesSection;
+                window.PLEX_CONFIG.sections.arabic = arabicSection;
+                window.PLEX_CONFIG.sections.adult = adultSection;
             }
             
             showNotification('✅ Plex settings saved! Local URL: ' + localUrl, 'success');
