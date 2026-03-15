@@ -32,12 +32,7 @@
             AUTO_UPDATE_ENABLED: true
         };
         
-        // GitHub Configuration for Customer Data
-        const GITHUB_CONFIG = {
-            USERNAME: 'samsat1',
-            REPO: 'app',
-            DATA_URL: 'https://raw.githubusercontent.com/samsat1/app/main/admin_data.json'
-        };
+        // Local App - No GitHub needed
 
         // Remote Update System
         const updateSystem = {
@@ -4763,16 +4758,27 @@
             loginBtn.textContent = 'Verifying...';
             
             try {
-                // Load latest customer data from admin
+                // Load customers from localStorage (automatic)
                 const customers = loadCustomersFromAdmin();
                 console.log('Checking credentials for:', username, 'Total customers:', customers.length);
                 
-                // Find customer with matching username and password
-                const customer = customers.find(c => 
-                    c.username === username && c.password === password
-                );
+                // Find customer with matching username and password (try multiple field names)
+                const customer = customers.find(c => {
+                    const userMatch = 
+                        (c.username && c.username === username) ||
+                        (c.user && c.user === username) ||
+                        (c.email && c.email === username) ||
+                        (c.name && c.name === username);
+                    
+                    const passMatch = 
+                        (c.password && c.password === password) ||
+                        (c.pass && c.pass === password);
+                    
+                    return userMatch && passMatch;
+                });
                 
                 if (!customer) {
+                    console.log('Login failed. Available customers:', customers.map(c => ({user: c.username || c.user, name: c.name})));
                     throw new Error('Invalid username or password');
                 }
                 
@@ -4865,78 +4871,39 @@
             return packages.map(p => p.toLowerCase());
         }
         
-        // Load customers from GitHub
-        async function loadCustomersFromGitHub() {
-            try {
-                console.log('Loading customers from GitHub...');
-                const response = await fetch(GITHUB_CONFIG.DATA_URL + '?t=' + Date.now());
-                if (!response.ok) throw new Error('Failed to fetch');
-                
-                const data = await response.json();
-                
-                if (data.customers && data.customers.length > 0) {
-                    // Save to localStorage for offline access
-                    localStorage.setItem('githubAdminData', JSON.stringify(data));
-                    localStorage.setItem('adminCustomers', JSON.stringify(data.customers));
-                    console.log('Loaded from GitHub:', data.customers.length, 'customers');
-                    return data.customers;
-                }
-                
-                return [];
-            } catch (e) {
-                console.log('GitHub load failed:', e.message);
-                // Try to use cached data
-                const cached = localStorage.getItem('adminCustomers');
-                if (cached) return JSON.parse(cached);
-                return [];
-            }
-        }
-        
-        // Load packages from GitHub
-        async function loadPackagesFromGitHub() {
-            try {
-                console.log('Loading packages from GitHub...');
-                const response = await fetch(GITHUB_CONFIG.DATA_URL + '?t=' + Date.now());
-                if (!response.ok) throw new Error('Failed to fetch');
-                
-                const data = await response.json();
-                
-                if (data.packages && data.packages.length > 0) {
-                    localStorage.setItem('adminPackages', JSON.stringify(data.packages));
-                    console.log('Loaded from GitHub:', data.packages.length, 'packages');
-                    return data.packages;
-                }
-                
-                return [];
-            } catch (e) {
-                console.log('GitHub load failed:', e.message);
-                const cached = localStorage.getItem('adminPackages');
-                if (cached) return JSON.parse(cached);
-                return [];
-            }
-        }
-        
-        // Load customers from admin data
+        // Load customers from localStorage (automatic)
         window.loadCustomersFromAdmin = function() {
-            try {
-                // Try to get from localStorage first
-                let customers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
-                
-                // Also check GitHub
-                const githubData = localStorage.getItem('githubAdminData');
-                if (githubData) {
-                    const parsed = JSON.parse(githubData);
-                    if (parsed.customers && parsed.customers.length > customers.length) {
-                        customers = parsed.customers;
+            console.log('🔍 Loading customers from localStorage...');
+            
+            // FIRST - try adminCustomers (exact key from admin)
+            const adminCustomersData = localStorage.getItem('adminCustomers');
+            if (adminCustomersData) {
+                try {
+                    const customers = JSON.parse(adminCustomersData);
+                    if (Array.isArray(customers) && customers.length > 0) {
+                        console.log('✅ Found customers in adminCustomers! Count:', customers.length);
+                        console.log('Sample:', customers[0]);
+                        return customers;
                     }
+                } catch (e) {
+                    console.error('Error parsing adminCustomers:', e);
                 }
-                
-                console.log('Loaded customers:', customers.length);
-                return customers;
-            } catch (e) {
-                console.error('Error loading customers:', e);
-                return [];
             }
+            
+            // Try customers key
+            const customersData = localStorage.getItem('customers');
+            if (customersData) {
+                try {
+                    const customers = JSON.parse(customersData);
+                    if (Array.isArray(customers) && customers.length > 0) {
+                        console.log('✅ Found customers in customers! Count:', customers.length);
+                        return customers;
+                    }
+                } catch (e) {}
+            }
+            
+            console.log('❌ No customers found in adminCustomers or customers keys');
+            return [];
         }
         
         // Filter content by customer subscription
@@ -4964,15 +4931,9 @@
             // Setup event listeners
             setupEventListeners();
             
-            // Sync customer and package data from GitHub in background
-            Promise.all([
-                loadCustomersFromGitHub(),
-                loadPackagesFromGitHub()
-            ]).then(([customers, packages]) => {
-                console.log('Synced from GitHub - Customers:', customers.length, 'Packages:', packages.length);
-            }).catch(e => {
-                console.log('GitHub sync failed, using local data');
-            });
+            // Load customer subscription data from localStorage (automatic)
+            const customers = loadCustomersFromAdmin();
+            console.log('👥 Loaded customer data:', customers.length, 'customers');
             
             // Load customer subscription data (with built-in fallback)
             adminCustomers = loadCustomersFromAdmin();
