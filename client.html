@@ -5044,6 +5044,11 @@
                     content: [], 
                     streamingMode: 'always-streaming' 
                 };
+                window.contentData.addon = window.contentData.addon || { 
+                    name: 'Add-ons', 
+                    content: [], 
+                    streamingMode: 'always-streaming' 
+                };
                 
                 // Load Live TV channels from adminPackages
                 try {
@@ -5294,6 +5299,7 @@
                 console.log('  - sportsPlus:', contentData.sportsPlus?.content?.length || 0, 'items');
                 console.log('  - arabic:', contentData.arabic?.content?.length || 0, 'items');
                 console.log('  - adult:', contentData.adult?.content?.length || 0, 'items');
+                console.log('  - addon:', contentData.addon?.content?.length || 0, 'items');
             } catch(e) {
                 console.error('❌ Error loading Plex content:', e);
             }
