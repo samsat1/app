@@ -5049,6 +5049,16 @@
                     content: [], 
                     streamingMode: 'always-streaming' 
                 };
+                window.contentData.vod = window.contentData.vod || { 
+                    name: 'VOD', 
+                    content: [], 
+                    streamingMode: 'always-streaming' 
+                };
+                window.contentData.series = window.contentData.series || { 
+                    name: 'Series', 
+                    content: [], 
+                    streamingMode: 'always-streaming' 
+                };
                 
                 // Load Live TV channels from adminPackages
                 try {
@@ -5300,6 +5310,8 @@
                 console.log('  - arabic:', contentData.arabic?.content?.length || 0, 'items');
                 console.log('  - adult:', contentData.adult?.content?.length || 0, 'items');
                 console.log('  - addon:', contentData.addon?.content?.length || 0, 'items');
+                console.log('  - vod:', contentData.vod?.content?.length || 0, 'items');
+                console.log('  - series:', contentData.series?.content?.length || 0, 'items');
             } catch(e) {
                 console.error('❌ Error loading Plex content:', e);
             }
@@ -5392,16 +5404,22 @@
         
         // Global function for refreshing addon packages - defined early for onclick access
         window.refreshAddonPackages = function() {
-            // Safety check: initialize contentData.addon if it doesn't exist
+            // Safety check: initialize ALL contentData objects if they don't exist
             if (!window.contentData) {
                 window.contentData = {};
             }
-            if (!window.contentData.addon) {
-                window.contentData.addon = { name: 'Add-ons', content: [], streamingMode: 'always-streaming' };
-            }
-            if (!window.contentData.adult) {
-                window.contentData.adult = { name: 'Adult', content: [], streamingMode: 'always-streaming' };
-            }
+            
+            // Initialize all possible content types
+            const contentTypes = ['live', 'movies', 'sports', 'sportsPlus', 'arabic', 'adult', 'addon', 'vod', 'series'];
+            contentTypes.forEach(type => {
+                if (!window.contentData[type]) {
+                    window.contentData[type] = { 
+                        name: type.charAt(0).toUpperCase() + type.slice(1), 
+                        content: [], 
+                        streamingMode: 'always-streaming' 
+                    };
+                }
+            });
             
             contentData.addon.content = loadPackagesFromAdmin();
             contentData.adult.content = loadAdultPackagesFromAdmin(); // Also refresh adult packages
