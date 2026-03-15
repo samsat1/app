@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-15T19:25:36.129Z",
+  "exportDate": "2026-03-15T19:38:16.268Z",
   "customers": [
     {
       "id": "CUST_1764860761457",
@@ -41,20 +41,20 @@
       "username": "sam111",
       "name": "sam111",
       "phone": "123456",
-      "plan": "Basic TV Package",
+      "plan": "Basic TV Package, 2nd TV",
       "addons": "Sports Package, Sports Plus Package, Movies Package, Arabic Package, Adult Content Package",
-      "monthlyPrice": 43,
-      "totalPrice": 129,
-      "expiryDate": "2026-06-15",
+      "monthlyPrice": 45,
+      "totalPrice": 540,
+      "expiryDate": "2027-03-15",
       "password": "123456",
       "macAddress": "",
       "adultPassword": "1818",
       "status": "active",
-      "duration": "3 Months",
-      "durationMonths": 3,
+      "duration": "12 Months",
+      "durationMonths": 12,
       "createdAt": "2025-12-04T22:46:29.419Z",
-      "resetDeviceLock": 1773602520675,
-      "updatedAt": "2026-03-15T19:22:00.675Z"
+      "resetDeviceLock": 1773603466078,
+      "updatedAt": "2026-03-15T19:37:46.078Z"
     }
   ],
   "packages": [
@@ -119,10 +119,119 @@
       "id": "PKG_1764860844049"
     }
   ],
-  "resellers": {},
+  "resellers": {
+    "reseller001": {
+      "name": "Reseller 001",
+      "id": "reseller001",
+      "username": "reseller001",
+      "password": "res001_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller002": {
+      "name": "Reseller 002",
+      "id": "reseller002",
+      "username": "reseller002",
+      "password": "res002_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller003": {
+      "name": "Reseller 003",
+      "id": "reseller003",
+      "username": "reseller003",
+      "password": "res003_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller004": {
+      "name": "Reseller 004",
+      "id": "reseller004",
+      "username": "reseller004",
+      "password": "res004_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller005": {
+      "name": "Reseller 005",
+      "id": "reseller005",
+      "username": "reseller005",
+      "password": "res005_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller006": {
+      "name": "Reseller 006",
+      "id": "reseller006",
+      "username": "reseller006",
+      "password": "res006_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller007": {
+      "name": "Reseller 007",
+      "id": "reseller007",
+      "username": "reseller007",
+      "password": "res007_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller008": {
+      "name": "Reseller 008",
+      "id": "reseller008",
+      "username": "reseller008",
+      "password": "res008_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller009": {
+      "name": "Reseller 009",
+      "id": "reseller009",
+      "username": "reseller009",
+      "password": "res009_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller010": {
+      "name": "Reseller 010",
+      "id": "reseller010",
+      "username": "reseller010",
+      "password": "res010_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller011": {
+      "name": "Reseller 011",
+      "id": "reseller011",
+      "username": "reseller011",
+      "password": "res011_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller012": {
+      "name": "Reseller 012",
+      "id": "reseller012",
+      "username": "reseller012",
+      "password": "res012_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    }
+  },
   "creditTransfers": [],
   "resellerTransactions": [],
-  "plexServerUrl": "http://192.168.1.100:32400",
+  "plexServerUrl": "https://192.168.1.100:32400",
   "plexLocalUrl": "https://192.168.1.100:32400",
   "plexToken": "s9HUT7z3jba63ByZBe63",
   "plexMoviesSection": "5",
