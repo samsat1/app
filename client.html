@@ -4713,6 +4713,198 @@
             alert(message);
         }
 
+        // ==================== CUSTOMER AUTHENTICATION SYSTEM ====================
+        let currentCustomer = null;
+        
+        // Customer Authentication Functions
+        window.showCustomerLogin = function() {
+            const loginModal = document.getElementById('loginModal') || createLoginModal();
+            loginModal.classList.add('show');
+        }
+        
+        function createLoginModal() {
+            const modal = document.createElement('div');
+            modal.id = 'loginModal';
+            modal.className = 'login-modal show';
+            modal.innerHTML = `
+                <div class="login-content">
+                    <div class="login-header">
+                        <div class="login-title">iWATCH TV</div>
+                        <div class="login-subtitle">Enter your credentials</div>
+                    </div>
+                    <form class="login-form" id="customerLoginForm" onsubmit="handleCustomerLogin(event)">
+                        <div class="form-group">
+                            <label class="form-label">Username</label>
+                            <input type="text" class="form-input" id="customerLoginUsername" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-input" id="customerLoginPassword" required>
+                        </div>
+                        <button type="submit" class="login-btn" id="customerLoginBtn">Login</button>
+                        <div id="loginError" style="color: #ff6b6b; text-align: center; margin-top: 10px; display: none;"></div>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            return modal;
+        }
+        
+        window.handleCustomerLogin = async function(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('customerLoginUsername').value.trim();
+            const password = document.getElementById('customerLoginPassword').value;
+            const errorEl = document.getElementById('loginError');
+            const loginBtn = document.getElementById('customerLoginBtn');
+            
+            errorEl.style.display = 'none';
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Verifying...';
+            
+            try {
+                // Load latest customer data from admin
+                const customers = loadCustomersFromAdmin();
+                console.log('Checking credentials for:', username, 'Total customers:', customers.length);
+                
+                // Find customer with matching username and password
+                const customer = customers.find(c => 
+                    c.username === username && c.password === password
+                );
+                
+                if (!customer) {
+                    throw new Error('Invalid username or password');
+                }
+                
+                // Check if subscription is expired
+                const expiryDate = new Date(customer.expiryDate);
+                const now = new Date();
+                
+                if (expiryDate < now) {
+                    throw new Error('Subscription expired on ' + expiryDate.toLocaleDateString());
+                }
+                
+                // Login successful
+                currentCustomer = customer;
+                
+                // Save login session
+                localStorage.setItem('currentCustomer', JSON.stringify(customer));
+                
+                // Hide login modal
+                const modal = document.getElementById('loginModal');
+                if (modal) modal.classList.remove('show');
+                
+                // Update UI
+                showNotification('Welcome ' + customer.name + '! Your subscription is valid until ' + expiryDate.toLocaleDateString(), 'success');
+                
+                // Apply subscription filtering
+                filterContentBySubscription();
+                renderContent();
+                
+                console.log('Customer logged in:', customer.name, 'Plan:', customer.plan, 'Expiry:', customer.expiryDate);
+                
+            } catch (error) {
+                errorEl.textContent = error.message;
+                errorEl.style.display = 'block';
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Login';
+            }
+        }
+        
+        window.customerLogout = function() {
+            currentCustomer = null;
+            localStorage.removeItem('currentCustomer');
+            showCustomerLogin();
+            showNotification('Logged out successfully', 'info');
+        }
+        
+        window.checkCustomerLogin = function() {
+            const savedCustomer = localStorage.getItem('currentCustomer');
+            
+            if (savedCustomer) {
+                try {
+                    const customer = JSON.parse(savedCustomer);
+                    
+                    // Verify subscription is still valid
+                    const expiryDate = new Date(customer.expiryDate);
+                    const now = new Date();
+                    
+                    if (expiryDate >= now) {
+                        // Refresh customer data from admin
+                        const customers = loadCustomersFromAdmin();
+                        const freshCustomer = customers.find(c => c.username === customer.username);
+                        
+                        if (freshCustomer) {
+                            currentCustomer = freshCustomer;
+                            localStorage.setItem('currentCustomer', JSON.stringify(freshCustomer));
+                            console.log('Auto-logged in:', freshCustomer.name);
+                            return true;
+                        }
+                    }
+                    
+                    // Clear expired/invalid session
+                    localStorage.removeItem('currentCustomer');
+                } catch (e) {
+                    localStorage.removeItem('currentCustomer');
+                }
+            }
+            
+            // Show login screen
+            showCustomerLogin();
+            return false;
+        }
+        
+        // Get customer's subscribed packages
+        window.getCustomerPackages = function() {
+            if (!currentCustomer) return [];
+            
+            const packages = [];
+            if (currentCustomer.plan) packages.push(...currentCustomer.plan.split(',').map(p => p.trim()));
+            if (currentCustomer.addons) packages.push(...currentCustomer.addons.split(',').map(p => p.trim()));
+            
+            return packages.map(p => p.toLowerCase());
+        }
+        
+        // Load customers from admin data
+        window.loadCustomersFromAdmin = function() {
+            try {
+                // Try to get from localStorage first
+                let customers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
+                
+                // Also check GitHub
+                const githubData = localStorage.getItem('githubAdminData');
+                if (githubData) {
+                    const parsed = JSON.parse(githubData);
+                    if (parsed.customers && parsed.customers.length > customers.length) {
+                        customers = parsed.customers;
+                    }
+                }
+                
+                console.log('Loaded customers:', customers.length);
+                return customers;
+            } catch (e) {
+                console.error('Error loading customers:', e);
+                return [];
+            }
+        }
+        
+        // Filter content by customer subscription
+        window.filterContentByCustomerSubscription = function(content) {
+            if (!currentCustomer) return [];
+            
+            const customerPackages = getCustomerPackages();
+            console.log('Customer packages:', customerPackages);
+            
+            return content.filter(item => {
+                // If no package requirement, allow all
+                if (!item.package) return true;
+                
+                // Check if customer has required package
+                const requiredPackage = item.package.toLowerCase();
+                return customerPackages.some(p => requiredPackage.includes(p) || p.includes(requiredPackage));
+            });
+        }
+
         // Global function for app initialization - defined early for onload access
         window.initApp = function() {
             // Initialize player
@@ -4740,6 +4932,9 @@
             
             // Auto-login check for TV platform
             checkAutoLogin();
+            
+            // Require customer authentication
+            checkCustomerLogin();
             
             // Apply subscription filtering
             const availablePackages = filterContentBySubscription();
