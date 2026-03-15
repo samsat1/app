@@ -4334,6 +4334,15 @@
                     });
                     
                     libraries.push({
+                        id: 'arabic_folder',
+                        name: 'Arabic',
+                        type: 'movie',
+                        count: 0,
+                        isAdult: false,
+                        actualFolder: true
+                    });
+                    
+                    libraries.push({
                         id: 'adult_folder', 
                         name: 'Adult',
                         type: 'movie',
@@ -4343,11 +4352,16 @@
                     });
                 }
                 
-                // Now get actual content counts for movies and adult folders
+                // Now get actual content counts for movies, arabic and adult folders
                 const moviesLibrary = libraries.find(lib => 
                     lib.name.toLowerCase().includes('movie') || 
                     lib.name.toLowerCase().includes('videos') ||
                     (lib.actualFolder && lib.name === 'Movies')
+                );
+                
+                const arabicLibrary = libraries.find(lib => 
+                    lib.name.toLowerCase().includes('arabic') ||
+                    (lib.actualFolder && lib.name === 'Arabic')
                 );
                 
                 const adultLibrary = libraries.find(lib => 
@@ -4370,6 +4384,22 @@
                         console.log(`📊 Real Movies count: ${moviesLibrary.count}`);
                     })
                     .catch(err => console.log('Movies count fetch error:', err));
+                }
+                
+                // Fetch actual content count for Arabic via CORS proxy
+                if (arabicLibrary) {
+                    const arabicContentUrl = `${serverUrl}/library/sections/${arabicLibrary.id}/all?X-Plex-Token=${accessToken}`;
+                    fetch(getProxiedUrl(arabicContentUrl), {})
+                    .then(response => response.text())
+                    .then(xmlText => {
+                        // Count MediaContainer size for actual count
+                        const match = xmlText.match(/size="(\d+)"/);
+                        if (match) {
+                            arabicLibrary.count = parseInt(match[1]);
+                        }
+                        console.log(`📊 Real Arabic count: ${arabicLibrary.count}`);
+                    })
+                    .catch(err => console.log('Arabic count fetch error:', err));
                 }
                 
                 // Fetch actual content count for Adult via CORS proxy
@@ -4409,6 +4439,14 @@
                     { 
                         id: 'movies_folder',
                         name: 'Movies', 
+                        type: 'movie', 
+                        count: 0, 
+                        isAdult: false,
+                        note: 'Found in your Plex library'
+                    },
+                    { 
+                        id: 'arabic_folder', 
+                        name: 'Arabic', 
                         type: 'movie', 
                         count: 0, 
                         isAdult: false,
@@ -4707,8 +4745,9 @@
             localUrl: localStorage.getItem('plexLocalUrl') || 'http://127.0.0.1:32400',
             token: localStorage.getItem('plexToken') || '',
             sections: {
-                movies: parseInt(localStorage.getItem('plexMoviesSection')) || 26,
-                adult: parseInt(localStorage.getItem('plexAdultSection')) || 21
+                movies: localStorage.getItem('plexMoviesSection') || '',
+                arabic: localStorage.getItem('plexArabicSection') || '',
+                adult: localStorage.getItem('plexAdultSection') || ''
             }
         };
         
@@ -4758,9 +4797,36 @@
             }
         };
         
+        window.importArabicXML = function() {
+            const xml = document.getElementById('arabicXmlInput').value.trim();
+            if (!xml) {
+                showNotification('❌ Please paste the Arabic XML first', 'error');
+                return;
+            }
+            
+            const videos = parseVideoXML(xml, 'arabic');
+            if (videos.length > 0) {
+                // Save to both keys for compatibility
+                localStorage.setItem('plexArabicCache', JSON.stringify(videos));
+                localStorage.setItem('plexCachedArabic', JSON.stringify(videos));
+                updateCacheCounts();
+                showNotification(`✅ Imported ${videos.length} Arabic videos successfully!`, 'success');
+                document.getElementById('arabicXmlInput').value = '';
+            } else {
+                showNotification('❌ No videos found in XML. Make sure you pasted the complete XML.', 'error');
+            }
+        };
+        
         function parseVideoXML(xmlString, libraryType) {
             const videos = [];
-            const sectionId = libraryType === 'movies' ? PLEX_CONFIG.sections.movies : PLEX_CONFIG.sections.adult;
+            let sectionId;
+            if (libraryType === 'movies') {
+                sectionId = PLEX_CONFIG.sections.movies;
+            } else if (libraryType === 'arabic') {
+                sectionId = PLEX_CONFIG.sections.arabic;
+            } else if (libraryType === 'adult') {
+                sectionId = PLEX_CONFIG.sections.adult;
+            }
             
             try {
                 console.log('🔍 Parsing XML, length:', xmlString.length);
@@ -4845,7 +4911,15 @@
         }
         
         window.copyPlexUrl = function(type) {
-            const section = type === 'movies' ? PLEX_CONFIG.sections.movies : PLEX_CONFIG.sections.adult;
+            let section;
+            if (type === 'movies') {
+                section = PLEX_CONFIG.sections.movies;
+            } else if (type === 'arabic') {
+                section = PLEX_CONFIG.sections.arabic;
+            } else if (type === 'adult') {
+                section = PLEX_CONFIG.sections.adult;
+            }
+            
             // Use localhost since Plex is running locally
             const url = `${PLEX_CONFIG.localUrl}/library/sections/${section}/all?X-Plex-Token=${PLEX_CONFIG.token}`;
             
@@ -6712,9 +6786,11 @@ Network: Always Streaming → Optimized for instant access`;
             const plexServerUrl = localStorage.getItem('plexServerUrl') || '';
             const plexLocalUrl = localStorage.getItem('plexLocalUrl') || 'http://127.0.0.1:32400';
             const plexToken = localStorage.getItem('plexToken') || '';
-            const plexMoviesSection = localStorage.getItem('plexMoviesSection') || '26';
-            const plexAdultSection = localStorage.getItem('plexAdultSection') || '21';
+            const plexMoviesSection = localStorage.getItem('plexMoviesSection') || '';
+            const plexArabicSection = localStorage.getItem('plexArabicSection') || '';
+            const plexAdultSection = localStorage.getItem('plexAdultSection') || '';
             const cachedMovies = JSON.parse(localStorage.getItem('plexCachedMovies') || '[]');
+            const cachedArabic = JSON.parse(localStorage.getItem('plexCachedArabic') || '[]');
             const cachedAdult = JSON.parse(localStorage.getItem('plexCachedAdult') || '[]');
             
             mainContent.innerHTML = `
@@ -6744,14 +6820,18 @@ Network: Always Streaming → Optimized for instant access`;
                                     <button onclick="generatePlexToken()" class="btn btn-warning" style="padding: 12px 20px;">🔑 Generate</button>
                                 </div>
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
                                 <div>
                                     <label style="color: rgba(255,255,255,0.8); font-size: 14px; display: block; margin-bottom: 5px;">Movies Section ID:</label>
-                                    <input type="text" id="plexMoviesSection" value="${plexMoviesSection}" placeholder="26" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
+                                    <input type="text" id="plexMoviesSection" value="${plexMoviesSection}" placeholder="Enter ID" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
+                                </div>
+                                <div>
+                                    <label style="color: rgba(255,255,255,0.8); font-size: 14px; display: block; margin-bottom: 5px;">Arabic Section ID:</label>
+                                    <input type="text" id="plexArabicSection" value="${plexArabicSection}" placeholder="Enter ID" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
                                 </div>
                                 <div>
                                     <label style="color: rgba(255,255,255,0.8); font-size: 14px; display: block; margin-bottom: 5px;">Adult Section ID:</label>
-                                    <input type="text" id="plexAdultSection" value="${plexAdultSection}" placeholder="21" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
+                                    <input type="text" id="plexAdultSection" value="${plexAdultSection}" placeholder="Enter ID" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
                                 </div>
                             </div>
                             <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
@@ -6778,6 +6858,10 @@ Network: Always Streaming → Optimized for instant access`;
                                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                                     <span style="color: rgba(255,255,255,0.8);">Cached Movies:</span>
                                     <span style="color: #2196f3; font-weight: 600;">${cachedMovies.length} videos</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                    <span style="color: rgba(255,255,255,0.8);">Cached Arabic:</span>
+                                    <span style="color: #9c27b0; font-weight: 600;">${cachedArabic.length} videos</span>
                                 </div>
                                 <div style="display: flex; justify-content: space-between;">
                                     <span style="color: rgba(255,255,255,0.8);">Cached Adult:</span>
@@ -6808,6 +6892,21 @@ Network: Always Streaming → Optimized for instant access`;
                             </div>
                             <button onclick="importMoviesXML()" class="btn btn-primary" style="width: 100%; padding: 12px;">📥 Import Movies</button>
                             <div id="moviesCount" style="margin-top: 10px; color: #4caf50; font-size: 13px; font-weight: bold;">Movies cached: ${cachedMovies.length}</div>
+                        </div>
+                        
+                        <!-- Arabic Import -->
+                        <div style="background: rgba(156, 39, 176, 0.1); padding: 20px; border-radius: 8px; border: 1px solid #9c27b0;">
+                            <h4 style="color: #9c27b0; margin-bottom: 15px;">🕌 Arabic Library</h4>
+                            <div style="margin-bottom: 15px;">
+                                <button onclick="copyPlexUrl('arabic')" class="btn" style="width: 100%; margin-bottom: 10px; padding: 12px; background: #9c27b0; color: white;">📋 Copy Arabic URL</button>
+                                <p style="color: #888; font-size: 12px;">1. Click button → 2. Open URL in browser → 3. Select All (Ctrl+A) → 4. Copy (Ctrl+C) → 5. Paste below</p>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <label style="color: #ccc; font-size: 13px;">Paste Arabic XML:</label>
+                                <textarea id="arabicXmlInput" placeholder="Paste the entire XML content here..." style="width: 100%; height: 120px; padding: 10px; border-radius: 6px; border: 1px solid #444; background: #1a1a2e; color: white; font-size: 12px; margin-top: 5px;"></textarea>
+                            </div>
+                            <button onclick="importArabicXML()" class="btn" style="width: 100%; padding: 12px; background: #9c27b0; color: white;">📥 Import Arabic Videos</button>
+                            <div id="arabicCount" style="margin-top: 10px; color: #4caf50; font-size: 13px; font-weight: bold;">Arabic videos cached: ${cachedArabic.length}</div>
                         </div>
                         
                         <!-- Adult Import -->
@@ -6849,13 +6948,15 @@ Network: Always Streaming → Optimized for instant access`;
             const serverUrl = document.getElementById('plexServerUrl')?.value || '';
             const localUrl = document.getElementById('plexLocalUrl')?.value || 'http://127.0.0.1:32400';
             const token = document.getElementById('plexToken')?.value || '';
-            const moviesSection = document.getElementById('plexMoviesSection')?.value || '26';
-            const adultSection = document.getElementById('plexAdultSection')?.value || '21';
+            const moviesSection = document.getElementById('plexMoviesSection')?.value || '';
+            const arabicSection = document.getElementById('plexArabicSection')?.value || '';
+            const adultSection = document.getElementById('plexAdultSection')?.value || '';
             
             localStorage.setItem('plexServerUrl', serverUrl);
             localStorage.setItem('plexLocalUrl', localUrl);
             localStorage.setItem('plexToken', token);
             localStorage.setItem('plexMoviesSection', moviesSection);
+            localStorage.setItem('plexArabicSection', arabicSection);
             localStorage.setItem('plexAdultSection', adultSection);
             
             // Update the PLEX_CONFIG object
