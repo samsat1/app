@@ -1190,14 +1190,23 @@
             }
             
             // Update UI with prices
-            document.getElementById('basicPrice').textContent = '$' + packagePrices.basic + '/month';
-            document.getElementById('secondTVPrice').textContent = '+$' + packagePrices.secondTV + '/month';
-            document.getElementById('thirdTVPrice').textContent = '+$' + packagePrices.thirdTV + '/month';
-            document.getElementById('sportsPrice').textContent = '+$' + packagePrices.sports + '/month';
-            document.getElementById('sportsPlusPrice').textContent = '+$' + packagePrices.sportsPlus + '/month';
-            document.getElementById('moviesPrice').textContent = '+$' + packagePrices.movies + '/month';
-            document.getElementById('arabicPrice').textContent = '+$' + packagePrices.arabic + '/month';
-            document.getElementById('adultPrice').textContent = '+$' + packagePrices.adult + '/month';
+            const basicPriceEl = document.getElementById('basicPrice');
+            const secondTVPriceEl = document.getElementById('secondTVPrice');
+            const thirdTVPriceEl = document.getElementById('thirdTVPrice');
+            const sportsPriceEl = document.getElementById('sportsPrice');
+            const sportsPlusPriceEl = document.getElementById('sportsPlusPrice');
+            const moviesPriceEl = document.getElementById('moviesPrice');
+            const arabicPriceEl = document.getElementById('arabicPrice');
+            const adultPriceEl = document.getElementById('adultPrice');
+            
+            if (basicPriceEl) basicPriceEl.textContent = '$' + packagePrices.basic + '/month';
+            if (secondTVPriceEl) secondTVPriceEl.textContent = '+$' + packagePrices.secondTV + '/month';
+            if (thirdTVPriceEl) thirdTVPriceEl.textContent = '+$' + packagePrices.thirdTV + '/month';
+            if (sportsPriceEl) sportsPriceEl.textContent = '+$' + packagePrices.sports + '/month';
+            if (sportsPlusPriceEl) sportsPlusPriceEl.textContent = '+$' + packagePrices.sportsPlus + '/month';
+            if (moviesPriceEl) moviesPriceEl.textContent = '+$' + packagePrices.movies + '/month';
+            if (arabicPriceEl) arabicPriceEl.textContent = '+$' + packagePrices.arabic + '/month';
+            if (adultPriceEl) adultPriceEl.textContent = '+$' + packagePrices.adult + '/month';
         }
         
         // Update Stats
