@@ -1476,6 +1476,16 @@
                 }
             }
             
+            // Clear package form function (defined here for use in this scope)
+            function clearPackageForm() {
+                const fields = ['packageName', 'packagePrice', 'secondTVPrice', 'thirdTVPrice', 'sportsPrice', 'sportsPlusPrice', 'moviesPrice', 'arabicPrice', 'adultPackagePrice', 'packageFeatures'];
+                fields.forEach(field => {
+                    const element = document.getElementById(field);
+                    if (element) element.value = '';
+                });
+                document.getElementById('packageDuration').value = '1 Month';
+            }
+            
             // Update global packages variable to reflect the new data
             packages = [...packages]; // Create a copy to ensure reference update
             
