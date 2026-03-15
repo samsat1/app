@@ -3593,6 +3593,7 @@
             console.log('📦 Checking cached Plex content:', {
                 moviesCache: cachedMovies ? 'FOUND' : 'NONE',
                 adultCache: cachedAdult ? 'FOUND' : 'NONE',
+                arabicCache: cachedArabic ? 'FOUND' : 'NONE',
                 liveCache: cachedLive ? 'FOUND' : 'NONE'
             });
             
@@ -3664,24 +3665,41 @@
                 }
             } catch(e) { console.error('Error loading adult:', e); }
             
-            // Load Arabic from admin panel (section ID 7)
+            // Load Arabic from admin panel (section ID 7) or Plex cache
             try {
                 const adminPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                let arabicLoaded = false;
                 
-                // Arabic channels from admin (section ID 7)
+                // Arabic channels from admin (section ID 7) - check first
                 const arabicChannels = adminPackages.filter(pkg => pkg.sectionId === 7 || pkg.type === 'arabic' || pkg.category === 'arabic' || (pkg.packageName && pkg.packageName.toLowerCase().includes('arabic')));
-                if (!contentData.arabic) contentData.arabic = { name: 'Arabic', content: [] };
-                contentData.arabic.content = arabicChannels.map(pkg => ({
-                    id: pkg.id || pkg.packageId || 'arabic_' + Math.random().toString(36).substr(2, 9),
-                    name: pkg.packageName || pkg.name || 'Unknown Arabic Channel',
-                    description: pkg.packageDescription || pkg.description || '',
-                    type: 'hls',
-                    url: pkg.url || pkg.streamUrl || '',
-                    package: pkg.packageName || '',
-                    packageId: pkg.packageId || pkg.id,
-                    category: 'arabic'
-                }));
-                console.log(`📦 Loaded ${arabicChannels.length} Arabic channels from admin (section ID 7)`);
+                
+                if (arabicChannels.length > 0) {
+                    // Load from admin first
+                    if (!contentData.arabic) contentData.arabic = { name: 'Arabic', content: [] };
+                    contentData.arabic.content = arabicChannels.map(pkg => ({
+                        id: pkg.id || pkg.packageId || 'arabic_' + Math.random().toString(36).substr(2, 9),
+                        name: pkg.packageName || pkg.name || 'Unknown Arabic Channel',
+                        description: pkg.packageDescription || pkg.description || '',
+                        type: 'hls',
+                        url: pkg.url || pkg.streamUrl || '',
+                        package: pkg.packageName || '',
+                        packageId: pkg.packageId || pkg.id,
+                        category: 'arabic'
+                    }));
+                    console.log(`📦 Loaded ${arabicChannels.length} Arabic channels from admin (section ID 7)`);
+                    arabicLoaded = true;
+                } else if (cachedArabic) {
+                    // Fallback to Plex cache
+                    try {
+                        const arabic = JSON.parse(cachedArabic);
+                        if (arabic && arabic.length > 0) {
+                            if (!contentData.arabic) contentData.arabic = { name: 'Arabic', content: [] };
+                            contentData.arabic.content = arabic;
+                            console.log(`📦 Loaded ${arabic.length} Arabic channels from Plex cache`);
+                            arabicLoaded = true;
+                        }
+                    } catch(e) { console.error('Error parsing cached Arabic:', e); }
+                }
                 
             } catch(e) { console.error('Error loading Arabic:', e); }
             
@@ -3701,24 +3719,9 @@
                 } catch(e) { console.error('Error parsing cached live channels:', e); }
             }
             
-            // Load Arabic and Sports Plus from adminPackages
+            // Load Sports Plus and Sports from adminPackages
             try {
                 const adminPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
-                
-                // Arabic channels (from admin section ID 7)
-                const arabicChannels = adminPackages.filter(pkg => pkg.type === 'arabic' || pkg.category === 'arabic' || (pkg.packageName && pkg.packageName.toLowerCase().includes('arabic')));
-                if (!contentData.arabic) contentData.arabic = { name: 'Arabic', content: [] };
-                contentData.arabic.content = arabicChannels.map(pkg => ({
-                    id: pkg.id || pkg.packageId || 'arabic_' + Math.random().toString(36).substr(2, 9),
-                    name: pkg.packageName || pkg.name || 'Unknown Arabic Channel',
-                    description: pkg.packageDescription || pkg.description || '',
-                    type: 'hls',
-                    url: pkg.url || pkg.streamUrl || '',
-                    package: pkg.packageName || '',
-                    packageId: pkg.packageId || pkg.id,
-                    category: 'arabic'
-                }));
-                console.log(`📦 Loaded ${arabicChannels.length} Arabic channels from adminPackages`);
                 
                 // Sports Plus channels (from admin - Nimble streams)
                 const sportsPlusChannels = adminPackages.filter(pkg => pkg.type === 'sports_plus' || pkg.category === 'sports-plus' || (pkg.packageName && pkg.packageName.toLowerCase().includes('sports plus')));
@@ -3760,9 +3763,9 @@
             if (adultTabUpdate) adultTabUpdate.textContent = `Adult (${contentData.adult.content.length})`;
             
             // Refresh display if cached content loaded
-            if (moviesLoaded || adultLoaded) {
+            if (moviesLoaded || adultLoaded || (contentData.arabic && contentData.arabic.content.length > 0)) {
                 console.log('📺 ====== PLEX CONTENT LOADED FROM CACHE ======');
-                console.log('📺 Final counts:', { movies: contentData.movies.content.length, adult: contentData.adult.content.length });
+                console.log('📺 Final counts:', { movies: contentData.movies.content.length, adult: contentData.adult.content.length, arabic: contentData.arabic ? contentData.arabic.content.length : 0 });
                 
                 // Always refresh display to show the loaded content
                 renderContent();
