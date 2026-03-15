@@ -937,10 +937,10 @@
                     type: 'live_tv',
                     source: 'satellite_qam_udp',
                     streamingMode: 'always_streaming',
-                    description: 'Live TV from Satellite → QAM → UDP → Plex',
-                    libraries: ['Live TV'],
-                    channels: ['Live TV'],
-                    features: ['Live TV', 'News', 'Entertainment', 'Local Channels'],
+                    description: 'Live TV from Satellite + Movies from Plex',
+                    libraries: ['Live TV', 'Movies'],
+                    channels: ['Live TV', 'Movies'],
+                    features: ['Live TV', 'News', 'Entertainment', 'Local Channels', 'Movies'],
                     accessLevel: 1,
                     passwordProtected: false,
                     plexPath: '/plex/live-tv/',
@@ -992,6 +992,36 @@
                     networkPath: 'PC Library → Plex → Mikrotik → OLT → ONU',
                     requiresBasicTV: false,
                     adultPIN: '1818'
+                },
+                'sports_plus': {
+                    name: 'Sports Plus Package',
+                    type: 'live_tv',
+                    source: 'satellite_qam_udp',
+                    streamingMode: 'always_streaming',
+                    description: 'Extra Sports Live TV from Satellite → QAM → UDP → Plex',
+                    libraries: ['Live TV'],
+                    channels: ['Live TV', 'Sports Plus'],
+                    features: ['Sports Live', 'Extra Channels', 'Premium Sports'],
+                    accessLevel: 2,
+                    passwordProtected: false,
+                    plexPath: '/plex/live-tv/sports-plus/',
+                    networkPath: 'Satellite → QAM Modulator → UDP → Plex → Mikrotik → OLT → ONU',
+                    requiresBasicTV: true
+                },
+                'arabic': {
+                    name: 'Arabic Package',
+                    type: 'vod',
+                    source: 'pc_library_plex',
+                    streamingMode: 'on_demand',
+                    description: 'Arabic content from PC Library folder in Plex',
+                    libraries: ['Arabic'],
+                    channels: [],
+                    features: ['Arabic Library', 'On-Demand', 'Arabic Movies', 'Arabic Series'],
+                    accessLevel: 3,
+                    passwordProtected: false,
+                    plexPath: '/plex/library/arabic/',
+                    networkPath: 'PC Library → Plex → Mikrotik → OLT → ONU',
+                    requiresBasicTV: false
                 }
             },
 
@@ -5390,7 +5420,9 @@ Network: Always Streaming → Optimized for instant access`;
             const secondTV = document.getElementById('secondTVCheckbox');
             const thirdTV = document.getElementById('thirdTVCheckbox');
             const sportsAddon = document.getElementById('sportsAddon');
+            const sportsPlusAddon = document.getElementById('sportsPlusAddon');
             const moviesAddon = document.getElementById('moviesAddon');
+            const arabicAddon = document.getElementById('arabicAddon');
             const adultAddon = document.getElementById('adultAddon');
             
             const customerName = document.getElementById('customerName')?.value;
@@ -5427,7 +5459,9 @@ Network: Always Streaming → Optimized for instant access`;
             if (basicTV.checked) {
                 const selectedAddons = [];
                 if (sportsAddon && sportsAddon.checked) selectedAddons.push('Sports');
+                if (sportsPlusAddon && sportsPlusAddon.checked) selectedAddons.push('Sports Plus');
                 if (moviesAddon && moviesAddon.checked) selectedAddons.push('Movies');
+                if (arabicAddon && arabicAddon.checked) selectedAddons.push('Arabic');
                 if (adultAddon && adultAddon.checked) selectedAddons.push('Adult Content');
                 
                 if (selectedAddons.length > 0) {
@@ -5435,13 +5469,16 @@ Network: Always Streaming → Optimized for instant access`;
                 }
             } else {
                 // If Basic TV is not selected, check if any addons are somehow selected (shouldn't be possible with UI)
-                const addonChecked = (sportsAddon && sportsAddon.checked) || (moviesAddon && moviesAddon.checked) || 
+                const addonChecked = (sportsAddon && sportsAddon.checked) || (sportsPlusAddon && sportsPlusAddon.checked) || 
+                                     (moviesAddon && moviesAddon.checked) || (arabicAddon && arabicAddon.checked) ||
                                      (adultAddon && adultAddon.checked);
                 if (addonChecked) {
                     showNotification('🚨 CRITICAL ERROR: Addons cannot be selected without Basic TV Package! This should not be possible.', 'error');
                     // Reset all addons as safety measure
                     if (sportsAddon) sportsAddon.checked = false;
+                    if (sportsPlusAddon) sportsPlusAddon.checked = false;
                     if (moviesAddon) moviesAddon.checked = false;
+                    if (arabicAddon) arabicAddon.checked = false;
                     if (adultAddon) adultAddon.checked = false;
                     updateDeviceSelection();
                     return;
@@ -5473,7 +5510,9 @@ Network: Always Streaming → Optimized for instant access`;
             // Collect selected addons
             const selectedAddons = [];
             if (document.getElementById('sportsAddon')?.checked) selectedAddons.push('Sports Package');
+            if (document.getElementById('sportsPlusAddon')?.checked) selectedAddons.push('Sports Plus Package');
             if (document.getElementById('moviesAddon')?.checked) selectedAddons.push('Movies Package');
+            if (document.getElementById('arabicAddon')?.checked) selectedAddons.push('Arabic Package');
             if (document.getElementById('adultAddon')?.checked) selectedAddons.push('Adult Content Package');
             
             // Calculate total price and duration
@@ -5699,16 +5738,22 @@ Network: Always Streaming → Optimized for instant access`;
         function updateAddonAvailability() {
             const basicTV = document.getElementById('basicTVCheckbox');
             const sportsAddon = document.getElementById('sportsAddon');
+            const sportsPlusAddon = document.getElementById('sportsPlusAddon');
             const moviesAddon = document.getElementById('moviesAddon');
+            const arabicAddon = document.getElementById('arabicAddon');
             const sportsAddonContainer = document.getElementById('sportsAddonContainer');
+            const sportsPlusAddonContainer = document.getElementById('sportsPlusAddonContainer');
             const moviesAddonContainer = document.getElementById('moviesAddonContainer');
+            const arabicAddonContainer = document.getElementById('arabicAddonContainer');
             const sportsAddonLabel = document.getElementById('sportsAddonLabel');
+            const sportsPlusAddonLabel = document.getElementById('sportsPlusAddonLabel');
             const moviesAddonLabel = document.getElementById('moviesAddonLabel');
+            const arabicAddonLabel = document.getElementById('arabicAddonLabel');
             const addonStatusMessage = document.getElementById('addonStatusMessage');
             
             if (!basicTV.checked) {
                 // Disable regular addons when Basic TV is not selected (adult has separate logic)
-                [sportsAddon, moviesAddon].forEach(checkbox => {
+                [sportsAddon, sportsPlusAddon, moviesAddon, arabicAddon].forEach(checkbox => {
                     if (checkbox) {
                         checkbox.disabled = true;
                         checkbox.checked = false;
@@ -5716,10 +5761,10 @@ Network: Always Streaming → Optimized for instant access`;
                 });
                 
                 // Update labels and containers
-                const labels = [sportsAddonLabel, moviesAddonLabel];
-                const containers = [sportsAddonContainer, moviesAddonContainer];
+                const labels = [sportsAddonLabel, sportsPlusAddonLabel, moviesAddonLabel, arabicAddonLabel];
+                const containers = [sportsAddonContainer, sportsPlusAddonContainer, moviesAddonContainer, arabicAddonContainer];
                 
-                const labelTextsLocked = ['🔒 Sports Package - LOCKED', '🔒 Movies Package - LOCKED'];
+                const labelTextsLocked = ['🔒 Sports Package - LOCKED', '🔒 Sports Plus Package - LOCKED', '🔒 Movies Package - LOCKED', '🔒 Arabic Package - LOCKED'];
                 
                 labels.forEach((label, index) => {
                     if (label) {
@@ -5740,20 +5785,37 @@ Network: Always Streaming → Optimized for instant access`;
                 }
             } else {
                 // Enable regular addons when Basic TV is selected (adult has separate logic)
-                [sportsAddon, moviesAddon].forEach(checkbox => {
+                [sportsAddon, sportsPlusAddon, moviesAddon, arabicAddon].forEach(checkbox => {
                     if (checkbox) {
                         checkbox.disabled = false;
                     }
                 });
                 
                 // Update labels and containers
-                const labels = [sportsAddonLabel, moviesAddonLabel];
-                const containers = [sportsAddonContainer, moviesAddonContainer];
+                const labels = [sportsAddonLabel, sportsPlusAddonLabel, moviesAddonLabel, arabicAddonLabel];
+                const containers = [sportsAddonContainer, sportsPlusAddonContainer, moviesAddonContainer, arabicAddonContainer];
                 
-                const labelTextsUnlocked = ['🏆 Sports Package', '🎬 Movies Package'];
+                const labelTextsUnlocked = ['🏆 Sports Package', '🏆 Sports Plus Package', '🎬 Movies Package', '🕌 Arabic Package'];
                 
                 labels.forEach((label, index) => {
                     if (label) {
+                        label.textContent = labelTextsUnlocked[index];
+                        label.style.color = '#4caf50';
+                    }
+                    if (containers[index]) {
+                        containers[index].style.cursor = 'pointer';
+                        containers[index].style.opacity = '1';
+                    }
+                });
+                
+                if (addonStatusMessage) {
+                    addonStatusMessage.textContent = '✅ Addons are now available - Select your preferred packages';
+                    addonStatusMessage.style.background = 'rgba(76,175,80,0.2)';
+                    addonStatusMessage.style.borderColor = 'rgba(76,175,80,0.4)';
+                    addonStatusMessage.style.color = '#4caf50';
+                }
+            }
+        }
                         label.textContent = labelTextsUnlocked[index];
                         label.style.color = '#4caf50';
                     }
@@ -5898,7 +5960,9 @@ Network: Always Streaming → Optimized for instant access`;
             const secondTV = document.getElementById('secondTVCheckbox')?.checked;
             const thirdTV = document.getElementById('thirdTVCheckbox')?.checked;
             const sportsAddon = document.getElementById('sportsAddon')?.checked;
+            const sportsPlusAddon = document.getElementById('sportsPlusAddon')?.checked;
             const moviesAddon = document.getElementById('moviesAddon')?.checked;
+            const arabicAddon = document.getElementById('arabicAddon')?.checked;
             const adultAddon = document.getElementById('adultAddon')?.checked;
             
             // Get actual package prices from created packages
@@ -5908,27 +5972,39 @@ Network: Always Streaming → Optimized for instant access`;
             let thirdTVPrice = 10; // Default fallback
             const addonPrices = {
                 sports: 8,
+                sportsPlus: 8,
                 movies: 8,
+                arabic: 8,
                 adult: 0
             };
             
-            // Get adult packages from adminPackages for adult addon pricing
-            let adultPrice = 0;
+            // Get package prices from adminPackages
             try {
                 const adminPackages = JSON.parse(localStorage.getItem('adminPackages')) || [];
-                const adultPackages = adminPackages.filter(pkg => 
-                    pkg.isAdult === true || 
-                    pkg.name.toLowerCase().includes('adult') || 
-                    pkg.name.toLowerCase().includes('xxx') ||
-                    (pkg.adultPackagePrice && pkg.adultPackagePrice > 0)
-                );
-                if (adultPackages.length > 0) {
-                    adultPrice = adultPackages[0].adultPackagePrice || 0;
+                
+                // Find each package by name and get its price
+                const sportsPkg = adminPackages.find(p => p.name && p.name.toLowerCase().includes('sport') && !p.name.toLowerCase().includes('plus'));
+                const sportsPlusPkg = adminPackages.find(p => p.name && p.name.toLowerCase().includes('sports plus'));
+                const moviesPkg = adminPackages.find(p => p.name && p.name.toLowerCase().includes('movie') && !p.isAdult);
+                const arabicPkg = adminPackages.find(p => p.name && p.name.toLowerCase().includes('arabic'));
+                const adultPkg = adminPackages.find(p => p.isAdult || (p.name && p.name.toLowerCase().includes('adult')));
+                
+                if (sportsPkg) addonPrices.sports = sportsPkg.price || 8;
+                if (sportsPlusPkg) addonPrices.sportsPlus = sportsPlusPkg.price || 8;
+                if (moviesPkg) addonPrices.movies = moviesPkg.price || 8;
+                if (arabicPkg) addonPrices.arabic = arabicPkg.price || 8;
+                if (adultPkg) addonPrices.adult = adultPkg.price || 0;
+                
+                // Get base prices from first non-adult package
+                const basePkg = adminPackages.find(p => !p.isAdult && p.name && !p.name.toLowerCase().includes('adult'));
+                if (basePkg) {
+                    basePrice = basePkg.price || basePrice;
+                    secondTVPrice = basePkg.secondTVPrice || secondTVPrice;
+                    thirdTVPrice = basePkg.thirdTVPrice || thirdTVPrice;
                 }
             } catch (e) {
-                console.error('Error loading adult packages for pricing:', e);
+                console.error('Error loading package prices:', e);
             }
-            addonPrices.adult = adultPrice;
             
             // Use the first available package prices, or fall back to defaults
             if (packages.length > 0) {
@@ -5936,12 +6012,8 @@ Network: Always Streaming → Optimized for instant access`;
                 basePrice = firstPackage.price || basePrice;
                 secondTVPrice = firstPackage.secondTVPrice || secondTVPrice;
                 thirdTVPrice = firstPackage.thirdTVPrice || thirdTVPrice;
-                
-                // Use package-specific addon prices if available
-                if (firstPackage.sportsPrice) addonPrices.sports = firstPackage.sportsPrice;
-                if (firstPackage.moviesPrice) addonPrices.movies = firstPackage.moviesPrice;
             }
-            
+
             if (basicTV) {
                 monthlyPrice += basePrice;
             }
@@ -5954,8 +6026,14 @@ Network: Always Streaming → Optimized for instant access`;
             if (sportsAddon) {
                 monthlyPrice += addonPrices.sports;
             }
+            if (sportsPlusAddon) {
+                monthlyPrice += addonPrices.sportsPlus;
+            }
             if (moviesAddon) {
                 monthlyPrice += addonPrices.movies;
+            }
+            if (arabicAddon) {
+                monthlyPrice += addonPrices.arabic;
             }
             if (adultAddon) {
                 monthlyPrice += addonPrices.adult;
@@ -6065,7 +6143,7 @@ Network: Always Streaming → Optimized for instant access`;
                 if (element) element.value = '';
             });
             
-            const checkboxes = ['basicTVCheckbox', 'secondTVCheckbox', 'thirdTVCheckbox', 'sportsAddon', 'moviesAddon', 'adultAddon'];
+            const checkboxes = ['basicTVCheckbox', 'secondTVCheckbox', 'thirdTVCheckbox', 'sportsAddon', 'sportsPlusAddon', 'moviesAddon', 'arabicAddon', 'adultAddon'];
             checkboxes.forEach(id => {
                 const checkbox = document.getElementById(id);
                 if (checkbox) {
@@ -6322,10 +6400,22 @@ Network: Always Streaming → Optimized for instant access`;
                                         <span id="sportsAddonLabel">🔒 Sports Package - LOCKED</span>
                                     </label>
                                     
+                                    <!-- Sports Plus Addon -->
+                                    <label id="sportsPlusAddonContainer" style="color: rgba(255,255,255,0.3); display: flex; align-items: center; cursor: not-allowed; margin-bottom: 8px; opacity: 0.6;">
+                                        <input type="checkbox" name="customerAddons" value="sportsPlus" id="sportsPlusAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="updateTotalPrice()" disabled>
+                                        <span id="sportsPlusAddonLabel">🔒 Sports Plus Package - LOCKED</span>
+                                    </label>
+                                    
                                     <!-- Movies Addon -->
                                     <label id="moviesAddonContainer" style="color: rgba(255,255,255,0.3); display: flex; align-items: center; cursor: not-allowed; margin-bottom: 8px; opacity: 0.6;">
                                         <input type="checkbox" name="customerAddons" value="movies" id="moviesAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="updateTotalPrice()" disabled>
                                         <span id="moviesAddonLabel">🔒 Movies Package - LOCKED</span>
+                                    </label>
+                                    
+                                    <!-- Arabic Addon -->
+                                    <label id="arabicAddonContainer" style="color: rgba(255,255,255,0.3); display: flex; align-items: center; cursor: not-allowed; margin-bottom: 8px; opacity: 0.6;">
+                                        <input type="checkbox" name="customerAddons" value="arabic" id="arabicAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="updateTotalPrice()" disabled>
+                                        <span id="arabicAddonLabel">🔒 Arabic Package - LOCKED</span>
                                     </label>
                                     
 
@@ -8128,16 +8218,22 @@ Network: Always Streaming → Optimized for instant access`;
             
             // Reset addon checkboxes first
             const sportsAddonEl = document.getElementById('sportsAddon');
+            const sportsPlusAddonEl = document.getElementById('sportsPlusAddon');
             const moviesAddonEl = document.getElementById('moviesAddon');
+            const arabicAddonEl = document.getElementById('arabicAddon');
             const adultAddonEl = document.getElementById('adultAddon');
             
             if (sportsAddonEl) sportsAddonEl.checked = false;
+            if (sportsPlusAddonEl) sportsPlusAddonEl.checked = false;
             if (moviesAddonEl) moviesAddonEl.checked = false;
+            if (arabicAddonEl) arabicAddonEl.checked = false;
             if (adultAddonEl) adultAddonEl.checked = false;
             
             // Check for various formats: "sports", "Sports Package", "Sports", etc.
-            if (sportsAddonEl) sportsAddonEl.checked = addonsString.includes('sport');
+            if (sportsAddonEl) sportsAddonEl.checked = addonsString.includes('sport') && !addonsString.includes('plus');
+            if (sportsPlusAddonEl) sportsPlusAddonEl.checked = addonsString.includes('Sports Plus') || addonsString.includes('sports plus');
             if (moviesAddonEl) moviesAddonEl.checked = addonsString.includes('movie');
+            if (arabicAddonEl) arabicAddonEl.checked = addonsString.includes('arabic');
             if (adultAddonEl) adultAddonEl.checked = addonsString.includes('adult');
             
             // Update device selection and price
@@ -8258,28 +8354,36 @@ Network: Always Streaming → Optimized for instant access`;
             
             // Clear all addon checkboxes first
             const sportsAddonEl2 = document.getElementById('sportsAddon');
+            const sportsPlusAddonEl2 = document.getElementById('sportsPlusAddon');
             const moviesAddonEl2 = document.getElementById('moviesAddon');
+            const arabicAddonEl2 = document.getElementById('arabicAddon');
             const adultAddonEl2 = document.getElementById('adultAddon');
             
             if (sportsAddonEl2) sportsAddonEl2.checked = false;
+            if (sportsPlusAddonEl2) sportsPlusAddonEl2.checked = false;
             if (moviesAddonEl2) moviesAddonEl2.checked = false;
+            if (arabicAddonEl2) arabicAddonEl2.checked = false;
             if (adultAddonEl2) adultAddonEl2.checked = false;
             
             // Set checkboxes based on customer's actual addon selections
             // Check for various formats: "sports", "Sports Package", "Sports", etc.
             // More robust checking - use exact matches for known package names
-            const sportsMatch = addonsString.includes('sports') || addonsString.includes('sport');
+            const sportsMatch = (addonsString.includes('sports') || addonsString.includes('sport')) && !addonsString.includes('plus');
+            const sportsPlusMatch = addonsString.includes('Sports Plus') || addonsString.includes('sports plus');
             const moviesMatch = addonsString.includes('movies') || addonsString.includes('movie');
+            const arabicMatch = addonsString.includes('arabic');
             const adultMatch = addonsString.includes('adult');
             
             if (sportsAddonEl2) sportsAddonEl2.checked = sportsMatch;
+            if (sportsPlusAddonEl2) sportsPlusAddonEl2.checked = sportsPlusMatch;
             if (moviesAddonEl2) moviesAddonEl2.checked = moviesMatch;
+            if (arabicAddonEl2) arabicAddonEl2.checked = arabicMatch;
             if (adultAddonEl2) adultAddonEl2.checked = adultMatch;
             
             // Debug: Log what's being checked
             console.log('🔍 Debug - Customer addons:', customer.addons);
             console.log('🔍 Debug - addonsString:', addonsString);
-            console.log('🔍 Debug - sportsMatch:', sportsMatch, 'moviesMatch:', moviesMatch, 'adultMatch:', adultMatch);
+            console.log('🔍 Debug - sportsMatch:', sportsMatch, 'sportsPlusMatch:', sportsPlusMatch, 'moviesMatch:', moviesMatch, 'arabicMatch:', arabicMatch, 'adultMatch:', adultMatch);
             
             // Enable/disable addon checkboxes based on basic TV selection
             updateAdultAddonAvailability();
