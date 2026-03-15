@@ -785,8 +785,8 @@
                     <div class="package-option disabled" id="arabicOption" onclick="togglePackage('arabic')">
                         <div class="package-checkbox">✓</div>
                         <div class="package-info">
-                            <div class="package-name">🇸🇦 Arabic Package</div>
-                            <div class="package-price" id="arabicPrice">+$8/month</div>
+                            <div class="package-name">🕌 Arabic Package</div>
+                            <div class="package-price" id="arabicPrice">+$0/month</div>
                         </div>
                     </div>
                     
@@ -795,16 +795,16 @@
                         <div class="package-checkbox">✓</div>
                         <div class="package-info">
                             <div class="package-name">⚽ Sports Package</div>
-                            <div class="package-price" id="sportsPrice">+$8/month</div>
+                            <div class="package-price" id="sportsPrice">+$0/month</div>
                         </div>
                     </div>
                     
                     <!-- Sports Plus -->
-                    <div class="package-option disabled" id="sportsPlusOption" onclick="togglePackage('sportsPlus')">
+                    <div class="package-option disabled" id="sportsPlusOption" onclick="togglePackage('sportsPlus')" style="display: none;">
                         <div class="package-checkbox">✓</div>
                         <div class="package-info">
                             <div class="package-name">🏆 Sports Plus Package</div>
-                            <div class="package-price" id="sportsPlusPrice">+$8/month</div>
+                            <div class="package-price" id="sportsPlusPrice">+$0/month</div>
                         </div>
                     </div>
                     
@@ -1107,6 +1107,16 @@
                 adult: 0
             };
             
+            // Get package option elements
+            const sportsPlusOption = document.getElementById('sportsPlusOption');
+            const arabicOption = document.getElementById('arabicOption');
+            const adultOption = document.getElementById('adultOption');
+            
+            // Hide all optional packages by default
+            if (sportsPlusOption) sportsPlusOption.style.display = 'none';
+            if (arabicOption) arabicOption.style.display = 'none';
+            if (adultOption) adultOption.style.display = 'none';
+            
             if (adminData.packages && adminData.packages.length > 0) {
                 console.log('Found', adminData.packages.length, 'packages');
                 
@@ -1116,6 +1126,26 @@
                     p.name && 
                     p.name.toLowerCase().includes('basic') && 
                     !p.isAdult
+                );
+                
+                // 2nd TV package - look for "2nd", "second", "additional", or "extra" in name
+                const secondPkg = adminData.packages.find(p => 
+                    p.name && 
+                    !p.isAdult &&
+                    (p.name.toLowerCase().includes('2nd') || 
+                     p.name.toLowerCase().includes('second') || 
+                     p.name.toLowerCase().includes('additional') ||
+                     p.name.toLowerCase().includes('extra device') ||
+                     p.name.toLowerCase().includes('additional device'))
+                );
+                
+                // 3rd TV package - look for "3rd" or "third" in name
+                const thirdPkg = adminData.packages.find(p => 
+                    p.name && 
+                    !p.isAdult &&
+                    (p.name.toLowerCase().includes('3rd') || 
+                     p.name.toLowerCase().includes('third') ||
+                     p.name.toLowerCase().includes('3rd device'))
                 );
                 
                 // Sports package
@@ -1159,6 +1189,16 @@
                     console.log('Basic package found:', basicPkg.name, 'price:', packagePrices.basic);
                 }
                 
+                if (secondPkg) {
+                    packagePrices.secondTV = parseFloat(secondPkg.price || secondPkg.packagePrice || 15);
+                    console.log('2nd TV package found:', secondPkg.name, 'price:', packagePrices.secondTV);
+                }
+                
+                if (thirdPkg) {
+                    packagePrices.thirdTV = parseFloat(thirdPkg.price || thirdPkg.packagePrice || 10);
+                    console.log('3rd TV package found:', thirdPkg.name, 'price:', packagePrices.thirdTV);
+                }
+                
                 if (sportsPkg) {
                     packagePrices.sports = parseFloat(sportsPkg.price || sportsPkg.packagePrice || 8);
                     console.log('Sports package found:', sportsPkg.name, 'price:', packagePrices.sports);
@@ -1167,6 +1207,8 @@
                 if (sportsPlusPkg) {
                     packagePrices.sportsPlus = parseFloat(sportsPlusPkg.price || sportsPlusPkg.packagePrice || 8);
                     console.log('Sports Plus package found:', sportsPlusPkg.name, 'price:', packagePrices.sportsPlus);
+                    // Show Sports Plus option
+                    if (sportsPlusOption) sportsPlusOption.style.display = 'flex';
                 }
                 
                 if (moviesPkg) {
@@ -1177,11 +1219,15 @@
                 if (arabicPkg) {
                     packagePrices.arabic = parseFloat(arabicPkg.price || arabicPkg.packagePrice || 8);
                     console.log('Arabic package found:', arabicPkg.name, 'price:', packagePrices.arabic);
+                    // Show Arabic option
+                    if (arabicOption) arabicOption.style.display = 'flex';
                 }
                 
                 if (adultPkg) {
                     packagePrices.adult = parseFloat(adultPkg.price || adultPkg.packagePrice || 0);
                     console.log('Adult package found:', adultPkg.name, 'price:', packagePrices.adult);
+                    // Show Adult option
+                    if (adultOption) adultOption.style.display = 'flex';
                 }
                 
                 console.log('Prices loaded:', packagePrices);
