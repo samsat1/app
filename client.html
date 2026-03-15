@@ -5392,6 +5392,17 @@
         
         // Global function for refreshing addon packages - defined early for onclick access
         window.refreshAddonPackages = function() {
+            // Safety check: initialize contentData.addon if it doesn't exist
+            if (!window.contentData) {
+                window.contentData = {};
+            }
+            if (!window.contentData.addon) {
+                window.contentData.addon = { name: 'Add-ons', content: [], streamingMode: 'always-streaming' };
+            }
+            if (!window.contentData.adult) {
+                window.contentData.adult = { name: 'Adult', content: [], streamingMode: 'always-streaming' };
+            }
+            
             contentData.addon.content = loadPackagesFromAdmin();
             contentData.adult.content = loadAdultPackagesFromAdmin(); // Also refresh adult packages
             console.log(`📦 Loaded ${contentData.addon.content.length} add-on packages from admin panel`);
