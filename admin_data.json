@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-15T18:34:47.299Z",
+  "exportDate": "2026-03-15T18:42:26.965Z",
   "customers": [
     {
       "id": "CUST_1764860761457",
@@ -232,9 +232,9 @@
   },
   "creditTransfers": [],
   "resellerTransactions": [],
-  "plexServerUrl": "https://192.168.1.100:32400",
+  "plexServerUrl": "http://192.168.1.100:32400",
   "plexLocalUrl": "http://192.168.1.100:32400",
-  "plexToken": "s9HUT7z3jba63ByZBe63",
+  "plexToken": "6GwshqsFfxxZj8pN-feW",
   "plexMoviesSection": "5",
   "plexAdultSection": "4",
   "tvSyncUrl": "https://raw.githubusercontent.com/samsat1/app/main/admin_data.json",
