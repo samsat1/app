@@ -654,6 +654,18 @@
             </div>
         </div>
         
+        <!-- Current Package Prices -->
+        <div class="prices-bar" id="pricesBar" style="background: rgba(255,255,255,0.1); padding: 10px 15px; margin: 10px; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+            <div style="color: #fff; font-size: 12px; width: 100%; text-align: center; margin-bottom: 5px;">📦 Current Package Prices (Auto-refreshes every 30s)</div>
+            <div class="price-item" style="background: rgba(76,175,80,0.2); padding: 5px 10px; border-radius: 5px; font-size: 11px; color: #4caf50;">Basic: $<span id="displayBasicPrice">-</span></div>
+            <div class="price-item" style="background: rgba(33,150,243,0.2); padding: 5px 10px; border-radius: 5px; font-size: 11px; color: #2196f3;">2nd TV: $<span id="displaySecondTVPrice">-</span></div>
+            <div class="price-item" style="background: rgba(33,150,243,0.2); padding: 5px 10px; border-radius: 5px; font-size: 11px; color: #2196f3;">3rd TV: $<span id="displayThirdTVPrice">-</span></div>
+            <div class="price-item" style="background: rgba(255,152,0,0.2); padding: 5px 10px; border-radius: 5px; font-size: 11px; color: #ff9800;">Sports: $<span id="displaySportsPrice">-</span></div>
+            <div class="price-item" style="background: rgba(156,39,176,0.2); padding: 5px 10px; border-radius: 5px; font-size: 11px; color: #9c27b0;">Movies: $<span id="displayMoviesPrice">-</span></div>
+            <div class="price-item" style="background: rgba(0,188,212,0.2); padding: 5px 10px; border-radius: 5px; font-size: 11px; color: #00bcd4;">Arabic: $<span id="displayArabicPrice">-</span></div>
+            <div class="price-item" style="background: rgba(244,67,54,0.2); padding: 5px 10px; border-radius: 5px; font-size: 11px; color: #f44336;">Adult: $<span id="displayAdultPrice">-</span></div>
+        </div>
+        
         <!-- Stats -->
         <div class="stats-grid">
             <div class="stat-card">
@@ -787,6 +799,15 @@
                         <div class="package-info">
                             <div class="package-name">🕌 Arabic Package</div>
                             <div class="package-price" id="arabicPrice">+$0/month</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Movies -->
+                    <div class="package-option disabled" id="moviesOption" onclick="togglePackage('movies')">
+                        <div class="package-checkbox">✓</div>
+                        <div class="package-info">
+                            <div class="package-name">🎬 Movies Package</div>
+                            <div class="package-price" id="moviesPrice">+$0/month</div>
                         </div>
                     </div>
                     
@@ -1111,11 +1132,13 @@
             const sportsPlusOption = document.getElementById('sportsPlusOption');
             const arabicOption = document.getElementById('arabicOption');
             const adultOption = document.getElementById('adultOption');
+            const moviesOption = document.getElementById('moviesOption');
             
             // Hide all optional packages by default
             if (sportsPlusOption) sportsPlusOption.style.display = 'none';
             if (arabicOption) arabicOption.style.display = 'none';
             if (adultOption) adultOption.style.display = 'none';
+            if (moviesOption) moviesOption.style.display = 'none';
             
             if (adminData.packages && adminData.packages.length > 0) {
                 console.log('Found', adminData.packages.length, 'packages');
@@ -1186,15 +1209,19 @@
                 // Set prices from found packages
                 if (basicPkg) {
                     packagePrices.basic = parseFloat(basicPkg.price || basicPkg.packagePrice || 25);
-                    console.log('Basic package found:', basicPkg.name, 'price:', packagePrices.basic);
+                    // Get 2nd and 3rd TV prices from Basic package fields
+                    packagePrices.secondTV = parseFloat(basicPkg.secondTVPrice || basicPkg.secondTVPrice || 15);
+                    packagePrices.thirdTV = parseFloat(basicPkg.thirdTVPrice || basicPkg.thirdTVPrice || 10);
+                    console.log('Basic package found:', basicPkg.name, 'price:', packagePrices.basic, '2nd TV:', packagePrices.secondTV, '3rd TV:', packagePrices.thirdTV);
                 }
                 
-                if (secondPkg) {
+                // Legacy support: check for separate 2nd/3rd packages if Basic doesn't have the prices
+                if (secondPkg && !basicPkg?.secondTVPrice) {
                     packagePrices.secondTV = parseFloat(secondPkg.price || secondPkg.packagePrice || 15);
                     console.log('2nd TV package found:', secondPkg.name, 'price:', packagePrices.secondTV);
                 }
                 
-                if (thirdPkg) {
+                if (thirdPkg && !basicPkg?.thirdTVPrice) {
                     packagePrices.thirdTV = parseFloat(thirdPkg.price || thirdPkg.packagePrice || 10);
                     console.log('3rd TV package found:', thirdPkg.name, 'price:', packagePrices.thirdTV);
                 }
@@ -1214,6 +1241,8 @@
                 if (moviesPkg) {
                     packagePrices.movies = parseFloat(moviesPkg.price || moviesPkg.packagePrice || 8);
                     console.log('Movies package found:', moviesPkg.name, 'price:', packagePrices.movies);
+                    // Show Movies option
+                    if (moviesOption) moviesOption.style.display = 'flex';
                 }
                 
                 if (arabicPkg) {
@@ -1253,6 +1282,23 @@
             if (moviesPriceEl) moviesPriceEl.textContent = '+$' + packagePrices.movies + '/month';
             if (arabicPriceEl) arabicPriceEl.textContent = '+$' + packagePrices.arabic + '/month';
             if (adultPriceEl) adultPriceEl.textContent = '+$' + packagePrices.adult + '/month';
+            
+            // Update the price display bar in header
+            const displayBasicPrice = document.getElementById('displayBasicPrice');
+            const displaySecondTVPrice = document.getElementById('displaySecondTVPrice');
+            const displayThirdTVPrice = document.getElementById('displayThirdTVPrice');
+            const displaySportsPrice = document.getElementById('displaySportsPrice');
+            const displayMoviesPrice = document.getElementById('displayMoviesPrice');
+            const displayArabicPrice = document.getElementById('displayArabicPrice');
+            const displayAdultPrice = document.getElementById('displayAdultPrice');
+            
+            if (displayBasicPrice) displayBasicPrice.textContent = packagePrices.basic;
+            if (displaySecondTVPrice) displaySecondTVPrice.textContent = packagePrices.secondTV;
+            if (displayThirdTVPrice) displayThirdTVPrice.textContent = packagePrices.thirdTV;
+            if (displaySportsPrice) displaySportsPrice.textContent = packagePrices.sports;
+            if (displayMoviesPrice) displayMoviesPrice.textContent = packagePrices.movies;
+            if (displayArabicPrice) displayArabicPrice.textContent = packagePrices.arabic;
+            if (displayAdultPrice) displayAdultPrice.textContent = packagePrices.adult;
         }
         
         // Update Stats
