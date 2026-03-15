@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug localStorage</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a1a; color: #fff; }
+        h1, h2 { color: #0057FF; }
+        .section { background: #2a2a2a; padding: 15px; margin: 10px 0; border-radius: 8px; }
+        .success { color: #00FF00; }
+        .warning { color: #FFA500; }
+        .error { color: #FF0000; }
+        ul { list-style: none; padding: 0; }
+        li { padding: 5px 0; border-bottom: 1px solid #333; }
+        .key { font-weight: bold; color: #0057FF; }
+        .value { color: #aaa; }
+    </style>
+</head>
+<body>
+    <h1>📋 localStorage Debug Report</h1>
+    
+    <div class="section">
+        <h2>Customer-Related Keys</h2>
+        <ul id="customerKeys"></ul>
+    </div>
+    
+    <div class="section">
+        <h2>Plex Content Keys</h2>
+        <ul id="plexKeys"></ul>
+    </div>
+    
+    <div class="section">
+        <h2>All Keys</h2>
+        <ul id="allKeys"></ul>
+    </div>
+
+    <script>
+        const customerKeysList = document.getElementById('customerKeys');
+        const plexKeysList = document.getElementById('plexKeys');
+        const allKeysList = document.getElementById('allKeys');
+        
+        // Check customer keys
+        let foundCustomerKeys = false;
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (key.includes('customer') || key.includes('Customer'))) {
+                foundCustomerKeys = true;
+                const data = localStorage.getItem(key);
+                try {
+                    const parsed = JSON.parse(data);
+                    customerKeysList.innerHTML += `<li><span class="key">${key}</span>: <span class="success">${parsed.length} customers</span></li>`;
+                    customerKeysList.innerHTML += `<li style="padding-left: 20px; color: #aaa;">Sample: ${JSON.stringify(parsed[0] || {}).substring(0, 150)}</li>`;
+                } catch(e) {
+                    customerKeysList.innerHTML += `<li><span class="key">${key}</span>: <span class="error">Error: ${e.message}</span></li>`;
+                }
+            }
+        }
+        if (!foundCustomerKeys) {
+            customerKeysList.innerHTML += `<li class="warning">No customer keys found!</li>`;
+        }
+        
+        // Check Plex keys
+        let foundPlexKeys = false;
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.includes('plex') && key.includes('Cache')) {
+                foundPlexKeys = true;
+                const data = localStorage.getItem(key);
+                try {
+                    const parsed = JSON.parse(data);
+                    plexKeysList.innerHTML += `<li><span class="key">${key}</span>: <span class="success">${parsed.length} items</span></li>`;
+                    if (parsed.length > 0) {
+                        plexKeysList.innerHTML += `<li style="padding-left: 20px; color: #aaa;">Sample: ${JSON.stringify(parsed[0]).substring(0, 150)}</li>`;
+                    }
+                } catch(e) {
+                    plexKeysList.innerHTML += `<li><span class="key">${key}</span>: <span class="error">Error: ${e.message}</span></li>`;
+                }
+            }
+        }
+        if (!foundPlexKeys) {
+            plexKeysList.innerHTML += `<li class="warning">No Plex cache keys found!</li>`;
+        }
+        
+        // List all keys
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            allKeysList.innerHTML += `<li><span class="key">${key}</span></li>`;
+        }
+    </script>
+</body>
+</html>

@@ -4878,33 +4878,43 @@
             
             // 1. Check adminCustomers (created by admin)
             const adminCustomersData = localStorage.getItem('adminCustomers');
+            console.log('📋 Checking adminCustomers key:', adminCustomersData ? 'Found' : 'Not found');
             if (adminCustomersData) {
                 try {
                     const customers = JSON.parse(adminCustomersData);
                     if (Array.isArray(customers) && customers.length > 0) {
                         console.log('✅ Found', customers.length, 'customers in adminCustomers');
+                        console.log('   Sample customer:', JSON.stringify(customers[0]).substring(0, 100));
                         allCustomers = [...allCustomers, ...customers];
+                    } else {
+                        console.log('⚠️ adminCustomers is empty or not an array');
                     }
                 } catch (e) {
-                    console.error('Error parsing adminCustomers:', e);
+                    console.error('❌ Error parsing adminCustomers:', e);
                 }
             }
             
-            // 2. Check reseller customers (created by resellers)
+            // 2. Check ALL localStorage keys for customer data
+            console.log('📋 Scanning all localStorage keys for customer data...');
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
-                if (key && key.startsWith('resellerCustomers_')) {
+                if (!key) continue;
+                
+                // Check for reseller customers
+                if (key.startsWith('resellerCustomers_')) {
+                    console.log('📋 Found reseller key:', key);
                     try {
                         const data = localStorage.getItem(key);
                         if (data) {
                             const customers = JSON.parse(data);
                             if (Array.isArray(customers) && customers.length > 0) {
                                 console.log('✅ Found', customers.length, 'customers in', key);
+                                console.log('   Sample:', JSON.stringify(customers[0]).substring(0, 100));
                                 allCustomers = [...allCustomers, ...customers];
                             }
                         }
                     } catch (e) {
-                        console.error('Error parsing', key, e);
+                        console.error('❌ Error parsing', key, e);
                     }
                 }
             }
@@ -4932,7 +4942,105 @@
             });
             
             console.log('✅ Total customers found:', uniqueCustomers.length);
+            console.log('   Customer IDs:', uniqueCustomers.map(c => c.id || c.username || c.name).join(', '));
             return uniqueCustomers;
+        }
+        
+        // Load Plex content from localStorage caches
+        window.loadPlexContent = function() {
+            console.log('📀 Starting Plex content loading...');
+            
+            // Check what Plex keys exist
+            console.log('📀 Checking for Plex cache keys in localStorage...');
+            const keysToCheck = ['plexMoviesCache', 'plexArabicCache', 'plexAdultCache'];
+            keysToCheck.forEach(key => {
+                const data = localStorage.getItem(key);
+                if (data) {
+                    try {
+                        const parsed = JSON.parse(data);
+                        console.log('   ✅ Found', key, 'with', parsed.length, 'items');
+                    } catch(e) {
+                        console.log('   ❌ Found', key, 'but error parsing:', e.message);
+                    }
+                } else {
+                    console.log('   ⚠️ Not found:', key);
+                }
+            });
+            
+            try {
+                const moviesCache = JSON.parse(localStorage.getItem('plexMoviesCache') || '[]');
+                const arabicCache = JSON.parse(localStorage.getItem('plexArabicCache') || '[]');
+                const adultCache = JSON.parse(localStorage.getItem('plexAdultCache') || '[]');
+                
+                console.log('📀 Plex caches - Movies:', moviesCache.length, '| Arabic:', arabicCache.length, '| Adult:', adultCache.length);
+                
+                // Initialize contentData if needed
+                window.contentData = window.contentData || {};
+                
+                // Add movies to addon section
+                if (moviesCache.length > 0) {
+                    console.log('📀 Adding', moviesCache.length, 'movies to content');
+                    window.contentData.addon = window.contentData.addon || { content: [] };
+                    window.contentData.addon.content = [
+                        ...(window.contentData.addon.content || []),
+                        ...moviesCache.map(m => ({
+                            id: m.id,
+                            title: m.name,
+                            description: m.description || '',
+                            type: 'vod',
+                            thumbnail: m.thumb || '',
+                            url: m.key || ''
+                        }))
+                    ];
+                }
+                
+                if (arabicCache.length > 0) {
+                    console.log('📀 Adding', arabicCache.length, 'Arabic videos to content');
+                    window.contentData.arabic = window.contentData.arabic || { content: [] };
+                    window.contentData.arabic.content = [
+                        ...(window.contentData.arabic.content || []),
+                        ...arabicCache.map(m => ({
+                            id: m.id,
+                            title: m.name,
+                            description: m.description || '',
+                            type: 'vod',
+                            thumbnail: m.thumb || '',
+                            url: m.key || ''
+                        }))
+                    ];
+                }
+                
+                if (adultCache.length > 0) {
+                    console.log('📀 Adding', adultCache.length, 'Adult videos to content');
+                    window.contentData.adult = window.contentData.adult || { content: [] };
+                    window.contentData.adult.content = [
+                        ...(window.contentData.adult.content || []),
+                        ...adultCache.map(m => ({
+                            id: m.id,
+                            title: m.name,
+                            description: m.description || '',
+                            type: 'vod',
+                            thumbnail: m.thumb || '',
+                            url: m.key || ''
+                        }))
+                    ];
+                }
+                
+                console.log('✅ Plex content loading complete');
+                console.log('   Total addon content:', (window.contentData.addon?.content?.length || 0));
+                console.log('   Total Arabic content:', (window.contentData.arabic?.content?.length || 0));
+                console.log('   Total Adult content:', (window.contentData.adult?.content?.length || 0));
+                
+                // Force re-render if content was updated
+                if (moviesCache.length > 0 || arabicCache.length > 0 || adultCache.length > 0) {
+                    console.log('📀 Triggering content re-render...');
+                    if (typeof renderContent === 'function') {
+                        renderContent();
+                    }
+                }
+            } catch(e) {
+                console.error('❌ Error loading Plex:', e);
+            }
         }
         
         // Filter content by customer subscription
@@ -4965,71 +5073,8 @@
             console.log('👥 Loaded customer data:', customers.length, 'customers');
             
             // Load Plex content from localStorage caches
-            try {
-                const moviesCache = JSON.parse(localStorage.getItem('plexMoviesCache') || '[]');
-                const arabicCache = JSON.parse(localStorage.getItem('plexArabicCache') || '[]');
-                const adultCache = JSON.parse(localStorage.getItem('plexAdultCache') || '[]');
-                
-                console.log('📀 Loaded Plex content:', moviesCache.length, 'movies,', arabicCache.length, 'arabic,', adultCache.length, 'adult');
-                
-                // Add to content if there are items
-                if (moviesCache.length > 0) {
-                    // Add movies to addon section
-                    window.contentData = window.contentData || {};
-                    window.contentData.addon = window.contentData.addon || { content: [] };
-                    window.contentData.addon.content = [
-                        ...(window.contentData.addon.content || []),
-                        ...moviesCache.map(m => ({
-                            id: m.id,
-                            title: m.name,
-                            description: m.description || '',
-                            type: 'vod',
-                            thumbnail: m.thumb ? 'https://192.168.1.100:32400' + m.thumb + '?X-Plex-Token=gpz5Q3P5ExUb7pcTnaAz' : '',
-                            url: m.key ? 'https://192.168.1.100:32400' + m.key + '?X-Plex-Token=gpz5Q3P5ExUb7pcTnaAz' : ''
-                        }))
-                    ];
-                }
-                
-                if (arabicCache.length > 0) {
-                    window.contentData = window.contentData || {};
-                    window.contentData.arabic = window.contentData.arabic || { content: [] };
-                    window.contentData.arabic.content = [
-                        ...(window.contentData.arabic.content || []),
-                        ...arabicCache.map(m => ({
-                            id: m.id,
-                            title: m.name,
-                            description: m.description || '',
-                            type: 'vod',
-                            thumbnail: m.thumb ? 'https://192.168.1.100:32400' + m.thumb + '?X-Plex-Token=gpz5Q3P5ExUb7pcTnaAz' : '',
-                            url: m.key ? 'https://192.168.1.100:32400' + m.key + '?X-Plex-Token=gpz5Q3P5ExUb7pcTnaAz' : ''
-                        }))
-                    ];
-                }
-                
-                if (adultCache.length > 0) {
-                    window.contentData = window.contentData || {};
-                    window.contentData.adult = window.contentData.adult || { content: [] };
-                    window.contentData.adult.content = [
-                        ...(window.contentData.adult.content || []),
-                        ...adultCache.map(m => ({
-                            id: m.id,
-                            title: m.name,
-                            description: m.description || '',
-                            type: 'vod',
-                            thumbnail: m.thumb ? 'https://192.168.1.100:32400' + m.thumb + '?X-Plex-Token=gpz5Q3P5ExUb7pcTnaAz' : '',
-                            url: m.key ? 'https://192.168.1.100:32400' + m.key + '?X-Plex-Token=gpz5Q3P5ExUb7pcTnaAz' : ''
-                        }))
-                    ];
-                }
-                
-                console.log('✅ Plex content loaded into client');
-            } catch(e) {
-                console.error('Error loading Plex content:', e);
-            }
-            
-            // Load customer subscription data (with built-in fallback)
-            adminCustomers = loadCustomersFromAdmin();
-            console.log('👥 Loaded customer data:', adminCustomers.length, 'customers');
+            console.log('📀 Loading Plex content from localStorage...');
+            loadPlexContent();
             
             // Load built-in content if no admin data exists
             ensureBuiltInContent();
