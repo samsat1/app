@@ -4132,6 +4132,11 @@
         }
 
         function renderContent() {
+            // Ensure Plex content is loaded if available in localStorage
+            if (typeof loadPlexContent === 'function') {
+                loadPlexContent();
+            }
+            
             renderCategories();
             
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
@@ -4144,25 +4149,16 @@
             // Apply subscription-based filtering
             if (['movies', 'vod'].includes(currentSource)) {
                 console.log(`🔍 Filtering ${currentSource} content - current content count: ${filteredContent.length}`);
-                const userPackage = getUserAssignedPackage();
-                console.log(`📦 User package found:`, userPackage);
                 
-                if (userPackage && userPackage.libraries && userPackage.libraries.length > 0) {
-                    // Content is already filtered by updateContentByLibraries function
-                    console.log(`📺 Showing content from assigned libraries for ${currentSource}`);
+                // ALWAYS show content if it exists - even without subscription
+                // User can see but not play if subscription expired
+                if (filteredContent.length > 0) {
+                    console.log(`✅ Showing ${filteredContent.length} ${currentSource} items (content loaded from Plex)`);
                 } else {
-                    // No libraries assigned, keep default content for both VOD and Movies so sections are visible
-                    if (currentSource === 'vod' || currentSource === 'movies') {
-                        console.log(`${currentSource === 'movies' ? '🎬 Movies' : '📀 VOD'}: No libraries assigned, keeping default content`);
-                        console.log(`${currentSource}: Content array length: ${filteredContent.length}`);
-                        // Keep the default content so the section is visible
-                    } else {
-                        // For other sources, clear content if no libraries
-                        console.log(`${currentSource}: No libraries assigned, clearing content`);
-                        filteredContent = [];
-                    }
+                    console.log(`⚠️ No ${currentSource} content found - checking if Plex content needs loading`);
+                    // Try loading Plex content again
+                    loadPlexContent();
                 }
-                console.log(`✅ ${currentSource} final content count: ${filteredContent.length}`);
             }
             
             // Additional subscription filtering for other sections
@@ -4999,8 +4995,48 @@
                 // Initialize contentData if needed
                 window.contentData = window.contentData || {};
                 
-                // Add movies to addon section
+                // Show Arabic tab if Arabic content exists
+                if (arabicCache.length > 0) {
+                    const arabicTab = document.getElementById('arabicTab');
+                    if (arabicTab) {
+                        arabicTab.style.display = '';
+                        arabicTab.textContent = `🕌 Arabic (${arabicCache.length})`;
+                    }
+                }
+                
+                // Show Adult tab if Adult content exists
+                if (adultCache.length > 0) {
+                    const adultTab = document.getElementById('adultTab');
+                    if (adultTab) {
+                        adultTab.style.display = '';
+                    }
+                }
+                
+                // Add movies to Movies section (visible by default in tab bar)
                 if (moviesCache.length > 0) {
+                    console.log('📀 Adding', moviesCache.length, 'movies to Movies section');
+                    window.contentData.movies = window.contentData.movies || { content: [], name: 'Movies', streamingMode: 'always-streaming' };
+                    window.contentData.movies.content = [
+                        ...(window.contentData.movies.content || []),
+                        ...moviesCache.map(m => ({
+                            id: m.id,
+                            title: m.name,
+                            description: m.description || '',
+                            type: 'vod',
+                            thumbnail: m.thumb || '',
+                            url: m.key || ''
+                        }))
+                    ];
+                    
+                    // Update Movies tab to show count
+                    const moviesTab = document.getElementById('moviesTab');
+                    if (moviesTab) {
+                        moviesTab.textContent = `Movies (${window.contentData.movies.content.length})`;
+                    }
+                }
+                
+                // Add Arabic content to arabic section
+                if (arabicCache.length > 0) {
                     console.log('📀 Adding', moviesCache.length, 'movies to content');
                     window.contentData.addon = window.contentData.addon || { content: [] };
                     window.contentData.addon.content = [
