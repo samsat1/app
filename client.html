@@ -4132,10 +4132,8 @@
         }
 
         function renderContent() {
-            // Ensure Plex content is loaded if available in localStorage
-            if (typeof loadPlexContent === 'function') {
-                loadPlexContent();
-            }
+            // Don't call loadPlexContent here - it's already called in initApp
+            // This prevents infinite loop
             
             renderCategories();
             
@@ -4154,10 +4152,6 @@
                 // User can see but not play if subscription expired
                 if (filteredContent.length > 0) {
                     console.log(`✅ Showing ${filteredContent.length} ${currentSource} items (content loaded from Plex)`);
-                } else {
-                    console.log(`⚠️ No ${currentSource} content found - checking if Plex content needs loading`);
-                    // Try loading Plex content again
-                    loadPlexContent();
                 }
             }
             
@@ -4896,206 +4890,75 @@
             return packages.map(p => p.toLowerCase());
         }
         
-        // Load customers from localStorage - SIMPLE VERSION
+        // Load customers from localStorage - SIMPLE VERSION (matches old working version)
         window.loadCustomersFromAdmin = function() {
-            let allCustomers = [];
-            
-            // Check adminCustomers (standard key from admin panel)
-            const adminData = localStorage.getItem('adminCustomers');
-            if (adminData) {
-                try {
-                    const parsed = JSON.parse(adminData);
-                    if (Array.isArray(parsed)) {
-                        allCustomers = [...allCustomers, ...parsed];
-                    }
-                } catch(e) {}
-            }
-            
-            // Check customers key
-            const customersData = localStorage.getItem('customers');
-            if (customersData) {
-                try {
-                    const parsed = JSON.parse(customersData);
-                    if (Array.isArray(parsed)) {
-                        allCustomers = [...allCustomers, ...parsed];
-                    }
-                } catch(e) {}
-            }
-            
-            // Check iptvCustomers key
-            const iptvData = localStorage.getItem('iptvCustomers');
-            if (iptvData) {
-                try {
-                    const parsed = JSON.parse(iptvData);
-                    if (Array.isArray(parsed)) {
-                        allCustomers = [...allCustomers, ...parsed];
-                    }
-                } catch(e) {}
-            }
-            
-            // Check any resellerCustomers_* keys
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && key.startsWith('resellerCustomers_')) {
-                    try {
-                        const data = localStorage.getItem(key);
-                        if (data) {
-                            const parsed = JSON.parse(data);
-                            if (Array.isArray(parsed)) {
-                                allCustomers = [...allCustomers, ...parsed];
-                            }
-                        }
-                    } catch(e) {}
+            try {
+                const adminCustomers = localStorage.getItem('adminCustomers');
+                if (adminCustomers) {
+                    const customers = JSON.parse(adminCustomers);
+                    console.log('👥 Loaded customers:', customers.length);
+                    return customers;
                 }
+            } catch (e) {
+                console.error('Error loading customers:', e);
             }
-            
-            // Remove duplicates
-            const unique = [];
-            const seen = new Set();
-            allCustomers.forEach(c => {
-                const id = c.id || c.username || c.name;
-                if (id && !seen.has(id)) {
-                    seen.add(id);
-                    unique.push(c);
-                }
-            });
-            
-            console.log('👥 Loaded customers:', unique.length);
-            return unique;
+            return [];
         }
         
-        // Load Plex content from localStorage caches
+        // Load Plex content from localStorage - SIMPLE VERSION
         window.loadPlexContent = function() {
-            console.log('📀 Starting Plex content loading...');
-            
-            // Check what Plex keys exist
-            console.log('📀 Checking for Plex cache keys in localStorage...');
-            const keysToCheck = ['plexMoviesCache', 'plexArabicCache', 'plexAdultCache'];
-            keysToCheck.forEach(key => {
-                const data = localStorage.getItem(key);
-                if (data) {
-                    try {
-                        const parsed = JSON.parse(data);
-                        console.log('   ✅ Found', key, 'with', parsed.length, 'items');
-                    } catch(e) {
-                        console.log('   ❌ Found', key, 'but error parsing:', e.message);
-                    }
-                } else {
-                    console.log('   ⚠️ Not found:', key);
-                }
-            });
+            console.log('📀 Loading Plex content from localStorage...');
             
             try {
-                const moviesCache = JSON.parse(localStorage.getItem('plexMoviesCache') || '[]');
-                const arabicCache = JSON.parse(localStorage.getItem('plexArabicCache') || '[]');
-                const adultCache = JSON.parse(localStorage.getItem('plexAdultCache') || '[]');
-                
-                console.log('📀 Plex caches - Movies:', moviesCache.length, '| Arabic:', arabicCache.length, '| Adult:', adultCache.length);
+                // Read directly from localStorage
+                const moviesCache = localStorage.getItem('plexMoviesCache');
+                const adultCache = localStorage.getItem('plexAdultCache');
                 
                 // Initialize contentData if needed
                 window.contentData = window.contentData || {};
+                window.contentData.movies = window.contentData.movies || { content: [], name: 'Movies', streamingMode: 'always-streaming' };
+                window.contentData.adult = window.contentData.adult || { content: [], name: 'Adult', streamingMode: 'always-streaming' };
                 
-                // Show Arabic tab if Arabic content exists
-                if (arabicCache.length > 0) {
-                    const arabicTab = document.getElementById('arabicTab');
-                    if (arabicTab) {
-                        arabicTab.style.display = '';
-                        arabicTab.textContent = `🕌 Arabic (${arabicCache.length})`;
+                // Load movies directly from cache
+                if (moviesCache) {
+                    try {
+                        const movies = JSON.parse(moviesCache);
+                        if (movies && movies.length > 0) {
+                            window.contentData.movies.content = movies;
+                            console.log(`📀 Loaded ${movies.length} movies from cache`);
+                            
+                            // Update Movies tab
+                            const moviesTab = document.querySelector('.source-tab[data-source="movies"]');
+                            if (moviesTab) {
+                                moviesTab.textContent = `Movies (${movies.length})`;
+                            }
+                        }
+                    } catch(e) {
+                        console.error('Error parsing movies cache:', e);
                     }
                 }
                 
-                // Show Adult tab if Adult content exists
-                if (adultCache.length > 0) {
-                    const adultTab = document.getElementById('adultTab');
-                    if (adultTab) {
-                        adultTab.style.display = '';
+                // Load adult content directly from cache
+                if (adultCache) {
+                    try {
+                        const adult = JSON.parse(adultCache);
+                        if (adult && adult.length > 0) {
+                            window.contentData.adult.content = adult;
+                            console.log(`📀 Loaded ${adult.length} adult videos from cache`);
+                            
+                            // Show Adult tab
+                            const adultTab = document.querySelector('.source-tab[data-source="adult"]');
+                            if (adultTab) {
+                                adultTab.style.display = '';
+                                adultTab.textContent = `Adult (${adult.length})`;
+                            }
+                        }
+                    } catch(e) {
+                        console.error('Error parsing adult cache:', e);
                     }
                 }
                 
-                // Add movies to Movies section (visible by default in tab bar)
-                if (moviesCache.length > 0) {
-                    console.log('📀 Adding', moviesCache.length, 'movies to Movies section');
-                    window.contentData.movies = window.contentData.movies || { content: [], name: 'Movies', streamingMode: 'always-streaming' };
-                    window.contentData.movies.content = [
-                        ...(window.contentData.movies.content || []),
-                        ...moviesCache.map(m => ({
-                            id: m.id,
-                            title: m.name,
-                            description: m.description || '',
-                            type: 'vod',
-                            thumbnail: m.thumb || '',
-                            url: m.key || ''
-                        }))
-                    ];
-                    
-                    // Update Movies tab to show count
-                    const moviesTab = document.getElementById('moviesTab');
-                    if (moviesTab) {
-                        moviesTab.textContent = `Movies (${window.contentData.movies.content.length})`;
-                    }
-                }
-                
-                // Add Arabic content to arabic section
-                if (arabicCache.length > 0) {
-                    console.log('📀 Adding', moviesCache.length, 'movies to content');
-                    window.contentData.addon = window.contentData.addon || { content: [] };
-                    window.contentData.addon.content = [
-                        ...(window.contentData.addon.content || []),
-                        ...moviesCache.map(m => ({
-                            id: m.id,
-                            title: m.name,
-                            description: m.description || '',
-                            type: 'vod',
-                            thumbnail: m.thumb || '',
-                            url: m.key || ''
-                        }))
-                    ];
-                }
-                
-                if (arabicCache.length > 0) {
-                    console.log('📀 Adding', arabicCache.length, 'Arabic videos to content');
-                    window.contentData.arabic = window.contentData.arabic || { content: [] };
-                    window.contentData.arabic.content = [
-                        ...(window.contentData.arabic.content || []),
-                        ...arabicCache.map(m => ({
-                            id: m.id,
-                            title: m.name,
-                            description: m.description || '',
-                            type: 'vod',
-                            thumbnail: m.thumb || '',
-                            url: m.key || ''
-                        }))
-                    ];
-                }
-                
-                if (adultCache.length > 0) {
-                    console.log('📀 Adding', adultCache.length, 'Adult videos to content');
-                    window.contentData.adult = window.contentData.adult || { content: [] };
-                    window.contentData.adult.content = [
-                        ...(window.contentData.adult.content || []),
-                        ...adultCache.map(m => ({
-                            id: m.id,
-                            title: m.name,
-                            description: m.description || '',
-                            type: 'vod',
-                            thumbnail: m.thumb || '',
-                            url: m.key || ''
-                        }))
-                    ];
-                }
-                
-                console.log('✅ Plex content loading complete');
-                console.log('   Total addon content:', (window.contentData.addon?.content?.length || 0));
-                console.log('   Total Arabic content:', (window.contentData.arabic?.content?.length || 0));
-                console.log('   Total Adult content:', (window.contentData.adult?.content?.length || 0));
-                
-                // Force re-render if content was updated
-                if (moviesCache.length > 0 || arabicCache.length > 0 || adultCache.length > 0) {
-                    console.log('📀 Triggering content re-render...');
-                    if (typeof renderContent === 'function') {
-                        renderContent();
-                    }
-                }
+                console.log('📀 Plex content loading complete');
             } catch(e) {
                 console.error('❌ Error loading Plex:', e);
             }
