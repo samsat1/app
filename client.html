@@ -4874,36 +4874,65 @@
         // Load customers from localStorage (automatic)
         window.loadCustomersFromAdmin = function() {
             console.log('🔍 Loading customers from localStorage...');
+            let allCustomers = [];
             
-            // FIRST - try adminCustomers (exact key from admin)
+            // 1. Check adminCustomers (created by admin)
             const adminCustomersData = localStorage.getItem('adminCustomers');
             if (adminCustomersData) {
                 try {
                     const customers = JSON.parse(adminCustomersData);
                     if (Array.isArray(customers) && customers.length > 0) {
-                        console.log('✅ Found customers in adminCustomers! Count:', customers.length);
-                        console.log('Sample:', customers[0]);
-                        return customers;
+                        console.log('✅ Found', customers.length, 'customers in adminCustomers');
+                        allCustomers = [...allCustomers, ...customers];
                     }
                 } catch (e) {
                     console.error('Error parsing adminCustomers:', e);
                 }
             }
             
-            // Try customers key
+            // 2. Check reseller customers (created by resellers)
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('resellerCustomers_')) {
+                    try {
+                        const data = localStorage.getItem(key);
+                        if (data) {
+                            const customers = JSON.parse(data);
+                            if (Array.isArray(customers) && customers.length > 0) {
+                                console.log('✅ Found', customers.length, 'customers in', key);
+                                allCustomers = [...allCustomers, ...customers];
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Error parsing', key, e);
+                    }
+                }
+            }
+            
+            // Also try the general 'customers' key
             const customersData = localStorage.getItem('customers');
             if (customersData) {
                 try {
                     const customers = JSON.parse(customersData);
                     if (Array.isArray(customers) && customers.length > 0) {
-                        console.log('✅ Found customers in customers! Count:', customers.length);
-                        return customers;
+                        console.log('✅ Found', customers.length, 'customers in customers key');
+                        allCustomers = [...allCustomers, ...customers];
                     }
                 } catch (e) {}
             }
             
-            console.log('❌ No customers found in adminCustomers or customers keys');
-            return [];
+            // Remove duplicates by customer ID
+            const uniqueCustomers = [];
+            const seenIds = new Set();
+            allCustomers.forEach(c => {
+                if (!seenIds.has(c.id)) {
+                    seenIds.add(c.id);
+                    uniqueCustomers.push(c);
+                }
+            });
+            
+            console.log('✅ Total customers found:', uniqueCustomers.length);
+            return uniqueCustomers;
         }
         
         // Filter content by customer subscription
@@ -4945,8 +4974,8 @@
             // Auto-login check for TV platform
             checkAutoLogin();
             
-            // Require customer authentication
-            checkCustomerLogin();
+            // NOTE: Customer login is OPTIONAL now - content shows regardless
+            // checkCustomerLogin(); // Commented out - content should show without login
             
             // Apply subscription filtering
             const availablePackages = filterContentBySubscription();
