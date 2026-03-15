@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-15T18:42:26.965Z",
+  "exportDate": "2026-03-15T18:46:31.085Z",
   "customers": [
     {
       "id": "CUST_1764860761457",
@@ -42,9 +42,27 @@
       "name": "sam111",
       "phone": "123456",
       "plan": "Basic TV Package",
-      "addons": "Sports Package, Movies Package, Arabic Package, Adult Content Package",
-      "monthlyPrice": 35,
-      "totalPrice": 420,
+      "addons": "Movies Package, Adult Content Package",
+      "monthlyPrice": 18.5,
+      "totalPrice": 18.5,
+      "expiryDate": "2026-01-04",
+      "password": "123456",
+      "macAddress": "",
+      "adultPassword": "1818",
+      "status": "active",
+      "duration": "1 Month",
+      "durationMonths": 1,
+      "createdAt": "2025-12-04T22:46:29.419Z"
+    },
+    {
+      "id": "CUST_1773600382176",
+      "username": "sam",
+      "name": "sam",
+      "phone": "76755399",
+      "plan": "Basic TV Package",
+      "addons": "Sports Package, Sports Plus Package, Movies Package, Arabic Package, Adult Content Package",
+      "monthlyPrice": 43,
+      "totalPrice": 516,
       "expiryDate": "2027-03-15",
       "password": "123456",
       "macAddress": "",
@@ -52,9 +70,7 @@
       "status": "active",
       "duration": "12 Months",
       "durationMonths": 12,
-      "createdAt": "2025-12-04T22:46:29.419Z",
-      "resetDeviceLock": 1773599677106,
-      "updatedAt": "2026-03-15T18:34:37.106Z"
+      "createdAt": "2026-03-15T18:46:22.176Z"
     }
   ],
   "packages": [
@@ -232,9 +248,9 @@
   },
   "creditTransfers": [],
   "resellerTransactions": [],
-  "plexServerUrl": "http://192.168.1.100:32400",
+  "plexServerUrl": "https://192.168.1.100:32400",
   "plexLocalUrl": "http://192.168.1.100:32400",
-  "plexToken": "6GwshqsFfxxZj8pN-feW",
+  "plexToken": "s9HUT7z3jba63ByZBe63",
   "plexMoviesSection": "5",
   "plexAdultSection": "4",
   "tvSyncUrl": "https://raw.githubusercontent.com/samsat1/app/main/admin_data.json",
