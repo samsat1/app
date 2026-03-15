@@ -4865,6 +4865,57 @@
             return packages.map(p => p.toLowerCase());
         }
         
+        // Load customers from GitHub
+        async function loadCustomersFromGitHub() {
+            try {
+                console.log('Loading customers from GitHub...');
+                const response = await fetch(GITHUB_CONFIG.DATA_URL + '?t=' + Date.now());
+                if (!response.ok) throw new Error('Failed to fetch');
+                
+                const data = await response.json();
+                
+                if (data.customers && data.customers.length > 0) {
+                    // Save to localStorage for offline access
+                    localStorage.setItem('githubAdminData', JSON.stringify(data));
+                    localStorage.setItem('adminCustomers', JSON.stringify(data.customers));
+                    console.log('Loaded from GitHub:', data.customers.length, 'customers');
+                    return data.customers;
+                }
+                
+                return [];
+            } catch (e) {
+                console.log('GitHub load failed:', e.message);
+                // Try to use cached data
+                const cached = localStorage.getItem('adminCustomers');
+                if (cached) return JSON.parse(cached);
+                return [];
+            }
+        }
+        
+        // Load packages from GitHub
+        async function loadPackagesFromGitHub() {
+            try {
+                console.log('Loading packages from GitHub...');
+                const response = await fetch(GITHUB_CONFIG.DATA_URL + '?t=' + Date.now());
+                if (!response.ok) throw new Error('Failed to fetch');
+                
+                const data = await response.json();
+                
+                if (data.packages && data.packages.length > 0) {
+                    localStorage.setItem('adminPackages', JSON.stringify(data.packages));
+                    console.log('Loaded from GitHub:', data.packages.length, 'packages');
+                    return data.packages;
+                }
+                
+                return [];
+            } catch (e) {
+                console.log('GitHub load failed:', e.message);
+                const cached = localStorage.getItem('adminPackages');
+                if (cached) return JSON.parse(cached);
+                return [];
+            }
+        }
+        
         // Load customers from admin data
         window.loadCustomersFromAdmin = function() {
             try {
