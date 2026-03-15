@@ -2238,20 +2238,17 @@
                     <button class="source-tab active" onclick="switchSource('live')" data-source="live">
                         📺 Live TV
                     </button>
-                    <button class="source-tab" onclick="switchSource('sports-live')" data-source="sports-live" id="sportsLiveTab" style="display: none;">
-                        ⚽ Sports TV
+                    <button class="source-tab" onclick="switchSource('sports')" data-source="sports" id="sportsTab">
+                        ⚽ Sports
                     </button>
-                    <button class="source-tab" onclick="switchSource('livetv-addon')" data-source="livetv-addon" id="liveTvAddonTab" style="display: none;">
-                        📡 TV Addon
+                    <button class="source-tab" onclick="switchSource('sportsPlus')" data-source="sportsPlus" id="sportsPlusTab">
+                        🏆 Sports Plus
                     </button>
                     <button class="source-tab" onclick="switchSource('movies')" data-source="movies">
                         🎬 Movies
                     </button>
-                    <button class="source-tab" onclick="switchSource('basic')" data-source="basic">
-                        🏠 Basic
-                    </button>
-                    <button class="source-tab" onclick="switchSource('addon')" data-source="addon">
-                        📦 Addon
+                    <button class="source-tab" onclick="switchSource('arabic')" data-source="arabic" id="arabicTab">
+                        🕌 Arabic
                     </button>
                     <!-- Adult tab - hidden by default, appears only when password is entered -->
                     <button class="source-tab adult-tab" onclick="switchSource('adult')" data-source="adult" id="adultTab" style="display: none;">
@@ -3590,6 +3587,7 @@
             // Check for cached content from localStorage
             const cachedMovies = localStorage.getItem('plexMoviesCache');
             const cachedAdult = localStorage.getItem('plexAdultCache');
+            const cachedArabic = localStorage.getItem('plexArabicCache');
             const cachedLive = localStorage.getItem('liveChannelsCache');
             
             console.log('📦 Checking cached Plex content:', {
@@ -3601,29 +3599,91 @@
             let moviesLoaded = false;
             let adultLoaded = false;
             
-            // Load cached movies immediately if available
-            if (cachedMovies) {
-                try {
-                    const movies = JSON.parse(cachedMovies);
-                    if (movies && movies.length > 0) {
-                        contentData.movies.content = movies;
-                        console.log(`📦 Loaded ${movies.length} cached movies from localStorage`);
-                        moviesLoaded = true;
-                    }
-                } catch(e) { console.error('Error parsing cached movies:', e); }
-            }
+            // Load movies - check admin packages first (section ID 5), then Plex cache
+            try {
+                const adminPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                const adminMovies = adminPackages.filter(pkg => pkg.sectionId === 5 || pkg.type === 'movies' || pkg.category === 'movies' || (pkg.packageName && pkg.packageName.toLowerCase().includes('movie')));
+                
+                if (adminMovies.length > 0) {
+                    // Load from admin first
+                    contentData.movies.content = adminMovies.map(pkg => ({
+                        id: pkg.id || pkg.packageId || 'movie_' + Math.random().toString(36).substr(2, 9),
+                        name: pkg.packageName || pkg.name || 'Unknown Movie',
+                        description: pkg.packageDescription || pkg.description || '',
+                        type: 'hls',
+                        url: pkg.url || pkg.streamUrl || '',
+                        package: pkg.packageName || '',
+                        packageId: pkg.packageId || pkg.id,
+                        category: 'movies'
+                    }));
+                    console.log(`📦 Loaded ${adminMovies.length} movies from admin (section ID 5)`);
+                    moviesLoaded = true;
+                } else if (cachedMovies) {
+                    // Fallback to Plex cache
+                    try {
+                        const movies = JSON.parse(cachedMovies);
+                        if (movies && movies.length > 0) {
+                            contentData.movies.content = movies;
+                            console.log(`📦 Loaded ${movies.length} movies from Plex cache`);
+                            moviesLoaded = true;
+                        }
+                    } catch(e) { console.error('Error parsing cached movies:', e); }
+                }
+            } catch(e) { console.error('Error loading movies:', e); }
             
-            // Load cached adult content immediately if available
-            if (cachedAdult) {
-                try {
-                    const adult = JSON.parse(cachedAdult);
-                    if (adult && adult.length > 0) {
-                        contentData.adult.content = adult;
-                        console.log(`📦 Loaded ${adult.length} cached adult videos from localStorage`);
-                        adultLoaded = true;
-                    }
-                } catch(e) { console.error('Error parsing cached adult:', e); }
-            }
+            // Load adult - check admin packages first (section ID 4), then Plex cache
+            try {
+                const adminPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                const adminAdult = adminPackages.filter(pkg => pkg.sectionId === 4 || pkg.type === 'adult' || pkg.category === 'adult' || (pkg.packageName && pkg.packageName.toLowerCase().includes('adult')));
+                
+                if (adminAdult.length > 0) {
+                    // Load from admin first
+                    contentData.adult.content = adminAdult.map(pkg => ({
+                        id: pkg.id || pkg.packageId || 'adult_' + Math.random().toString(36).substr(2, 9),
+                        name: pkg.packageName || pkg.name || 'Unknown Adult',
+                        description: pkg.packageDescription || pkg.description || '',
+                        type: 'hls',
+                        url: pkg.url || pkg.streamUrl || '',
+                        package: pkg.packageName || '',
+                        packageId: pkg.packageId || pkg.id,
+                        category: 'adult',
+                        adult: true
+                    }));
+                    console.log(`📦 Loaded ${adminAdult.length} adult from admin (section ID 4)`);
+                    adultLoaded = true;
+                } else if (cachedAdult) {
+                    // Fallback to Plex cache
+                    try {
+                        const adult = JSON.parse(cachedAdult);
+                        if (adult && adult.length > 0) {
+                            contentData.adult.content = adult;
+                            console.log(`📦 Loaded ${adult.length} adult from Plex cache`);
+                            adultLoaded = true;
+                        }
+                    } catch(e) { console.error('Error parsing cached adult:', e); }
+                }
+            } catch(e) { console.error('Error loading adult:', e); }
+            
+            // Load Arabic from admin panel (section ID 7)
+            try {
+                const adminPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                
+                // Arabic channels from admin (section ID 7)
+                const arabicChannels = adminPackages.filter(pkg => pkg.sectionId === 7 || pkg.type === 'arabic' || pkg.category === 'arabic' || (pkg.packageName && pkg.packageName.toLowerCase().includes('arabic')));
+                if (!contentData.arabic) contentData.arabic = { name: 'Arabic', content: [] };
+                contentData.arabic.content = arabicChannels.map(pkg => ({
+                    id: pkg.id || pkg.packageId || 'arabic_' + Math.random().toString(36).substr(2, 9),
+                    name: pkg.packageName || pkg.name || 'Unknown Arabic Channel',
+                    description: pkg.packageDescription || pkg.description || '',
+                    type: 'hls',
+                    url: pkg.url || pkg.streamUrl || '',
+                    package: pkg.packageName || '',
+                    packageId: pkg.packageId || pkg.id,
+                    category: 'arabic'
+                }));
+                console.log(`📦 Loaded ${arabicChannels.length} Arabic channels from admin (section ID 7)`);
+                
+            } catch(e) { console.error('Error loading Arabic:', e); }
             
             // Load cached live channels
             if (cachedLive) {
@@ -3640,6 +3700,57 @@
                     }
                 } catch(e) { console.error('Error parsing cached live channels:', e); }
             }
+            
+            // Load Arabic and Sports Plus from adminPackages
+            try {
+                const adminPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                
+                // Arabic channels (from admin section ID 7)
+                const arabicChannels = adminPackages.filter(pkg => pkg.type === 'arabic' || pkg.category === 'arabic' || (pkg.packageName && pkg.packageName.toLowerCase().includes('arabic')));
+                if (!contentData.arabic) contentData.arabic = { name: 'Arabic', content: [] };
+                contentData.arabic.content = arabicChannels.map(pkg => ({
+                    id: pkg.id || pkg.packageId || 'arabic_' + Math.random().toString(36).substr(2, 9),
+                    name: pkg.packageName || pkg.name || 'Unknown Arabic Channel',
+                    description: pkg.packageDescription || pkg.description || '',
+                    type: 'hls',
+                    url: pkg.url || pkg.streamUrl || '',
+                    package: pkg.packageName || '',
+                    packageId: pkg.packageId || pkg.id,
+                    category: 'arabic'
+                }));
+                console.log(`📦 Loaded ${arabicChannels.length} Arabic channels from adminPackages`);
+                
+                // Sports Plus channels (from admin - Nimble streams)
+                const sportsPlusChannels = adminPackages.filter(pkg => pkg.type === 'sports_plus' || pkg.category === 'sports-plus' || (pkg.packageName && pkg.packageName.toLowerCase().includes('sports plus')));
+                if (!contentData.sportsPlus) contentData.sportsPlus = { name: 'Sports Plus', content: [] };
+                contentData.sportsPlus.content = sportsPlusChannels.map(pkg => ({
+                    id: pkg.id || pkg.packageId || 'sportsplus_' + Math.random().toString(36).substr(2, 9),
+                    name: pkg.packageName || pkg.name || 'Unknown Sports Plus Channel',
+                    description: pkg.packageDescription || pkg.description || '',
+                    type: 'hls',
+                    url: pkg.url || pkg.streamUrl || '',
+                    package: pkg.packageName || '',
+                    packageId: pkg.packageId || pkg.id,
+                    category: 'sports-plus'
+                }));
+                console.log(`📦 Loaded ${sportsPlusChannels.length} Sports Plus channels from adminPackages`);
+                
+                // Sports channels (separate from Sports Plus)
+                const sportsChannels = adminPackages.filter(pkg => pkg.type === 'live_sports' || pkg.category === 'sports' || (pkg.packageName && pkg.packageName.toLowerCase().includes('sport') && !pkg.packageName.toLowerCase().includes('plus')));
+                if (!contentData.sports) contentData.sports = { name: 'Sports', content: [] };
+                contentData.sports.content = sportsChannels.map(pkg => ({
+                    id: pkg.id || pkg.packageId || 'sports_' + Math.random().toString(36).substr(2, 9),
+                    name: pkg.packageName || pkg.name || 'Unknown Sports Channel',
+                    description: pkg.packageDescription || pkg.description || '',
+                    type: 'hls',
+                    url: pkg.url || pkg.streamUrl || '',
+                    package: pkg.packageName || '',
+                    packageId: pkg.packageId || pkg.id,
+                    category: 'sports'
+                }));
+                console.log(`📦 Loaded ${sportsChannels.length} Sports channels from adminPackages`);
+                
+            } catch(e) { console.error('Error loading Arabic/Sports Plus:', e); }
             
             // Update tab counts immediately
             const moviesTabUpdate = document.querySelector('.source-tab[data-source="movies"]');
@@ -4744,23 +4855,34 @@
             
             // Filter Live TV channels by customer's packages
             if (currentSource === 'live' && currentUser) {
-                const customerPackages = currentUser.packages || [];
-                const customerPlan = (currentUser.plan || '').toLowerCase();
-                const addonsRaw = currentUser.addons || '';
-                const customerAddons = typeof addonsRaw === 'string' ? addonsRaw.toLowerCase().split(',').map(a => a.trim()) : [];
-                const allPackages = [...customerPackages.map(p => p.toLowerCase()), customerPlan, ...customerAddons];
-                
-                const hasBasic = allPackages.some(p => p.includes('basic') || p.includes('tv'));
-                const hasSports = allPackages.some(p => p.includes('sport'));
-                const isAdmin = currentUser.role === 'admin';
-                
-                filteredContent = filteredContent.filter(channel => {
-                    if (isAdmin) return true; // Admin sees all
-                    if (channel.package === 'basic') return hasBasic || hasSports;
-                    if (channel.package === 'sports') return hasSports;
-                    return true;
-                });
-                console.log(`📺 Live TV filtered: ${filteredContent.length} channels (Basic: ${hasBasic}, Sports: ${hasSports}, Plan: ${customerPlan})`);
+                // For Live TV - show ALL channels without filtering (admin will control via packages)
+                if (currentSource === 'live') {
+                    // Don't filter - show all live channels
+                    console.log(`📺 Live TV: showing all ${filteredContent.length} channels`);
+                } else if (currentSource === 'sports') {
+                    // Show sports channels only
+                    filteredContent = filteredContent.filter(ch => ch.package && ch.package.toLowerCase().includes('sport'));
+                    console.log(`📺 Sports filtered: ${filteredContent.length} channels`);
+                } else {
+                    // Other sources - check subscription
+                    const customerPackages = currentUser.packages || [];
+                    const customerPlan = (currentUser.plan || '').toLowerCase();
+                    const addonsRaw = currentUser.addons || '';
+                    const customerAddons = typeof addonsRaw === 'string' ? addonsRaw.toLowerCase().split(',').map(a => a.trim()) : [];
+                    const allPackages = [...customerPackages.map(p => p.toLowerCase()), customerPlan, ...customerAddons];
+                    
+                    const hasBasic = allPackages.some(p => p.includes('basic') || p.includes('tv'));
+                    const hasSports = allPackages.some(p => p.includes('sport'));
+                    const isAdmin = currentUser.role === 'admin';
+                    
+                    filteredContent = filteredContent.filter(channel => {
+                        if (isAdmin) return true; // Admin sees all
+                        if (channel.package === 'basic') return hasBasic || hasSports;
+                        if (channel.package === 'sports') return hasSports;
+                        return true;
+                    });
+                    console.log(`📺 ${currentSource} filtered: ${filteredContent.length} channels (Basic: ${hasBasic}, Sports: ${hasSports}, Plan: ${customerPlan})`);
+                }
             }
             
             const availableContent = filteredContent.filter(item => {
