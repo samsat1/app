@@ -4964,6 +4964,69 @@
             const customers = loadCustomersFromAdmin();
             console.log('👥 Loaded customer data:', customers.length, 'customers');
             
+            // Load Plex content from localStorage caches
+            try {
+                const moviesCache = JSON.parse(localStorage.getItem('plexMoviesCache') || '[]');
+                const arabicCache = JSON.parse(localStorage.getItem('plexArabicCache') || '[]');
+                const adultCache = JSON.parse(localStorage.getItem('plexAdultCache') || '[]');
+                
+                console.log('📀 Loaded Plex content:', moviesCache.length, 'movies,', arabicCache.length, 'arabic,', adultCache.length, 'adult');
+                
+                // Add to content if there are items
+                if (moviesCache.length > 0) {
+                    // Add movies to addon section
+                    window.contentData = window.contentData || {};
+                    window.contentData.addon = window.contentData.addon || { content: [] };
+                    window.contentData.addon.content = [
+                        ...(window.contentData.addon.content || []),
+                        ...moviesCache.map(m => ({
+                            id: m.id,
+                            title: m.name,
+                            description: m.description || '',
+                            type: 'vod',
+                            thumbnail: m.thumb ? 'https://192.168.1.100:32400' + m.thumb + '?X-Plex-Token=gpz5Q3P5ExUb7pcTnaAz' : '',
+                            url: m.key ? 'https://192.168.1.100:32400' + m.key + '?X-Plex-Token=gpz5Q3P5ExUb7pcTnaAz' : ''
+                        }))
+                    ];
+                }
+                
+                if (arabicCache.length > 0) {
+                    window.contentData = window.contentData || {};
+                    window.contentData.arabic = window.contentData.arabic || { content: [] };
+                    window.contentData.arabic.content = [
+                        ...(window.contentData.arabic.content || []),
+                        ...arabicCache.map(m => ({
+                            id: m.id,
+                            title: m.name,
+                            description: m.description || '',
+                            type: 'vod',
+                            thumbnail: m.thumb ? 'https://192.168.1.100:32400' + m.thumb + '?X-Plex-Token=gpz5Q3P5ExUb7pcTnaAz' : '',
+                            url: m.key ? 'https://192.168.1.100:32400' + m.key + '?X-Plex-Token=gpz5Q3P5ExUb7pcTnaAz' : ''
+                        }))
+                    ];
+                }
+                
+                if (adultCache.length > 0) {
+                    window.contentData = window.contentData || {};
+                    window.contentData.adult = window.contentData.adult || { content: [] };
+                    window.contentData.adult.content = [
+                        ...(window.contentData.adult.content || []),
+                        ...adultCache.map(m => ({
+                            id: m.id,
+                            title: m.name,
+                            description: m.description || '',
+                            type: 'vod',
+                            thumbnail: m.thumb ? 'https://192.168.1.100:32400' + m.thumb + '?X-Plex-Token=gpz5Q3P5ExUb7pcTnaAz' : '',
+                            url: m.key ? 'https://192.168.1.100:32400' + m.key + '?X-Plex-Token=gpz5Q3P5ExUb7pcTnaAz' : ''
+                        }))
+                    ];
+                }
+                
+                console.log('✅ Plex content loaded into client');
+            } catch(e) {
+                console.error('Error loading Plex content:', e);
+            }
+            
             // Load customer subscription data (with built-in fallback)
             adminCustomers = loadCustomersFromAdmin();
             console.log('👥 Loaded customer data:', adminCustomers.length, 'customers');
