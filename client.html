@@ -3555,39 +3555,10 @@
 
         // Load content directly from Plex Movies and Adult folders
         async function loadPlexLibraryContent() {
-            console.log('📺 ====== PLEX LIBRARY LOADING STARTED ======');
+            console.log('📺 ====== PLEX LIBRARY LOADING STARTED (LOCAL MODE) ======');
             
-            // Try Firebase cache first (synced from admin panel)
-            try {
-                const moviesDoc = await fireDb.collection('plexMovies').doc('main').get();
-                const adultDoc = await fireDb.collection('plexAdult').doc('main').get();
-                const liveDoc = await fireDb.collection('liveChannels').doc('main').get();
-                if (moviesDoc.exists && moviesDoc.data().list) {
-                    const movies = moviesDoc.data().list;
-                    contentData.movies.content = movies;
-                    localStorage.setItem('plexMoviesCache', JSON.stringify(movies));
-                    console.log(`☁️ Loaded ${movies.length} movies from Firebase`);
-                }
-                if (adultDoc.exists && adultDoc.data().list) {
-                    const adult = adultDoc.data().list;
-                    contentData.adult.content = adult;
-                    localStorage.setItem('plexAdultCache', JSON.stringify(adult));
-                    console.log(`☁️ Loaded ${adult.length} adult videos from Firebase`);
-                }
-                if (liveDoc.exists && liveDoc.data().list) {
-                    const live = liveDoc.data().list;
-                    // Filter channels by package
-                    contentData.live.content = live.filter(ch => !ch.package || ch.package === 'basic');
-                    contentData['sports-live'].content = live.filter(ch => ch.package === 'sports');
-                    contentData['livetv-addon'].content = live.filter(ch => ch.package === 'livetv-addon');
-                    localStorage.setItem('liveChannelsCache', JSON.stringify(live));
-                    console.log(`☁️ Loaded ${live.length} live channels from Firebase (Basic: ${contentData.live.content.length}, Sports: ${contentData['sports-live'].content.length}, Addon: ${contentData['livetv-addon'].content.length})`);
-                    // Show/hide tabs based on content
-                    updateLiveTabs();
-                }
-            } catch(e) { console.log('Firebase not available, using localStorage:', e.message); }
-            
-            // Check for cached content FIRST (from PowerShell script)
+            // LOCAL VERSION - Load from localStorage only
+            // Check for cached content FIRST (from admin panel)
             const cachedMovies = localStorage.getItem('plexMoviesCache');
             const cachedAdult = localStorage.getItem('plexAdultCache');
             
@@ -3605,7 +3576,7 @@
                     const movies = JSON.parse(cachedMovies);
                     if (movies && movies.length > 0) {
                         contentData.movies.content = movies;
-                        console.log(`📦 Loaded ${movies.length} cached movies`);
+                        console.log(`📦 Loaded ${movies.length} cached movies from localStorage`);
                         moviesLoaded = true;
                     }
                 } catch(e) { console.error('Error parsing cached movies:', e); }
@@ -3616,7 +3587,7 @@
                     const adult = JSON.parse(cachedAdult);
                     if (adult && adult.length > 0) {
                         contentData.adult.content = adult;
-                        console.log(`📦 Loaded ${adult.length} cached adult videos`);
+                        console.log(`📦 Loaded ${adult.length} cached adult videos from localStorage`);
                         adultLoaded = true;
                     }
                 } catch(e) { console.error('Error parsing cached adult:', e); }
@@ -3631,7 +3602,7 @@
             
             // Refresh display if cached content loaded
             if (moviesLoaded || adultLoaded) {
-                console.log('📺 ====== PLEX CONTENT LOADED FROM CACHE ======');
+                console.log('📺 ====== PLEX CONTENT LOADED FROM LOCAL STORAGE ======');
                 console.log('📺 Final counts:', { movies: contentData.movies.content.length, adult: contentData.adult.content.length });
                 
                 // Always refresh display to show the loaded content
@@ -3639,7 +3610,7 @@
                 return;
             }
             
-            // If no cache, try live fetch with token
+            // If no cache, try live Plex server (optional)
             // Clear any old wrong URLs and set correct default
             if (localStorage.getItem('plexServerUrl') === 'http://127.0.0.1:32400') {
                 localStorage.removeItem('plexServerUrl');
@@ -3647,11 +3618,6 @@
             const plexServerUrl = localStorage.getItem('plexServerUrl') || 'http://192.168.1.100:32400';
             const plexToken = localStorage.getItem('plexToken') || localStorage.getItem('plexAutoToken') || 'xcak2s6WSj7hzAinAigm';
             const storedLibraries = localStorage.getItem('plexLibraries');
-            
-            console.log('📺 Plex Config:', {
-                serverUrl: plexServerUrl,
-                tokenExists: !!plexToken,
-                tokenPreview: plexToken ? plexToken.substring(0, 10) + '...' : 'NONE',
                 storedLibraries: storedLibraries ? 'YES' : 'NO'
             });
             
@@ -3708,12 +3674,10 @@
                     if (moviesContent.length > 0) {
                         contentData.movies.content = moviesContent;
                         console.log(`✅ Loaded ${moviesContent.length} movies from Plex`);
-                        // Cache for future use
+                        // Cache for future use in localStorage
                         try { 
                             localStorage.setItem('plexMoviesCache', JSON.stringify(moviesContent));
-                            // Also save to Firebase for mobile access
-                            fireDb.collection('plexCache').doc('movies').set({content: moviesContent, updated: Date.now()});
-                            console.log('☁️ Synced movies to Firebase');
+                            console.log('💾 Saved movies to localStorage');
                         } catch(e) {}
                         moviesLoadedLive = true;
                     } else {
@@ -3730,12 +3694,10 @@
                         // Replace packages with actual video content
                         contentData.adult.content = adultContent;
                         console.log(`✅ Loaded ${adultContent.length} adult videos from Plex - REPLACING PACKAGES`);
-                        // Cache for future use
+                        // Cache for future use in localStorage
                         try { 
                             localStorage.setItem('plexAdultCache', JSON.stringify(adultContent));
-                            // Also save to Firebase for mobile access
-                            fireDb.collection('plexCache').doc('adult').set({content: adultContent, updated: Date.now()});
-                            console.log('☁️ Synced adult content to Firebase');
+                            console.log('💾 Saved adult content to localStorage');
                         } catch(e) {}
                         adultLoadedLive = true;
                     } else {
@@ -4017,37 +3979,33 @@
         }
 
         async function loginUser(username, password) {
-            // Direct Firebase login - bypass passwordManager
+            // LOCAL VERSION - Use localStorage only, no Firebase
             try {
-                const doc = await firebase.firestore().collection('customers').doc('main').get();
-                if (doc.exists) {
-                    const data = doc.data();
-                    const customers = data.list || [];
-                    const user = customers.find(c => c.username === username && c.password === password);
+                // Load customers from localStorage
+                const customers = loadCustomersFromAdmin();
+                const user = customers.find(c => c.username === username && c.password === password);
+                
+                if (user) {
+                    isLoggedIn = true;
+                    currentUser = user;
+                    adminCustomers = customers;
+                    localStorage.setItem('adminCustomers', JSON.stringify(customers));
                     
-                    if (user) {
-                        isLoggedIn = true;
-                        currentUser = user;
-                        adminCustomers = customers;
-                        localStorage.setItem('adminCustomers', JSON.stringify(customers));
-                        
-                        console.log('✅ Login successful:', user.username);
-                        updateUserInterface();
-                        hideLoginModal();
-                        // Welcome message removed
-                        // Store credentials for auto-login
-                        const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
-                        storeCredentials(username, password, user.subscriptionExpiry, rememberMe);
-                        // Refresh content from Firebase on login
-                        loadPlexLibraryContent();
-                        return true;
-                    }
+                    console.log('✅ Login successful (local):', user.username);
+                    updateUserInterface();
+                    hideLoginModal();
+                    // Store credentials for auto-login
+                    const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
+                    storeCredentials(username, password, user.subscriptionExpiry || user.expiryDate, rememberMe);
+                    // Refresh content from localStorage on login
+                    loadPlexLibraryContent();
+                    return true;
                 }
             } catch(e) {
-                console.error('Firebase login error:', e);
+                console.error('Local login error:', e);
             }
             
-            // Fallback to old method
+            // Fallback to passwordManager
             const user = passwordManager.authenticateUser(username, password);
             if (user) {
                 isLoggedIn = true;
@@ -4055,11 +4013,10 @@
                 adminCustomers = loadCustomersFromAdmin();
                 updateUserInterface();
                 hideLoginModal();
-                // Welcome message removed
                 // Store credentials for auto-login
                 const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
                 storeCredentials(username, password, user.subscriptionExpiry, rememberMe);
-                // Refresh content from Firebase on login
+                // Refresh content from localStorage on login
                 loadPlexLibraryContent();
                 return true;
             }
