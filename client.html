@@ -734,7 +734,10 @@
         }
 
         .source-tabs {
-            display: flex;
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: 1fr;
+            gap: 4px;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 12px;
             padding: 4px;
@@ -2238,17 +2241,17 @@
                     <button class="source-tab active" onclick="switchSource('live')" data-source="live">
                         📺 Live TV
                     </button>
-                    <button class="source-tab" onclick="switchSource('sports')" data-source="sports" id="sportsTab">
-                        ⚽ Sports
-                    </button>
-                    <button class="source-tab" onclick="switchSource('sportsPlus')" data-source="sportsPlus" id="sportsPlusTab">
-                        🏆 Sports Plus
-                    </button>
                     <button class="source-tab" onclick="switchSource('movies')" data-source="movies">
                         🎬 Movies
                     </button>
                     <button class="source-tab" onclick="switchSource('arabic')" data-source="arabic" id="arabicTab">
                         🕌 Arabic
+                    </button>
+                    <button class="source-tab" onclick="switchSource('sports')" data-source="sports" id="sportsTab">
+                        ⚽ Sports
+                    </button>
+                    <button class="source-tab" onclick="switchSource('sportsPlus')" data-source="sportsPlus" id="sportsPlusTab">
+                        🏆 Sports Plus
                     </button>
                     <!-- Adult tab - hidden by default, appears only when password is entered -->
                     <button class="source-tab adult-tab" onclick="switchSource('adult')" data-source="adult" id="adultTab" style="display: none;">
@@ -3284,11 +3287,14 @@
                 if (adminPackages) {
                     const packages = JSON.parse(adminPackages);
                     // Filter packages that are marked as adult or contain adult indicators
+                    // Include sectionId 4 for consistency with Plex Adult library
                     return packages.filter(pkg => 
+                        pkg.sectionId === 4 ||
                         pkg.isAdult === true || 
                         pkg.name.toLowerCase().includes('adult') || 
                         pkg.name.toLowerCase().includes('xxx') ||
-                        (pkg.type === 'adult')
+                        (pkg.type === 'adult') ||
+                        (pkg.category && pkg.category.toLowerCase().includes('adult'))
                     ).map(pkg => ({
                         id: pkg.id || 'ADULT_' + Date.now(),
                         name: pkg.name,
@@ -6046,39 +6052,26 @@
         }
 
         // Auto-sync function - runs on startup
-        // HARDCODED SYNC URL - No customer setup required
-        const SYNC_URL = 'https://raw.githubusercontent.com/samsat1/app/main/admin_data_internet.json';
-        
-        // STREAMING SERVER CONFIGURATION - Auto-configured for Cloudflare Tunnel
-        // This is used for streaming when accessing from internet via Cloudflare Tunnel
-        // Cloudflare tunnel already points to Plex on port 32400, so no need to add port
-        const STREAM_SERVER = 'https://gaps-disclose-constitute-stated.trycloudflare.com';
-        
-        // Function to get stream URL - handles both local and internet access
-        window.getStreamUrl = function(streamUrl) {
-            // If already a full URL, return as-is
-            if (streamUrl.startsWith('http://') || streamUrl.startsWith('https://')) {
-                return streamUrl;
-            }
-            // If relative URL, prepend the stream server (Cloudflare tunnel already handles Plex on port 32400)
-            return `${STREAM_SERVER}/${streamUrl}`;
-        };
-        
+        // DISABLED - Was syncing from hardcoded GitHub and overwriting local customers
+        // To enable, set a custom sync URL in localStorage with key 'syncUrl'
         window.autoSyncData = async function() {
-            const syncUrl = SYNC_URL; // Use hardcoded URL
+            // Check if custom sync URL is configured in localStorage
+            const customSyncUrl = localStorage.getItem('syncUrl');
+            
+            if (!customSyncUrl) {
+                console.log('⚠️ No custom sync URL configured - skipping auto-sync');
+                return false;
+            }
             
             try {
-                console.log('📡 Auto-syncing data from:', syncUrl);
-                const response = await fetch(syncUrl + '?t=' + Date.now()); // Cache bust
+                console.log('📡 Auto-syncing data from:', customSyncUrl);
+                const response = await fetch(customSyncUrl + '?t=' + Date.now()); // Cache bust
                 if (!response.ok) throw new Error('Fetch failed');
                 
                 const data = await response.json();
                 
-                // Import customers
-                if (data.customers && Array.isArray(data.customers)) {
-                    localStorage.setItem('adminCustomers', JSON.stringify(data.customers));
-                }
-                // Import packages
+                // Only sync packages, NOT customers (to prevent overwriting local customers)
+                // Customers should only be managed from admin panel
                 if (data.packages && Array.isArray(data.packages)) {
                     localStorage.setItem('adminPackages', JSON.stringify(data.packages));
                 }
@@ -6267,10 +6260,32 @@
         
         // Global function for refreshing addon packages - defined early for onclick access
         window.refreshAddonPackages = function() {
+            // Load addons from admin packages
             contentData.addon.content = loadPackagesFromAdmin();
-            contentData.adult.content = loadAdultPackagesFromAdmin(); // Also refresh adult packages
             console.log(`📦 Loaded ${contentData.addon.content.length} add-on packages from admin panel`);
-            console.log(`🔞 Loaded ${contentData.adult.content.length} adult packages from admin panel`);
+            
+            // Load adult - use Plex cache first, then fallback to admin packages
+            const cachedAdult = localStorage.getItem('plexAdultCache');
+            if (cachedAdult) {
+                try {
+                    const adultFromCache = JSON.parse(cachedAdult);
+                    if (adultFromCache && adultFromCache.length > 0) {
+                        contentData.adult.content = adultFromCache;
+                        console.log(`🔞 Loaded ${adultFromCache.length} adult content from Plex cache`);
+                    } else {
+                        // Fallback to admin packages if cache is empty
+                        contentData.adult.content = loadAdultPackagesFromAdmin();
+                        console.log(`🔞 Loaded ${contentData.adult.content.length} adult packages from admin panel`);
+                    }
+                } catch(e) {
+                    contentData.adult.content = loadAdultPackagesFromAdmin();
+                    console.log(`🔞 Loaded ${contentData.adult.content.length} adult packages from admin panel`);
+                }
+            } else {
+                // No cache, load from admin packages
+                contentData.adult.content = loadAdultPackagesFromAdmin();
+                console.log(`🔞 Loaded ${contentData.adult.content.length} adult packages from admin panel`);
+            }
             
             // Refresh the display if addon tab is currently active
             if (currentSource === 'addon') {
@@ -7306,12 +7321,9 @@
             let targetSource = 'movies'; // default
             if (pkgKeyword.includes('adult')) {
                 targetSource = 'adult';
-                // Unlock adult content for this session
-                adultUnlocked = true;
-                // Show the adult tab
-                if (typeof showAdultTab === 'function') {
-                    showAdultTab();
-                }
+                // NOTE: Adult still requires password - don't auto-unlock
+                // Adult content will be available after password entry
+                console.log('📦 Adult package detected - password still required');
             } else if (pkgKeyword.includes('movie')) {
                 targetSource = 'movies';
             }
