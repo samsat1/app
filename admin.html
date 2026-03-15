@@ -4549,16 +4549,26 @@
                     s.title.toLowerCase().includes('movie')
                 );
                 
+                // Find and cache Arabic library
+                const arabicLib = sections.find(s => 
+                    s.title.toLowerCase().includes('arabic')
+                );
+                
                 // Find and cache Adult library
                 const adultLib = sections.find(s => 
                     s.title.toLowerCase().includes('adult')
                 );
                 
-                let moviesCount = 0, adultCount = 0;
+                let moviesCount = 0, arabicCount = 0, adultCount = 0;
                 
                 if (moviesLib) {
                     const content = await cacheLibraryContent(serverUrl, accessToken, moviesLib.key, false);
                     moviesCount = content.length;
+                }
+                
+                if (arabicLib) {
+                    const content = await cacheLibraryContent(serverUrl, accessToken, arabicLib.key, false);
+                    arabicCount = content.length;
                 }
                 
                 if (adultLib) {
@@ -4566,7 +4576,7 @@
                     adultCount = content.length;
                 }
                 
-                showNotification(`✅ Cached ${moviesCount} movies and ${adultCount} adult videos for client`, 'success');
+                showNotification(`✅ Cached ${moviesCount} movies, ${arabicCount} Arabic, and ${adultCount} adult videos for client`, 'success');
                 
             } catch(error) {
                 console.error('Cache error:', error);
