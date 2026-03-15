@@ -2659,6 +2659,12 @@
         
         // Load packages from GitHub
         async function loadPackagesFromGitHub() {
+            // Skip if GitHub is not configured
+            if (typeof GITHUB_CONFIG === 'undefined') {
+                console.log('📦 GitHub not configured, skipping GitHub package loading');
+                return [];
+            }
+            
             try {
                 console.log('Loading packages from GitHub...');
                 const response = await fetch(GITHUB_CONFIG.DATA_URL + '?t=' + Date.now());
@@ -4876,40 +4882,43 @@
             console.log('🔍 Loading customers from localStorage...');
             let allCustomers = [];
             
-            // 1. Check adminCustomers (created by admin)
-            const adminCustomersData = localStorage.getItem('adminCustomers');
-            console.log('📋 Checking adminCustomers key:', adminCustomersData ? 'Found' : 'Not found');
-            if (adminCustomersData) {
-                try {
-                    const customers = JSON.parse(adminCustomersData);
-                    if (Array.isArray(customers) && customers.length > 0) {
-                        console.log('✅ Found', customers.length, 'customers in adminCustomers');
-                        console.log('   Sample customer:', JSON.stringify(customers[0]).substring(0, 100));
-                        allCustomers = [...allCustomers, ...customers];
-                    } else {
-                        console.log('⚠️ adminCustomers is empty or not an array');
-                    }
-                } catch (e) {
-                    console.error('❌ Error parsing adminCustomers:', e);
-                }
-            }
+            // Keys to check for customer data
+            const customerKeys = ['adminCustomers', 'customers', 'iptvCustomers'];
             
-            // 2. Check ALL localStorage keys for customer data
+            // Check each possible key
+            customerKeys.forEach(keyName => {
+                const data = localStorage.getItem(keyName);
+                console.log('📋 Checking', keyName + ':', data ? 'Found' : 'Not found');
+                if (data) {
+                    try {
+                        const customers = JSON.parse(data);
+                        if (Array.isArray(customers) && customers.length > 0) {
+                            console.log('✅ Found', customers.length, 'customers in', keyName);
+                            console.log('   Sample:', JSON.stringify(customers[0]).substring(0, 100));
+                            allCustomers = [...allCustomers, ...customers];
+                        }
+                    } catch (e) {
+                        console.error('❌ Error parsing', keyName + ':', e);
+                    }
+                }
+            });
+            
+            // Also scan all localStorage keys for any that contain "customer"
             console.log('📋 Scanning all localStorage keys for customer data...');
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
                 if (!key) continue;
                 
-                // Check for reseller customers
-                if (key.startsWith('resellerCustomers_')) {
-                    console.log('📋 Found reseller key:', key);
+                // Check for reseller customers or any other customer-related keys
+                if (key.startsWith('resellerCustomers_') || 
+                    (key.toLowerCase().includes('customer') && !customerKeys.includes(key))) {
+                    console.log('📋 Found additional key:', key);
                     try {
                         const data = localStorage.getItem(key);
                         if (data) {
                             const customers = JSON.parse(data);
                             if (Array.isArray(customers) && customers.length > 0) {
                                 console.log('✅ Found', customers.length, 'customers in', key);
-                                console.log('   Sample:', JSON.stringify(customers[0]).substring(0, 100));
                                 allCustomers = [...allCustomers, ...customers];
                             }
                         }
@@ -4919,30 +4928,19 @@
                 }
             }
             
-            // Also try the general 'customers' key
-            const customersData = localStorage.getItem('customers');
-            if (customersData) {
-                try {
-                    const customers = JSON.parse(customersData);
-                    if (Array.isArray(customers) && customers.length > 0) {
-                        console.log('✅ Found', customers.length, 'customers in customers key');
-                        allCustomers = [...allCustomers, ...customers];
-                    }
-                } catch (e) {}
-            }
-            
             // Remove duplicates by customer ID
             const uniqueCustomers = [];
             const seenIds = new Set();
             allCustomers.forEach(c => {
-                if (!seenIds.has(c.id)) {
-                    seenIds.add(c.id);
+                const id = c.id || c.username || c.name || c.user;
+                if (!seenIds.has(id)) {
+                    seenIds.add(id);
                     uniqueCustomers.push(c);
                 }
             });
             
             console.log('✅ Total customers found:', uniqueCustomers.length);
-            console.log('   Customer IDs:', uniqueCustomers.map(c => c.id || c.username || c.name).join(', '));
+            console.log('   Customer IDs:', uniqueCustomers.map(c => c.id || c.username || c.name || 'unknown').join(', '));
             return uniqueCustomers;
         }
         
