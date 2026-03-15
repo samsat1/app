@@ -4719,13 +4719,15 @@
         
         // Customer Authentication Functions
         window.showCustomerLogin = function() {
-            const loginModal = document.getElementById('loginModal') || createLoginModal();
-            loginModal.classList.add('show');
-        }
-        
-        function createLoginModal() {
+            // Remove any existing customer login modal first
+            const existingModal = document.getElementById('customerLoginModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Create a NEW modal specifically for customer login
             const modal = document.createElement('div');
-            modal.id = 'loginModal';
+            modal.id = 'customerLoginModal';
             modal.className = 'login-modal show';
             modal.innerHTML = `
                 <div class="login-content">
@@ -4748,7 +4750,13 @@
                 </div>
             `;
             document.body.appendChild(modal);
-            return modal;
+            
+            // Close on outside click
+            modal.addEventListener('click', function(e) {
+                if (e.target.id === 'customerLoginModal') {
+                    modal.classList.remove('show');
+                }
+            });
         }
         
         window.handleCustomerLogin = async function(event) {
@@ -4802,8 +4810,8 @@
                 // Save login session
                 localStorage.setItem('currentCustomer', JSON.stringify(customer));
                 
-                // Hide login modal
-                const modal = document.getElementById('loginModal');
+                // Hide the customer login modal
+                const modal = document.getElementById('customerLoginModal');
                 if (modal) modal.classList.remove('show');
                 
                 // Update UI
@@ -4826,8 +4834,23 @@
         window.customerLogout = function() {
             currentCustomer = null;
             localStorage.removeItem('currentCustomer');
+            
+            // Close the customer login modal
+            const modal = document.getElementById('customerLoginModal');
+            if (modal) {
+                modal.classList.remove('show');
+            }
+            
             showCustomerLogin();
             showNotification('Logged out successfully', 'info');
+        }
+        
+        // Close customer login modal
+        window.closeCustomerLogin = function() {
+            const modal = document.getElementById('customerLoginModal');
+            if (modal) {
+                modal.classList.remove('show');
+            }
         }
         
         window.checkCustomerLogin = function() {
@@ -4877,71 +4900,72 @@
             return packages.map(p => p.toLowerCase());
         }
         
-        // Load customers from localStorage (automatic)
+        // Load customers from localStorage - SIMPLE VERSION
         window.loadCustomersFromAdmin = function() {
-            console.log('🔍 Loading customers from localStorage...');
             let allCustomers = [];
             
-            // Keys to check for customer data
-            const customerKeys = ['adminCustomers', 'customers', 'iptvCustomers'];
-            
-            // Check each possible key
-            customerKeys.forEach(keyName => {
-                const data = localStorage.getItem(keyName);
-                console.log('📋 Checking', keyName + ':', data ? 'Found' : 'Not found');
-                if (data) {
-                    try {
-                        const customers = JSON.parse(data);
-                        if (Array.isArray(customers) && customers.length > 0) {
-                            console.log('✅ Found', customers.length, 'customers in', keyName);
-                            console.log('   Sample:', JSON.stringify(customers[0]).substring(0, 100));
-                            allCustomers = [...allCustomers, ...customers];
-                        }
-                    } catch (e) {
-                        console.error('❌ Error parsing', keyName + ':', e);
+            // Check adminCustomers (standard key from admin panel)
+            const adminData = localStorage.getItem('adminCustomers');
+            if (adminData) {
+                try {
+                    const parsed = JSON.parse(adminData);
+                    if (Array.isArray(parsed)) {
+                        allCustomers = [...allCustomers, ...parsed];
                     }
-                }
-            });
+                } catch(e) {}
+            }
             
-            // Also scan all localStorage keys for any that contain "customer"
-            console.log('📋 Scanning all localStorage keys for customer data...');
+            // Check customers key
+            const customersData = localStorage.getItem('customers');
+            if (customersData) {
+                try {
+                    const parsed = JSON.parse(customersData);
+                    if (Array.isArray(parsed)) {
+                        allCustomers = [...allCustomers, ...parsed];
+                    }
+                } catch(e) {}
+            }
+            
+            // Check iptvCustomers key
+            const iptvData = localStorage.getItem('iptvCustomers');
+            if (iptvData) {
+                try {
+                    const parsed = JSON.parse(iptvData);
+                    if (Array.isArray(parsed)) {
+                        allCustomers = [...allCustomers, ...parsed];
+                    }
+                } catch(e) {}
+            }
+            
+            // Check any resellerCustomers_* keys
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
-                if (!key) continue;
-                
-                // Check for reseller customers or any other customer-related keys
-                if (key.startsWith('resellerCustomers_') || 
-                    (key.toLowerCase().includes('customer') && !customerKeys.includes(key))) {
-                    console.log('📋 Found additional key:', key);
+                if (key && key.startsWith('resellerCustomers_')) {
                     try {
                         const data = localStorage.getItem(key);
                         if (data) {
-                            const customers = JSON.parse(data);
-                            if (Array.isArray(customers) && customers.length > 0) {
-                                console.log('✅ Found', customers.length, 'customers in', key);
-                                allCustomers = [...allCustomers, ...customers];
+                            const parsed = JSON.parse(data);
+                            if (Array.isArray(parsed)) {
+                                allCustomers = [...allCustomers, ...parsed];
                             }
                         }
-                    } catch (e) {
-                        console.error('❌ Error parsing', key, e);
-                    }
+                    } catch(e) {}
                 }
             }
             
-            // Remove duplicates by customer ID
-            const uniqueCustomers = [];
-            const seenIds = new Set();
+            // Remove duplicates
+            const unique = [];
+            const seen = new Set();
             allCustomers.forEach(c => {
-                const id = c.id || c.username || c.name || c.user;
-                if (!seenIds.has(id)) {
-                    seenIds.add(id);
-                    uniqueCustomers.push(c);
+                const id = c.id || c.username || c.name;
+                if (id && !seen.has(id)) {
+                    seen.add(id);
+                    unique.push(c);
                 }
             });
             
-            console.log('✅ Total customers found:', uniqueCustomers.length);
-            console.log('   Customer IDs:', uniqueCustomers.map(c => c.id || c.username || c.name || 'unknown').join(', '));
-            return uniqueCustomers;
+            console.log('👥 Loaded customers:', unique.length);
+            return unique;
         }
         
         // Load Plex content from localStorage caches
