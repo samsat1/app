@@ -781,6 +781,15 @@
                         </div>
                     </div>
                     
+                    <!-- Arabic -->
+                    <div class="package-option disabled" id="arabicOption" onclick="togglePackage('arabic')">
+                        <div class="package-checkbox">✓</div>
+                        <div class="package-info">
+                            <div class="package-name">🇸🇦 Arabic Package</div>
+                            <div class="package-price" id="arabicPrice">+$8/month</div>
+                        </div>
+                    </div>
+                    
                     <!-- Sports -->
                     <div class="package-option disabled" id="sportsOption" onclick="togglePackage('sports')">
                         <div class="package-checkbox">✓</div>
@@ -790,12 +799,12 @@
                         </div>
                     </div>
                     
-                    <!-- Movies -->
-                    <div class="package-option disabled" id="moviesOption" onclick="togglePackage('movies')">
+                    <!-- Sports Plus -->
+                    <div class="package-option disabled" id="sportsPlusOption" onclick="togglePackage('sportsPlus')">
                         <div class="package-checkbox">✓</div>
                         <div class="package-info">
-                            <div class="package-name">🎬 Movies Package</div>
-                            <div class="package-price" id="moviesPrice">+$8/month</div>
+                            <div class="package-name">🏆 Sports Plus Package</div>
+                            <div class="package-price" id="sportsPlusPrice">+$8/month</div>
                         </div>
                     </div>
                     
@@ -890,7 +899,8 @@
             secondTV: 15,
             thirdTV: 10,
             sports: 8,
-            movies: 8,
+            sportsPlus: 8,
+            arabic: 8,
             adult: 0
         };
         
@@ -900,7 +910,8 @@
             second: false,
             third: false,
             sports: false,
-            movies: false,
+            sportsPlus: false,
+            arabic: false,
             adult: false
         };
         
@@ -1084,36 +1095,93 @@
         function loadPackagePrices() {
             console.log('Loading package prices, packages:', JSON.stringify(adminData.packages, null, 2));
             
-            // Try to get prices from admin packages
+            // Reset to defaults
+            packagePrices = {
+                basic: 25,
+                secondTV: 15,
+                thirdTV: 10,
+                sports: 8,
+                sportsPlus: 8,
+                movies: 8,
+                arabic: 8,
+                adult: 0
+            };
+            
             if (adminData.packages && adminData.packages.length > 0) {
                 console.log('Found', adminData.packages.length, 'packages');
                 
-                // Find each package type separately
-                const basicPkg = adminData.packages.find(p => p.name && p.name.toLowerCase().includes('basic') && !p.isAdult);
-                const sportsPkg = adminData.packages.find(p => p.name && p.name.toLowerCase().includes('sport') && !p.isAdult);
-                const moviesPkg = adminData.packages.find(p => p.name && p.name.toLowerCase().includes('movie') && !p.isAdult);
-                const adultPkg = adminData.packages.find(p => p.isAdult || (p.name && p.name.toLowerCase().includes('adult')));
+                // Find each package by name and get its price
+                // Basic package - Live TV + Movies
+                const basicPkg = adminData.packages.find(p => 
+                    p.name && 
+                    p.name.toLowerCase().includes('basic') && 
+                    !p.isAdult
+                );
                 
-                // Get Basic package prices
+                // Sports package
+                const sportsPkg = adminData.packages.find(p => 
+                    p.name && 
+                    p.name.toLowerCase().includes('sport') && 
+                    !p.name.toLowerCase().includes('plus') && 
+                    !p.isAdult
+                );
+                
+                // Sports Plus package
+                const sportsPlusPkg = adminData.packages.find(p => 
+                    p.name && 
+                    p.name.toLowerCase().includes('sports plus') && 
+                    !p.isAdult
+                );
+                
+                // Movies package (adult or regular)
+                const moviesPkg = adminData.packages.find(p => 
+                    p.name && 
+                    p.name.toLowerCase().includes('movie') && 
+                    !p.isAdult
+                );
+                
+                // Arabic package
+                const arabicPkg = adminData.packages.find(p => 
+                    p.name && 
+                    p.name.toLowerCase().includes('arabic') && 
+                    !p.isAdult
+                );
+                
+                // Adult package
+                const adultPkg = adminData.packages.find(p => 
+                    p.isAdult || 
+                    (p.name && p.name.toLowerCase().includes('adult'))
+                );
+                
+                // Set prices from found packages
                 if (basicPkg) {
                     packagePrices.basic = parseFloat(basicPkg.price || basicPkg.packagePrice || 25);
-                    packagePrices.secondTV = parseFloat(basicPkg.secondTVPrice || basicPkg.secondTvPrice || 15);
-                    packagePrices.thirdTV = parseFloat(basicPkg.thirdTVPrice || basicPkg.thirdTvPrice || 10);
+                    console.log('Basic package found:', basicPkg.name, 'price:', packagePrices.basic);
                 }
                 
-                // Get Sports package price
                 if (sportsPkg) {
-                    packagePrices.sports = parseFloat(sportsPkg.price || sportsPkg.sportsPrice || 8);
+                    packagePrices.sports = parseFloat(sportsPkg.price || sportsPkg.packagePrice || 8);
+                    console.log('Sports package found:', sportsPkg.name, 'price:', packagePrices.sports);
                 }
                 
-                // Get Movies package price  
+                if (sportsPlusPkg) {
+                    packagePrices.sportsPlus = parseFloat(sportsPlusPkg.price || sportsPlusPkg.packagePrice || 8);
+                    console.log('Sports Plus package found:', sportsPlusPkg.name, 'price:', packagePrices.sportsPlus);
+                }
+                
                 if (moviesPkg) {
-                    packagePrices.movies = parseFloat(moviesPkg.price || moviesPkg.moviesPrice || 8);
+                    packagePrices.movies = parseFloat(moviesPkg.price || moviesPkg.packagePrice || 8);
+                    console.log('Movies package found:', moviesPkg.name, 'price:', packagePrices.movies);
                 }
                 
-                // Get Adult package price
+                if (arabicPkg) {
+                    packagePrices.arabic = parseFloat(arabicPkg.price || arabicPkg.packagePrice || 8);
+                    console.log('Arabic package found:', arabicPkg.name, 'price:', packagePrices.arabic);
+                }
+                
                 if (adultPkg) {
-                    packagePrices.adult = parseFloat(adultPkg.adultPackagePrice || adultPkg.price || 0);
+                    packagePrices.adult = parseFloat(adultPkg.price || adultPkg.packagePrice || 0);
+                    console.log('Adult package found:', adultPkg.name, 'price:', packagePrices.adult);
                 }
                 
                 console.log('Prices loaded:', packagePrices);
@@ -1126,7 +1194,9 @@
             document.getElementById('secondTVPrice').textContent = '+$' + packagePrices.secondTV + '/month';
             document.getElementById('thirdTVPrice').textContent = '+$' + packagePrices.thirdTV + '/month';
             document.getElementById('sportsPrice').textContent = '+$' + packagePrices.sports + '/month';
+            document.getElementById('sportsPlusPrice').textContent = '+$' + packagePrices.sportsPlus + '/month';
             document.getElementById('moviesPrice').textContent = '+$' + packagePrices.movies + '/month';
+            document.getElementById('arabicPrice').textContent = '+$' + packagePrices.arabic + '/month';
             document.getElementById('adultPrice').textContent = '+$' + packagePrices.adult + '/month';
         }
         
@@ -1231,7 +1301,9 @@
                 second: false,
                 third: false,
                 sports: false,
+                sportsPlus: false,
                 movies: false,
+                arabic: false,
                 adult: false
             };
             selectedDuration = 1;
@@ -1245,7 +1317,9 @@
             document.getElementById('secondTVOption')?.classList.add('disabled');
             document.getElementById('thirdTVOption')?.classList.add('disabled');
             document.getElementById('sportsOption')?.classList.add('disabled');
+            document.getElementById('sportsPlusOption')?.classList.add('disabled');
             document.getElementById('moviesOption')?.classList.add('disabled');
+            document.getElementById('arabicOption')?.classList.add('disabled');
             document.getElementById('adultOption')?.classList.add('disabled');
             document.querySelectorAll('.duration-btn').forEach((btn, i) => {
                 btn.classList.toggle('selected', i === 0);
@@ -1318,24 +1392,32 @@
             if (selectedPackages.basic) {
                 document.getElementById('secondTVOption').classList.remove('disabled');
                 document.getElementById('sportsOption').classList.remove('disabled');
+                document.getElementById('sportsPlusOption').classList.remove('disabled');
                 document.getElementById('moviesOption').classList.remove('disabled');
+                document.getElementById('arabicOption').classList.remove('disabled');
                 document.getElementById('adultOption').classList.remove('disabled');
             } else {
                 // Disable addons when basic is unchecked
                 selectedPackages.second = false;
                 selectedPackages.third = false;
                 selectedPackages.sports = false;
+                selectedPackages.sportsPlus = false;
                 selectedPackages.movies = false;
+                selectedPackages.arabic = false;
                 selectedPackages.adult = false;
                 document.getElementById('secondTVOption').classList.remove('selected');
                 document.getElementById('thirdTVOption').classList.remove('selected');
                 document.getElementById('sportsOption').classList.remove('selected');
+                document.getElementById('sportsPlusOption').classList.remove('selected');
                 document.getElementById('moviesOption').classList.remove('selected');
+                document.getElementById('arabicOption').classList.remove('selected');
                 document.getElementById('adultOption').classList.remove('selected');
                 document.getElementById('secondTVOption').classList.add('disabled');
                 document.getElementById('thirdTVOption').classList.add('disabled');
                 document.getElementById('sportsOption').classList.add('disabled');
+                document.getElementById('sportsPlusOption').classList.add('disabled');
                 document.getElementById('moviesOption').classList.add('disabled');
+                document.getElementById('arabicOption').classList.add('disabled');
                 document.getElementById('adultOption').classList.add('disabled');
             }
             
@@ -1367,8 +1449,14 @@
             if (selectedPackages.sports) {
                 total += packagePrices.sports;
             }
+            if (selectedPackages.sportsPlus) {
+                total += packagePrices.sportsPlus;
+            }
             if (selectedPackages.movies) {
                 total += packagePrices.movies;
+            }
+            if (selectedPackages.arabic) {
+                total += packagePrices.arabic;
             }
             if (selectedPackages.adult) {
                 total += packagePrices.adult;
@@ -1407,7 +1495,9 @@
             if (selectedPackages.second) total += packagePrices.secondTV;
             if (selectedPackages.third) total += packagePrices.thirdTV;
             if (selectedPackages.sports) total += packagePrices.sports;
+            if (selectedPackages.sportsPlus) total += packagePrices.sportsPlus;
             if (selectedPackages.movies) total += packagePrices.movies;
+            if (selectedPackages.arabic) total += packagePrices.arabic;
             if (selectedPackages.adult) total += packagePrices.adult;
             total = total * selectedDuration;
             
@@ -1432,7 +1522,9 @@
             
             const addons = [];
             if (selectedPackages.sports) addons.push('Sports');
+            if (selectedPackages.sportsPlus) addons.push('Sports Plus');
             if (selectedPackages.movies) addons.push('Movies');
+            if (selectedPackages.arabic) addons.push('Arabic');
             if (selectedPackages.adult) addons.push('Adult');
             
             if (isEdit) {

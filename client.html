@@ -1853,26 +1853,18 @@
                     <button class="source-tab" onclick="switchSource('movies')" data-source="movies">
                         🎬 Movies
                     </button>
-                    <button class="source-tab" onclick="switchSource('vod')" data-source="vod">
-                        📀 VOD
-                    </button>
-                    <button class="source-tab" onclick="switchSource('basic')" data-source="basic">
-                        🏠 Basic
-                    </button>
-                    <button class="source-tab" onclick="switchSource('addon')" data-source="addon">
-                        📦 Addon
-                    </button>
-                    <!-- Sports tab - hidden by default, appears only when customer has Sports subscription -->
-                    <button class="source-tab" onclick="switchSource('sports')" data-source="sports" id="sportsTab" style="display: none;">
+                    <button class="source-tab" onclick="switchSource('sports')" data-source="sports" id="sportsTab">
                         ⚽ Sports
                     </button>
-                </div>
+                    <button class="source-tab" onclick="switchSource('sportsPlus')" data-source="sportsPlus" id="sportsPlusTab">
+                        🏆 Sports Plus
+                    </button>
+                    <button class="source-tab" onclick="switchSource('arabic')" data-source="arabic" id="arabicTab" style="display: none;">
+                        🕌 Arabic
+                    </button>
                     <!-- Adult tab - hidden by default, appears only when password is entered -->
                     <button class="source-tab adult-tab" onclick="switchSource('adult')" data-source="adult" id="adultTab" style="display: none;">
                         🔞 Adult
-                    </button>
-                    <button class="source-tab" onclick="switchSource('internet')" data-source="internet">
-                        🌐 Videos
                     </button>
                 </div>
             </div>
@@ -1926,7 +1918,7 @@
                     </div>
                     <div class="overlay-info">
                         <h2 class="overlay-title">Welcome to iWATCH TV</h2>
-                        <p class="overlay-description">Ready to watch! Try demo/demo123 or premium/premium123</p>
+                        <p class="overlay-description">Login with your subscription credentials to start watching</p>
                     </div>
                 </div>
             </div>
@@ -3296,55 +3288,44 @@
             live: {
                 name: 'Live TV',
                 content: [],
-                streamingMode: 'always-streaming' // Live TV always streams
-            },
-            sports: {
-                name: 'Sports',
-                content: [],
-                streamingMode: 'always-streaming' // Sports always stream live
+                streamingMode: 'always-streaming'
             },
             movies: {
                 name: 'Movies',
                 content: [],
-                streamingMode: 'always-streaming' // Movies always stream for better UX
+                streamingMode: 'always-streaming'
             },
-            vod: {
-                name: 'VOD Library',
+            sports: {
+                name: 'Sports',
                 content: [],
-                streamingMode: 'on-demand' // VOD streams on-demand
+                streamingMode: 'always-streaming'
             },
-            basic: {
-                name: 'Basic Package',
+            sportsPlus: {
+                name: 'Sports Plus',
                 content: [],
-                streamingMode: 'on-demand' // Basic packages on-demand
+                streamingMode: 'always-streaming'
             },
-            addon: {
-                name: 'Add-on Packages',
-                content: loadPackagesFromAdmin(), // Load from admin panel
-                streamingMode: 'mixed' // Mixed - depends on package
+            arabic: {
+                name: 'Arabic',
+                content: [],
+                streamingMode: 'always-streaming'
             },
             adult: {
                 name: 'Adult Content',
-                content: loadAdultPackagesFromAdmin(), // Load adult packages
-                streamingMode: 'on-demand' // Adult content on-demand
-            },
-            internet: {
-                name: 'Internet Videos',
                 content: [],
-                streamingMode: 'on-demand' // Internet videos on-demand
+                streamingMode: 'on-demand'
             }
         };
 
         // Helper Functions for Content Display
         function getSourceIcon(source) {
             switch(source) {
-                case 'live': return '🔴';
-                case 'sports': return '⚽';
+                case 'live': return '📺';
                 case 'movies': return '🎬';
-                case 'vod': return '📀';
-                case 'basic': return '🏠';
-                case 'addon': return '🔧';
-                case 'internet': return '🌐';
+                case 'sports': return '⚽';
+                case 'sportsPlus': return '🏆';
+                case 'arabic': return '🕌';
+                case 'adult': return '🔞';
                 default: return '📺';
             }
         }
@@ -3352,26 +3333,24 @@
         function getBadgeClass(source) {
             switch(source) {
                 case 'live': return 'badge-live';
-                case 'sports': return 'badge-live';
                 case 'movies': return 'badge-movies';
-                case 'vod': return 'badge-vod';
-                case 'basic': return 'badge-basic';
-                case 'addon': return 'badge-addon';
-                case 'internet': return 'badge-internet';
-                default: return 'badge-internet';
+                case 'sports': return 'badge-live';
+                case 'sportsPlus': return 'badge-live';
+                case 'arabic': return 'badge-movies';
+                case 'adult': return 'badge-adult';
+                default: return 'badge-live';
             }
         }
 
         function getBadgeText(source) {
             switch(source) {
                 case 'live': return 'LIVE';
-                case 'sports': return 'SPORT';
                 case 'movies': return 'MOVIE';
-                case 'vod': return 'VOD';
-                case 'basic': return 'BASIC';
-                case 'addon': return 'ADDON';
-                case 'internet': return 'NET';
-                default: return 'NET';
+                case 'sports': return 'SPORT';
+                case 'sportsPlus': return 'SPORT+';
+                case 'arabic': return 'ARABIC';
+                case 'adult': return 'ADULT';
+                default: return 'LIVE';
             }
         }
 
@@ -4032,6 +4011,8 @@
         function updateSportsTabVisibility() {
             if (!currentUser) {
                 hideSportsTab();
+                hideSportsPlusTab();
+                hideArabicTab();
                 return;
             }
 
@@ -4042,15 +4023,62 @@
             if (customer) {
                 const plan = customer.plan || '';
                 const addons = customer.addons || '';
+                
+                // Check Sports
                 const hasSports = plan.includes('Sports') || addons.includes('Sports');
-
                 if (hasSports) {
                     showSportsTab();
                 } else {
                     hideSportsTab();
                 }
+                
+                // Check Sports Plus
+                const hasSportsPlus = plan.includes('Sports Plus') || addons.includes('Sports Plus');
+                if (hasSportsPlus) {
+                    showSportsPlusTab();
+                } else {
+                    hideSportsPlusTab();
+                }
+                
+                // Check Arabic
+                const hasArabic = plan.includes('Arabic') || addons.includes('Arabic');
+                if (hasArabic) {
+                    showArabicTab();
+                } else {
+                    hideArabicTab();
+                }
             } else {
                 hideSportsTab();
+                hideSportsPlusTab();
+                hideArabicTab();
+            }
+        }
+
+        // Show/Hide Sports Plus Tab
+        function showSportsPlusTab() {
+            const tab = document.getElementById('sportsPlusTab');
+            if (tab) tab.style.display = 'block';
+        }
+
+        function hideSportsPlusTab() {
+            const tab = document.getElementById('sportsPlusTab');
+            if (tab) {
+                tab.style.display = 'none';
+                if (currentSource === 'sportsPlus') switchSource('live');
+            }
+        }
+
+        // Show/Hide Arabic Tab
+        function showArabicTab() {
+            const tab = document.getElementById('arabicTab');
+            if (tab) tab.style.display = 'block';
+        }
+
+        function hideArabicTab() {
+            const tab = document.getElementById('arabicTab');
+            if (tab) {
+                tab.style.display = 'none';
+                if (currentSource === 'arabic') switchSource('live');
             }
         }
 
@@ -4126,7 +4154,7 @@
                     if (currentSource === 'vod' || currentSource === 'movies') {
                         console.log(`${currentSource === 'movies' ? '🎬 Movies' : '📀 VOD'}: No libraries assigned, keeping default content`);
                         console.log(`${currentSource}: Content array length: ${filteredContent.length}`);
-                        // Keep the default content for demo purposes
+                        // Keep the default content so the section is visible
                     } else {
                         // For other sources, clear content if no libraries
                         console.log(`${currentSource}: No libraries assigned, clearing content`);
@@ -4799,7 +4827,7 @@
             const fileInput = document.getElementById('adminDataFileInput');
             if (!fileInput) {
                 console.error('❌ File input element not found');
-                showError('🎯 Plug-and-play interface: No import needed! Try demo/demo123 or premium/premium123');
+                showError('Please import admin data to continue');
                 return;
             }
             
