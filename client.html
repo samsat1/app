@@ -271,8 +271,7 @@
                 // AUTO-LOGIN REMOVED - Each client must enter their own credentials
                 'adminLogin': '',  // REMOVED: Set your admin password here
                 'resellerLogin': '',  // REMOVED: Set your reseller password here
-                'clientAdult': '8899',
-                'panelAccess': '000000',
+                'clientAdult': '112233',
                 'masterAdult': '273972' // Master password for admin emergency access to adult content
             },
             verifyPassword: function(key, input) {
@@ -737,7 +736,7 @@
             display: grid;
             grid-auto-flow: column;
             grid-auto-columns: 1fr;
-            gap: 4px;
+            gap: 10px;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 12px;
             padding: 4px;
@@ -746,7 +745,7 @@
 
         .source-tab {
             flex: 1;
-            padding: 10px;
+            padding: 6px 8px;
             background: transparent;
             border: none;
             border-radius: 8px;
@@ -754,6 +753,18 @@
             font-weight: 500;
             cursor: pointer;
             transition: all 0.3s ease;
+            font-size: 12px;
+            line-height: 1.2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 40px;
+        }
+        
+        .source-tab span {
+            font-size: 9px;
+            margin-top: 2px;
         }
 
         .source-tab.active {
@@ -2239,7 +2250,7 @@
             <div class="source-selector">
                 <div class="source-tabs">
                     <button class="source-tab active" onclick="switchSource('live')" data-source="live">
-                        📺 Live TV
+                        📺 Live <span>TV</span>
                     </button>
                     <button class="source-tab" onclick="switchSource('movies')" data-source="movies">
                         🎬 Movies
@@ -2251,7 +2262,7 @@
                         ⚽ Sports
                     </button>
                     <button class="source-tab" onclick="switchSource('sportsPlus')" data-source="sportsPlus" id="sportsPlusTab">
-                        🏆 Sports Plus
+                        🏆 Sports <span>Plus</span>
                     </button>
                     <!-- Adult tab - hidden by default, appears only when password is entered -->
                     <button class="source-tab adult-tab" onclick="switchSource('adult')" data-source="adult" id="adultTab" style="display: none;">
