@@ -734,10 +734,7 @@
         }
 
         .source-tabs {
-            display: grid;
-            grid-auto-flow: column;
-            grid-auto-columns: 1fr;
-            gap: 4px;
+            display: flex;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 12px;
             padding: 4px;
@@ -869,6 +866,23 @@
 
         .source-tab.adult-tab.active {
             background: linear-gradient(135deg, var(--adult-color), #ff6b7a);
+            color: white;
+        }
+        
+        /* Arabic Tab Styling */
+        .source-tab.arabic-tab {
+            background: rgba(0, 123, 255, 0.1);
+            border-color: #007bff;
+            color: #007bff;
+        }
+        
+        .source-tab.arabic-tab:hover {
+            background: rgba(0, 123, 255, 0.2);
+            border-color: #007bff;
+        }
+        
+        .source-tab.arabic-tab.active {
+            background: linear-gradient(135deg, #007bff, #00d4ff);
             color: white;
         }
 
@@ -2126,61 +2140,55 @@
         }
     </style>
 
-    <!-- LOCAL VERSION - No Firebase SDK needed -->
+    <!-- LOCAL VERSION - Using localStorage only -->
     <script>
-        // LOCAL VERSION - Firebase not used
-        // Using localStorage for all data storage
-        const firebaseConfig = {};
-        // Firebase removed - using localStorage only
-        const fireDb = null;
-        console.log('📦 Local version - using localStorage only');
+        // LOCAL VERSION - No Firebase needed
+        // All data loaded from localStorage (set by admin panel)
         
-        async function loadPlexFromFirebase() {
-            try {
-                const doc = await fireDb.collection('settings').doc('plex').get();
-                if (doc.exists) {
-                    const data = doc.data();
-                    if (data.serverUrl) localStorage.setItem('plexServerUrl', data.serverUrl);
-                    if (data.token) localStorage.setItem('plexToken', data.token);
-                    if (data.moviesSection) localStorage.setItem('plexMoviesSection', data.moviesSection);
-                    if (data.adultSection) localStorage.setItem('plexAdultSection', data.adultSection);
-                    console.log('✅ Loaded Plex settings from Firebase');
-                    return true;
-                }
-            } catch(e) { console.log('Firebase load error:', e); }
-            return false;
+        console.log('📍 Running in LOCAL mode - using localStorage');
+        
+        // Check if data exists in localStorage
+        function checkLocalStorageData() {
+            const customers = localStorage.getItem('adminCustomers');
+            const packages = localStorage.getItem('adminPackages');
+            const plexMovies = localStorage.getItem('plexMoviesCache');
+            const plexAdult = localStorage.getItem('plexAdultCache');
+            const plexArabic = localStorage.getItem('plexArabicCache');
+            
+            console.log('📦 Local data check:');
+            console.log('  - Customers:', customers ? JSON.parse(customers).length : 0);
+            console.log('  - Packages:', packages ? JSON.parse(packages).length : 0);
+            console.log('  - Movies:', plexMovies ? JSON.parse(plexMovies).length : 0);
+            console.log('  - Adult:', plexAdult ? JSON.parse(plexAdult).length : 0);
+            console.log('  - Arabic:', plexArabic ? JSON.parse(plexArabic).length : 0);
         }
         
-        // Load customers from Firebase
-        async function loadCustomersFromFirebase() {
-            try {
-                const doc = await fireDb.collection('customers').doc('main').get();
-                if (doc.exists && doc.data().list) {
-                    localStorage.setItem('adminCustomers', JSON.stringify(doc.data().list));
-                    console.log('✅ Loaded ' + doc.data().list.length + ' customers from Firebase');
-                }
-            } catch(e) { console.log('Firebase customers load error:', e); }
-        }
-        
-        // Auto-load on page start
-        loadPlexFromFirebase();
-        loadCustomersFromFirebase();
+        // Run check on startup
+        checkLocalStorageData();
     </script>
 
 </head>
 <body onload="initApp()">
-    <!-- INTERNET VERSION INDICATOR -->
-    <!-- PRE-DEFINITION: Placeholder functions to prevent "not defined" errors -->
+    <!-- Quick fix: Define functions early that are called from HTML onclick -->
     <script>
-        // Define placeholder functions BEFORE body onload and onclick events
-        window.initApp = function() { console.log('initApp loading...'); };
-        window.showLoginModal = function() { console.log('showLoginModal loading...'); };
-        window.switchSource = function(source) { console.log('switchSource:', source); };
-        window.playContent = function(content) { console.log('playContent:', content); };
-        window.logoutUser = function() { console.log('logoutUser loading...'); };
-        console.log('✅ Placeholder functions defined');
+    window.showLoginModal = function() { 
+        var m = document.getElementById('loginModal'); 
+        if (m) m.classList.add('show'); 
+        var u = document.getElementById('username'); 
+        if (u) u.focus(); 
+    };
+    window.logoutUser = function() { 
+        window.location.reload(); 
+    };
+    window.exitAdultContent = function() { 
+        window.location.reload(); 
+    };
+    window.switchSource = function(source) { 
+        console.log('switchSource called:', source); 
+    };
     </script>
     
+    <!-- LOCAL VERSION INDICATOR -->
     <div class="local-indicator"></div>
     
     <!-- Header -->
@@ -2241,21 +2249,28 @@
                     <button class="source-tab active" onclick="switchSource('live')" data-source="live">
                         📺 Live TV
                     </button>
+                    <button class="source-tab" onclick="switchSource('sports-live')" data-source="sports-live" id="sportsLiveTab" style="display: none;">
+                        ⚽ Sports TV
+                    </button>
+                    <button class="source-tab" onclick="switchSource('livetv-addon')" data-source="livetv-addon" id="liveTvAddonTab" style="display: none;">
+                        📡 TV Addon
+                    </button>
                     <button class="source-tab" onclick="switchSource('movies')" data-source="movies">
                         🎬 Movies
                     </button>
-                    <button class="source-tab" onclick="switchSource('arabic')" data-source="arabic" id="arabicTab">
-                        🕌 Arabic
+                    <button class="source-tab" onclick="switchSource('basic')" data-source="basic">
+                        🏠 Basic
                     </button>
-                    <button class="source-tab" onclick="switchSource('sports')" data-source="sports" id="sportsTab">
-                        ⚽ Sports
-                    </button>
-                    <button class="source-tab" onclick="switchSource('sportsPlus')" data-source="sportsPlus" id="sportsPlusTab">
-                        🏆 Sports Plus
+                    <button class="source-tab" onclick="switchSource('addon')" data-source="addon">
+                        📦 Addon
                     </button>
                     <!-- Adult tab - hidden by default, appears only when password is entered -->
                     <button class="source-tab adult-tab" onclick="switchSource('adult')" data-source="adult" id="adultTab" style="display: none;">
                         🔞 Adult
+                    </button>
+                    <!-- Arabic tab -->
+                    <button class="source-tab arabic-tab" onclick="switchSource('arabic')" data-source="arabic" id="arabicTab" style="display: none;">
+                        🇸🇦 Arabic
                     </button>
                 </div>
             </div>
@@ -3287,14 +3302,11 @@
                 if (adminPackages) {
                     const packages = JSON.parse(adminPackages);
                     // Filter packages that are marked as adult or contain adult indicators
-                    // Include sectionId 4 for consistency with Plex Adult library
                     return packages.filter(pkg => 
-                        pkg.sectionId === 4 ||
                         pkg.isAdult === true || 
                         pkg.name.toLowerCase().includes('adult') || 
                         pkg.name.toLowerCase().includes('xxx') ||
-                        (pkg.type === 'adult') ||
-                        (pkg.category && pkg.category.toLowerCase().includes('adult'))
+                        (pkg.type === 'adult')
                     ).map(pkg => ({
                         id: pkg.id || 'ADULT_' + Date.now(),
                         name: pkg.name,
@@ -3583,183 +3595,59 @@
         // Initialize Media API
         window.mediaAPI = new MediaAPI();
 
-        // Load content directly from localStorage (no Firebase)
+        // Load content directly from Plex Movies and Adult folders
         async function loadPlexLibraryContent() {
-            console.log('📺 ====== PLEX LIBRARY LOADING STARTED (LOCAL VERSION) ======');
+            console.log('📺 ====== PLEX LIBRARY LOADING STARTED (LOCAL MODE) ======');
             
-            // Skip Firebase - use localStorage directly
-            console.log('📦 Loading from localStorage cache...');
-            
-            // Check for cached content from localStorage
+            // LOCAL VERSION - Load from localStorage only
+            // Check for cached content FIRST (from admin panel)
             const cachedMovies = localStorage.getItem('plexMoviesCache');
             const cachedAdult = localStorage.getItem('plexAdultCache');
             const cachedArabic = localStorage.getItem('plexArabicCache');
-            const cachedLive = localStorage.getItem('liveChannelsCache');
             
             console.log('📦 Checking cached Plex content:', {
                 moviesCache: cachedMovies ? 'FOUND' : 'NONE',
                 adultCache: cachedAdult ? 'FOUND' : 'NONE',
-                arabicCache: cachedArabic ? 'FOUND' : 'NONE',
-                liveCache: cachedLive ? 'FOUND' : 'NONE'
+                arabicCache: cachedArabic ? 'FOUND' : 'NONE'
             });
             
             let moviesLoaded = false;
             let adultLoaded = false;
             
-            // Load movies - check admin packages first (section ID 5), then Plex cache
-            try {
-                const adminPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
-                const adminMovies = adminPackages.filter(pkg => pkg.sectionId === 5 || pkg.type === 'movies' || pkg.category === 'movies' || (pkg.packageName && pkg.packageName.toLowerCase().includes('movie')));
-                
-                if (adminMovies.length > 0) {
-                    // Load from admin first
-                    contentData.movies.content = adminMovies.map(pkg => ({
-                        id: pkg.id || pkg.packageId || 'movie_' + Math.random().toString(36).substr(2, 9),
-                        name: pkg.packageName || pkg.name || 'Unknown Movie',
-                        description: pkg.packageDescription || pkg.description || '',
-                        type: 'hls',
-                        url: pkg.url || pkg.streamUrl || '',
-                        package: pkg.packageName || '',
-                        packageId: pkg.packageId || pkg.id,
-                        category: 'movies'
-                    }));
-                    console.log(`📦 Loaded ${adminMovies.length} movies from admin (section ID 5)`);
-                    moviesLoaded = true;
-                } else if (cachedMovies) {
-                    // Fallback to Plex cache
-                    try {
-                        const movies = JSON.parse(cachedMovies);
-                        if (movies && movies.length > 0) {
-                            contentData.movies.content = movies;
-                            console.log(`📦 Loaded ${movies.length} movies from Plex cache`);
-                            moviesLoaded = true;
-                        }
-                    } catch(e) { console.error('Error parsing cached movies:', e); }
-                }
-            } catch(e) { console.error('Error loading movies:', e); }
-            
-            // Load adult - check admin packages first (section ID 4), then Plex cache
-            try {
-                const adminPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
-                const adminAdult = adminPackages.filter(pkg => pkg.sectionId === 4 || pkg.type === 'adult' || pkg.category === 'adult' || (pkg.packageName && pkg.packageName.toLowerCase().includes('adult')));
-                
-                if (adminAdult.length > 0) {
-                    // Load from admin first
-                    contentData.adult.content = adminAdult.map(pkg => ({
-                        id: pkg.id || pkg.packageId || 'adult_' + Math.random().toString(36).substr(2, 9),
-                        name: pkg.packageName || pkg.name || 'Unknown Adult',
-                        description: pkg.packageDescription || pkg.description || '',
-                        type: 'hls',
-                        url: pkg.url || pkg.streamUrl || '',
-                        package: pkg.packageName || '',
-                        packageId: pkg.packageId || pkg.id,
-                        category: 'adult',
-                        adult: true
-                    }));
-                    console.log(`📦 Loaded ${adminAdult.length} adult from admin (section ID 4)`);
-                    adultLoaded = true;
-                } else if (cachedAdult) {
-                    // Fallback to Plex cache
-                    try {
-                        const adult = JSON.parse(cachedAdult);
-                        if (adult && adult.length > 0) {
-                            contentData.adult.content = adult;
-                            console.log(`📦 Loaded ${adult.length} adult from Plex cache`);
-                            adultLoaded = true;
-                        }
-                    } catch(e) { console.error('Error parsing cached adult:', e); }
-                }
-            } catch(e) { console.error('Error loading adult:', e); }
-            
-            // Load Arabic from admin panel (section ID 7) or Plex cache
-            try {
-                const adminPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
-                let arabicLoaded = false;
-                
-                // Arabic channels from admin (section ID 7) - check first
-                const arabicChannels = adminPackages.filter(pkg => pkg.sectionId === 7 || pkg.type === 'arabic' || pkg.category === 'arabic' || (pkg.packageName && pkg.packageName.toLowerCase().includes('arabic')));
-                
-                if (arabicChannels.length > 0) {
-                    // Load from admin first
-                    if (!contentData.arabic) contentData.arabic = { name: 'Arabic', content: [] };
-                    contentData.arabic.content = arabicChannels.map(pkg => ({
-                        id: pkg.id || pkg.packageId || 'arabic_' + Math.random().toString(36).substr(2, 9),
-                        name: pkg.packageName || pkg.name || 'Unknown Arabic Channel',
-                        description: pkg.packageDescription || pkg.description || '',
-                        type: 'hls',
-                        url: pkg.url || pkg.streamUrl || '',
-                        package: pkg.packageName || '',
-                        packageId: pkg.packageId || pkg.id,
-                        category: 'arabic'
-                    }));
-                    console.log(`📦 Loaded ${arabicChannels.length} Arabic channels from admin (section ID 7)`);
-                    arabicLoaded = true;
-                } else if (cachedArabic) {
-                    // Fallback to Plex cache
-                    try {
-                        const arabic = JSON.parse(cachedArabic);
-                        if (arabic && arabic.length > 0) {
-                            if (!contentData.arabic) contentData.arabic = { name: 'Arabic', content: [] };
-                            contentData.arabic.content = arabic;
-                            console.log(`📦 Loaded ${arabic.length} Arabic channels from Plex cache`);
-                            arabicLoaded = true;
-                        }
-                    } catch(e) { console.error('Error parsing cached Arabic:', e); }
-                }
-                
-            } catch(e) { console.error('Error loading Arabic:', e); }
-            
-            // Load cached live channels
-            if (cachedLive) {
+            // Load cached content immediately if available
+            if (cachedMovies) {
                 try {
-                    const live = JSON.parse(cachedLive);
-                    if (live && live.length > 0) {
-                        // Filter channels by package
-                        contentData.live.content = live.filter(ch => !ch.package || ch.package === 'basic');
-                        contentData['sports-live'].content = live.filter(ch => ch.package === 'sports');
-                        contentData['livetv-addon'].content = live.filter(ch => ch.package === 'livetv-addon');
-                        console.log(`📦 Loaded ${live.length} cached live channels from localStorage (Basic: ${contentData.live.content.length}, Sports: ${contentData['sports-live'].content.length}, Addon: ${contentData['livetv-addon'].content.length})`);
-                        // Show/hide tabs based on content
-                        updateLiveTabs();
+                    const movies = JSON.parse(cachedMovies);
+                    if (movies && movies.length > 0) {
+                        contentData.movies.content = movies;
+                        console.log(`📦 Loaded ${movies.length} cached movies from localStorage`);
+                        moviesLoaded = true;
                     }
-                } catch(e) { console.error('Error parsing cached live channels:', e); }
+                } catch(e) { console.error('Error parsing cached movies:', e); }
             }
             
-            // Load Sports Plus and Sports from adminPackages
-            try {
-                const adminPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
-                
-                // Sports Plus channels (from admin - Nimble streams)
-                const sportsPlusChannels = adminPackages.filter(pkg => pkg.type === 'sports_plus' || pkg.category === 'sports-plus' || (pkg.packageName && pkg.packageName.toLowerCase().includes('sports plus')));
-                if (!contentData.sportsPlus) contentData.sportsPlus = { name: 'Sports Plus', content: [] };
-                contentData.sportsPlus.content = sportsPlusChannels.map(pkg => ({
-                    id: pkg.id || pkg.packageId || 'sportsplus_' + Math.random().toString(36).substr(2, 9),
-                    name: pkg.packageName || pkg.name || 'Unknown Sports Plus Channel',
-                    description: pkg.packageDescription || pkg.description || '',
-                    type: 'hls',
-                    url: pkg.url || pkg.streamUrl || '',
-                    package: pkg.packageName || '',
-                    packageId: pkg.packageId || pkg.id,
-                    category: 'sports-plus'
-                }));
-                console.log(`📦 Loaded ${sportsPlusChannels.length} Sports Plus channels from adminPackages`);
-                
-                // Sports channels (separate from Sports Plus)
-                const sportsChannels = adminPackages.filter(pkg => pkg.type === 'live_sports' || pkg.category === 'sports' || (pkg.packageName && pkg.packageName.toLowerCase().includes('sport') && !pkg.packageName.toLowerCase().includes('plus')));
-                if (!contentData.sports) contentData.sports = { name: 'Sports', content: [] };
-                contentData.sports.content = sportsChannels.map(pkg => ({
-                    id: pkg.id || pkg.packageId || 'sports_' + Math.random().toString(36).substr(2, 9),
-                    name: pkg.packageName || pkg.name || 'Unknown Sports Channel',
-                    description: pkg.packageDescription || pkg.description || '',
-                    type: 'hls',
-                    url: pkg.url || pkg.streamUrl || '',
-                    package: pkg.packageName || '',
-                    packageId: pkg.packageId || pkg.id,
-                    category: 'sports'
-                }));
-                console.log(`📦 Loaded ${sportsChannels.length} Sports channels from adminPackages`);
-                
-            } catch(e) { console.error('Error loading Arabic/Sports Plus:', e); }
+            if (cachedAdult) {
+                try {
+                    const adult = JSON.parse(cachedAdult);
+                    if (adult && adult.length > 0) {
+                        contentData.adult.content = adult;
+                        console.log(`📦 Loaded ${adult.length} cached adult videos from localStorage`);
+                        adultLoaded = true;
+                    }
+                } catch(e) { console.error('Error parsing cached adult:', e); }
+            }
+            
+            let arabicLoaded = false;
+            if (cachedArabic) {
+                try {
+                    const arabic = JSON.parse(cachedArabic);
+                    if (arabic && arabic.length > 0) {
+                        contentData.arabic.content = arabic;
+                        console.log(`📦 Loaded ${arabic.length} cached Arabic videos from localStorage`);
+                        arabicLoaded = true;
+                    }
+                } catch(e) { console.error('Error parsing cached arabic:', e); }
+            }
             
             // Update tab counts immediately
             const moviesTabUpdate = document.querySelector('.source-tab[data-source="movies"]');
@@ -3768,17 +3656,25 @@
             const adultTabUpdate = document.querySelector('.source-tab[data-source="adult"]');
             if (adultTabUpdate) adultTabUpdate.textContent = `Adult (${contentData.adult.content.length})`;
             
+            const arabicTabUpdate = document.querySelector('.source-tab[data-source="arabic"]');
+            if (arabicTabUpdate) arabicTabUpdate.textContent = `Arabic (${contentData.arabic.content.length})`;
+            
+            // Show Arabic tab if there's content
+            if (contentData.arabic.content.length > 0) {
+                showArabicTab();
+            }
+            
             // Refresh display if cached content loaded
-            if (moviesLoaded || adultLoaded || (contentData.arabic && contentData.arabic.content.length > 0)) {
-                console.log('📺 ====== PLEX CONTENT LOADED FROM CACHE ======');
-                console.log('📺 Final counts:', { movies: contentData.movies.content.length, adult: contentData.adult.content.length, arabic: contentData.arabic ? contentData.arabic.content.length : 0 });
+            if (moviesLoaded || adultLoaded || arabicLoaded) {
+                console.log('📺 ====== PLEX CONTENT LOADED FROM LOCAL STORAGE ======');
+                console.log('📺 Final counts:', { movies: contentData.movies.content.length, adult: contentData.adult.content.length, arabic: contentData.arabic.content.length });
                 
                 // Always refresh display to show the loaded content
                 renderContent();
                 return;
             }
             
-            // If no cache, try live fetch with token
+            // If no cache, try live Plex server (optional)
             // Clear any old wrong URLs and set correct default
             if (localStorage.getItem('plexServerUrl') === 'http://127.0.0.1:32400') {
                 localStorage.removeItem('plexServerUrl');
@@ -3786,11 +3682,6 @@
             const plexServerUrl = localStorage.getItem('plexServerUrl') || 'http://192.168.1.100:32400';
             const plexToken = localStorage.getItem('plexToken') || localStorage.getItem('plexAutoToken') || 'xcak2s6WSj7hzAinAigm';
             const storedLibraries = localStorage.getItem('plexLibraries');
-            
-            console.log('📺 Plex Config:', {
-                serverUrl: plexServerUrl,
-                tokenExists: !!plexToken,
-                tokenPreview: plexToken ? plexToken.substring(0, 10) + '...' : 'NONE',
                 storedLibraries: storedLibraries ? 'YES' : 'NO'
             });
             
@@ -3847,12 +3738,10 @@
                     if (moviesContent.length > 0) {
                         contentData.movies.content = moviesContent;
                         console.log(`✅ Loaded ${moviesContent.length} movies from Plex`);
-                        // Cache for future use
+                        // Cache for future use in localStorage
                         try { 
                             localStorage.setItem('plexMoviesCache', JSON.stringify(moviesContent));
-                            // Also save to Firebase for mobile access
-                            fireDb.collection('plexCache').doc('movies').set({content: moviesContent, updated: Date.now()});
-                            console.log('☁️ Synced movies to Firebase');
+                            console.log('💾 Saved movies to localStorage');
                         } catch(e) {}
                         moviesLoadedLive = true;
                     } else {
@@ -3869,16 +3758,50 @@
                         // Replace packages with actual video content
                         contentData.adult.content = adultContent;
                         console.log(`✅ Loaded ${adultContent.length} adult videos from Plex - REPLACING PACKAGES`);
-                        // Cache for future use
+                        // Cache for future use in localStorage
                         try { 
                             localStorage.setItem('plexAdultCache', JSON.stringify(adultContent));
-                            // Also save to Firebase for mobile access
-                            fireDb.collection('plexCache').doc('adult').set({content: adultContent, updated: Date.now()});
-                            console.log('☁️ Synced adult content to Firebase');
+                            console.log('💾 Saved adult content to localStorage');
                         } catch(e) {}
                         adultLoadedLive = true;
                     } else {
                         console.log('⚠️ No adult content loaded from direct Plex fetch');
+                    }
+                }
+                
+                // Load Arabic content
+                let arabicLib = libraries.find(l => {
+                    const title = (l.title || l.name || '').toLowerCase();
+                    return title.includes('arabic');
+                });
+                
+                // Fallback to stored section ID from localStorage
+                const arabicSection = localStorage.getItem('plexArabicSection');
+                if (!arabicLib && arabicSection) {
+                    arabicLib = { title: 'Arabic', key: arabicSection };
+                }
+                
+                console.log('📺 Arabic library detection:', {
+                    arabicLib: arabicLib ? `${arabicLib.title || arabicLib.name} (ID: ${arabicLib.key || arabicLib.id})` : 'NOT FOUND'
+                });
+                
+                let arabicLoadedLive = false;
+                
+                if (arabicLib) {
+                    const libraryKey = arabicLib.key || arabicLib.id;
+                    console.log(`🇸🇦 Loading Arabic content from library: ${arabicLib.title || arabicLib.name} (ID: ${libraryKey})`);
+                    const arabicContent = await fetchPlexLibraryContent(plexServerUrl, plexToken, libraryKey, false);
+                    if (arabicContent.length > 0) {
+                        contentData.arabic.content = arabicContent;
+                        console.log(`✅ Loaded ${arabicContent.length} Arabic videos from Plex - REPLACING PACKAGES`);
+                        // Cache for future use in localStorage
+                        try { 
+                            localStorage.setItem('plexArabicCache', JSON.stringify(arabicContent));
+                            console.log('💾 Saved Arabic content to localStorage');
+                        } catch(e) {}
+                        arabicLoadedLive = true;
+                    } else {
+                        console.log('⚠️ No Arabic content loaded from direct Plex fetch');
                     }
                 }
                 
@@ -3891,6 +3814,17 @@
             const moviesTab = document.querySelector('.source-tab[data-source="movies"]');
             if (moviesTab) moviesTab.textContent = `Movies (${contentData.movies.content.length})`;
             
+            const adultTab = document.querySelector('.source-tab[data-source="adult"]');
+            if (adultTab) adultTab.textContent = `Adult (${contentData.adult.content.length})`;
+            
+            const arabicTab = document.querySelector('.source-tab[data-source="arabic"]');
+            if (arabicTab) arabicTab.textContent = `Arabic (${contentData.arabic.content.length})`;
+            
+            // Show Arabic tab if there's content
+            if (contentData.arabic.content.length > 0) {
+                showArabicTab();
+            }
+            
             // Refresh display
             if (currentSource === 'movies' || currentSource === 'addon') {
                 displayContent(currentSource);
@@ -3899,7 +3833,8 @@
             console.log('📺 ====== PLEX LIBRARY LOADING COMPLETE ======');
             console.log('📺 Final counts:', {
                 movies: contentData.movies.content.length,
-                adult: contentData.adult.content.length
+                adult: contentData.adult.content.length,
+                arabic: contentData.arabic.content.length
             });
         }
         
@@ -4018,6 +3953,12 @@
                     console.log(`🔞 Loaded ${mediaContent.adult.length} adult videos from Plex`);
                 }
                 
+                // Load Arabic content from Plex Arabic library
+                if (mediaContent.arabic && mediaContent.arabic.length > 0) {
+                    contentData.arabic.content = mediaContent.arabic;
+                    console.log(`🇸🇦 Loaded ${mediaContent.arabic.length} Arabic videos from Plex`);
+                }
+                
                 // Update tab labels with real counts
                 const moviesTab = document.querySelector('.source-tab[data-source="movies"]');
                 const vodTab = document.querySelector('.source-tab[data-source="vod"]');
@@ -4027,13 +3968,13 @@
                 console.log('✅ Content updated from media libraries');
                 
                 // Refresh display if currently viewing affected sections
-                if (['movies', 'vod', 'series', 'adult'].includes(currentSource)) {
+                if (['movies', 'vod', 'series', 'adult', 'arabic'].includes(currentSource)) {
                     displayContent(currentSource);
                 }
                 
                 // Show success message
                 if (libraryIds && libraryIds.length > 0) {
-                    const totalLoaded = mediaContent.movies.length + mediaContent.series.length + mediaContent.vod.length + (mediaContent.adult?.length || 0);
+                    const totalLoaded = mediaContent.movies.length + mediaContent.series.length + mediaContent.vod.length + (mediaContent.adult?.length || 0) + (mediaContent.arabic?.length || 0);
                     console.log(`Loaded ${totalLoaded} items from media libraries`);
                 }
                 
@@ -4094,6 +4035,11 @@
                 name: 'Adult Content',
                 content: loadAdultPackagesFromAdmin(), // Load adult packages
                 streamingMode: 'on-demand' // Adult content on-demand
+            },
+            arabic: {
+                name: 'Arabic Content',
+                content: [], // Arabic videos from Plex
+                streamingMode: 'on-demand'
             },
             internet: {
                 name: 'Internet Videos',
@@ -4156,32 +4102,30 @@
         }
 
         async function loginUser(username, password) {
-            // LOCAL VERSION - Use localStorage instead of Firebase
+            // LOCAL VERSION - Use localStorage only, no Firebase
             try {
-                // Try to load customers from localStorage first
-                const customersRaw = localStorage.getItem('adminCustomers');
-                if (customersRaw) {
-                    const customers = JSON.parse(customersRaw);
-                    const user = customers.find(c => c.username === username && c.password === password);
+                // Load customers from localStorage
+                const customers = loadCustomersFromAdmin();
+                const user = customers.find(c => c.username === username && c.password === password);
+                
+                if (user) {
+                    isLoggedIn = true;
+                    currentUser = user;
+                    adminCustomers = customers;
+                    localStorage.setItem('adminCustomers', JSON.stringify(customers));
                     
-                    if (user) {
-                        isLoggedIn = true;
-                        currentUser = user;
-                        adminCustomers = customers;
-                        
-                        console.log('✅ Login successful (local):', user.username);
-                        updateUserInterface();
-                        hideLoginModal();
-                        // Store credentials for auto-login
-                        const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
-                        storeCredentials(username, password, user.subscriptionExpiry, rememberMe);
-                        // Load content from localStorage
-                        loadPlexLibraryContent();
-                        return true;
-                    }
+                    console.log('✅ Login successful (local):', user.username);
+                    updateUserInterface();
+                    hideLoginModal();
+                    // Store credentials for auto-login
+                    const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
+                    storeCredentials(username, password, user.subscriptionExpiry || user.expiryDate, rememberMe);
+                    // Refresh content from localStorage on login
+                    loadPlexLibraryContent();
+                    return true;
                 }
             } catch(e) {
-                console.log('Local login failed, trying fallback:', e.message);
+                console.error('Local login error:', e);
             }
             
             // Fallback to passwordManager
@@ -4195,7 +4139,7 @@
                 // Store credentials for auto-login
                 const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
                 storeCredentials(username, password, user.subscriptionExpiry, rememberMe);
-                // Load content from localStorage
+                // Refresh content from localStorage on login
                 loadPlexLibraryContent();
                 return true;
             }
@@ -4747,6 +4691,25 @@
                 }
             }
         }
+        
+        // Arabic Tab Management
+        function showArabicTab() {
+            const arabicTab = document.getElementById('arabicTab');
+            if (arabicTab) {
+                arabicTab.style.display = 'block';
+            }
+        }
+        
+        function hideArabicTab() {
+            const arabicTab = document.getElementById('arabicTab');
+            if (arabicTab) {
+                arabicTab.style.display = 'none';
+                // If currently viewing Arabic content, switch to basic tab
+                if (currentSource === 'arabic') {
+                    switchSource('basic');
+                }
+            }
+        }
 
         // Content Management
         // Global function for source switching - defined early for onclick access
@@ -4864,34 +4827,23 @@
             
             // Filter Live TV channels by customer's packages
             if (currentSource === 'live' && currentUser) {
-                // For Live TV - show ALL channels without filtering (admin will control via packages)
-                if (currentSource === 'live') {
-                    // Don't filter - show all live channels
-                    console.log(`📺 Live TV: showing all ${filteredContent.length} channels`);
-                } else if (currentSource === 'sports') {
-                    // Show sports channels only
-                    filteredContent = filteredContent.filter(ch => ch.package && ch.package.toLowerCase().includes('sport'));
-                    console.log(`📺 Sports filtered: ${filteredContent.length} channels`);
-                } else {
-                    // Other sources - check subscription
-                    const customerPackages = currentUser.packages || [];
-                    const customerPlan = (currentUser.plan || '').toLowerCase();
-                    const addonsRaw = currentUser.addons || '';
-                    const customerAddons = typeof addonsRaw === 'string' ? addonsRaw.toLowerCase().split(',').map(a => a.trim()) : [];
-                    const allPackages = [...customerPackages.map(p => p.toLowerCase()), customerPlan, ...customerAddons];
-                    
-                    const hasBasic = allPackages.some(p => p.includes('basic') || p.includes('tv'));
-                    const hasSports = allPackages.some(p => p.includes('sport'));
-                    const isAdmin = currentUser.role === 'admin';
-                    
-                    filteredContent = filteredContent.filter(channel => {
-                        if (isAdmin) return true; // Admin sees all
-                        if (channel.package === 'basic') return hasBasic || hasSports;
-                        if (channel.package === 'sports') return hasSports;
-                        return true;
-                    });
-                    console.log(`📺 ${currentSource} filtered: ${filteredContent.length} channels (Basic: ${hasBasic}, Sports: ${hasSports}, Plan: ${customerPlan})`);
-                }
+                const customerPackages = currentUser.packages || [];
+                const customerPlan = (currentUser.plan || '').toLowerCase();
+                const addonsRaw = currentUser.addons || '';
+                const customerAddons = typeof addonsRaw === 'string' ? addonsRaw.toLowerCase().split(',').map(a => a.trim()) : [];
+                const allPackages = [...customerPackages.map(p => p.toLowerCase()), customerPlan, ...customerAddons];
+                
+                const hasBasic = allPackages.some(p => p.includes('basic') || p.includes('tv'));
+                const hasSports = allPackages.some(p => p.includes('sport'));
+                const isAdmin = currentUser.role === 'admin';
+                
+                filteredContent = filteredContent.filter(channel => {
+                    if (isAdmin) return true; // Admin sees all
+                    if (channel.package === 'basic') return hasBasic || hasSports;
+                    if (channel.package === 'sports') return hasSports;
+                    return true;
+                });
+                console.log(`📺 Live TV filtered: ${filteredContent.length} channels (Basic: ${hasBasic}, Sports: ${hasSports}, Plan: ${customerPlan})`);
             }
             
             const availableContent = filteredContent.filter(item => {
@@ -6052,26 +6004,39 @@
         }
 
         // Auto-sync function - runs on startup
-        // DISABLED - Was syncing from hardcoded GitHub and overwriting local customers
-        // To enable, set a custom sync URL in localStorage with key 'syncUrl'
-        window.autoSyncData = async function() {
-            // Check if custom sync URL is configured in localStorage
-            const customSyncUrl = localStorage.getItem('syncUrl');
-            
-            if (!customSyncUrl) {
-                console.log('⚠️ No custom sync URL configured - skipping auto-sync');
-                return false;
+        // HARDCODED SYNC URL - No customer setup required
+        const SYNC_URL = 'https://raw.githubusercontent.com/samsat1/app/main/admin_data_internet.json';
+        
+        // STREAMING SERVER CONFIGURATION - Auto-configured for Cloudflare Tunnel
+        // This is used for streaming when accessing from internet via Cloudflare Tunnel
+        // Cloudflare tunnel already points to Plex on port 32400, so no need to add port
+        const STREAM_SERVER = 'https://gaps-disclose-constitute-stated.trycloudflare.com';
+        
+        // Function to get stream URL - handles both local and internet access
+        window.getStreamUrl = function(streamUrl) {
+            // If already a full URL, return as-is
+            if (streamUrl.startsWith('http://') || streamUrl.startsWith('https://')) {
+                return streamUrl;
             }
+            // If relative URL, prepend the stream server (Cloudflare tunnel already handles Plex on port 32400)
+            return `${STREAM_SERVER}/${streamUrl}`;
+        };
+        
+        window.autoSyncData = async function() {
+            const syncUrl = SYNC_URL; // Use hardcoded URL
             
             try {
-                console.log('📡 Auto-syncing data from:', customSyncUrl);
-                const response = await fetch(customSyncUrl + '?t=' + Date.now()); // Cache bust
+                console.log('📡 Auto-syncing data from:', syncUrl);
+                const response = await fetch(syncUrl + '?t=' + Date.now()); // Cache bust
                 if (!response.ok) throw new Error('Fetch failed');
                 
                 const data = await response.json();
                 
-                // Only sync packages, NOT customers (to prevent overwriting local customers)
-                // Customers should only be managed from admin panel
+                // Import customers
+                if (data.customers && Array.isArray(data.customers)) {
+                    localStorage.setItem('adminCustomers', JSON.stringify(data.customers));
+                }
+                // Import packages
                 if (data.packages && Array.isArray(data.packages)) {
                     localStorage.setItem('adminPackages', JSON.stringify(data.packages));
                 }
@@ -6109,6 +6074,10 @@
                         localStorage.setItem('plexAdultCache', JSON.stringify(data.plexAdultCache));
                         localStorage.setItem('plexCachedAdult', JSON.stringify(data.plexAdultCache));
                     }
+                    if (data.plexArabicCache) {
+                        localStorage.setItem('plexArabicCache', JSON.stringify(data.plexArabicCache));
+                        localStorage.setItem('plexCachedArabic', JSON.stringify(data.plexArabicCache));
+                    }
                     if (data.plexConfig) {
                         localStorage.setItem('plexConfig', JSON.stringify(data.plexConfig));
                         localStorage.setItem('plexServerUrl', data.plexConfig.localUrl || data.plexConfig.serverUrl);
@@ -6117,8 +6086,9 @@
                     
                     const movies = data.plexMoviesCache?.length || 0;
                     const adult = data.plexAdultCache?.length || 0;
+                    const arabic = data.plexArabicCache?.length || 0;
                     
-                    alert(`✅ Imported ${movies} movies + ${adult} adult videos!\n\nRefreshing page...`);
+                    alert(`✅ Imported ${movies} movies + ${adult} adult + ${arabic} Arabic videos!\n\nRefreshing page...`);
                     window.location.reload();
                 } catch (err) {
                     alert('❌ Failed to import: ' + err.message);
@@ -6260,32 +6230,10 @@
         
         // Global function for refreshing addon packages - defined early for onclick access
         window.refreshAddonPackages = function() {
-            // Load addons from admin packages
             contentData.addon.content = loadPackagesFromAdmin();
+            contentData.adult.content = loadAdultPackagesFromAdmin(); // Also refresh adult packages
             console.log(`📦 Loaded ${contentData.addon.content.length} add-on packages from admin panel`);
-            
-            // Load adult - use Plex cache first, then fallback to admin packages
-            const cachedAdult = localStorage.getItem('plexAdultCache');
-            if (cachedAdult) {
-                try {
-                    const adultFromCache = JSON.parse(cachedAdult);
-                    if (adultFromCache && adultFromCache.length > 0) {
-                        contentData.adult.content = adultFromCache;
-                        console.log(`🔞 Loaded ${adultFromCache.length} adult content from Plex cache`);
-                    } else {
-                        // Fallback to admin packages if cache is empty
-                        contentData.adult.content = loadAdultPackagesFromAdmin();
-                        console.log(`🔞 Loaded ${contentData.adult.content.length} adult packages from admin panel`);
-                    }
-                } catch(e) {
-                    contentData.adult.content = loadAdultPackagesFromAdmin();
-                    console.log(`🔞 Loaded ${contentData.adult.content.length} adult packages from admin panel`);
-                }
-            } else {
-                // No cache, load from admin packages
-                contentData.adult.content = loadAdultPackagesFromAdmin();
-                console.log(`🔞 Loaded ${contentData.adult.content.length} adult packages from admin panel`);
-            }
+            console.log(`🔞 Loaded ${contentData.adult.content.length} adult packages from admin panel`);
             
             // Refresh the display if addon tab is currently active
             if (currentSource === 'addon') {
@@ -7320,10 +7268,10 @@
             // Determine which source to switch to based on package keyword
             let targetSource = 'movies'; // default
             if (pkgKeyword.includes('adult')) {
-                targetSource = 'adult';
-                // NOTE: Adult still requires password - don't auto-unlock
-                // Adult content will be available after password entry
-                console.log('📦 Adult package detected - password still required');
+                // For adult packages, still require password to show adult tab
+                // Just mark that they have adult package access, but don't show tab without password
+                console.log('📦 User has adult package - password still required to view adult content');
+                targetSource = 'movies'; // Redirect to movies instead
             } else if (pkgKeyword.includes('movie')) {
                 targetSource = 'movies';
             }
