@@ -405,7 +405,7 @@
                                 permissions: ['basic_access'], // Customer has basic access
                                 plan: customer.plan,
                                 addons: customer.addons,
-                                adultPassword: customer.adultPassword || '8899'
+                                adultPassword: customer.adultPassword || '112233'
                             };
                         }
                     }
@@ -2234,6 +2234,14 @@
                 <div class="adult-icon">🔒</div>
                 <div class="adult-status">Locked</div>
             </div>
+            
+            <!-- Change Password Button (discreet lock icon) -->
+            <button class="logout-btn" id="changePasswordBtn" onclick="showChangeAdultPassword()" style="display: none; background: linear-gradient(135deg, #667eea, #764ba2);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                </svg>
+                🔑
+            </button>
         </div>
     </header>
 
@@ -4250,6 +4258,16 @@
                 }
             }
             
+            // Show/hide change password button based on login status
+            const changePasswordBtn = document.getElementById('changePasswordBtn');
+            if (changePasswordBtn) {
+                if (isLoggedIn) {
+                    changePasswordBtn.classList.add('show');
+                } else {
+                    changePasswordBtn.classList.remove('show');
+                }
+            }
+            
             if (isLoggedIn && currentUser) {
                 // Clear any previous state first
                 userName.textContent = '';
@@ -4610,7 +4628,7 @@
             const password = document.getElementById('adultPassword').value;
             
             // Get customer's adult password (if logged in) or use default
-            let correctPassword = '8899'; // Default password
+            let correctPassword = '112233'; // Default password
             const customPassword = localStorage.getItem('customAdultPassword');
             if (customPassword) {
                 correctPassword = customPassword;
@@ -4652,7 +4670,7 @@
             const confirm = document.getElementById('confirmAdultPass').value;
             
             // Get current password
-            let correctPassword = '8899';
+            let correctPassword = '112233';
             if (currentUser && currentUser.adultPassword) {
                 correctPassword = currentUser.adultPassword;
             }
