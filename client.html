@@ -2490,6 +2490,22 @@
         let currentCategory = 'all';
         let adultUnlocked = false;
         let currentContent = null;
+        
+        // Content Data - defined early to prevent ReferenceError
+        const contentData = {
+            live: { name: 'Live TV', content: [], streamingMode: 'always-streaming' },
+            'sports-live': { name: 'Sports TV', content: [], streamingMode: 'always-streaming' },
+            'livetv-addon': { name: 'TV Addon', content: [], streamingMode: 'always-streaming' },
+            vod: { name: 'Video on Demand', content: [], streamingMode: 'on-demand' },
+            series: { name: 'TV Series', content: [], streamingMode: 'on-demand' },
+            movies: { name: 'Movies', content: [], streamingMode: 'on-demand' },
+            basic: { name: 'Basic Package', content: [], streamingMode: 'on-demand' },
+            addon: { name: 'Add-on Packages', content: [], streamingMode: 'mixed' },
+            adult: { name: 'Adult Content', content: [], streamingMode: 'on-demand' },
+            arabic: { name: 'Arabic Content', content: [], streamingMode: 'on-demand' },
+            internet: { name: 'Internet Videos', content: [], streamingMode: 'on-demand' }
+        };
+        
         let isFullscreenMode = false; // Track if VLC fullscreen is active
         let clickTimer = null; // For single/double click detection
         let clickDelay = 400; // ms to wait before treating as single click
@@ -4053,54 +4069,14 @@
             }
         }
 
-        // Content Data
-        const contentData = {
-            live: {
-                name: 'Live TV',
-                content: [], // Channels loaded from Firebase/admin (basic package)
-                streamingMode: 'always-streaming' // Live TV always streams
-            },
-            'sports-live': {
-                name: 'Sports TV',
-                content: [], // Sports channels (sports addon)
-                streamingMode: 'always-streaming'
-            },
-            'livetv-addon': {
-                name: 'TV Addon',
-                content: [], // TV Addon channels
-                streamingMode: 'always-streaming'
-            },
-            movies: {
-                name: 'Movies',
-                content: [],
-                streamingMode: 'always-streaming' // Movies always stream for better UX
-            },
-            vod: {
-                name: 'VOD Library',
-                content: [],
-                streamingMode: 'on-demand' // VOD streams on-demand
-            },
-            basic: {
-                name: 'Basic Package',
-                content: [],
-                streamingMode: 'on-demand' // Basic packages on-demand
-            },
-            addon: {
-                name: 'Add-on Packages',
-                content: loadPackagesFromAdmin(), // Load from admin panel
-                streamingMode: 'mixed' // Mixed - depends on package
-            },
-            adult: {
-                name: 'Adult Content',
-                content: loadAdultPackagesFromAdmin(), // Load adult packages
-                streamingMode: 'on-demand' // Adult content on-demand
-            },
-            internet: {
-                name: 'Internet Videos',
-                content: [],
-                streamingMode: 'on-demand' // Internet videos on-demand
-            }
-        };
+        // Content Data - update with functions (already declared earlier)
+        contentData.movies = { name: 'Movies', content: [], streamingMode: 'always-streaming' };
+        contentData.vod = { name: 'VOD Library', content: [], streamingMode: 'on-demand' };
+        contentData.basic = { name: 'Basic Package', content: [], streamingMode: 'on-demand' };
+        contentData.addon = { name: 'Add-on Packages', content: loadPackagesFromAdmin(), streamingMode: 'mixed' };
+        contentData.adult = { name: 'Adult Content', content: loadAdultPackagesFromAdmin(), streamingMode: 'on-demand' };
+        contentData.series = { name: 'TV Series', content: [], streamingMode: 'on-demand' };
+        // Note: arabic and internet already defined above
 
         // Helper Functions for Content Display
         function getSourceIcon(source) {
