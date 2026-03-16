@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-16T16:42:52.720Z",
+  "exportDate": "2026-03-16T21:17:06.588Z",
   "customers": [
     {
       "id": "CUST_1773632455677",
@@ -139,6 +139,26 @@
       "rejectionReason": null,
       "createdAt": "2026-03-16T03:40:12.618Z",
       "id": "PKG_1773632412618"
+    },
+    {
+      "name": " Plus",
+      "price": 30,
+      "duration": "1 Month",
+      "features": "",
+      "secondTVPrice": 0,
+      "thirdTVPrice": 0,
+      "sportsPrice": 0,
+      "moviesPrice": 0,
+      "isAdult": "",
+      "adultPackagePrice": 0,
+      "approved": true,
+      "approvedDate": "2026-03-16T21:16:33.329Z",
+      "approvedBy": "admin",
+      "rejectedDate": null,
+      "rejectedBy": null,
+      "rejectionReason": null,
+      "createdAt": "2026-03-16T21:16:33.329Z",
+      "id": "PKG_1773695793329"
     }
   ],
   "resellers": {
