@@ -3399,6 +3399,7 @@
                 if (data.plexToken) localStorage.setItem('plexToken', data.plexToken);
                 if (data.plexMoviesSection) localStorage.setItem('plexMoviesSection', data.plexMoviesSection);
                 if (data.plexAdultSection) localStorage.setItem('plexAdultSection', data.plexAdultSection);
+                if (data.plexArabicSection) localStorage.setItem('plexArabicSection', data.plexArabicSection);
                 
                 console.log('✅ Auto-load complete!');
                 showNotification('📥 Data loaded from GitHub', 'success');
@@ -3497,6 +3498,7 @@
                     plexToken: localStorage.getItem('plexToken') || '',
                     plexMoviesSection: localStorage.getItem('plexMoviesSection') || '',
                     plexAdultSection: localStorage.getItem('plexAdultSection') || '',
+                    plexArabicSection: localStorage.getItem('plexArabicSection') || '',
                     tvSyncUrl: `https://raw.githubusercontent.com/${username}/${repo}/main/admin_data.json`,
                     githubUsername: username,
                     githubRepo: repo
@@ -3661,7 +3663,8 @@
                         serverUrl: localStorage.getItem('plexServerUrl') || '',
                         token: localStorage.getItem('plexToken') || '',
                         moviesSection: localStorage.getItem('plexMoviesSection') || '',
-                        adultSection: localStorage.getItem('plexAdultSection') || ''
+                        adultSection: localStorage.getItem('plexAdultSection') || '',
+                        arabicSection: localStorage.getItem('plexArabicSection') || ''
                     },
                     contentMappings: JSON.parse(localStorage.getItem('packageContentMappings') || '{}'),
                     adminCredentials: JSON.parse(localStorage.getItem('adminPasswords') || '{}'),
@@ -3724,6 +3727,7 @@
                         if (data.plexConfig.token) localStorage.setItem('plexToken', data.plexConfig.token);
                         if (data.plexConfig.moviesSection) localStorage.setItem('plexMoviesSection', data.plexConfig.moviesSection);
                         if (data.plexConfig.adultSection) localStorage.setItem('plexAdultSection', data.plexConfig.adultSection);
+                        if (data.plexConfig.arabicSection) localStorage.setItem('plexArabicSection', data.plexConfig.arabicSection);
                     }
                     if (data.contentMappings) {
                         localStorage.setItem('packageContentMappings', JSON.stringify(data.contentMappings));
@@ -4680,7 +4684,8 @@
             token: localStorage.getItem('plexToken') || '',
             sections: {
                 movies: parseInt(localStorage.getItem('plexMoviesSection')) || 26,
-                adult: parseInt(localStorage.getItem('plexAdultSection')) || 21
+                adult: parseInt(localStorage.getItem('plexAdultSection')) || 21,
+                arabic: parseInt(localStorage.getItem('plexArabicSection')) || 7
             }
         };
         
@@ -6693,6 +6698,7 @@ Network: Always Streaming → Optimized for instant access`;
             const plexToken = localStorage.getItem('plexToken') || '';
             const plexMoviesSection = localStorage.getItem('plexMoviesSection') || '26';
             const plexAdultSection = localStorage.getItem('plexAdultSection') || '21';
+            const plexArabicSection = localStorage.getItem('plexArabicSection') || '7';
             const cachedMovies = JSON.parse(localStorage.getItem('plexCachedMovies') || '[]');
             const cachedAdult = JSON.parse(localStorage.getItem('plexCachedAdult') || '[]');
             
@@ -6731,6 +6737,10 @@ Network: Always Streaming → Optimized for instant access`;
                                 <div>
                                     <label style="color: rgba(255,255,255,0.8); font-size: 14px; display: block; margin-bottom: 5px;">Adult Section ID:</label>
                                     <input type="text" id="plexAdultSection" value="${plexAdultSection}" placeholder="21" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
+                                </div>
+                                <div>
+                                    <label style="color: rgba(255,255,255,0.8); font-size: 14px; display: block; margin-bottom: 5px;">Arabic Section ID:</label>
+                                    <input type="text" id="plexArabicSection" value="${plexArabicSection}" placeholder="7" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
                                 </div>
                             </div>
                             <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
@@ -6828,30 +6838,25 @@ Network: Always Streaming → Optimized for instant access`;
             const serverUrl = document.getElementById('plexServerUrl')?.value || '';
             const localUrl = document.getElementById('plexLocalUrl')?.value || 'http://127.0.0.1:32400';
             const token = document.getElementById('plexToken')?.value || '';
-            const moviesSection = document.getElementById('plexMoviesSection')?.value || '5';
+            const moviesSection = document.getElementById('plexMoviesSection')?.value || '26';
+            const adultSection = document.getElementById('plexAdultSection')?.value || '21';
             const arabicSection = document.getElementById('plexArabicSection')?.value || '7';
-            const adultSection = document.getElementById('plexAdultSection')?.value || '4';
             
             localStorage.setItem('plexServerUrl', serverUrl);
             localStorage.setItem('plexLocalUrl', localUrl);
             localStorage.setItem('plexToken', token);
             localStorage.setItem('plexMoviesSection', moviesSection);
-            localStorage.setItem('plexArabicSection', arabicSection);
             localStorage.setItem('plexAdultSection', adultSection);
+            localStorage.setItem('plexArabicSection', arabicSection);
             
             // Update the PLEX_CONFIG object
             if (window.PLEX_CONFIG) {
                 window.PLEX_CONFIG.serverUrl = serverUrl;
                 window.PLEX_CONFIG.localUrl = localUrl;
                 window.PLEX_CONFIG.token = token;
-                window.PLEX_CONFIG.sections = {
-                    movies: parseInt(moviesSection),
-                    arabic: parseInt(arabicSection),
-                    adult: parseInt(adultSection)
-                };
             }
             
-            showNotification('✅ Plex settings saved! Movies: ' + moviesSection + ', Arabic: ' + arabicSection + ', Adult: ' + adultSection, 'success');
+            showNotification('✅ Plex settings saved! Local URL: ' + localUrl, 'success');
         };
         
         // Update cached content counts
