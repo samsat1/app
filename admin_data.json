@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-16T21:17:06.588Z",
+  "exportDate": "2026-03-16T21:18:46.426Z",
   "customers": [
     {
       "id": "CUST_1773632455677",
@@ -10,15 +10,17 @@
       "plan": "Basic TV Package",
       "addons": "Sports Package, Sports Plus Package, Arabic Package, Movies Package, Adult Content Package",
       "monthlyPrice": 45,
-      "totalPrice": 540,
-      "expiryDate": "2027-03-16",
+      "totalPrice": 405,
+      "expiryDate": "2026-12-16",
       "password": "123456",
       "macAddress": "",
       "adultPassword": "1818",
       "status": "active",
-      "duration": "12 Months",
-      "durationMonths": 12,
-      "createdAt": "2026-03-16T03:40:55.677Z"
+      "duration": "9 Months",
+      "durationMonths": 9,
+      "createdAt": "2026-03-16T03:40:55.677Z",
+      "resetDeviceLock": 1773695918946,
+      "updatedAt": "2026-03-16T21:18:38.946Z"
     },
     {
       "id": "CUST_1773632501983",
