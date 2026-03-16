@@ -4492,7 +4492,12 @@
                     s.title.toLowerCase().includes('adult')
                 );
                 
-                let moviesCount = 0, adultCount = 0;
+                // Find and cache Arabic library
+                const arabicLib = sections.find(s => 
+                    s.title.toLowerCase().includes('arabic')
+                );
+                
+                let moviesCount = 0, adultCount = 0, arabicCount = 0;
                 
                 if (moviesLib) {
                     const content = await cacheLibraryContent(serverUrl, accessToken, moviesLib.key, false);
@@ -4504,7 +4509,12 @@
                     adultCount = content.length;
                 }
                 
-                showNotification(`✅ Cached ${moviesCount} movies and ${adultCount} adult videos for client`, 'success');
+                if (arabicLib) {
+                    const content = await cacheLibraryContent(serverUrl, accessToken, arabicLib.key, false);
+                    arabicCount = content.length;
+                }
+                
+                showNotification(`✅ Cached ${moviesCount} movies, ${adultCount} adult, and ${arabicCount} Arabic videos for client`, 'success');
                 
             } catch(error) {
                 console.error('Cache error:', error);
@@ -4605,15 +4615,20 @@
             try {
                 const movies = JSON.parse(localStorage.getItem('plexMoviesCache')) || [];
                 const adult = JSON.parse(localStorage.getItem('plexAdultCache')) || [];
+                const arabic = JSON.parse(localStorage.getItem('plexArabicCache')) || [];
                 
                 document.getElementById('moviesCount').textContent = `Movies cached: ${movies.length}`;
                 document.getElementById('adultCount').textContent = `Adult videos cached: ${adult.length}`;
+                if (document.getElementById('arabicCount')) {
+                    document.getElementById('arabicCount').textContent = `Arabic videos cached: ${arabic.length}`;
+                }
             } catch(e) {}
         }
         
         function viewCachedContent() {
             const movies = JSON.parse(localStorage.getItem('plexMoviesCache')) || [];
             const adult = JSON.parse(localStorage.getItem('plexAdultCache')) || [];
+            const arabic = JSON.parse(localStorage.getItem('plexArabicCache')) || [];
             
             let html = '<strong>🎬 Movies (' + movies.length + '):</strong><br>';
             movies.forEach((m, i) => {
@@ -4625,7 +4640,12 @@
                 html += `${i+1}. ${a.name}<br>`;
             });
             
-            if (movies.length === 0 && adult.length === 0) {
+            html += '<br><strong>🔶 Arabic (' + arabic.length + '):</strong><br>';
+            arabic.forEach((a, i) => {
+                html += `${i+1}. ${a.name}<br>`;
+            });
+            
+            if (movies.length === 0 && adult.length === 0 && arabic.length === 0) {
                 html = 'No cached content. Add videos using the forms above.';
             }
             
@@ -4637,6 +4657,7 @@
             if (confirm('Are you sure you want to clear all cached videos?')) {
                 localStorage.removeItem('plexMoviesCache');
                 localStorage.removeItem('plexAdultCache');
+                localStorage.removeItem('plexArabicCache');
                 updateCacheCounts();
                 document.getElementById('cachedContentPreview').style.display = 'none';
                 showNotification('🗑️ All cached content cleared', 'info');
@@ -4647,9 +4668,10 @@
         function exportCacheData() {
             const movies = JSON.parse(localStorage.getItem('plexMoviesCache') || '[]');
             const adult = JSON.parse(localStorage.getItem('plexAdultCache') || '[]');
+            const arabic = JSON.parse(localStorage.getItem('plexArabicCache') || '[]');
             const plexConfig = JSON.parse(localStorage.getItem('plexConfig') || '{}');
             
-            if (movies.length === 0 && adult.length === 0) {
+            if (movies.length === 0 && adult.length === 0 && arabic.length === 0) {
                 showNotification('❌ No cached content to export', 'error');
                 return;
             }
@@ -4660,8 +4682,10 @@
                 plexConfig: plexConfig,
                 plexMoviesCache: movies,
                 plexAdultCache: adult,
+                plexArabicCache: arabic,
                 plexCachedMovies: movies,
-                plexCachedAdult: adult
+                plexCachedAdult: adult,
+                plexCachedArabic: arabic
             };
             
             const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
@@ -4672,7 +4696,7 @@
             a.click();
             URL.revokeObjectURL(url);
             
-            showNotification(`📤 Exported ${movies.length} movies + ${adult.length} adult videos`, 'success');
+            showNotification(`📤 Exported ${movies.length} movies + ${adult.length} adult + ${arabic.length} Arabic videos`, 'success');
         }
         
         // ========== IMPORT FROM PLEX XML ==========
@@ -4735,9 +4759,36 @@
             }
         };
         
+        window.importArabicXML = function() {
+            const xml = document.getElementById('arabicXmlInput').value.trim();
+            if (!xml) {
+                showNotification('❌ Please paste the Arabic XML first', 'error');
+                return;
+            }
+            
+            const videos = parseVideoXML(xml, 'arabic');
+            if (videos.length > 0) {
+                // Save to both keys for compatibility
+                localStorage.setItem('plexArabicCache', JSON.stringify(videos));
+                localStorage.setItem('plexCachedArabic', JSON.stringify(videos));
+                updateCacheCounts();
+                showNotification(`✅ Imported ${videos.length} Arabic videos successfully!`, 'success');
+                document.getElementById('arabicXmlInput').value = '';
+            } else {
+                showNotification('❌ No videos found in XML. Make sure you pasted the complete XML.', 'error');
+            }
+        };
+        
         function parseVideoXML(xmlString, libraryType) {
             const videos = [];
-            const sectionId = libraryType === 'movies' ? PLEX_CONFIG.sections.movies : PLEX_CONFIG.sections.adult;
+            let sectionId;
+            if (libraryType === 'movies') {
+                sectionId = PLEX_CONFIG.sections.movies;
+            } else if (libraryType === 'adult') {
+                sectionId = PLEX_CONFIG.sections.adult;
+            } else if (libraryType === 'arabic') {
+                sectionId = PLEX_CONFIG.sections.arabic;
+            }
             
             try {
                 console.log('🔍 Parsing XML, length:', xmlString.length);
@@ -4822,7 +4873,14 @@
         }
         
         window.copyPlexUrl = function(type) {
-            const section = type === 'movies' ? PLEX_CONFIG.sections.movies : PLEX_CONFIG.sections.adult;
+            let section;
+            if (type === 'movies') {
+                section = PLEX_CONFIG.sections.movies;
+            } else if (type === 'adult') {
+                section = PLEX_CONFIG.sections.adult;
+            } else if (type === 'arabic') {
+                section = PLEX_CONFIG.sections.arabic;
+            }
             // Use localhost since Plex is running locally
             const url = `${PLEX_CONFIG.localUrl}/library/sections/${section}/all?X-Plex-Token=${PLEX_CONFIG.token}`;
             
@@ -6701,6 +6759,7 @@ Network: Always Streaming → Optimized for instant access`;
             const plexArabicSection = localStorage.getItem('plexArabicSection') || '7';
             const cachedMovies = JSON.parse(localStorage.getItem('plexCachedMovies') || '[]');
             const cachedAdult = JSON.parse(localStorage.getItem('plexCachedAdult') || '[]');
+            const cachedArabic = JSON.parse(localStorage.getItem('plexCachedArabic') || '[]');
             
             mainContent.innerHTML = `
                 <div class="dashboard-header">
@@ -6783,7 +6842,7 @@ Network: Always Streaming → Optimized for instant access`;
                     <h3 class="section-title">📥 Import Videos from Plex (Easy Method)</h3>
                     <p style="color: #4caf50; margin-bottom: 15px; font-weight: bold;">💡 Use this if auto-fetch fails due to CORS restrictions</p>
                     
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
                         <!-- Movies Import -->
                         <div style="background: rgba(33, 150, 243, 0.1); padding: 20px; border-radius: 8px; border: 1px solid #2196f3;">
                             <h4 style="color: #2196f3; margin-bottom: 15px;">🎬 Movies Library</h4>
@@ -6797,6 +6856,21 @@ Network: Always Streaming → Optimized for instant access`;
                             </div>
                             <button onclick="importMoviesXML()" class="btn btn-primary" style="width: 100%; padding: 12px;">📥 Import Movies</button>
                             <div id="moviesCount" style="margin-top: 10px; color: #4caf50; font-size: 13px; font-weight: bold;">Movies cached: ${cachedMovies.length}</div>
+                        </div>
+                        
+                        <!-- Arabic Import -->
+                        <div style="background: rgba(255, 193, 7, 0.1); padding: 20px; border-radius: 8px; border: 1px solid #ffc107;">
+                            <h4 style="color: #ffc107; margin-bottom: 15px;">🔶 Arabic Library</h4>
+                            <div style="margin-bottom: 15px;">
+                                <button onclick="copyPlexUrl('arabic')" class="btn btn-warning" style="width: 100%; margin-bottom: 10px; padding: 12px;">📋 Copy Arabic URL</button>
+                                <p style="color: #888; font-size: 12px;">1. Click button → 2. Open URL in browser → 3. Select All (Ctrl+A) → 4. Copy (Ctrl+C) → 5. Paste below</p>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <label style="color: #ccc; font-size: 13px;">Paste Arabic XML:</label>
+                                <textarea id="arabicXmlInput" placeholder="Paste the entire XML content here..." style="width: 100%; height: 120px; padding: 10px; border-radius: 6px; border: 1px solid #444; background: #1a1a2e; color: white; font-size: 12px; margin-top: 5px;"></textarea>
+                            </div>
+                            <button onclick="importArabicXML()" class="btn btn-warning" style="width: 100%; padding: 12px;">📥 Import Arabic Videos</button>
+                            <div id="arabicCount" style="margin-top: 10px; color: #4caf50; font-size: 13px; font-weight: bold;">Arabic videos cached: ${cachedArabic.length}</div>
                         </div>
                         
                         <!-- Adult Import -->
