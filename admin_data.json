@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-16T21:18:46.426Z",
+  "exportDate": "2026-03-16T21:22:48.596Z",
   "customers": [
     {
       "id": "CUST_1773632455677",
@@ -132,15 +132,14 @@
       "sportsPrice": 0,
       "moviesPrice": 0,
       "isAdult": true,
-      "adultPackagePrice": 4,
+      "adultPackagePrice": 3,
       "approved": true,
-      "approvedDate": "2026-03-16T03:40:12.618Z",
+      "approvedDate": "2026-03-16T21:22:43.408Z",
       "approvedBy": "admin",
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-03-16T03:40:12.618Z",
-      "id": "PKG_1773632412618"
+      "createdAt": "2026-03-16T21:22:43.408Z"
     },
     {
       "name": " Plus",
