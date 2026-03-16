@@ -937,10 +937,10 @@
                     type: 'live_tv',
                     source: 'satellite_qam_udp',
                     streamingMode: 'always_streaming',
-                    description: 'Live TV from Satellite + Movies from Plex',
-                    libraries: ['Live TV', 'Movies'],
-                    channels: ['Live TV', 'Movies'],
-                    features: ['Live TV', 'News', 'Entertainment', 'Local Channels', 'Movies'],
+                    description: 'Live TV from Satellite → QAM → UDP → Plex',
+                    libraries: ['Live TV'],
+                    channels: ['Live TV'],
+                    features: ['Live TV', 'News', 'Entertainment', 'Local Channels'],
                     accessLevel: 1,
                     passwordProtected: false,
                     plexPath: '/plex/live-tv/',
@@ -992,36 +992,6 @@
                     networkPath: 'PC Library → Plex → Mikrotik → OLT → ONU',
                     requiresBasicTV: false,
                     adultPIN: '1818'
-                },
-                'sports_plus': {
-                    name: 'Sports Plus Package',
-                    type: 'live_tv',
-                    source: 'satellite_qam_udp',
-                    streamingMode: 'always_streaming',
-                    description: 'Extra Sports Live TV from Satellite → QAM → UDP → Plex',
-                    libraries: ['Live TV'],
-                    channels: ['Live TV', 'Sports Plus'],
-                    features: ['Sports Live', 'Extra Channels', 'Premium Sports'],
-                    accessLevel: 2,
-                    passwordProtected: false,
-                    plexPath: '/plex/live-tv/sports-plus/',
-                    networkPath: 'Satellite → QAM Modulator → UDP → Plex → Mikrotik → OLT → ONU',
-                    requiresBasicTV: true
-                },
-                'arabic': {
-                    name: 'Arabic Package',
-                    type: 'vod',
-                    source: 'pc_library_plex',
-                    streamingMode: 'on_demand',
-                    description: 'Arabic content from PC Library folder in Plex',
-                    libraries: ['Arabic'],
-                    channels: [],
-                    features: ['Arabic Library', 'On-Demand', 'Arabic Movies', 'Arabic Series'],
-                    accessLevel: 3,
-                    passwordProtected: false,
-                    plexPath: '/plex/library/arabic/',
-                    networkPath: 'PC Library → Plex → Mikrotik → OLT → ONU',
-                    requiresBasicTV: false
                 }
             },
 
@@ -1346,8 +1316,8 @@
             const thirdTVPrice = document.getElementById('thirdTVPrice')?.value;
             const sportsPrice = document.getElementById('sportsPrice')?.value;
             const sportsPlusPrice = document.getElementById('sportsPlusPrice')?.value;
-            const moviesPrice = document.getElementById('moviesPrice')?.value;
             const arabicPrice = document.getElementById('arabicPrice')?.value;
+            const moviesPrice = document.getElementById('moviesPrice')?.value;
             const adultPackagePrice = document.getElementById('adultPackagePrice')?.value;
             
             // Detect adult package: by name contains "adult"/"xxx" OR by having adult addon price
@@ -1398,16 +1368,7 @@
                 secondTVPrice: parseFloat(secondTVPrice || '0'),
                 thirdTVPrice: parseFloat(thirdTVPrice || '0'),
                 sportsPrice: parseFloat(sportsPrice || '0'),
-                sportsPlusPrice: parseFloat(sportsPlusPrice || '0'),
                 moviesPrice: parseFloat(moviesPrice || '0'),
-                arabicPrice: parseFloat(arabicPrice || '0'),
-                addonPrices: {
-                    sports: parseFloat(sportsPrice || '0'),
-                    sportsPlus: parseFloat(sportsPlusPrice || '0'),
-                    movies: parseFloat(moviesPrice || '0'),
-                    arabic: parseFloat(arabicPrice || '0'),
-                    adult: isAdultPackage ? parseFloat(adultPackagePrice || '0') : 0
-                },
                 isAdult: isAdultPackage,
                 adultPackagePrice: isAdultPackage ? parseFloat(adultPackagePrice) : 0,
                 // Authentication System Fields
@@ -1474,16 +1435,6 @@
                     packageAuthenticationSystem.broadcastUpdate('mapping_updated', packageData.id);
                     console.log('✅ Package mapping updated successfully');
                 }
-            }
-            
-            // Clear package form function (defined here for use in this scope)
-            function clearPackageForm() {
-                const fields = ['packageName', 'packagePrice', 'secondTVPrice', 'thirdTVPrice', 'sportsPrice', 'sportsPlusPrice', 'moviesPrice', 'arabicPrice', 'adultPackagePrice', 'packageFeatures'];
-                fields.forEach(field => {
-                    const element = document.getElementById(field);
-                    if (element) element.value = '';
-                });
-                document.getElementById('packageDuration').value = '1 Month';
             }
             
             // Update global packages variable to reflect the new data
@@ -3996,9 +3947,7 @@
             const secondTVPrice = document.getElementById('secondTVPrice')?.value;
             const thirdTVPrice = document.getElementById('thirdTVPrice')?.value;
             const sportsPrice = document.getElementById('sportsPrice')?.value;
-            const sportsPlusPrice = document.getElementById('sportsPlusPrice')?.value;
             const moviesPrice = document.getElementById('moviesPrice')?.value;
-            const arabicPrice = document.getElementById('arabicPrice')?.value;
             const adultPackagePrice = document.getElementById('adultPackagePrice')?.value;
             
             // Detect adult package: by name contains "adult"/"xxx" OR by having adult addon price
@@ -4027,15 +3976,9 @@
                 thirdTVPrice: parseFloat(thirdTVPrice || '0'),
                 addonPrices: {
                     sports: parseFloat(sportsPrice || '0'),
-                    sportsPlus: parseFloat(sportsPlusPrice || '0'),
                     movies: parseFloat(moviesPrice || '0'),
-                    arabic: parseFloat(arabicPrice || '0'),
                     adult: isAdultPackage ? parseFloat(adultPackagePrice || '0') : 0
                 },
-                sportsPrice: parseFloat(sportsPrice || '0'),
-                sportsPlusPrice: parseFloat(sportsPlusPrice || '0'),
-                moviesPrice: parseFloat(moviesPrice || '0'),
-                arabicPrice: parseFloat(arabicPrice || '0'),
                 isAdult: isAdultPackage,
                 adultPackagePrice: isAdultPackage ? parseFloat(adultPackagePrice) : 0,
                 // Authentication System Fields - Auto-approve packages
@@ -4071,7 +4014,7 @@
                 showNotification(`✅ Package "${name}" created successfully - ${priceInfo}`, 'success');
                 
                 // Clear form
-                const fields = ['packageName', 'packagePrice', 'packageFeatures', 'secondTVPrice', 'thirdTVPrice', 'sportsPrice', 'sportsPlusPrice', 'moviesPrice', 'arabicPrice', 'adultPackagePrice'];
+                const fields = ['packageName', 'packagePrice', 'packageFeatures', 'secondTVPrice', 'thirdTVPrice', 'sportsPrice', 'moviesPrice'];
                 fields.forEach(field => {
                     const element = document.getElementById(field);
                     if (element) element.value = '';
@@ -4363,15 +4306,6 @@
                     });
                     
                     libraries.push({
-                        id: 'arabic_folder',
-                        name: 'Arabic',
-                        type: 'movie',
-                        count: 0,
-                        isAdult: false,
-                        actualFolder: true
-                    });
-                    
-                    libraries.push({
                         id: 'adult_folder', 
                         name: 'Adult',
                         type: 'movie',
@@ -4381,16 +4315,11 @@
                     });
                 }
                 
-                // Now get actual content counts for movies, arabic and adult folders
+                // Now get actual content counts for movies and adult folders
                 const moviesLibrary = libraries.find(lib => 
                     lib.name.toLowerCase().includes('movie') || 
                     lib.name.toLowerCase().includes('videos') ||
                     (lib.actualFolder && lib.name === 'Movies')
-                );
-                
-                const arabicLibrary = libraries.find(lib => 
-                    lib.name.toLowerCase().includes('arabic') ||
-                    (lib.actualFolder && lib.name === 'Arabic')
                 );
                 
                 const adultLibrary = libraries.find(lib => 
@@ -4413,22 +4342,6 @@
                         console.log(`📊 Real Movies count: ${moviesLibrary.count}`);
                     })
                     .catch(err => console.log('Movies count fetch error:', err));
-                }
-                
-                // Fetch actual content count for Arabic via CORS proxy
-                if (arabicLibrary) {
-                    const arabicContentUrl = `${serverUrl}/library/sections/${arabicLibrary.id}/all?X-Plex-Token=${accessToken}`;
-                    fetch(getProxiedUrl(arabicContentUrl), {})
-                    .then(response => response.text())
-                    .then(xmlText => {
-                        // Count MediaContainer size for actual count
-                        const match = xmlText.match(/size="(\d+)"/);
-                        if (match) {
-                            arabicLibrary.count = parseInt(match[1]);
-                        }
-                        console.log(`📊 Real Arabic count: ${arabicLibrary.count}`);
-                    })
-                    .catch(err => console.log('Arabic count fetch error:', err));
                 }
                 
                 // Fetch actual content count for Adult via CORS proxy
@@ -4474,14 +4387,6 @@
                         note: 'Found in your Plex library'
                     },
                     { 
-                        id: 'arabic_folder', 
-                        name: 'Arabic', 
-                        type: 'movie', 
-                        count: 0, 
-                        isAdult: false,
-                        note: 'Found in your Plex library'
-                    },
-                    { 
                         id: 'adult_folder', 
                         name: 'Adult', 
                         type: 'movie', 
@@ -4497,9 +4402,9 @@
         }
         
         // Fetch and cache actual video content for client interface via CORS proxy
-        async function cacheLibraryContent(serverUrl, accessToken, libraryId, libraryType) {
+        async function cacheLibraryContent(serverUrl, accessToken, libraryId, isAdult) {
             try {
-                console.log(`📦 Caching content from library ${libraryId} (type: ${libraryType}) via CORS proxy...`);
+                console.log(`📦 Caching content from library ${libraryId} via CORS proxy...`);
                 const contentUrl = `${serverUrl}/library/sections/${libraryId}/all?X-Plex-Token=${accessToken}`;
                 const response = await fetch(getProxiedUrl(contentUrl), {
                     headers: { 'Accept': 'application/json' }
@@ -4513,14 +4418,11 @@
                 const data = await response.json();
                 const items = data.MediaContainer?.Metadata || [];
                 
-                const isAdult = libraryType === 'adult';
-                const isArabic = libraryType === 'arabic';
-                
                 const content = items.map((item, index) => ({
                     id: `plex_${libraryId}_${item.ratingKey || index}`,
                     name: item.title,
                     description: item.summary || 'No description available',
-                    category: isAdult ? 'adult' : (isArabic ? 'arabic' : 'movie'),
+                    category: isAdult ? 'adult' : 'movie',
                     isAdult: isAdult,
                     adult: isAdult,
                     type: 'mp4',
@@ -4533,16 +4435,8 @@
                     ratingKey: item.ratingKey
                 }));
                 
-                // Store in localStorage for client to use - use correct cache key
-                let cacheKey;
-                if (isAdult) {
-                    cacheKey = 'plexAdultCache';
-                } else if (isArabic) {
-                    cacheKey = 'plexArabicCache';
-                } else {
-                    cacheKey = 'plexMoviesCache';
-                }
-                
+                // Store in localStorage for client to use
+                const cacheKey = isAdult ? 'plexAdultCache' : 'plexMoviesCache';
                 try {
                     localStorage.setItem(cacheKey, JSON.stringify(content));
                     console.log(`✅ Cached ${content.length} items to ${cacheKey}`);
@@ -4589,34 +4483,24 @@
                     s.title.toLowerCase().includes('movie')
                 );
                 
-                // Find and cache Arabic library
-                const arabicLib = sections.find(s => 
-                    s.title.toLowerCase().includes('arabic')
-                );
-                
                 // Find and cache Adult library
                 const adultLib = sections.find(s => 
                     s.title.toLowerCase().includes('adult')
                 );
                 
-                let moviesCount = 0, arabicCount = 0, adultCount = 0;
+                let moviesCount = 0, adultCount = 0;
                 
                 if (moviesLib) {
-                    const content = await cacheLibraryContent(serverUrl, accessToken, moviesLib.key, 'movies');
+                    const content = await cacheLibraryContent(serverUrl, accessToken, moviesLib.key, false);
                     moviesCount = content.length;
                 }
                 
-                if (arabicLib) {
-                    const content = await cacheLibraryContent(serverUrl, accessToken, arabicLib.key, 'arabic');
-                    arabicCount = content.length;
-                }
-                
                 if (adultLib) {
-                    const content = await cacheLibraryContent(serverUrl, accessToken, adultLib.key, 'adult');
+                    const content = await cacheLibraryContent(serverUrl, accessToken, adultLib.key, true);
                     adultCount = content.length;
                 }
                 
-                showNotification(`✅ Cached ${moviesCount} movies, ${arabicCount} Arabic, and ${adultCount} adult videos for client`, 'success');
+                showNotification(`✅ Cached ${moviesCount} movies and ${adultCount} adult videos for client`, 'success');
                 
             } catch(error) {
                 console.error('Cache error:', error);
@@ -4716,18 +4600,15 @@
         function updateCacheCounts() {
             try {
                 const movies = JSON.parse(localStorage.getItem('plexMoviesCache')) || [];
-                const arabic = JSON.parse(localStorage.getItem('plexArabicCache')) || [];
                 const adult = JSON.parse(localStorage.getItem('plexAdultCache')) || [];
                 
                 document.getElementById('moviesCount').textContent = `Movies cached: ${movies.length}`;
-                document.getElementById('arabicCount').textContent = `Arabic videos cached: ${arabic.length}`;
                 document.getElementById('adultCount').textContent = `Adult videos cached: ${adult.length}`;
             } catch(e) {}
         }
         
         function viewCachedContent() {
             const movies = JSON.parse(localStorage.getItem('plexMoviesCache')) || [];
-            const arabic = JSON.parse(localStorage.getItem('plexArabicCache')) || [];
             const adult = JSON.parse(localStorage.getItem('plexAdultCache')) || [];
             
             let html = '<strong>🎬 Movies (' + movies.length + '):</strong><br>';
@@ -4735,17 +4616,12 @@
                 html += `${i+1}. ${m.name}<br>`;
             });
             
-            html += '<br><strong>🕌 Arabic (' + arabic.length + '):</strong><br>';
-            arabic.forEach((a, i) => {
-                html += `${i+1}. ${a.name}<br>`;
-            });
-            
             html += '<br><strong>🔞 Adult (' + adult.length + '):</strong><br>';
             adult.forEach((a, i) => {
                 html += `${i+1}. ${a.name}<br>`;
             });
             
-            if (movies.length === 0 && arabic.length === 0 && adult.length === 0) {
+            if (movies.length === 0 && adult.length === 0) {
                 html = 'No cached content. Add videos using the forms above.';
             }
             
@@ -4756,11 +4632,7 @@
         function clearCachedContent() {
             if (confirm('Are you sure you want to clear all cached videos?')) {
                 localStorage.removeItem('plexMoviesCache');
-                localStorage.removeItem('plexArabicCache');
                 localStorage.removeItem('plexAdultCache');
-                localStorage.removeItem('plexCachedMovies');
-                localStorage.removeItem('plexCachedArabic');
-                localStorage.removeItem('plexCachedAdult');
                 updateCacheCounts();
                 document.getElementById('cachedContentPreview').style.display = 'none';
                 showNotification('🗑️ All cached content cleared', 'info');
@@ -4770,11 +4642,10 @@
         // Export cache data for local client use
         function exportCacheData() {
             const movies = JSON.parse(localStorage.getItem('plexMoviesCache') || '[]');
-            const arabic = JSON.parse(localStorage.getItem('plexArabicCache') || '[]');
             const adult = JSON.parse(localStorage.getItem('plexAdultCache') || '[]');
             const plexConfig = JSON.parse(localStorage.getItem('plexConfig') || '{}');
             
-            if (movies.length === 0 && arabic.length === 0 && adult.length === 0) {
+            if (movies.length === 0 && adult.length === 0) {
                 showNotification('❌ No cached content to export', 'error');
                 return;
             }
@@ -4784,10 +4655,8 @@
                 exportDate: new Date().toISOString(),
                 plexConfig: plexConfig,
                 plexMoviesCache: movies,
-                plexArabicCache: arabic,
                 plexAdultCache: adult,
                 plexCachedMovies: movies,
-                plexCachedArabic: arabic,
                 plexCachedAdult: adult
             };
             
@@ -4799,7 +4668,7 @@
             a.click();
             URL.revokeObjectURL(url);
             
-            showNotification(`📤 Exported ${movies.length} movies + ${arabic.length} Arabic + ${adult.length} adult videos`, 'success');
+            showNotification(`📤 Exported ${movies.length} movies + ${adult.length} adult videos`, 'success');
         }
         
         // ========== IMPORT FROM PLEX XML ==========
@@ -4810,9 +4679,8 @@
             localUrl: localStorage.getItem('plexLocalUrl') || 'http://127.0.0.1:32400',
             token: localStorage.getItem('plexToken') || '',
             sections: {
-                movies: localStorage.getItem('plexMoviesSection') || '',
-                arabic: localStorage.getItem('plexArabicSection') || '',
-                adult: localStorage.getItem('plexAdultSection') || ''
+                movies: parseInt(localStorage.getItem('plexMoviesSection')) || 26,
+                adult: parseInt(localStorage.getItem('plexAdultSection')) || 21
             }
         };
         
@@ -4862,36 +4730,9 @@
             }
         };
         
-        window.importArabicXML = function() {
-            const xml = document.getElementById('arabicXmlInput').value.trim();
-            if (!xml) {
-                showNotification('❌ Please paste the Arabic XML first', 'error');
-                return;
-            }
-            
-            const videos = parseVideoXML(xml, 'arabic');
-            if (videos.length > 0) {
-                // Save to both keys for compatibility
-                localStorage.setItem('plexArabicCache', JSON.stringify(videos));
-                localStorage.setItem('plexCachedArabic', JSON.stringify(videos));
-                updateCacheCounts();
-                showNotification(`✅ Imported ${videos.length} Arabic videos successfully!`, 'success');
-                document.getElementById('arabicXmlInput').value = '';
-            } else {
-                showNotification('❌ No videos found in XML. Make sure you pasted the complete XML.', 'error');
-            }
-        };
-        
         function parseVideoXML(xmlString, libraryType) {
             const videos = [];
-            let sectionId;
-            if (libraryType === 'movies') {
-                sectionId = PLEX_CONFIG.sections.movies;
-            } else if (libraryType === 'arabic') {
-                sectionId = PLEX_CONFIG.sections.arabic;
-            } else if (libraryType === 'adult') {
-                sectionId = PLEX_CONFIG.sections.adult;
-            }
+            const sectionId = libraryType === 'movies' ? PLEX_CONFIG.sections.movies : PLEX_CONFIG.sections.adult;
             
             try {
                 console.log('🔍 Parsing XML, length:', xmlString.length);
@@ -4976,15 +4817,7 @@
         }
         
         window.copyPlexUrl = function(type) {
-            let section;
-            if (type === 'movies') {
-                section = PLEX_CONFIG.sections.movies;
-            } else if (type === 'arabic') {
-                section = PLEX_CONFIG.sections.arabic;
-            } else if (type === 'adult') {
-                section = PLEX_CONFIG.sections.adult;
-            }
-            
+            const section = type === 'movies' ? PLEX_CONFIG.sections.movies : PLEX_CONFIG.sections.adult;
             // Use localhost since Plex is running locally
             const url = `${PLEX_CONFIG.localUrl}/library/sections/${section}/all?X-Plex-Token=${PLEX_CONFIG.token}`;
             
@@ -5560,8 +5393,8 @@ Network: Always Streaming → Optimized for instant access`;
             const thirdTV = document.getElementById('thirdTVCheckbox');
             const sportsAddon = document.getElementById('sportsAddon');
             const sportsPlusAddon = document.getElementById('sportsPlusAddon');
-            const moviesAddon = document.getElementById('moviesAddon');
             const arabicAddon = document.getElementById('arabicAddon');
+            const moviesAddon = document.getElementById('moviesAddon');
             const adultAddon = document.getElementById('adultAddon');
             
             const customerName = document.getElementById('customerName')?.value;
@@ -5599,8 +5432,8 @@ Network: Always Streaming → Optimized for instant access`;
                 const selectedAddons = [];
                 if (sportsAddon && sportsAddon.checked) selectedAddons.push('Sports');
                 if (sportsPlusAddon && sportsPlusAddon.checked) selectedAddons.push('Sports Plus');
-                if (moviesAddon && moviesAddon.checked) selectedAddons.push('Movies');
                 if (arabicAddon && arabicAddon.checked) selectedAddons.push('Arabic');
+                if (moviesAddon && moviesAddon.checked) selectedAddons.push('Movies');
                 if (adultAddon && adultAddon.checked) selectedAddons.push('Adult Content');
                 
                 if (selectedAddons.length > 0) {
@@ -5609,15 +5442,15 @@ Network: Always Streaming → Optimized for instant access`;
             } else {
                 // If Basic TV is not selected, check if any addons are somehow selected (shouldn't be possible with UI)
                 const addonChecked = (sportsAddon && sportsAddon.checked) || (sportsPlusAddon && sportsPlusAddon.checked) || 
-                                     (moviesAddon && moviesAddon.checked) || (arabicAddon && arabicAddon.checked) ||
+                                     (arabicAddon && arabicAddon.checked) || (moviesAddon && moviesAddon.checked) || 
                                      (adultAddon && adultAddon.checked);
                 if (addonChecked) {
                     showNotification('🚨 CRITICAL ERROR: Addons cannot be selected without Basic TV Package! This should not be possible.', 'error');
                     // Reset all addons as safety measure
                     if (sportsAddon) sportsAddon.checked = false;
                     if (sportsPlusAddon) sportsPlusAddon.checked = false;
-                    if (moviesAddon) moviesAddon.checked = false;
                     if (arabicAddon) arabicAddon.checked = false;
+                    if (moviesAddon) moviesAddon.checked = false;
                     if (adultAddon) adultAddon.checked = false;
                     updateDeviceSelection();
                     return;
@@ -5650,8 +5483,8 @@ Network: Always Streaming → Optimized for instant access`;
             const selectedAddons = [];
             if (document.getElementById('sportsAddon')?.checked) selectedAddons.push('Sports Package');
             if (document.getElementById('sportsPlusAddon')?.checked) selectedAddons.push('Sports Plus Package');
-            if (document.getElementById('moviesAddon')?.checked) selectedAddons.push('Movies Package');
             if (document.getElementById('arabicAddon')?.checked) selectedAddons.push('Arabic Package');
+            if (document.getElementById('moviesAddon')?.checked) selectedAddons.push('Movies Package');
             if (document.getElementById('adultAddon')?.checked) selectedAddons.push('Adult Content Package');
             
             // Calculate total price and duration
@@ -5878,21 +5711,21 @@ Network: Always Streaming → Optimized for instant access`;
             const basicTV = document.getElementById('basicTVCheckbox');
             const sportsAddon = document.getElementById('sportsAddon');
             const sportsPlusAddon = document.getElementById('sportsPlusAddon');
-            const moviesAddon = document.getElementById('moviesAddon');
             const arabicAddon = document.getElementById('arabicAddon');
+            const moviesAddon = document.getElementById('moviesAddon');
             const sportsAddonContainer = document.getElementById('sportsAddonContainer');
             const sportsPlusAddonContainer = document.getElementById('sportsPlusAddonContainer');
-            const moviesAddonContainer = document.getElementById('moviesAddonContainer');
             const arabicAddonContainer = document.getElementById('arabicAddonContainer');
+            const moviesAddonContainer = document.getElementById('moviesAddonContainer');
             const sportsAddonLabel = document.getElementById('sportsAddonLabel');
             const sportsPlusAddonLabel = document.getElementById('sportsPlusAddonLabel');
-            const moviesAddonLabel = document.getElementById('moviesAddonLabel');
             const arabicAddonLabel = document.getElementById('arabicAddonLabel');
+            const moviesAddonLabel = document.getElementById('moviesAddonLabel');
             const addonStatusMessage = document.getElementById('addonStatusMessage');
             
             if (!basicTV.checked) {
                 // Disable regular addons when Basic TV is not selected (adult has separate logic)
-                [sportsAddon, sportsPlusAddon, moviesAddon, arabicAddon].forEach(checkbox => {
+                [sportsAddon, sportsPlusAddon, arabicAddon, moviesAddon].forEach(checkbox => {
                     if (checkbox) {
                         checkbox.disabled = true;
                         checkbox.checked = false;
@@ -5900,10 +5733,10 @@ Network: Always Streaming → Optimized for instant access`;
                 });
                 
                 // Update labels and containers
-                const labels = [sportsAddonLabel, sportsPlusAddonLabel, moviesAddonLabel, arabicAddonLabel];
-                const containers = [sportsAddonContainer, sportsPlusAddonContainer, moviesAddonContainer, arabicAddonContainer];
+                const labels = [sportsAddonLabel, sportsPlusAddonLabel, arabicAddonLabel, moviesAddonLabel];
+                const containers = [sportsAddonContainer, sportsPlusAddonContainer, arabicAddonContainer, moviesAddonContainer];
                 
-                const labelTextsLocked = ['🔒 Sports Package - LOCKED', '🔒 Sports Plus Package - LOCKED', '🔒 Movies Package - LOCKED', '🔒 Arabic Package - LOCKED'];
+                const labelTextsLocked = ['🔒 Sports Package - LOCKED', '🏆 Sports Plus Package - LOCKED', '🕌 Arabic Package - LOCKED', '🔒 Movies Package - LOCKED'];
                 
                 labels.forEach((label, index) => {
                     if (label) {
@@ -5924,17 +5757,17 @@ Network: Always Streaming → Optimized for instant access`;
                 }
             } else {
                 // Enable regular addons when Basic TV is selected (adult has separate logic)
-                [sportsAddon, sportsPlusAddon, moviesAddon, arabicAddon].forEach(checkbox => {
+                [sportsAddon, sportsPlusAddon, arabicAddon, moviesAddon].forEach(checkbox => {
                     if (checkbox) {
                         checkbox.disabled = false;
                     }
                 });
                 
                 // Update labels and containers
-                const labels = [sportsAddonLabel, sportsPlusAddonLabel, moviesAddonLabel, arabicAddonLabel];
-                const containers = [sportsAddonContainer, sportsPlusAddonContainer, moviesAddonContainer, arabicAddonContainer];
+                const labels = [sportsAddonLabel, sportsPlusAddonLabel, arabicAddonLabel, moviesAddonLabel];
+                const containers = [sportsAddonContainer, sportsPlusAddonContainer, arabicAddonContainer, moviesAddonContainer];
                 
-                const labelTextsUnlocked = ['🏆 Sports Package', '🏆 Sports Plus Package', '🎬 Movies Package', '🕌 Arabic Package'];
+                const labelTextsUnlocked = ['⚽ Sports Package', '🏆 Sports Plus Package', '🕌 Arabic Package', '🎬 Movies Package'];
                 
                 labels.forEach((label, index) => {
                     if (label) {
@@ -6083,8 +5916,8 @@ Network: Always Streaming → Optimized for instant access`;
             const thirdTV = document.getElementById('thirdTVCheckbox')?.checked;
             const sportsAddon = document.getElementById('sportsAddon')?.checked;
             const sportsPlusAddon = document.getElementById('sportsPlusAddon')?.checked;
-            const moviesAddon = document.getElementById('moviesAddon')?.checked;
             const arabicAddon = document.getElementById('arabicAddon')?.checked;
+            const moviesAddon = document.getElementById('moviesAddon')?.checked;
             const adultAddon = document.getElementById('adultAddon')?.checked;
             
             // Get actual package prices from created packages
@@ -6094,39 +5927,29 @@ Network: Always Streaming → Optimized for instant access`;
             let thirdTVPrice = 10; // Default fallback
             const addonPrices = {
                 sports: 8,
-                sportsPlus: 8,
-                movies: 8,
+                sports_plus: 10,
                 arabic: 8,
+                movies: 8,
                 adult: 0
             };
             
-            // Get package prices from adminPackages
+            // Get adult packages from adminPackages for adult addon pricing
+            let adultPrice = 0;
             try {
                 const adminPackages = JSON.parse(localStorage.getItem('adminPackages')) || [];
-                
-                // Find each package by name and get its price
-                const sportsPkg = adminPackages.find(p => p.name && p.name.toLowerCase().includes('sport') && !p.name.toLowerCase().includes('plus'));
-                const sportsPlusPkg = adminPackages.find(p => p.name && p.name.toLowerCase().includes('sports plus'));
-                const moviesPkg = adminPackages.find(p => p.name && p.name.toLowerCase().includes('movie') && !p.isAdult);
-                const arabicPkg = adminPackages.find(p => p.name && p.name.toLowerCase().includes('arabic'));
-                const adultPkg = adminPackages.find(p => p.isAdult || (p.name && p.name.toLowerCase().includes('adult')));
-                
-                if (sportsPkg) addonPrices.sports = sportsPkg.sportsPrice || sportsPkg.addonPrices?.sports || sportsPkg.price || 8;
-                if (sportsPlusPkg) addonPrices.sportsPlus = sportsPlusPkg.sportsPlusPrice || sportsPlusPkg.addonPrices?.sportsPlus || sportsPlusPkg.price || 8;
-                if (moviesPkg) addonPrices.movies = moviesPkg.moviesPrice || moviesPkg.addonPrices?.movies || moviesPkg.price || 8;
-                if (arabicPkg) addonPrices.arabic = arabicPkg.arabicPrice || arabicPkg.addonPrices?.arabic || arabicPkg.price || 8;
-                if (adultPkg) addonPrices.adult = adultPkg.adultPackagePrice || adultPkg.addonPrices?.adult || adultPkg.price || 0;
-                
-                // Get base prices from first non-adult package
-                const basePkg = adminPackages.find(p => !p.isAdult && p.name && !p.name.toLowerCase().includes('adult'));
-                if (basePkg) {
-                    basePrice = basePkg.price || basePrice;
-                    secondTVPrice = basePkg.secondTVPrice || secondTVPrice;
-                    thirdTVPrice = basePkg.thirdTVPrice || thirdTVPrice;
+                const adultPackages = adminPackages.filter(pkg => 
+                    pkg.isAdult === true || 
+                    pkg.name.toLowerCase().includes('adult') || 
+                    pkg.name.toLowerCase().includes('xxx') ||
+                    (pkg.adultPackagePrice && pkg.adultPackagePrice > 0)
+                );
+                if (adultPackages.length > 0) {
+                    adultPrice = adultPackages[0].adultPackagePrice || 0;
                 }
             } catch (e) {
-                console.error('Error loading package prices:', e);
+                console.error('Error loading adult packages for pricing:', e);
             }
+            addonPrices.adult = adultPrice;
             
             // Use the first available package prices, or fall back to defaults
             if (packages.length > 0) {
@@ -6134,8 +5957,25 @@ Network: Always Streaming → Optimized for instant access`;
                 basePrice = firstPackage.price || basePrice;
                 secondTVPrice = firstPackage.secondTVPrice || secondTVPrice;
                 thirdTVPrice = firstPackage.thirdTVPrice || thirdTVPrice;
+                
+                // Use package-specific addon prices if available
+                if (firstPackage.sportsPrice) addonPrices.sports = firstPackage.sportsPrice;
+                if (firstPackage.sportsPlusPrice) addonPrices.sports_plus = firstPackage.sportsPlusPrice;
+                if (firstPackage.arabicPrice) addonPrices.arabic = firstPackage.arabicPrice;
+                if (firstPackage.moviesPrice) addonPrices.movies = firstPackage.moviesPrice;
             }
-
+            
+            // Also check input fields for custom prices
+            const sportsPriceInput = document.getElementById('sportsPrice');
+            const sportsPlusPriceInput = document.getElementById('sportsPlusPrice');
+            const arabicPriceInput = document.getElementById('arabicPrice');
+            const moviesPriceInput = document.getElementById('moviesPrice');
+            
+            if (sportsPriceInput && sportsPriceInput.value) addonPrices.sports = parseFloat(sportsPriceInput.value);
+            if (sportsPlusPriceInput && sportsPlusPriceInput.value) addonPrices.sports_plus = parseFloat(sportsPlusPriceInput.value);
+            if (arabicPriceInput && arabicPriceInput.value) addonPrices.arabic = parseFloat(arabicPriceInput.value);
+            if (moviesPriceInput && moviesPriceInput.value) addonPrices.movies = parseFloat(moviesPriceInput.value);
+            
             if (basicTV) {
                 monthlyPrice += basePrice;
             }
@@ -6149,13 +5989,13 @@ Network: Always Streaming → Optimized for instant access`;
                 monthlyPrice += addonPrices.sports;
             }
             if (sportsPlusAddon) {
-                monthlyPrice += addonPrices.sportsPlus;
-            }
-            if (moviesAddon) {
-                monthlyPrice += addonPrices.movies;
+                monthlyPrice += addonPrices.sports_plus;
             }
             if (arabicAddon) {
                 monthlyPrice += addonPrices.arabic;
+            }
+            if (moviesAddon) {
+                monthlyPrice += addonPrices.movies;
             }
             if (adultAddon) {
                 monthlyPrice += addonPrices.adult;
@@ -6258,32 +6098,6 @@ Network: Always Streaming → Optimized for instant access`;
             `;
         }
         
-        // Delete customer function
-        window.deleteCustomer = function(customerId) {
-            if (confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
-                const customers = window.customers || [];
-                const customerIndex = customers.findIndex(c => c.id === customerId);
-                if (customerIndex > -1) {
-                    const deletedCustomer = customers[customerIndex];
-                    customers.splice(customerIndex, 1);
-                    localStorage.setItem('adminCustomers', JSON.stringify(customers));
-                    
-                    // Also update global iptvCustomers
-                    const globalCustomers = JSON.parse(localStorage.getItem('iptvCustomers')) || [];
-                    const globalIndex = globalCustomers.findIndex(c => c.id === customerId);
-                    if (globalIndex > -1) {
-                        globalCustomers.splice(globalIndex, 1);
-                        localStorage.setItem('iptvCustomers', JSON.stringify(globalCustomers));
-                    }
-                    
-                    window.customers = customers;
-                    updateCustomerListTable();
-                    updateCustomerStats();
-                    showNotification('🗑️ Customer "' + deletedCustomer.name + '" deleted successfully', 'success');
-                }
-            }
-        }
-        
         function clearCustomerForm() {
             const fields = ['customerName', 'customerPhone', 'customerPassword', 'customerMacAddress', 'customerAdultPassword'];
             fields.forEach(field => {
@@ -6291,7 +6105,7 @@ Network: Always Streaming → Optimized for instant access`;
                 if (element) element.value = '';
             });
             
-            const checkboxes = ['basicTVCheckbox', 'secondTVCheckbox', 'thirdTVCheckbox', 'sportsAddon', 'sportsPlusAddon', 'moviesAddon', 'arabicAddon', 'adultAddon'];
+            const checkboxes = ['basicTVCheckbox', 'secondTVCheckbox', 'thirdTVCheckbox', 'sportsAddon', 'sportsPlusAddon', 'arabicAddon', 'moviesAddon', 'adultAddon'];
             checkboxes.forEach(id => {
                 const checkbox = document.getElementById(id);
                 if (checkbox) {
@@ -6550,20 +6364,20 @@ Network: Always Streaming → Optimized for instant access`;
                                     
                                     <!-- Sports Plus Addon -->
                                     <label id="sportsPlusAddonContainer" style="color: rgba(255,255,255,0.3); display: flex; align-items: center; cursor: not-allowed; margin-bottom: 8px; opacity: 0.6;">
-                                        <input type="checkbox" name="customerAddons" value="sportsPlus" id="sportsPlusAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="updateTotalPrice()" disabled>
-                                        <span id="sportsPlusAddonLabel">🔒 Sports Plus Package - LOCKED</span>
+                                        <input type="checkbox" name="customerAddons" value="sports_plus" id="sportsPlusAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="updateTotalPrice()" disabled>
+                                        <span id="sportsPlusAddonLabel">🏆 Sports Plus Package - LOCKED</span>
+                                    </label>
+                                    
+                                    <!-- Arabic Addon -->
+                                    <label id="arabicAddonContainer" style="color: rgba(255,255,255,0.3); display: flex; align-items: center; cursor: not-allowed; margin-bottom: 8px; opacity: 0.6;">
+                                        <input type="checkbox" name="customerAddons" value="arabic" id="arabicAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="updateTotalPrice()" disabled>
+                                        <span id="arabicAddonLabel">🕌 Arabic Package - LOCKED</span>
                                     </label>
                                     
                                     <!-- Movies Addon -->
                                     <label id="moviesAddonContainer" style="color: rgba(255,255,255,0.3); display: flex; align-items: center; cursor: not-allowed; margin-bottom: 8px; opacity: 0.6;">
                                         <input type="checkbox" name="customerAddons" value="movies" id="moviesAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="updateTotalPrice()" disabled>
                                         <span id="moviesAddonLabel">🔒 Movies Package - LOCKED</span>
-                                    </label>
-                                    
-                                    <!-- Arabic Addon -->
-                                    <label id="arabicAddonContainer" style="color: rgba(255,255,255,0.3); display: flex; align-items: center; cursor: not-allowed; margin-bottom: 8px; opacity: 0.6;">
-                                        <input type="checkbox" name="customerAddons" value="arabic" id="arabicAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="updateTotalPrice()" disabled>
-                                        <span id="arabicAddonLabel">🔒 Arabic Package - LOCKED</span>
                                     </label>
                                     
 
@@ -6710,7 +6524,7 @@ Network: Always Streaming → Optimized for instant access`;
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                                 <div>
                                     <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Price ($):</label>
-                                    <input type="number" id="packagePrice" placeholder="Enter price" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                    <input type="number" id="packagePrice" placeholder="29.99" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
                                 </div>
                                 <div>
                                     <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Duration:</label>
@@ -6729,11 +6543,11 @@ Network: Always Streaming → Optimized for instant access`;
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                                     <div>
                                         <label style="color: rgba(255,255,255,0.7); font-size: 13px;">2nd TV Price ($):</label>
-                                        <input type="number" id="secondTVPrice" placeholder="Enter price" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                        <input type="number" id="secondTVPrice" placeholder="15.00" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
                                     </div>
                                     <div>
                                         <label style="color: rgba(255,255,255,0.7); font-size: 13px;">3rd TV Price ($):</label>
-                                        <input type="number" id="thirdTVPrice" placeholder="Enter price" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                        <input type="number" id="thirdTVPrice" placeholder="10.00" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
                                     </div>
                                 </div>
                             </div>
@@ -6744,24 +6558,24 @@ Network: Always Streaming → Optimized for instant access`;
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                                     <div>
                                         <label style="color: rgba(255,255,255,0.7); font-size: 13px;">Sports Package ($):</label>
-                                        <input type="number" id="sportsPrice" placeholder="Enter price" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                        <input type="number" id="sportsPrice" placeholder="8.00" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
                                     </div>
                                     <div>
                                         <label style="color: rgba(255,255,255,0.7); font-size: 13px;">Sports Plus Package ($):</label>
-                                        <input type="number" id="sportsPlusPrice" placeholder="Enter price" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
-                                    </div>
-                                    <div>
-                                        <label style="color: rgba(255,255,255,0.7); font-size: 13px;">Movies Package ($):</label>
-                                        <input type="number" id="moviesPrice" placeholder="Enter price" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                        <input type="number" id="sportsPlusPrice" placeholder="10.00" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
                                     </div>
                                     <div>
                                         <label style="color: rgba(255,255,255,0.7); font-size: 13px;">Arabic Package ($):</label>
-                                        <input type="number" id="arabicPrice" placeholder="Enter price" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                        <input type="number" id="arabicPrice" placeholder="8.00" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                    </div>
+                                    <div>
+                                        <label style="color: rgba(255,255,255,0.7); font-size: 13px;">Movies Package ($):</label>
+                                        <input type="number" id="moviesPrice" placeholder="8.00" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
                                     </div>
 
                                     <div>
                                         <label style="color: rgba(255,71,87,0.8); font-size: 13px;">🔞 Adult Package ($):</label>
-                                        <input type="number" id="adultPackagePrice" placeholder="Enter price" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,71,87,0.3); border-radius: 6px; color: white;">
+                                        <input type="number" id="adultPackagePrice" placeholder="19.99" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,71,87,0.3); border-radius: 6px; color: white;">
                                     </div>
                                 </div>
                                 <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 8px;">
@@ -6877,11 +6691,9 @@ Network: Always Streaming → Optimized for instant access`;
             const plexServerUrl = localStorage.getItem('plexServerUrl') || '';
             const plexLocalUrl = localStorage.getItem('plexLocalUrl') || 'http://127.0.0.1:32400';
             const plexToken = localStorage.getItem('plexToken') || '';
-            const plexMoviesSection = localStorage.getItem('plexMoviesSection') || '';
-            const plexArabicSection = localStorage.getItem('plexArabicSection') || '';
-            const plexAdultSection = localStorage.getItem('plexAdultSection') || '';
+            const plexMoviesSection = localStorage.getItem('plexMoviesSection') || '26';
+            const plexAdultSection = localStorage.getItem('plexAdultSection') || '21';
             const cachedMovies = JSON.parse(localStorage.getItem('plexCachedMovies') || '[]');
-            const cachedArabic = JSON.parse(localStorage.getItem('plexCachedArabic') || '[]');
             const cachedAdult = JSON.parse(localStorage.getItem('plexCachedAdult') || '[]');
             
             mainContent.innerHTML = `
@@ -6911,18 +6723,14 @@ Network: Always Streaming → Optimized for instant access`;
                                     <button onclick="generatePlexToken()" class="btn btn-warning" style="padding: 12px 20px;">🔑 Generate</button>
                                 </div>
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                                 <div>
                                     <label style="color: rgba(255,255,255,0.8); font-size: 14px; display: block; margin-bottom: 5px;">Movies Section ID:</label>
-                                    <input type="text" id="plexMoviesSection" value="${plexMoviesSection}" placeholder="Enter ID" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
-                                </div>
-                                <div>
-                                    <label style="color: rgba(255,255,255,0.8); font-size: 14px; display: block; margin-bottom: 5px;">Arabic Section ID:</label>
-                                    <input type="text" id="plexArabicSection" value="${plexArabicSection}" placeholder="Enter ID" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
+                                    <input type="text" id="plexMoviesSection" value="${plexMoviesSection}" placeholder="26" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
                                 </div>
                                 <div>
                                     <label style="color: rgba(255,255,255,0.8); font-size: 14px; display: block; margin-bottom: 5px;">Adult Section ID:</label>
-                                    <input type="text" id="plexAdultSection" value="${plexAdultSection}" placeholder="Enter ID" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
+                                    <input type="text" id="plexAdultSection" value="${plexAdultSection}" placeholder="21" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
                                 </div>
                             </div>
                             <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
@@ -6949,10 +6757,6 @@ Network: Always Streaming → Optimized for instant access`;
                                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                                     <span style="color: rgba(255,255,255,0.8);">Cached Movies:</span>
                                     <span style="color: #2196f3; font-weight: 600;">${cachedMovies.length} videos</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                    <span style="color: rgba(255,255,255,0.8);">Cached Arabic:</span>
-                                    <span style="color: #9c27b0; font-weight: 600;">${cachedArabic.length} videos</span>
                                 </div>
                                 <div style="display: flex; justify-content: space-between;">
                                     <span style="color: rgba(255,255,255,0.8);">Cached Adult:</span>
@@ -6983,21 +6787,6 @@ Network: Always Streaming → Optimized for instant access`;
                             </div>
                             <button onclick="importMoviesXML()" class="btn btn-primary" style="width: 100%; padding: 12px;">📥 Import Movies</button>
                             <div id="moviesCount" style="margin-top: 10px; color: #4caf50; font-size: 13px; font-weight: bold;">Movies cached: ${cachedMovies.length}</div>
-                        </div>
-                        
-                        <!-- Arabic Import -->
-                        <div style="background: rgba(156, 39, 176, 0.1); padding: 20px; border-radius: 8px; border: 1px solid #9c27b0;">
-                            <h4 style="color: #9c27b0; margin-bottom: 15px;">🕌 Arabic Library</h4>
-                            <div style="margin-bottom: 15px;">
-                                <button onclick="copyPlexUrl('arabic')" class="btn" style="width: 100%; margin-bottom: 10px; padding: 12px; background: #9c27b0; color: white;">📋 Copy Arabic URL</button>
-                                <p style="color: #888; font-size: 12px;">1. Click button → 2. Open URL in browser → 3. Select All (Ctrl+A) → 4. Copy (Ctrl+C) → 5. Paste below</p>
-                            </div>
-                            <div style="margin-bottom: 15px;">
-                                <label style="color: #ccc; font-size: 13px;">Paste Arabic XML:</label>
-                                <textarea id="arabicXmlInput" placeholder="Paste the entire XML content here..." style="width: 100%; height: 120px; padding: 10px; border-radius: 6px; border: 1px solid #444; background: #1a1a2e; color: white; font-size: 12px; margin-top: 5px;"></textarea>
-                            </div>
-                            <button onclick="importArabicXML()" class="btn" style="width: 100%; padding: 12px; background: #9c27b0; color: white;">📥 Import Arabic Videos</button>
-                            <div id="arabicCount" style="margin-top: 10px; color: #4caf50; font-size: 13px; font-weight: bold;">Arabic videos cached: ${cachedArabic.length}</div>
                         </div>
                         
                         <!-- Adult Import -->
@@ -7039,9 +6828,9 @@ Network: Always Streaming → Optimized for instant access`;
             const serverUrl = document.getElementById('plexServerUrl')?.value || '';
             const localUrl = document.getElementById('plexLocalUrl')?.value || 'http://127.0.0.1:32400';
             const token = document.getElementById('plexToken')?.value || '';
-            const moviesSection = document.getElementById('plexMoviesSection')?.value || '';
-            const arabicSection = document.getElementById('plexArabicSection')?.value || '';
-            const adultSection = document.getElementById('plexAdultSection')?.value || '';
+            const moviesSection = document.getElementById('plexMoviesSection')?.value || '5';
+            const arabicSection = document.getElementById('plexArabicSection')?.value || '7';
+            const adultSection = document.getElementById('plexAdultSection')?.value || '4';
             
             localStorage.setItem('plexServerUrl', serverUrl);
             localStorage.setItem('plexLocalUrl', localUrl);
@@ -7055,12 +6844,14 @@ Network: Always Streaming → Optimized for instant access`;
                 window.PLEX_CONFIG.serverUrl = serverUrl;
                 window.PLEX_CONFIG.localUrl = localUrl;
                 window.PLEX_CONFIG.token = token;
-                window.PLEX_CONFIG.sections.movies = moviesSection;
-                window.PLEX_CONFIG.sections.arabic = arabicSection;
-                window.PLEX_CONFIG.sections.adult = adultSection;
+                window.PLEX_CONFIG.sections = {
+                    movies: parseInt(moviesSection),
+                    arabic: parseInt(arabicSection),
+                    adult: parseInt(adultSection)
+                };
             }
             
-            showNotification('✅ Plex settings saved! Local URL: ' + localUrl, 'success');
+            showNotification('✅ Plex settings saved! Movies: ' + moviesSection + ', Arabic: ' + arabicSection + ', Adult: ' + adultSection, 'success');
         };
         
         // Update cached content counts
@@ -7155,12 +6946,10 @@ Network: Always Streaming → Optimized for instant access`;
             document.getElementById('packageDuration').value = pkg.duration;
             document.getElementById('secondTVPrice').value = pkg.secondTVPrice || '';
             document.getElementById('thirdTVPrice').value = pkg.thirdTVPrice || '';
-            document.getElementById('sportsPrice').value = pkg.sportsPrice || pkg.addonPrices?.sports || '';
-            document.getElementById('sportsPlusPrice').value = pkg.sportsPlusPrice || pkg.addonPrices?.sportsPlus || '';
-            document.getElementById('moviesPrice').value = pkg.moviesPrice || pkg.addonPrices?.movies || '';
-            document.getElementById('arabicPrice').value = pkg.arabicPrice || pkg.addonPrices?.arabic || '';
+            document.getElementById('sportsPrice').value = pkg.sportsPrice || '';
+            document.getElementById('moviesPrice').value = pkg.moviesPrice || '';
             document.getElementById('packageFeatures').value = pkg.features || '';
-            document.getElementById('adultPackagePrice').value = pkg.adultPackagePrice || pkg.price || '';
+            document.getElementById('adultPackagePrice').value = pkg.adultPackagePrice || '';
             
             // Change button to update mode
             document.getElementById('createPackageBtn').textContent = '💾 Update Package';
@@ -7254,7 +7043,7 @@ Network: Always Streaming → Optimized for instant access`;
 
         // Clear package form
         window.clearPackageForm = function() {
-            const fields = ['packageName', 'packagePrice', 'secondTVPrice', 'thirdTVPrice', 'sportsPrice', 'sportsPlusPrice', 'moviesPrice', 'arabicPrice', 'adultPackagePrice', 'packageFeatures'];
+            const fields = ['packageName', 'packagePrice', 'secondTVPrice', 'thirdTVPrice', 'sportsPrice', 'moviesPrice', 'adultPackagePrice', 'packageFeatures'];
             fields.forEach(field => {
                 const element = document.getElementById(field);
                 if (element) element.value = '';
@@ -7262,6 +7051,7 @@ Network: Always Streaming → Optimized for instant access`;
             
             document.getElementById('packageDuration').value = '1 Month';
         }
+        };
 
         // Device Management Section
         window.showDevicesSection = function() {
@@ -8406,21 +8196,21 @@ Network: Always Streaming → Optimized for instant access`;
             // Reset addon checkboxes first
             const sportsAddonEl = document.getElementById('sportsAddon');
             const sportsPlusAddonEl = document.getElementById('sportsPlusAddon');
-            const moviesAddonEl = document.getElementById('moviesAddon');
             const arabicAddonEl = document.getElementById('arabicAddon');
+            const moviesAddonEl = document.getElementById('moviesAddon');
             const adultAddonEl = document.getElementById('adultAddon');
             
             if (sportsAddonEl) sportsAddonEl.checked = false;
             if (sportsPlusAddonEl) sportsPlusAddonEl.checked = false;
-            if (moviesAddonEl) moviesAddonEl.checked = false;
             if (arabicAddonEl) arabicAddonEl.checked = false;
+            if (moviesAddonEl) moviesAddonEl.checked = false;
             if (adultAddonEl) adultAddonEl.checked = false;
             
             // Check for various formats: "sports", "Sports Package", "Sports", etc.
             if (sportsAddonEl) sportsAddonEl.checked = addonsString.includes('sport') && !addonsString.includes('plus');
-            if (sportsPlusAddonEl) sportsPlusAddonEl.checked = addonsString.includes('Sports Plus') || addonsString.includes('sports plus');
-            if (moviesAddonEl) moviesAddonEl.checked = addonsString.includes('movie');
+            if (sportsPlusAddonEl) sportsPlusAddonEl.checked = addonsString.includes('sports plus') || addonsString.includes('sports_plus');
             if (arabicAddonEl) arabicAddonEl.checked = addonsString.includes('arabic');
+            if (moviesAddonEl) moviesAddonEl.checked = addonsString.includes('movie');
             if (adultAddonEl) adultAddonEl.checked = addonsString.includes('adult');
             
             // Update device selection and price
@@ -8457,6 +8247,42 @@ Network: Always Streaming → Optimized for instant access`;
             }, 100);
             
             showNotification(`✏️ Loading edit form for ${customer.name}`, 'info');
+        }
+        
+        // Delete customer
+        window.deleteCustomer = function(customerId) {
+            if (!confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
+                return;
+            }
+            
+            console.log('Delete button clicked for customer:', customerId);
+            const customers = window.customers || [];
+            const customerIndex = customers.findIndex(c => c.id === customerId);
+            
+            if (customerIndex === -1) {
+                showNotification('❌ Customer not found', 'error');
+                return;
+            }
+            
+            const customerName = customers[customerIndex].name;
+            
+            // Remove customer from array
+            customers.splice(customerIndex, 1);
+            window.customers = customers;
+            
+            // Save to localStorage
+            localStorage.setItem('adminCustomers', JSON.stringify(customers));
+            
+            // Also update iptvCustomers
+            const globalCustomers = JSON.parse(localStorage.getItem('iptvCustomers')) || [];
+            const filteredGlobal = globalCustomers.filter(c => c.id !== customerId);
+            localStorage.setItem('iptvCustomers', JSON.stringify(filteredGlobal));
+            
+            showNotification(`✅ Customer "${customerName}" deleted successfully`, 'success');
+            
+            // Refresh the customer list
+            updateCustomerListTable();
+            updateCustomerStats();
         }
         
         // Load customer data for editing
@@ -8541,36 +8367,28 @@ Network: Always Streaming → Optimized for instant access`;
             
             // Clear all addon checkboxes first
             const sportsAddonEl2 = document.getElementById('sportsAddon');
-            const sportsPlusAddonEl2 = document.getElementById('sportsPlusAddon');
             const moviesAddonEl2 = document.getElementById('moviesAddon');
-            const arabicAddonEl2 = document.getElementById('arabicAddon');
             const adultAddonEl2 = document.getElementById('adultAddon');
             
             if (sportsAddonEl2) sportsAddonEl2.checked = false;
-            if (sportsPlusAddonEl2) sportsPlusAddonEl2.checked = false;
             if (moviesAddonEl2) moviesAddonEl2.checked = false;
-            if (arabicAddonEl2) arabicAddonEl2.checked = false;
             if (adultAddonEl2) adultAddonEl2.checked = false;
             
             // Set checkboxes based on customer's actual addon selections
             // Check for various formats: "sports", "Sports Package", "Sports", etc.
             // More robust checking - use exact matches for known package names
-            const sportsMatch = (addonsString.includes('sports') || addonsString.includes('sport')) && !addonsString.includes('plus');
-            const sportsPlusMatch = addonsString.includes('Sports Plus') || addonsString.includes('sports plus');
+            const sportsMatch = addonsString.includes('sports') || addonsString.includes('sport');
             const moviesMatch = addonsString.includes('movies') || addonsString.includes('movie');
-            const arabicMatch = addonsString.includes('arabic');
             const adultMatch = addonsString.includes('adult');
             
             if (sportsAddonEl2) sportsAddonEl2.checked = sportsMatch;
-            if (sportsPlusAddonEl2) sportsPlusAddonEl2.checked = sportsPlusMatch;
             if (moviesAddonEl2) moviesAddonEl2.checked = moviesMatch;
-            if (arabicAddonEl2) arabicAddonEl2.checked = arabicMatch;
             if (adultAddonEl2) adultAddonEl2.checked = adultMatch;
             
             // Debug: Log what's being checked
             console.log('🔍 Debug - Customer addons:', customer.addons);
             console.log('🔍 Debug - addonsString:', addonsString);
-            console.log('🔍 Debug - sportsMatch:', sportsMatch, 'sportsPlusMatch:', sportsPlusMatch, 'moviesMatch:', moviesMatch, 'arabicMatch:', arabicMatch, 'adultMatch:', adultMatch);
+            console.log('🔍 Debug - sportsMatch:', sportsMatch, 'moviesMatch:', moviesMatch, 'adultMatch:', adultMatch);
             
             // Enable/disable addon checkboxes based on basic TV selection
             updateAdultAddonAvailability();
