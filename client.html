@@ -405,7 +405,7 @@
                                 permissions: ['basic_access'], // Customer has basic access
                                 plan: customer.plan,
                                 addons: customer.addons,
-                                adultPassword: customer.adultPassword || '112233'
+                                adultPassword: (customer.adultPassword && customer.adultPassword.trim() !== '') ? customer.adultPassword : '112233'
                             };
                         }
                     }
@@ -2427,6 +2427,27 @@
         </div>
     </div>
     
+    <!-- Arabic Content Modal -->
+    <div class="adult-modal" id="arabicModal">
+        <div class="adult-content">
+            <div class="adult-header">
+                <h2 class="adult-title">🕌</h2>
+                <p class="adult-warning">Arabic Content Verification Required</p>
+                <p class="adult-warning">Enter password to access Arabic content</p>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 10px; color: var(--text-primary);">Enter Password:</label>
+                <input type="password" class="adult-input" id="arabicPassword" maxlength="6" placeholder="••••••">
+            </div>
+            
+            <div class="adult-buttons">
+                <button class="adult-btn confirm" onclick="verifyArabicPassword()">✅ Verify</button>
+                <button class="adult-btn cancel" onclick="hideArabicModal()">❌ Cancel</button>
+            </div>
+        </div>
+    </div>
+    
     <!-- Change Adult Password Modal -->
     <div class="adult-modal" id="changeAdultPasswordModal">
         <div class="adult-content">
@@ -2508,6 +2529,7 @@
         let currentSource = 'live';
         let currentCategory = 'all';
         let adultUnlocked = false;
+        let arabicUnlocked = false;
         let currentContent = null;
         
         // Content Data - defined early to prevent ReferenceError
@@ -4258,10 +4280,11 @@
                 }
             }
             
-            // Show/hide change password button based on login status
+            // Show/hide change password button based on login status or adult unlock
             const changePasswordBtn = document.getElementById('changePasswordBtn');
             if (changePasswordBtn) {
-                if (isLoggedIn) {
+                // Show button when logged in OR when adult content is unlocked
+                if (isLoggedIn || adultUnlocked) {
                     changePasswordBtn.classList.add('show');
                 } else {
                     changePasswordBtn.classList.remove('show');
@@ -4628,16 +4651,21 @@
             const password = document.getElementById('adultPassword').value;
             
             // Get customer's adult password (if logged in) or use default
-            let correctPassword = '112233'; // Default password
+            // ALWAYS allow 112233 as default - this is the master default
+            let correctPassword = '112233';
             const customPassword = localStorage.getItem('customAdultPassword');
-            if (customPassword) {
+            
+            // Only use custom password if it's not empty
+            if (customPassword && customPassword.trim() !== '') {
                 correctPassword = customPassword;
-            } else if (currentUser && currentUser.adultPassword) {
+            } else if (currentUser && currentUser.adultPassword && currentUser.adultPassword.trim() !== '' && currentUser.adultPassword !== '112233') {
                 correctPassword = currentUser.adultPassword;
             }
             
             // Also check master password for admin access
             const masterPassword = passwordManager.passwords.masterAdult;
+            
+            console.log('🔐 Password check:', { input: password, correct: correctPassword, master: masterPassword, custom: customPassword, userPass: currentUser?.adultPassword });
             
             if (password === correctPassword || password === masterPassword) {
                 adultUnlocked = true;
@@ -4669,9 +4697,14 @@
             const newPass = document.getElementById('newAdultPass').value;
             const confirm = document.getElementById('confirmAdultPass').value;
             
-            // Get current password
+            // Get current password - default to 112233 if not set
             let correctPassword = '112233';
-            if (currentUser && currentUser.adultPassword) {
+            const customPassword = localStorage.getItem('customAdultPassword');
+            
+            // Check localStorage first, then currentUser
+            if (customPassword && customPassword.trim() !== '') {
+                correctPassword = customPassword;
+            } else if (currentUser && currentUser.adultPassword && currentUser.adultPassword.trim() !== '') {
                 correctPassword = currentUser.adultPassword;
             }
             const masterPassword = passwordManager.passwords.masterAdult;
