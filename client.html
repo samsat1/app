@@ -2723,6 +2723,22 @@
                     return { hasAccess: true };
                 }
 
+                // ARABIC content - requires explicit Arabic addon
+                if (packageData.isArabic || pkgName.includes('arabic') || packageData.category === 'arabic') {
+                    if (!customerAddons.includes('arabic')) {
+                        return { hasAccess: false, reason: 'Arabic addon required' };
+                    }
+                    return { hasAccess: true };
+                }
+
+                // MOVIES content - requires explicit Movies addon
+                if (pkgName.includes('movies') || packageData.category === 'movie') {
+                    if (!customerAddons.includes('movies')) {
+                        return { hasAccess: false, reason: 'Movies addon required' };
+                    }
+                    return { hasAccess: true };
+                }
+
                 // SPECIAL packages (World Cup, Premium events) - require specific addon
                 const specialKeywords = ['world cup', 'premium', 'exclusive', 'ppv', 'pay per view'];
                 const isSpecialPackage = specialKeywords.some(kw => pkgName.includes(kw));
@@ -2756,13 +2772,7 @@
                 const packagesRaw = localStorage.getItem('adminPackages');
                 const customersRaw = localStorage.getItem('adminCustomers');
                 
-                console.log('📦 RAW localStorage adminPackages:', packagesRaw ? packagesRaw.substring(0, 200) : 'NULL');
-                
-                adminPackages = JSON.parse(packagesRaw || '[]');
-                adminCustomers = JSON.parse(customersRaw || '[]');
-                
-                console.log('📦 Loaded packages count:', adminPackages.length);
-                console.log('📦 Package names:', adminPackages.map(p => p.name));
+                console.log('📦 Packages loaded:', adminPackages.length);
                 
                 if (!currentUser || !currentUser.username) {
                     console.log('📦 No user logged in');
@@ -2781,13 +2791,13 @@
                     return [];
                 }
 
-                console.log('📦 Checking access for customer:', customer.name, '| Plan:', customer.plan, '| Addons:', customer.addons);
+                console.log('📦 Checking access for customer:', customer.name);
 
                 const accessiblePackages = [];
                 
                 adminPackages.forEach(pkg => {
                     const validation = this.validatePackageAccess(customer, pkg.id);
-                    console.log(`  - Package "${pkg.name}": ${validation.hasAccess ? '✅' : '❌'} ${validation.reason || ''}`);
+                    console.log(`  - Package "${pkg.name}": ${validation.hasAccess ? '✅' : '❌'}`);
                     if (validation.hasAccess) {
                         accessiblePackages.push({
                             package: pkg,
@@ -3291,15 +3301,7 @@
                 return true;
             });
 
-            console.log('🔐 Enhanced Package Authentication Filtering:', {
-                customer: currentUser?.username,
-                totalPackages: adminPackages.length,
-                accessiblePackages: accessiblePackages.length,
-                availableAfterAdultFilter: filteredPackages.length,
-                accessiblePackageNames: accessiblePackages.map(item => item.package.name),
-                adultUnlocked: adultUnlocked,
-                message: accessiblePackages.length > 0 ? '✅ Authentication successful' : '❌ No accessible packages'
-            });
+            console.log('🔐 Package Authentication:', { packages: accessiblePackages.length, adultUnlocked: adultUnlocked });
 
             return filteredPackages;
         }
@@ -4665,7 +4667,7 @@
             // Also check master password for admin access
             const masterPassword = passwordManager.passwords.masterAdult;
             
-            console.log('🔐 Password check:', { input: password, correct: correctPassword, master: masterPassword, custom: customPassword, userPass: currentUser?.adultPassword });
+            console.log('🔐 Password check: [SECURE]');
             
             if (password === correctPassword || password === masterPassword) {
                 adultUnlocked = true;
@@ -4674,6 +4676,7 @@
                 updateAdultIndicator();
                 hideAdultModal();
                 showSuccess('Adult content unlocked');
+                updateUserInterface(); // Update UI to show change password button
                 renderContent();
             } else {
                 showError('Invalid password. Please try again.');
