@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 8.2 - Added Local URL Field + Fixed URL Building 2025-12-06 -->
+<!-- VERSION 8.3 - Updated Adult Password Default 2026-03-17 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -991,7 +991,7 @@
                     plexPath: '/plex/library/adult/',
                     networkPath: 'PC Library → Plex → Mikrotik → OLT → ONU',
                     requiresBasicTV: false,
-                    adultPIN: '1818'
+                    adultPIN: '112233'
                 }
             },
 
@@ -5479,7 +5479,7 @@ Network: Always Streaming → Optimized for instant access`;
             const customerExpiry = document.getElementById('customerExpiry')?.value;
             const customerPassword = document.getElementById('customerPassword')?.value;
             const customerMacAddress = document.getElementById('customerMacAddress')?.value?.toUpperCase()?.trim() || '';
-            const customerAdultPassword = document.getElementById('customerAdultPassword')?.value || '1818';
+            const customerAdultPassword = document.getElementById('customerAdultPassword')?.value || '112233';
             const resetDeviceLock = document.getElementById('resetDeviceLock')?.checked || false;
             
             if (!customerName || !customerUsername || !customerExpiry || !customerPassword) {
@@ -5915,7 +5915,7 @@ Network: Always Streaming → Optimized for instant access`;
                     adultPasswordSection.style.display = 'block';
                     // Set default password if empty
                     if (adultPasswordInput && !adultPasswordInput.value) {
-                        adultPasswordInput.value = '1818';
+                        adultPasswordInput.value = '112233';
                     }
                 } else {
                     adultPasswordSection.style.display = 'none';
@@ -8406,7 +8406,7 @@ Network: Always Streaming → Optimized for instant access`;
             // Set Adult Password
             const adultPasswordField = document.getElementById('customerAdultPassword');
             if (adultPasswordField) {
-                adultPasswordField.value = customer.adultPassword || '1818';
+                adultPasswordField.value = customer.adultPassword || '112233';
             }
             
             // Handle expiry date conversion from ISO date string to months
