@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 6.7 - Fixed Arabic/Movies Addon Validation 2026-03-17 -->
+<!-- VERSION 6.8 - Fixed Arabic/Movies Content Filtering 2026-03-18 -->
 <!-- LOCAL VERSION - Green Indicator -->
 <html lang="en">
 <head>
@@ -3311,23 +3311,23 @@
 
             const customerAddons = (customer.addons || '').toLowerCase();
 
-            // Filter packages based on addons - same logic as validatePackageAccess
+            // Filter packages based on addons
             const filteredPackages = adminPackages.filter(pkg => {
                 const pkgName = (pkg.name || '').toLowerCase();
                 
-                // Adult - requires addon
+                // Adult - requires addon (check for 'adult', 'adult content', etc.)
                 if (pkg.isAdult || pkgName.includes('adult') || pkgName.includes('xxx')) {
-                    return customerAddons.includes('adult') && adultUnlocked;
+                    return (customerAddons.includes('adult') || customerAddons.includes('adult content')) && adultUnlocked;
                 }
                 
-                // Arabic - requires addon
+                // Arabic - requires addon (check for 'arabic', 'arabic package', etc.)
                 if (pkg.isArabic || pkgName.includes('arabic') || pkg.category === 'arabic' || pkg.sectionId === 7) {
-                    return customerAddons.includes('arabic');
+                    return customerAddons.includes('arabic') || customerAddons.includes('arabic package');
                 }
                 
-                // Movies - requires addon
+                // Movies - requires addon (check for 'movies', 'movies package', etc.)
                 if (pkgName.includes('movies') || pkg.category === 'movie' || pkg.category === 'vod' || pkg.sectionId === 26 || pkg.isMovie) {
-                    return customerAddons.includes('movies');
+                    return customerAddons.includes('movies') || customerAddons.includes('movies package');
                 }
                 
                 // Regular packages - require active subscription
@@ -4915,59 +4915,64 @@
             
             // Apply customer subscription filtering
             const availablePackages = filterContentBySubscription();
+            const accessiblePackageIds = availablePackages.map(pkg => pkg.id);
             
             let filteredContent = contentData[currentSource].content;
             
-            // Apply subscription-based filtering - but keep Plex cached content
-            if (['movies', 'vod'].includes(currentSource)) {
-                console.log(`🔍 Filtering ${currentSource} content - current content count: ${filteredContent.length}`);
+            // Filter content based on subscription access
+            filteredContent = filteredContent.filter(item => {
+                // If no package required, show it
+                if (!item.requiresPackage && !item.packageId) return true;
                 
-                // If content is already loaded (e.g., from Plex cache), keep it
-                // Only clear if explicitly no access (future enhancement)
-                if (filteredContent.length > 0) {
-                    console.log(`📺 Showing ${filteredContent.length} items in ${currentSource} section`);
-                } else {
-                    console.log(`📺 ${currentSource}: No content available`);
+                // Check if user's accessible packages include this item's package
+                const pkgId = item.packageId || item.requiresPackage;
+                if (pkgId) {
+                    return accessiblePackageIds.includes(pkgId);
                 }
-            }
-            
-            // Additional subscription filtering for other sections
-            if (currentSource === 'addon') {
-                // For addon section, show ALL packages so customers can see what's available
-                // Don't filter by access - customers should see all packages to subscribe to
-                console.log('📦 Addon section: showing all packages for subscription options');
-            }
-            
-            // Filter Live TV channels by customer's packages
-            if (currentSource === 'live' && currentUser) {
-                // For Live TV - show ALL channels without filtering (admin will control via packages)
-                if (currentSource === 'live') {
-                    // Don't filter - show all live channels
-                    console.log(`📺 Live TV: showing all ${filteredContent.length} channels`);
-                } else if (currentSource === 'sports') {
-                    // Show sports channels only
-                    filteredContent = filteredContent.filter(ch => ch.package && ch.package.toLowerCase().includes('sport'));
-                    console.log(`📺 Sports filtered: ${filteredContent.length} channels`);
-                } else {
-                    // Other sources - check subscription
-                    const customerPackages = currentUser.packages || [];
-                    const customerPlan = (currentUser.plan || '').toLowerCase();
-                    const addonsRaw = currentUser.addons || '';
-                    const customerAddons = typeof addonsRaw === 'string' ? addonsRaw.toLowerCase().split(',').map(a => a.trim()) : [];
-                    const allPackages = [...customerPackages.map(p => p.toLowerCase()), customerPlan, ...customerAddons];
-                    
-                    const hasBasic = allPackages.some(p => p.includes('basic') || p.includes('tv'));
-                    const hasSports = allPackages.some(p => p.includes('sport'));
-                    const isAdmin = currentUser.role === 'admin';
-                    
-                    filteredContent = filteredContent.filter(channel => {
-                        if (isAdmin) return true; // Admin sees all
-                        if (channel.package === 'basic') return hasBasic || hasSports;
-                        if (channel.package === 'sports') return hasSports;
-                        return true;
-                    });
-                    console.log(`📺 ${currentSource} filtered: ${filteredContent.length} channels (Basic: ${hasBasic}, Sports: ${hasSports}, Plan: ${customerPlan})`);
+                
+                // Check by category for Plex content
+                const category = (item.category || '').toLowerCase();
+                const source = (item.source || currentSource || '').toLowerCase();
+                
+                // Arabic content - check addon
+                if (source.includes('arabic') || category === 'arabic' || item.sectionId === 7) {
+                    const hasArabic = availablePackages.some(p => 
+                        p.name.toLowerCase().includes('arabic') || 
+                        p.category === 'arabic' ||
+                        p.sectionId === 7
+                    );
+                    return hasArabic;
                 }
+                
+                // Movies content - check addon
+                if (source.includes('movie') || source.includes('vod') || category === 'movie' || category === 'vod' || item.sectionId === 26) {
+                    const hasMovies = availablePackages.some(p => 
+                        p.name.toLowerCase().includes('movie') || 
+                        p.category === 'movie' ||
+                        p.category === 'vod' ||
+                        p.sectionId === 26
+                    );
+                    return hasMovies;
+                }
+                
+                // Adult content - check addon + password
+                if (item.adult || category === 'adult' || (item.name && item.name.toLowerCase().includes('adult'))) {
+                    const hasAdult = availablePackages.some(p => 
+                        p.isAdult || 
+                        p.name.toLowerCase().includes('adult')
+                    );
+                    return hasAdult && adultUnlocked;
+                }
+                
+                return true;
+            });
+            
+            // Apply search filter
+            if (searchTerm) {
+                filteredContent = filteredContent.filter(item => 
+                    (item.name || '').toLowerCase().includes(searchTerm) ||
+                    (item.description || '').toLowerCase().includes(searchTerm)
+                );
             }
             
             const availableContent = filteredContent.filter(item => {
