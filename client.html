@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 6.8 - Fixed Arabic/Movies Content Filtering 2026-03-18 -->
+<!-- VERSION 7.0 - Fixed Plex Content Addon Filtering 2026-03-18 -->
 <!-- LOCAL VERSION - Green Indicator -->
 <html lang="en">
 <head>
@@ -3316,7 +3316,7 @@
                 const pkgName = (pkg.name || '').toLowerCase();
                 
                 // Adult - requires addon (check for 'adult', 'adult content', etc.)
-                if (pkg.isAdult || pkgName.includes('adult') || pkgName.includes('xxx')) {
+                if (pkg.isAdult || pkgName.includes('adult') || pkgName.includes('xxx') || pkg.sectionId === 4) {
                     return (customerAddons.includes('adult') || customerAddons.includes('adult content')) && adultUnlocked;
                 }
                 
@@ -3325,8 +3325,8 @@
                     return customerAddons.includes('arabic') || customerAddons.includes('arabic package');
                 }
                 
-                // Movies - requires addon (check for 'movies', 'movies package', etc.)
-                if (pkgName.includes('movies') || pkg.category === 'movie' || pkg.category === 'vod' || pkg.sectionId === 26 || pkg.isMovie) {
+                // Movies - requires addon (check for 'movies', 'movies package', etc.) - Section ID 5
+                if (pkgName.includes('movies') || pkg.category === 'movie' || pkg.category === 'vod' || pkg.sectionId === 5 || pkg.isMovie) {
                     return customerAddons.includes('movies') || customerAddons.includes('movies package');
                 }
                 
@@ -4917,51 +4917,58 @@
             const availablePackages = filterContentBySubscription();
             const accessiblePackageIds = availablePackages.map(pkg => pkg.id);
             
+            // Get customer addons for content filtering
+            let customerAddons = '';
+            if (currentUser && currentUser.username) {
+                const adminCustomers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
+                const customer = adminCustomers.find(c => c.username === currentUser.username);
+                if (customer) {
+                    customerAddons = (customer.addons || '').toLowerCase();
+                }
+            }
+            
             let filteredContent = contentData[currentSource].content;
             
             // Filter content based on subscription access
             filteredContent = filteredContent.filter(item => {
-                // If no package required, show it
+                // Check if this is Plex content (has category field set)
+                const category = (item.category || '').toLowerCase();
+                const isAdult = item.adult || item.isAdult || category === 'adult';
+                const isArabic = item.arabic || item.isArabic || category === 'arabic';
+                const isMovie = category === 'movie' || category === 'vod';
+                
+                // If it's Plex content, check addon access
+                if (isAdult || isArabic || isMovie) {
+                    // Adult content - requires addon + password
+                    if (isAdult) {
+                        const hasAdultAddon = customerAddons.includes('arabic') || 
+                                            customerAddons.includes('arabic package') ||
+                                            customerAddons.includes('adult') || 
+                                            customerAddons.includes('adult content') ||
+                                            customerAddons.includes('adult content package');
+                        return hasAdultAddon && adultUnlocked;
+                    }
+                    
+                    // Arabic content - requires addon
+                    if (isArabic) {
+                        return customerAddons.includes('arabic') || 
+                               customerAddons.includes('arabic package');
+                    }
+                    
+                    // Movies content - requires addon
+                    if (isMovie) {
+                        return customerAddons.includes('movies') || 
+                               customerAddons.includes('movies package');
+                    }
+                }
+                
+                // If no special category, check requiresPackage/packageId
                 if (!item.requiresPackage && !item.packageId) return true;
                 
                 // Check if user's accessible packages include this item's package
                 const pkgId = item.packageId || item.requiresPackage;
                 if (pkgId) {
                     return accessiblePackageIds.includes(pkgId);
-                }
-                
-                // Check by category for Plex content
-                const category = (item.category || '').toLowerCase();
-                const source = (item.source || currentSource || '').toLowerCase();
-                
-                // Arabic content - check addon
-                if (source.includes('arabic') || category === 'arabic' || item.sectionId === 7) {
-                    const hasArabic = availablePackages.some(p => 
-                        p.name.toLowerCase().includes('arabic') || 
-                        p.category === 'arabic' ||
-                        p.sectionId === 7
-                    );
-                    return hasArabic;
-                }
-                
-                // Movies content - check addon
-                if (source.includes('movie') || source.includes('vod') || category === 'movie' || category === 'vod' || item.sectionId === 26) {
-                    const hasMovies = availablePackages.some(p => 
-                        p.name.toLowerCase().includes('movie') || 
-                        p.category === 'movie' ||
-                        p.category === 'vod' ||
-                        p.sectionId === 26
-                    );
-                    return hasMovies;
-                }
-                
-                // Adult content - check addon + password
-                if (item.adult || category === 'adult' || (item.name && item.name.toLowerCase().includes('adult'))) {
-                    const hasAdult = availablePackages.some(p => 
-                        p.isAdult || 
-                        p.name.toLowerCase().includes('adult')
-                    );
-                    return hasAdult && adultUnlocked;
                 }
                 
                 return true;
