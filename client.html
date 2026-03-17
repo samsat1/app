@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 6.6 - Fixed Movies/Arabic Addons + Console Cleanup 2026-03-17 -->
+<!-- VERSION 6.7 - Fixed Arabic/Movies Addon Validation 2026-03-17 -->
 <!-- LOCAL VERSION - Green Indicator -->
 <html lang="en">
 <head>
@@ -2461,7 +2461,7 @@
         <div class="adult-content">
             <div class="adult-header">
                 <h2 class="adult-title">🔐</h2>
-                <p class="adult-warning">Change Adult Password</p>
+                <p class="adult-warning">Change Password</p>
             </div>
             <div style="margin-bottom: 15px;">
                 <label style="display: block; margin-bottom: 5px; color: var(--text-primary); font-size: 13px;">Current Password:</label>
@@ -3298,20 +3298,47 @@
                 return adminPackages; // Admin sees all packages
             }
 
-            // Use the new package authentication system
-            const accessiblePackages = clientPackageAuth.getAccessiblePackages();
-            const availablePackages = accessiblePackages.map(item => item.package);
+            // If no user logged in, return empty
+            if (!currentUser || !currentUser.username) {
+                return [];
+            }
 
-            // Additional filtering for adult content based on password
-            const filteredPackages = availablePackages.filter(pkg => {
-                // Adult packages require password unlock
-                if (pkg.isAdult || pkg.name.toLowerCase().includes('adult')) {
-                    return adultUnlocked;
+            // Find current customer
+            const customer = adminCustomers.find(c => c.username === currentUser.username);
+            if (!customer) {
+                return [];
+            }
+
+            const customerAddons = (customer.addons || '').toLowerCase();
+
+            // Filter packages based on addons - same logic as validatePackageAccess
+            const filteredPackages = adminPackages.filter(pkg => {
+                const pkgName = (pkg.name || '').toLowerCase();
+                
+                // Adult - requires addon
+                if (pkg.isAdult || pkgName.includes('adult') || pkgName.includes('xxx')) {
+                    return customerAddons.includes('adult') && adultUnlocked;
                 }
-                return true;
+                
+                // Arabic - requires addon
+                if (pkg.isArabic || pkgName.includes('arabic') || pkg.category === 'arabic' || pkg.sectionId === 7) {
+                    return customerAddons.includes('arabic');
+                }
+                
+                // Movies - requires addon
+                if (pkgName.includes('movies') || pkg.category === 'movie' || pkg.category === 'vod' || pkg.sectionId === 26 || pkg.isMovie) {
+                    return customerAddons.includes('movies');
+                }
+                
+                // Regular packages - require active subscription
+                if (customer.status === 'active' || customer.plan) {
+                    return true;
+                }
+                
+                return false;
             });
 
-            console.log('🔐 Package Authentication:', { packages: accessiblePackages.length, adultUnlocked: adultUnlocked });
+            console.log('🔐 Package Authentication:', { packages: filteredPackages.length, customer: currentUser.username });
 
             return filteredPackages;
         }
