@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-17T00:22:33.033Z",
+  "exportDate": "2026-03-17T00:36:59.180Z",
   "customers": [
     {
       "id": "CUST_1773703825008",
@@ -18,7 +18,9 @@
       "status": "active",
       "duration": "1 Month",
       "durationMonths": 1,
-      "createdAt": "2026-03-16T23:30:25.008Z"
+      "createdAt": "2026-03-16T23:30:25.008Z",
+      "resetDeviceLock": 1773707076451,
+      "updatedAt": "2026-03-17T00:24:36.451Z"
     },
     {
       "id": "CUST_1773703914315",
@@ -36,7 +38,9 @@
       "status": "active",
       "duration": "1 Month",
       "durationMonths": 1,
-      "createdAt": "2026-03-16T23:31:54.315Z"
+      "createdAt": "2026-03-16T23:31:54.315Z",
+      "resetDeviceLock": 1773707101095,
+      "updatedAt": "2026-03-17T00:25:01.095Z"
     }
   ],
   "packages": [
