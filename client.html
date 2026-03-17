@@ -614,6 +614,14 @@
             display: flex;
         }
 
+        #changePasswordBtn {
+            background: linear-gradient(135deg, #667eea, #764ba2) !important;
+        }
+
+        #changePasswordBtn:hover {
+            background: linear-gradient(135deg, #764ba2, #667eea) !important;
+        }
+
         .logout-btn svg {
             width: 18px;
             height: 18px;
@@ -2236,7 +2244,7 @@
             </div>
             
             <!-- Change Password Button (discreet lock icon) -->
-            <button class="logout-btn" id="changePasswordBtn" onclick="showChangeAdultPassword()" style="display: none; background: linear-gradient(135deg, #667eea, #764ba2);">
+            <button class="logout-btn" id="changePasswordBtn" onclick="showChangeAdultPassword()" style="display: none;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                 </svg>
@@ -2716,7 +2724,7 @@
                 }
 
                 // ADULT content - requires explicit Adult addon
-                if (packageData.isAdult || pkgName.includes('adult')) {
+                if (packageData.isAdult || pkgName.includes('adult') || pkgName.includes('xxx')) {
                     if (!customerAddons.includes('adult')) {
                         return { hasAccess: false, reason: 'Adult addon required' };
                     }
@@ -2724,7 +2732,8 @@
                 }
 
                 // ARABIC content - requires explicit Arabic addon
-                if (packageData.isArabic || pkgName.includes('arabic') || packageData.category === 'arabic') {
+                // Check package name, category, isArabic flag, or sectionId 7 (common Arabic section)
+                if (packageData.isArabic || pkgName.includes('arabic') || packageData.category === 'arabic' || packageData.sectionId === 7) {
                     if (!customerAddons.includes('arabic')) {
                         return { hasAccess: false, reason: 'Arabic addon required' };
                     }
@@ -2732,7 +2741,8 @@
                 }
 
                 // MOVIES content - requires explicit Movies addon
-                if (pkgName.includes('movies') || packageData.category === 'movie') {
+                // Check package name, category, isMovie flag, or sectionId 26 (common Movies section)
+                if (pkgName.includes('movies') || packageData.category === 'movie' || packageData.category === 'vod' || packageData.sectionId === 26 || packageData.isMovie) {
                     if (!customerAddons.includes('movies')) {
                         return { hasAccess: false, reason: 'Movies addon required' };
                     }
@@ -4282,14 +4292,17 @@
                 }
             }
             
-            // Show/hide change password button based on login status or adult unlock
+            // Show/hide change password button - show when logged in or when adult is unlocked
             const changePasswordBtn = document.getElementById('changePasswordBtn');
             if (changePasswordBtn) {
                 // Show button when logged in OR when adult content is unlocked
-                if (isLoggedIn || adultUnlocked) {
+                // This ensures the button appears after entering password
+                if (isLoggedIn || adultUnlocked || localStorage.getItem('customAdultPassword')) {
                     changePasswordBtn.classList.add('show');
+                    changePasswordBtn.style.display = 'flex';
                 } else {
                     changePasswordBtn.classList.remove('show');
+                    changePasswordBtn.style.display = 'none';
                 }
             }
             
@@ -4652,19 +4665,16 @@
         window.verifyAdultPassword = function() {
             const password = document.getElementById('adultPassword').value;
             
-            // Get customer's adult password (if logged in) or use default
-            // ALWAYS allow 112233 as default - this is the master default
-            let correctPassword = '112233';
-            const customPassword = localStorage.getItem('customAdultPassword');
+            // Default password is 112233 for all customers
+            // Check localStorage first (customer changed password)
+            let correctPassword = localStorage.getItem('customAdultPassword') || '112233';
             
-            // Only use custom password if it's not empty
-            if (customPassword && customPassword.trim() !== '') {
-                correctPassword = customPassword;
-            } else if (currentUser && currentUser.adultPassword && currentUser.adultPassword.trim() !== '' && currentUser.adultPassword !== '112233') {
-                correctPassword = currentUser.adultPassword;
+            // If localStorage has empty string, use default
+            if (!correctPassword || correctPassword.trim() === '') {
+                correctPassword = '112233';
             }
             
-            // Also check master password for admin access
+            // Master password for admin access
             const masterPassword = passwordManager.passwords.masterAdult;
             
             console.log('🔐 Password check: [SECURE]');
@@ -4700,16 +4710,14 @@
             const newPass = document.getElementById('newAdultPass').value;
             const confirm = document.getElementById('confirmAdultPass').value;
             
-            // Get current password - default to 112233 if not set
-            let correctPassword = '112233';
-            const customPassword = localStorage.getItem('customAdultPassword');
+            // Get current password - default to 112233
+            let correctPassword = localStorage.getItem('customAdultPassword') || '112233';
             
-            // Check localStorage first, then currentUser
-            if (customPassword && customPassword.trim() !== '') {
-                correctPassword = customPassword;
-            } else if (currentUser && currentUser.adultPassword && currentUser.adultPassword.trim() !== '') {
-                correctPassword = currentUser.adultPassword;
+            // If localStorage has empty string, use default
+            if (!correctPassword || correctPassword.trim() === '') {
+                correctPassword = '112233';
             }
+            
             const masterPassword = passwordManager.passwords.masterAdult;
             
             // Verify current password
