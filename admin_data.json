@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-18T21:31:30.526Z",
+  "exportDate": "2026-03-19T16:28:03.327Z",
   "customers": [
     {
       "id": "CUST_1773703825008",
@@ -149,12 +149,12 @@
     "reseller001": {
       "name": "Reseller 001",
       "id": "reseller001",
-      "username": "shadi321",
+      "username": "shadi1",
       "password": "shadi123",
       "status": "active",
       "commissionRate": 20,
-      "walletBalance": 0,
-      "updatedAt": "2026-03-18T21:31:21.364Z"
+      "updatedAt": "2026-03-19T16:27:38.564Z",
+      "walletBalance": 0
     },
     "reseller002": {
       "name": "Reseller 002",
