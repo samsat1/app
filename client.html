@@ -3324,7 +3324,7 @@
                 
                 // Adult - requires addon (check for 'adult', 'adult content', etc.)
                 if (pkg.isAdult || pkgName.includes('adult') || pkgName.includes('xxx') || pkg.sectionId === 4) {
-                    return (customerAddons.includes('adult') || customerAddons.includes('adult content')) && adultUnlocked;
+                    return (customerAddons.includes('adult') || customerAddons.includes('adult content'));
                 }
                 
                 // Arabic - requires addon (check for 'arabic', 'arabic package', etc.)
@@ -4948,9 +4948,7 @@
                 if (isAdult || isArabic || isMovie) {
                     // Adult content - requires addon + password
                     if (isAdult) {
-                        const hasAdultAddon = customerAddons.includes('arabic') || 
-                                            customerAddons.includes('arabic package') ||
-                                            customerAddons.includes('adult') || 
+                        const hasAdultAddon = customerAddons.includes('adult') || 
                                             customerAddons.includes('adult content') ||
                                             customerAddons.includes('adult content package');
                         return hasAdultAddon && adultUnlocked;
