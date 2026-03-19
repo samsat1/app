@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-19T17:41:14.974Z",
+  "exportDate": "2026-03-19T18:54:23.138Z",
   "customers": [],
   "packages": [
     {
@@ -113,7 +113,7 @@
       "status": "active",
       "commissionRate": 20,
       "updatedAt": "2026-03-19T17:36:32.414Z",
-      "walletBalance": 111
+      "walletBalance": 85
     },
     "reseller002": {
       "name": "Reseller 002",
