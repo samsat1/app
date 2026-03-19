@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 8.3 - Updated Adult Password Default 2026-03-17 -->
+<!-- VERSION 8.4 - Enhanced Reseller Management with Credit History 2026-03-19 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1188,8 +1188,9 @@
         // Initialize the authentication system
         packageAuthenticationSystem.initialize();
 
-        // Admin credit transfer function
-        function sendCreditToReseller(resellerId, amount) {
+        // Admin credit transfer function with permanent history
+        // Credit history is stored permanently and CANNOT be deleted by anyone
+        function sendCreditToReseller(resellerId, amount, note = '') {
             if (!resellerId || !amount || amount <= 0) {
                 return { success: false, message: 'Please enter valid reseller ID and amount' };
             }
@@ -1202,19 +1203,137 @@
             
             // Update reseller wallet balance
             const reseller = resellers[resellerId];
-            reseller.walletBalance = (parseFloat(reseller.walletBalance) || 0) + parseFloat(amount);
+            const previousBalance = parseFloat(reseller.walletBalance) || 0;
+            const newBalance = previousBalance + parseFloat(amount);
+            reseller.walletBalance = newBalance;
             resellers[resellerId] = reseller;
             localStorage.setItem('resellerCredentials', JSON.stringify(resellers));
             
-            // Broadcast to reseller panels
+            // Also update RESELLER_ACCOUNTS for consistency
+            if (RESELLER_ACCOUNTS[resellerId]) {
+                RESELLER_ACCOUNTS[resellerId].walletBalance = newBalance;
+                saveResellerAccounts();
+            }
+            
+            // Create permanent credit transfer record (CANNOT BE DELETED)
+            const creditRecord = {
+                id: 'CREDIT_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                resellerId: resellerId,
+                resellerName: reseller.name || RESELLER_ACCOUNTS[resellerId]?.name || resellerId,
+                amount: parseFloat(amount),
+                previousBalance: previousBalance,
+                newBalance: newBalance,
+                note: note || 'Credit transfer from admin',
+                transferredBy: 'admin',
+                timestamp: new Date().toISOString(),
+                date: new Date().toLocaleString(),
+                // Permanent flag - this record can never be deleted
+                permanent: true,
+                // Version for tracking
+                version: '1.0'
+            };
+            
+            // Get existing permanent credit history
+            let permanentCreditHistory = JSON.parse(localStorage.getItem('permanentCreditHistory') || '[]');
+            
+            // Add new record to permanent history
+            permanentCreditHistory.push(creditRecord);
+            
+            // Save to localStorage (admin side)
+            localStorage.setItem('permanentCreditHistory', JSON.stringify(permanentCreditHistory));
+            
+            // Also save to GitHub-ready format for syncing
+            saveCreditTransferToGitHub(creditRecord);
+            
+            // Broadcast to reseller panels with full record
             localStorage.setItem('creditTransfer', JSON.stringify({
                 resellerId: resellerId,
                 amount: amount,
-                newBalance: reseller.walletBalance,
-                timestamp: Date.now()
+                newBalance: newBalance,
+                timestamp: Date.now(),
+                recordId: creditRecord.id,
+                permanent: true
             }));
             
-            return { success: true, message: `$${amount} credited to ${resellerId}` };
+            // Update the credit section if visible
+            updateCreditOverview();
+            
+            return { success: true, message: `$${amount} credited to ${resellerId}`, recordId: creditRecord.id };
+        }
+        
+        // Save credit transfer to GitHub for syncing (reseller panel reads from here)
+        function saveCreditTransferToGitHub(creditRecord) {
+            try {
+                // Get existing transfers from GitHub data
+                let githubTransfers = JSON.parse(localStorage.getItem('githubCreditTransfers') || '[]');
+                
+                // Add new record
+                githubTransfers.push(creditRecord);
+                
+                // Keep only last 500 records in local storage (but permanent history is complete)
+                if (githubTransfers.length > 500) {
+                    githubTransfers = githubTransfers.slice(-500);
+                }
+                
+                localStorage.setItem('githubCreditTransfers', JSON.stringify(githubTransfers));
+                
+                // Mark for GitHub sync
+                localStorage.setItem('creditTransferPending', JSON.stringify({
+                    action: 'add',
+                    record: creditRecord,
+                    timestamp: Date.now()
+                }));
+                
+                console.log('💾 Credit transfer saved for GitHub sync:', creditRecord.id);
+            } catch (e) {
+                console.error('Failed to save credit transfer:', e);
+            }
+        }
+        
+        // Get all permanent credit history (for admin viewing)
+        function getPermanentCreditHistory(resellerId = null) {
+            const history = JSON.parse(localStorage.getItem('permanentCreditHistory') || '[]');
+            
+            if (resellerId) {
+                return history.filter(h => h.resellerId === resellerId);
+            }
+            
+            return history;
+        }
+        
+        // Display permanent credit history in admin panel
+        function displayPermanentCreditHistory() {
+            const history = getPermanentCreditHistory();
+            const container = document.getElementById('permanentCreditHistoryList');
+            
+            if (!container) return;
+            
+            if (history.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">No credit transfers yet</p>';
+                return;
+            }
+            
+            // Sort by date descending (newest first)
+            const sorted = [...history].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            container.innerHTML = sorted.map(record => `
+                <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; margin-bottom: 10px; border-left: 4px solid #4caf50;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 600; color: #4caf50;">+$${record.amount.toFixed(2)}</span>
+                        <span style="font-size: 11px; color: rgba(255,255,255,0.5);">${record.date}</span>
+                    </div>
+                    <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-bottom: 5px;">
+                        Reseller: <strong>${record.resellerName}</strong> (${record.resellerId})
+                    </div>
+                    <div style="font-size: 12px; color: rgba(255,255,255,0.6);">
+                        Balance: $${record.previousBalance.toFixed(2)} → $${record.newBalance.toFixed(2)}
+                    </div>
+                    ${record.note ? `<div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 5px; font-style: italic;">"${record.note}"</div>` : ''}
+                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <span style="font-size: 10px; color: rgba(255,255,255,0.3);">ID: ${record.id} | Permanent Record</span>
+                    </div>
+                </div>
+            `).join('');
         }
 
         // Mobile menu toggle
@@ -7369,7 +7488,10 @@ Network: Always Streaming → Optimized for instant access`;
                             const displayPassword = reseller.credentials.password || reseller.password || '';
                             return `
                             <tr id="reseller-row-${reseller.id}" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                <td style="padding: 10px 8px; color: #4caf50; font-weight: 600;">${displayName}</td>
+                                <td style="padding: 10px 8px; color: #4caf50; font-weight: 600;">
+                                    <span id="name-display-${reseller.id}">${displayName}</span>
+                                    <input type="text" id="name-edit-${reseller.id}" value="${displayName}" style="display: none; width: 100%; padding: 5px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; color: white; font-size: 13px;">
+                                </td>
                                 <td style="padding: 10px 8px; color: rgba(255,255,255,0.9);">
                                     <span id="username-display-${reseller.id}">${reseller.username}</span>
                                     <input type="text" id="username-edit-${reseller.id}" value="${reseller.username}" style="display: none; width: 100%; padding: 5px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; color: white; font-size: 13px;">
@@ -7402,10 +7524,12 @@ Network: Always Streaming → Optimized for instant access`;
 
         function editReseller(resellerId) {
             // Hide display elements
+            document.getElementById(`name-display-${resellerId}`).style.display = 'none';
             document.getElementById(`username-display-${resellerId}`).style.display = 'none';
             document.getElementById(`password-display-${resellerId}`).style.display = 'none';
             
             // Show edit elements
+            document.getElementById(`name-edit-${resellerId}`).style.display = 'block';
             document.getElementById(`username-edit-${resellerId}`).style.display = 'block';
             document.getElementById(`password-edit-${resellerId}`).style.display = 'flex';
             
@@ -7426,10 +7550,12 @@ Network: Always Streaming → Optimized for instant access`;
 
         function cancelEdit(resellerId) {
             // Show display elements
+            document.getElementById(`name-display-${resellerId}`).style.display = 'block';
             document.getElementById(`username-display-${resellerId}`).style.display = 'block';
             document.getElementById(`password-display-${resellerId}`).style.display = 'block';
             
             // Hide edit elements
+            document.getElementById(`name-edit-${resellerId}`).style.display = 'none';
             document.getElementById(`username-edit-${resellerId}`).style.display = 'none';
             document.getElementById(`password-edit-${resellerId}`).style.display = 'none';
             
@@ -7440,8 +7566,14 @@ Network: Always Streaming → Optimized for instant access`;
         }
 
         function saveReseller(resellerId) {
+            const newName = document.getElementById(`name-edit-${resellerId}`).value.trim();
             const newUsername = document.getElementById(`username-edit-${resellerId}`).value.trim();
             const newPassword = document.getElementById(`password-edit-input-${resellerId}`).value.trim();
+
+            if (!newName) {
+                showNotification('Name is required', 'error');
+                return;
+            }
 
             if (!newUsername) {
                 showNotification('Username is required', 'error');
@@ -7460,6 +7592,7 @@ Network: Always Streaming → Optimized for instant access`;
 
             // Update RESELLER_ACCOUNTS
             if (RESELLER_ACCOUNTS[resellerId]) {
+                RESELLER_ACCOUNTS[resellerId].name = newName;
                 RESELLER_ACCOUNTS[resellerId].username = newUsername;
                 RESELLER_ACCOUNTS[resellerId].password = passwordToSave;
                 RESELLER_ACCOUNTS[resellerId].updatedAt = new Date().toISOString();
@@ -7484,6 +7617,7 @@ Network: Always Streaming → Optimized for instant access`;
             }
 
             // Update display
+            document.getElementById(`name-display-${resellerId}`).textContent = newName;
             document.getElementById(`username-display-${resellerId}`).textContent = newUsername;
             document.getElementById(`password-display-${resellerId}`).textContent = passwordToSave;
             
@@ -7493,7 +7627,7 @@ Network: Always Streaming → Optimized for instant access`;
             // Update dashboard statistics
             updateResellerStatistics();
             
-            showNotification(`✅ Reseller "${resellerId}" updated successfully!`, 'success');
+            showNotification(`✅ Reseller "${newName}" updated successfully!`, 'success');
         }
 
         function resetToDefaultResellers() {
@@ -7541,8 +7675,13 @@ Network: Always Streaming → Optimized for instant access`;
         }
 
         function deleteReseller(resellerId) {
+            // Get reseller name for better message
+            const resellerName = RESELLER_ACCOUNTS[resellerId]?.name || 
+                                 passwordManager.resellerCredentials[resellerId]?.username || 
+                                 resellerId;
+            
             // Confirm deletion
-            if (!confirm(`Are you sure you want to delete reseller "${resellerId}"? This action cannot be undone.`)) {
+            if (!confirm(`Are you sure you want to delete reseller "${resellerName}" (${resellerId})? This action cannot be undone.`)) {
                 return;
             }
             
@@ -7567,7 +7706,7 @@ Network: Always Streaming → Optimized for instant access`;
             displayResellersTable();
             updateResellerStatistics();
             
-            showNotification(`✅ Reseller "${resellerId}" deleted successfully!`, 'success');
+            showNotification(`✅ Reseller "${resellerName}" deleted successfully!`, 'success');
         }
 
         function createNewReseller() {
