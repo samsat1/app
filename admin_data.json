@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-19T16:32:36.051Z",
+  "exportDate": "2026-03-19T17:18:05.132Z",
   "customers": [
     {
       "id": "CUST_1773703825008",
@@ -154,7 +154,7 @@
       "status": "active",
       "commissionRate": 20,
       "updatedAt": "2026-03-19T16:27:38.564Z",
-      "walletBalance": 0
+      "walletBalance": 90
     },
     "reseller002": {
       "name": "Reseller 002",
@@ -256,7 +256,19 @@
       "walletBalance": 0
     }
   },
-  "creditTransfers": [],
+  "creditTransfers": [
+    {
+      "id": "credit_1773938086576",
+      "resellerId": "reseller001",
+      "amount": 115,
+      "type": "credit",
+      "date": "2026-03-19T16:34:46.576Z",
+      "note": "Admin credit transfer",
+      "timestamp": 1773938086576,
+      "previousBalance": 0,
+      "newBalance": 115
+    }
+  ],
   "resellerTransactions": [],
   "plexServerUrl": "http://192.168.1.100:32400",
   "plexLocalUrl": "http://192.168.1.100:32400",
