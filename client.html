@@ -3187,15 +3187,22 @@
             return [];
         }
 
-        // Load customers from admin panel (now uses correct key)
+        // Load customers from admin panel AND reseller-created customers for login
         function loadCustomersFromAdmin() {
             try {
+                // Try clientAuthCustomers first (includes admin AND reseller-created customers)
+                const clientAuthCustomers = localStorage.getItem('clientAuthCustomers');
+                if (clientAuthCustomers) {
+                    return JSON.parse(clientAuthCustomers);
+                }
+                
+                // Fallback to adminCustomers for backward compatibility
                 const adminCustomers = localStorage.getItem('adminCustomers');
                 if (adminCustomers) {
                     return JSON.parse(adminCustomers);
                 }
             } catch (e) {
-                console.error('Error loading customers from admin:', e);
+                console.error('Error loading customers for login:', e);
             }
             return [];
         }
@@ -3215,7 +3222,7 @@
                 console.log('🔑 Auto-login: Found stored credentials for:', credentials.username);
                 
                 // IMPORTANT: Wait for customer data to be available
-                const customers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
+                const customers = JSON.parse(localStorage.getItem('clientAuthCustomers') || localStorage.getItem('adminCustomers') || '[]');
                 if (customers.length === 0) {
                     console.log('🔑 Auto-login: Customer data not ready, will retry...');
                     return false; // Signal retry needed

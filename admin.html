@@ -5743,6 +5743,23 @@ Network: Always Streaming → Optimized for instant access`;
                         updatedAt: new Date().toISOString()
                     };
                     
+                    // ALSO update in clientAuthCustomers for client login
+                    const updatedCustomer = window.customers[customerIndex];
+                    const clientAuthCustomers = JSON.parse(localStorage.getItem('clientAuthCustomers') || '[]');
+                    const clientAuthIndex = clientAuthCustomers.findIndex(c => c.id === updatedCustomer.id);
+                    if (clientAuthIndex !== -1) {
+                        clientAuthCustomers[clientAuthIndex] = updatedCustomer;
+                        localStorage.setItem('clientAuthCustomers', JSON.stringify(clientAuthCustomers));
+                    }
+                    
+                    // Also update in iptvCustomers
+                    const globalCustomers = JSON.parse(localStorage.getItem('iptvCustomers') || '[]');
+                    const globalIndex = globalCustomers.findIndex(c => c.id === updatedCustomer.id);
+                    if (globalIndex !== -1) {
+                        globalCustomers[globalIndex] = updatedCustomer;
+                        localStorage.setItem('iptvCustomers', JSON.stringify(globalCustomers));
+                    }
+                    
                     const actionText = isRenewal ? 'renewed' : 'updated';
                     const deviceResetMsg = resetDeviceLock ? ' (Device lock will be reset on next login)' : '';
                     showNotification(`🔄 ${isRenewal ? 'Renewing' : 'Updating'} customer...`, 'info');
@@ -5809,7 +5826,14 @@ Network: Always Streaming → Optimized for instant access`;
             // Save to localStorage
             localStorage.setItem('adminCustomers', JSON.stringify(window.customers));
             
-            // ALSO save to global customer storage for client access
+            // ALSO save to clientAuthCustomers for CLIENT LOGIN (reseller-created customers use this too)
+            const clientAuthCustomers = JSON.parse(localStorage.getItem('clientAuthCustomers') || '[]');
+            const existingClientAuthIds = new Set(clientAuthCustomers.map(c => c.id));
+            const newClientAuthCustomers = window.customers.filter(c => !existingClientAuthIds.has(c.id));
+            clientAuthCustomers.push(...newClientAuthCustomers);
+            localStorage.setItem('clientAuthCustomers', JSON.stringify(clientAuthCustomers));
+            
+            // ALSO save to global customer storage for backward compatibility
             const globalCustomers = JSON.parse(localStorage.getItem('iptvCustomers')) || [];
             // Merge customers (avoid duplicates by ID)
             const existingCustomerIds = new Set(globalCustomers.map(c => c.id));

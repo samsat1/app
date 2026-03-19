@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+<!-- VERSION 9.0 - Enhanced Reseller Panel with Credit History 2026-03-19 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>iWatch TV - Reseller Panel</title>
-    <!-- VERSION 8.0 - Fixed Credit System 2026-03-14 -->
+    <!-- VERSION 9.0 - Enhanced Credit System with Permanent History -->
     <style>
         * {
             margin: 0;
@@ -1683,6 +1684,24 @@
                 localCustomers.push(newCustomer);
                 localStorage.setItem(localCustomersKey, JSON.stringify(localCustomers));
                 
+                // Save to clientAuthCustomers for CLIENT LOGIN only (NOT visible in admin panel)
+                const clientAuthCustomers = JSON.parse(localStorage.getItem('clientAuthCustomers') || '[]');
+                // Check if customer already exists
+                const existingClientIndex = clientAuthCustomers.findIndex(c => c.id === newCustomer.id);
+                if (existingClientIndex === -1) {
+                    clientAuthCustomers.push(newCustomer);
+                    localStorage.setItem('clientAuthCustomers', JSON.stringify(clientAuthCustomers));
+                    console.log('Customer saved to clientAuthCustomers for client login');
+                }
+                
+                // Also save to iptvCustomers for backward compatibility
+                const iptvCustomers = JSON.parse(localStorage.getItem('iptvCustomers') || '[]');
+                const existingIptvIndex = iptvCustomers.findIndex(c => c.id === newCustomer.id);
+                if (existingIptvIndex === -1) {
+                    iptvCustomers.push(newCustomer);
+                    localStorage.setItem('iptvCustomers', JSON.stringify(iptvCustomers));
+                }
+                
                 // Add transaction record locally
                 const pendingTransactions = JSON.parse(localStorage.getItem('pendingTransactions') || '[]');
                 pendingTransactions.push({
@@ -1925,6 +1944,22 @@
                     localCustomers.push(updatedCustomer);
                 }
                 localStorage.setItem(localCustomersKey, JSON.stringify(localCustomers));
+                
+                // ALSO update in clientAuthCustomers for CLIENT LOGIN only
+                const clientAuthCustomers = JSON.parse(localStorage.getItem('clientAuthCustomers') || '[]');
+                const clientAuthIndex = clientAuthCustomers.findIndex(c => c.id === customerId);
+                if (clientAuthIndex !== -1) {
+                    clientAuthCustomers[clientAuthIndex] = updatedCustomer;
+                    localStorage.setItem('clientAuthCustomers', JSON.stringify(clientAuthCustomers));
+                }
+                
+                // Also update in iptvCustomers for backward compatibility
+                const iptvCustomers = JSON.parse(localStorage.getItem('iptvCustomers') || '[]');
+                const iptvIndex = iptvCustomers.findIndex(c => c.id === customerId);
+                if (iptvIndex !== -1) {
+                    iptvCustomers[iptvIndex] = updatedCustomer;
+                    localStorage.setItem('iptvCustomers', JSON.stringify(iptvCustomers));
+                }
                 
                 // Update UI
                 renderCustomers();
