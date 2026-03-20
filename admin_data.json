@@ -1,7 +1,26 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-19T18:54:23.138Z",
-  "customers": [],
+  "exportDate": "2026-03-20T17:20:41.419Z",
+  "customers": [
+    {
+      "id": "CUST_1774027216725",
+      "username": "kevin",
+      "name": "salame abdul khalek",
+      "phone": "",
+      "plan": "Basic TV Package",
+      "addons": "Arabic Package, Movies Package, Adult Content Package",
+      "monthlyPrice": 27.5,
+      "totalPrice": 27.5,
+      "expiryDate": "2026-04-20",
+      "password": "123456",
+      "macAddress": "",
+      "adultPassword": "112233",
+      "status": "active",
+      "duration": "1 Month",
+      "durationMonths": 1,
+      "createdAt": "2026-03-20T17:20:16.725Z"
+    }
+  ],
   "packages": [
     {
       "name": "Basic",
@@ -113,7 +132,7 @@
       "status": "active",
       "commissionRate": 20,
       "updatedAt": "2026-03-19T17:36:32.414Z",
-      "walletBalance": 85
+      "walletBalance": 59
     },
     "reseller002": {
       "name": "Reseller 002",
@@ -215,19 +234,7 @@
       "walletBalance": 0
     }
   },
-  "creditTransfers": [
-    {
-      "id": "credit_1773941805573",
-      "resellerId": "reseller001",
-      "amount": 111,
-      "type": "credit",
-      "date": "2026-03-19T17:36:45.573Z",
-      "note": "Admin credit transfer",
-      "timestamp": 1773941805573,
-      "previousBalance": 0,
-      "newBalance": 111
-    }
-  ],
+  "creditTransfers": [],
   "resellerTransactions": [],
   "plexServerUrl": "http://192.168.1.100:32400",
   "plexLocalUrl": "http://192.168.1.100:32400",
