@@ -2879,9 +2879,20 @@
                 // Admin always has access
                 if (currentUser.role === 'admin') return true;
 
-                // Reload customer data
-                adminCustomers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
-                const customer = adminCustomers.find(c => c.username === currentUser.username);
+                // Reload customer data from both clientAuthCustomers and adminCustomers
+                const clientAuthCustomers = JSON.parse(localStorage.getItem('clientAuthCustomers') || '[]');
+                const adminCustomersList = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
+                const allCustomers = [...clientAuthCustomers, ...adminCustomersList];
+                
+                // Remove duplicates by id
+                const uniqueCustomers = allCustomers.reduce((acc, customer) => {
+                    if (!acc.find(c => c.id === customer.id)) {
+                        acc.push(customer);
+                    }
+                    return acc;
+                }, []);
+                
+                const customer = uniqueCustomers.find(c => c.username === currentUser.username);
                 if (!customer) return false;
 
                 // Check subscription expiry
@@ -2928,8 +2939,9 @@
                         this.refreshContentAccess();
                     }
 
-                    if (e.key === 'adminCustomers') {
+                    if (e.key === 'clientAuthCustomers' || e.key === 'adminCustomers') {
                         console.log('👥 Customer data updated, refreshing auth validation...');
+                        adminCustomers = loadCustomersFromAdmin();
                         this.refreshContentAccess();
                     }
                 });
@@ -4221,10 +4233,10 @@
         async function loginUser(username, password) {
             // LOCAL VERSION - Use localStorage instead of Firebase
             try {
-                // Try to load customers from localStorage first
-                const customersRaw = localStorage.getItem('adminCustomers');
-                if (customersRaw) {
-                    const customers = JSON.parse(customersRaw);
+                // Try to load customers from clientAuthCustomers first (includes admin AND reseller-created customers)
+                const clientAuthCustomersRaw = localStorage.getItem('clientAuthCustomers');
+                if (clientAuthCustomersRaw) {
+                    const customers = JSON.parse(clientAuthCustomersRaw);
                     const user = customers.find(c => c.username === username && c.password === password);
                     
                     if (user) {
@@ -4232,37 +4244,47 @@
                         currentUser = user;
                         adminCustomers = customers;
                         
-                        console.log('✅ Login successful (local):', user.username);
+                        console.log('✅ Login successful (clientAuth):', user.username);
+                        console.log('📅 Expiry date:', user.expiryDate);
                         updateUserInterface();
                         hideLoginModal();
                         // Store credentials for auto-login
                         const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
-                        storeCredentials(username, password, user.subscriptionExpiry, rememberMe);
+                        storeCredentials(username, password, user.expiryDate, rememberMe);
+                        // Load content from localStorage
+                        loadPlexLibraryContent();
+                        return true;
+                    }
+                }
+                
+                // Fallback to adminCustomers for backward compatibility
+                const adminCustomersRaw = localStorage.getItem('adminCustomers');
+                if (adminCustomersRaw) {
+                    const customers = JSON.parse(adminCustomersRaw);
+                    const user = customers.find(c => c.username === username && c.password === password);
+                    
+                    if (user) {
+                        isLoggedIn = true;
+                        currentUser = user;
+                        adminCustomers = customers;
+                        
+                        console.log('✅ Login successful (admin fallback):', user.username);
+                        console.log('📅 Expiry date:', user.expiryDate);
+                        updateUserInterface();
+                        hideLoginModal();
+                        // Store credentials for auto-login
+                        const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
+                        storeCredentials(username, password, user.expiryDate, rememberMe);
                         // Load content from localStorage
                         loadPlexLibraryContent();
                         return true;
                     }
                 }
             } catch(e) {
-                console.log('Local login failed, trying fallback:', e.message);
+                console.log('Local login failed:', e.message);
             }
             
-            // Fallback to passwordManager
-            const user = passwordManager.authenticateUser(username, password);
-            if (user) {
-                isLoggedIn = true;
-                currentUser = user;
-                adminCustomers = loadCustomersFromAdmin();
-                updateUserInterface();
-                hideLoginModal();
-                // Store credentials for auto-login
-                const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
-                storeCredentials(username, password, user.subscriptionExpiry, rememberMe);
-                // Load content from localStorage
-                loadPlexLibraryContent();
-                return true;
-            }
-            
+            showNotification('Invalid username or password', 'error');
             return false;
         }
 
