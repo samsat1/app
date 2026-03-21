@@ -6092,15 +6092,6 @@ Network: Always Streaming → Optimized for instant access`;
             if (totalCalculatedPriceElement) {
                 totalCalculatedPriceElement.textContent = `Total: ${calculation.totalPrice} (${calculation.duration})`;
             }
-            
-            // Visual feedback
-            if (totalPriceContainer) {
-                if (calculation.monthlyPrice <= 0) {
-                    totalPriceContainer.style.borderColor = 'rgba(244,67,54,0.3)';
-                } else {
-                    totalPriceContainer.style.borderColor = 'rgba(76,175,80,0.3)';
-                }
-            }
         }
 
         // Price calculation functions

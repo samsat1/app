@@ -4946,11 +4946,19 @@
             const availablePackages = filterContentBySubscription();
             const accessiblePackageIds = availablePackages.map(pkg => pkg.id);
             
-            // Get customer addons for content filtering
+            // Get customer addons for content filtering - check BOTH clientAuthCustomers and adminCustomers
             let customerAddons = '';
             if (currentUser && currentUser.username) {
-                const adminCustomers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
-                const customer = adminCustomers.find(c => c.username === currentUser.username);
+                // First check clientAuthCustomers (includes reseller-created customers)
+                const clientAuthCustomers = JSON.parse(localStorage.getItem('clientAuthCustomers') || '[]');
+                let customer = clientAuthCustomers.find(c => c.username === currentUser.username);
+                
+                // Fallback to adminCustomers if not found
+                if (!customer) {
+                    const adminCustomers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
+                    customer = adminCustomers.find(c => c.username === currentUser.username);
+                }
+                
                 if (customer) {
                     customerAddons = (customer.addons || '').toLowerCase();
                 }
