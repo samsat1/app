@@ -6170,18 +6170,40 @@ Network: Always Streaming → Optimized for instant access`;
             }
             addonPrices.adult = adultPrice;
             
-            // Use the first available package prices, or fall back to defaults
+            // Find the Basic package by name to get correct base prices
+            let basicPackage = null;
             if (packages.length > 0) {
-                const firstPackage = packages[0];
-                basePrice = firstPackage.price || basePrice;
-                secondTVPrice = firstPackage.secondTVPrice || secondTVPrice;
-                thirdTVPrice = firstPackage.thirdTVPrice || thirdTVPrice;
+                // First try to find a package with "Basic" in the name (case-insensitive)
+                basicPackage = packages.find(pkg => 
+                    pkg.name && pkg.name.toLowerCase().includes('basic')
+                );
                 
-                // Use package-specific addon prices if available
-                if (firstPackage.sportsPrice) addonPrices.sports = firstPackage.sportsPrice;
-                if (firstPackage.sportsPlusPrice) addonPrices.sports_plus = firstPackage.sportsPlusPrice;
-                if (firstPackage.arabicPrice) addonPrices.arabic = firstPackage.arabicPrice;
-                if (firstPackage.moviesPrice) addonPrices.movies = firstPackage.moviesPrice;
+                // If no Basic package found, use the first non-adult package
+                if (!basicPackage) {
+                    basicPackage = packages.find(pkg => 
+                        !pkg.isAdult && 
+                        !pkg.name.toLowerCase().includes('adult') && 
+                        !pkg.name.toLowerCase().includes('xxx')
+                    );
+                }
+                
+                // Fall back to first package if no suitable package found
+                if (!basicPackage) {
+                    basicPackage = packages[0];
+                }
+                
+                // Get prices from the found Basic package
+                if (basicPackage) {
+                    basePrice = basicPackage.price || basePrice;
+                    secondTVPrice = basicPackage.secondTVPrice || secondTVPrice;
+                    thirdTVPrice = basicPackage.thirdTVPrice || thirdTVPrice;
+                    
+                    // Use package-specific addon prices if available
+                    if (basicPackage.sportsPrice) addonPrices.sports = basicPackage.sportsPrice;
+                    if (basicPackage.sportsPlusPrice) addonPrices.sports_plus = basicPackage.sportsPlusPrice;
+                    if (basicPackage.arabicPrice) addonPrices.arabic = basicPackage.arabicPrice;
+                    if (basicPackage.moviesPrice) addonPrices.movies = basicPackage.moviesPrice;
+                }
             }
             
             // Also check input fields for custom prices
@@ -8850,5 +8872,6 @@ Network: Always Streaming → Optimized for instant access`;
             });
         }
     </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"e72945439c264b3b85d2e3b689102d27","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
