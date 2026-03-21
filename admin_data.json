@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-21T23:10:18.231Z",
+  "exportDate": "2026-03-21T23:11:32.904Z",
   "customers": [
     {
       "id": "CUST_1774134579436",
@@ -105,13 +105,14 @@
   ],
   "resellers": {
     "reseller001": {
-      "name": "Reseller 001",
+      "name": "shadiak",
       "id": "reseller001",
-      "username": "reseller001",
-      "password": "res001_pass",
+      "username": "shadiak01",
+      "password": "shadi123",
       "status": "active",
       "commissionRate": 20,
-      "walletBalance": 0
+      "updatedAt": "2026-03-21T23:11:12.047Z",
+      "walletBalance": 112
     },
     "reseller002": {
       "name": "Reseller 002",
@@ -213,7 +214,19 @@
       "walletBalance": 0
     }
   },
-  "creditTransfers": [],
+  "creditTransfers": [
+    {
+      "id": "credit_1774134683635",
+      "resellerId": "reseller001",
+      "amount": 112,
+      "type": "credit",
+      "date": "2026-03-21T23:11:23.635Z",
+      "note": "Admin credit transfer",
+      "timestamp": 1774134683635,
+      "previousBalance": 0,
+      "newBalance": 112
+    }
+  ],
   "resellerTransactions": [],
   "plexServerUrl": "http://192.168.1.100:32400",
   "plexLocalUrl": "http://192.168.1.100:32400",
