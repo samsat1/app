@@ -1,7 +1,26 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-23T22:37:26.153Z",
-  "customers": [],
+  "exportDate": "2026-03-24T06:16:31.642Z",
+  "customers": [
+    {
+      "id": "CUST_1774332902538",
+      "username": "sam",
+      "name": "salame abdul khalek",
+      "phone": "76755399",
+      "plan": "Basic TV Package",
+      "addons": "Arabic Package, Movies Package, Adult Content Package",
+      "monthlyPrice": 27,
+      "totalPrice": 27,
+      "expiryDate": "2026-04-24",
+      "password": "123456",
+      "macAddress": "",
+      "adultPassword": "112233",
+      "status": "active",
+      "duration": "1 Month",
+      "durationMonths": 1,
+      "createdAt": "2026-03-24T06:15:02.538Z"
+    }
+  ],
   "packages": [
     {
       "name": "Basic",
