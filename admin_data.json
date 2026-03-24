@@ -1,44 +1,7 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-24T06:57:56.599Z",
-  "customers": [
-    {
-      "id": "CUST_1774332902538",
-      "username": "sam",
-      "name": "salame abdul khalek",
-      "phone": "76755399",
-      "plan": "Basic TV Package",
-      "addons": "Arabic Package, Movies Package, Adult Content Package",
-      "monthlyPrice": 27,
-      "totalPrice": 27,
-      "expiryDate": "2026-04-24",
-      "password": "123456",
-      "macAddress": "",
-      "adultPassword": "112233",
-      "status": "active",
-      "duration": "1 Month",
-      "durationMonths": 1,
-      "createdAt": "2026-03-24T06:15:02.538Z"
-    },
-    {
-      "id": "CUST_1774333289063",
-      "username": "samM",
-      "name": "salame abdul khalek",
-      "phone": "09090909",
-      "plan": "Basic TV Package",
-      "addons": "Movies Package, Adult Content Package",
-      "monthlyPrice": 19,
-      "totalPrice": 19,
-      "expiryDate": "2026-04-24",
-      "password": "123456",
-      "macAddress": "",
-      "adultPassword": "112233",
-      "status": "active",
-      "duration": "1 Month",
-      "durationMonths": 1,
-      "createdAt": "2026-03-24T06:21:29.063Z"
-    }
-  ],
+  "exportDate": "2026-03-24T07:01:00.207Z",
+  "customers": [],
   "packages": [
     {
       "name": "Basic",
@@ -123,14 +86,13 @@
   ],
   "resellers": {
     "reseller001": {
-      "name": "shadi ak",
+      "name": "Reseller 001",
       "id": "reseller001",
-      "username": "shadi01",
-      "password": "shadi123",
+      "username": "reseller001",
+      "password": "res001_pass",
       "status": "active",
       "commissionRate": 20,
-      "updatedAt": "2026-03-23T22:33:45.765Z",
-      "walletBalance": 114
+      "walletBalance": 77
     },
     "reseller002": {
       "name": "Reseller 002",
@@ -232,19 +194,7 @@
       "walletBalance": 0
     }
   },
-  "creditTransfers": [
-    {
-      "id": "credit_1774305241606",
-      "resellerId": "reseller001",
-      "amount": 114,
-      "type": "credit",
-      "date": "2026-03-23T22:34:01.606Z",
-      "note": "Admin credit transfer",
-      "timestamp": 1774305241606,
-      "previousBalance": 0,
-      "newBalance": 114
-    }
-  ],
+  "creditTransfers": [],
   "resellerTransactions": [],
   "plexServerUrl": "http://192.168.1.100:32400",
   "plexLocalUrl": "http://192.168.1.100:32400",
