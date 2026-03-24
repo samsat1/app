@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-24T06:17:49.664Z",
+  "exportDate": "2026-03-24T06:26:16.882Z",
   "customers": [
     {
       "id": "CUST_1774332902538",
@@ -19,6 +19,24 @@
       "duration": "1 Month",
       "durationMonths": 1,
       "createdAt": "2026-03-24T06:15:02.538Z"
+    },
+    {
+      "id": "CUST_1774333289063",
+      "username": "samM",
+      "name": "salame abdul khalek",
+      "phone": "09090909",
+      "plan": "Basic TV Package",
+      "addons": "Movies Package, Adult Content Package",
+      "monthlyPrice": 19,
+      "totalPrice": 19,
+      "expiryDate": "2026-04-24",
+      "password": "123456",
+      "macAddress": "",
+      "adultPassword": "112233",
+      "status": "active",
+      "duration": "1 Month",
+      "durationMonths": 1,
+      "createdAt": "2026-03-24T06:21:29.063Z"
     }
   ],
   "packages": [
@@ -34,13 +52,13 @@
       "isAdult": "",
       "adultPackagePrice": 0,
       "approved": true,
-      "approvedDate": "2026-03-23T22:29:00.161Z",
+      "approvedDate": "2026-03-24T06:24:32.126Z",
       "approvedBy": "admin",
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-03-23T22:29:00.161Z",
-      "id": "PKG_1774304940161"
+      "createdAt": "2026-03-24T06:24:32.126Z",
+      "id": "PKG_1774333472126"
     },
     {
       "name": "Movies",
@@ -54,53 +72,13 @@
       "isAdult": "",
       "adultPackagePrice": 0,
       "approved": true,
-      "approvedDate": "2026-03-23T22:29:18.788Z",
+      "approvedDate": "2026-03-24T06:24:47.321Z",
       "approvedBy": "admin",
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-03-23T22:29:18.788Z",
-      "id": "PKG_1774304958788"
-    },
-    {
-      "name": "Sports",
-      "price": 6,
-      "duration": "1 Month",
-      "features": "",
-      "secondTVPrice": 5,
-      "thirdTVPrice": 5,
-      "sportsPrice": 6,
-      "moviesPrice": 3,
-      "isAdult": "",
-      "adultPackagePrice": 0,
-      "approved": true,
-      "approvedDate": "2026-03-23T22:29:34.388Z",
-      "approvedBy": "admin",
-      "rejectedDate": null,
-      "rejectedBy": null,
-      "rejectionReason": null,
-      "createdAt": "2026-03-23T22:29:34.388Z",
-      "id": "PKG_1774304974388"
-    },
-    {
-      "name": "Adult",
-      "price": 4,
-      "duration": "1 Month",
-      "features": "",
-      "secondTVPrice": 5,
-      "thirdTVPrice": 5,
-      "sportsPrice": 0,
-      "moviesPrice": 0,
-      "isAdult": true,
-      "adultPackagePrice": 4,
-      "approved": true,
-      "approvedDate": "2026-03-23T22:32:16.568Z",
-      "approvedBy": "admin",
-      "rejectedDate": null,
-      "rejectedBy": null,
-      "rejectionReason": null,
-      "createdAt": "2026-03-23T22:32:16.568Z",
-      "id": "PKG_1774305136568"
+      "createdAt": "2026-03-24T06:24:47.321Z",
+      "id": "PKG_1774333487321"
     },
     {
       "name": "Arabic",
@@ -114,13 +92,33 @@
       "isAdult": "",
       "adultPackagePrice": 0,
       "approved": true,
-      "approvedDate": "2026-03-23T22:33:01.150Z",
+      "approvedDate": "2026-03-24T06:25:17.741Z",
       "approvedBy": "admin",
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-03-23T22:33:01.150Z",
-      "id": "PKG_1774305181150"
+      "createdAt": "2026-03-24T06:25:17.741Z",
+      "id": "PKG_1774333517741"
+    },
+    {
+      "name": "Adult",
+      "price": 4.5,
+      "duration": "1 Month",
+      "features": "+18",
+      "secondTVPrice": 5,
+      "thirdTVPrice": 5,
+      "sportsPrice": 0,
+      "moviesPrice": 0,
+      "isAdult": true,
+      "adultPackagePrice": 4.5,
+      "approved": true,
+      "approvedDate": "2026-03-24T06:25:55.786Z",
+      "approvedBy": "admin",
+      "rejectedDate": null,
+      "rejectedBy": null,
+      "rejectionReason": null,
+      "createdAt": "2026-03-24T06:25:55.786Z",
+      "id": "PKG_1774333555786"
     }
   ],
   "resellers": {
