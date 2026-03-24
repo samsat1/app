@@ -6175,14 +6175,13 @@
         }
 
         // Auto-sync function - runs on startup
-        // DISABLED - Was syncing from hardcoded GitHub and overwriting local customers
-        // To enable, set a custom sync URL in localStorage with key 'syncUrl'
+        // Syncs from GitHub to load Plex settings and customer data
         window.autoSyncData = async function() {
-            // Check if custom sync URL is configured in localStorage
-            const customSyncUrl = localStorage.getItem('syncUrl');
+            // Check for sync URL - support both 'syncUrl' and 'tvSyncUrl' for compatibility with admin panel
+            const customSyncUrl = localStorage.getItem('syncUrl') || localStorage.getItem('tvSyncUrl');
             
             if (!customSyncUrl) {
-                console.log('⚠️ No custom sync URL configured - skipping auto-sync');
+                console.log('⚠️ No sync URL configured - Plex settings and customer data will only work if previously synced');
                 return false;
             }
             
@@ -6193,16 +6192,22 @@
                 
                 const data = await response.json();
                 
-                // Only sync packages, NOT customers (to prevent overwriting local customers)
-                // Customers should only be managed from admin panel
+                // Sync packages from admin
                 if (data.packages && Array.isArray(data.packages)) {
                     localStorage.setItem('adminPackages', JSON.stringify(data.packages));
                 }
-                // Import Plex settings
+                // Import Plex settings from admin
                 if (data.plexServerUrl) localStorage.setItem('plexServerUrl', data.plexServerUrl);
                 if (data.plexToken) localStorage.setItem('plexToken', data.plexToken);
                 if (data.plexMoviesSection) localStorage.setItem('plexMoviesSection', data.plexMoviesSection);
                 if (data.plexAdultSection) localStorage.setItem('plexAdultSection', data.plexAdultSection);
+                if (data.plexConfig) {
+                    localStorage.setItem('plexConfig', JSON.stringify(data.plexConfig));
+                    localStorage.setItem('plexServerUrl', data.plexConfig.localUrl || data.plexConfig.serverUrl);
+                    localStorage.setItem('plexToken', data.plexConfig.token);
+                    localStorage.setItem('plexMoviesSection', data.plexConfig.moviesSection);
+                    localStorage.setItem('plexAdultSection', data.plexConfig.adultSection);
+                }
                 
                 localStorage.setItem('lastAutoSync', new Date().toISOString());
                 console.log('✅ Auto-sync completed successfully');
@@ -8122,6 +8127,5 @@
             -webkit-backdrop-filter: none !important;
         }
     </style>
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"e72945439c264b3b85d2e3b689102d27","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
