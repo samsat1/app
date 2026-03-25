@@ -1,7 +1,96 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-24T07:02:15.028Z",
+  "exportDate": "2026-03-25T00:50:17.308Z",
   "customers": [],
+  "clientAuthCustomers": [
+    {
+      "id": "CUST_1774305403416",
+      "name": "salame abdul khalek",
+      "username": "sam",
+      "password": "123456",
+      "phone": "",
+      "plan": "Basic TV",
+      "addons": "Movies, Arabic, Adult",
+      "totalPrice": 20,
+      "monthlyPrice": 20,
+      "expiryDate": "2026-04-23",
+      "duration": "1 month",
+      "durationMonths": 1,
+      "resellerId": "reseller001",
+      "createdAt": "2026-03-23T22:36:43.416Z",
+      "status": "active"
+    },
+    {
+      "id": "CUST_1774333207242",
+      "name": "salame abdul khalek",
+      "username": "samM",
+      "password": "123456",
+      "phone": "",
+      "plan": "Basic TV",
+      "addons": "",
+      "totalPrice": 17,
+      "monthlyPrice": 17,
+      "expiryDate": "2026-04-24",
+      "duration": "1 month",
+      "durationMonths": 1,
+      "resellerId": "reseller001",
+      "createdAt": "2026-03-24T06:20:07.242Z",
+      "status": "active",
+      "updatedAt": "2026-03-24T06:40:43.400Z"
+    },
+    {
+      "id": "CUST_1774394361323",
+      "name": "salame abdul khalek",
+      "username": "kevin",
+      "password": "123456",
+      "phone": "",
+      "plan": "Basic TV, 2nd TV",
+      "addons": "Movies, Adult",
+      "totalPrice": 25.5,
+      "monthlyPrice": 25.5,
+      "expiryDate": "2026-04-24",
+      "duration": "1 month",
+      "durationMonths": 1,
+      "resellerId": "reseller001",
+      "createdAt": "2026-03-24T23:19:21.323Z",
+      "status": "active",
+      "updatedAt": "2026-03-24T23:25:07.764Z"
+    },
+    {
+      "id": "CUST_1774394453235",
+      "name": "agness",
+      "username": "kevinM",
+      "password": "123456",
+      "phone": "",
+      "plan": "Basic TV",
+      "addons": "Movies, Adult",
+      "totalPrice": 14.5,
+      "monthlyPrice": 14.5,
+      "expiryDate": "2026-04-24",
+      "duration": "1 month",
+      "durationMonths": 1,
+      "resellerId": "reseller001",
+      "createdAt": "2026-03-24T23:20:53.235Z",
+      "status": "active"
+    },
+    {
+      "id": "CUST_1774399333449",
+      "name": "salame abdul khalek",
+      "username": "kevinam",
+      "password": "123456",
+      "phone": "",
+      "plan": "Basic TV",
+      "addons": "Movies, Arabic, Adult",
+      "totalPrice": 20.5,
+      "monthlyPrice": 20.5,
+      "expiryDate": "2026-04-24",
+      "duration": "1 month",
+      "durationMonths": 1,
+      "resellerId": "reseller001",
+      "createdAt": "2026-03-25T00:42:13.449Z",
+      "status": "active"
+    }
+  ],
   "packages": [
     {
       "name": "Basic",
@@ -92,7 +181,7 @@
       "password": "res001_pass",
       "status": "active",
       "commissionRate": 20,
-      "walletBalance": 77
+      "walletBalance": 133.5
     },
     "reseller002": {
       "name": "Reseller 002",
@@ -194,7 +283,19 @@
       "walletBalance": 0
     }
   },
-  "creditTransfers": [],
+  "creditTransfers": [
+    {
+      "id": "credit_1774399809902",
+      "resellerId": "reseller001",
+      "amount": 117,
+      "type": "credit",
+      "date": "2026-03-25T00:50:09.902Z",
+      "note": "Admin credit transfer",
+      "timestamp": 1774399809903,
+      "previousBalance": 16.5,
+      "newBalance": 133.5
+    }
+  ],
   "resellerTransactions": [],
   "plexServerUrl": "http://192.168.1.100:32400",
   "plexLocalUrl": "http://192.168.1.100:32400",
