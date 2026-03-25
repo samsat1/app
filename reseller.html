@@ -2188,8 +2188,14 @@
                 const fileInfo = await getResponse.json();
                 const currentSha = fileInfo.sha;
                 
-                // Update file
-                const content = btoa(unescape(encodeURIComponent(JSON.stringify(adminData, null, 2))));
+                // CRITICAL FIX: Include clientAuthCustomers (reseller-created customers) in export
+                const exportData = {
+                    ...adminData,
+                    clientAuthCustomers: JSON.parse(localStorage.getItem('clientAuthCustomers') || '[]')
+                };
+                
+                // Update file with customer data
+                const content = btoa(unescape(encodeURIComponent(JSON.stringify(exportData, null, 2))));
                 
                 const updateResponse = await fetch(GITHUB_API_URL, {
                     method: 'PUT',
@@ -2254,5 +2260,6 @@
             }, 3000);
         }
     </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"e72945439c264b3b85d2e3b689102d27","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>

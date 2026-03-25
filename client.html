@@ -6196,6 +6196,7 @@
                 if (data.packages && Array.isArray(data.packages)) {
                     localStorage.setItem('adminPackages', JSON.stringify(data.packages));
                 }
+                
                 // Import Plex settings from admin
                 if (data.plexServerUrl) localStorage.setItem('plexServerUrl', data.plexServerUrl);
                 if (data.plexToken) localStorage.setItem('plexToken', data.plexToken);
@@ -6207,6 +6208,17 @@
                     localStorage.setItem('plexToken', data.plexConfig.token);
                     localStorage.setItem('plexMoviesSection', data.plexConfig.moviesSection);
                     localStorage.setItem('plexAdultSection', data.plexConfig.adultSection);
+                }
+                
+                // CRITICAL: Import reseller-created customers so they can login on this device
+                if (data.clientAuthCustomers && Array.isArray(data.clientAuthCustomers)) {
+                    // Merge with existing clientAuthCustomers (don't overwrite, just add new ones)
+                    const existingClients = JSON.parse(localStorage.getItem('clientAuthCustomers') || '[]');
+                    const existingUsernames = new Set(existingClients.map(c => c.username));
+                    const newClients = data.clientAuthCustomers.filter(c => !existingUsernames.has(c.username));
+                    const mergedClients = [...existingClients, ...newClients];
+                    localStorage.setItem('clientAuthCustomers', JSON.stringify(mergedClients));
+                    console.log(`✅ Synced ${newClients.length} reseller-created customers`);
                 }
                 
                 localStorage.setItem('lastAutoSync', new Date().toISOString());
@@ -8127,5 +8139,6 @@
             -webkit-backdrop-filter: none !important;
         }
     </style>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"e72945439c264b3b85d2e3b689102d27","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
