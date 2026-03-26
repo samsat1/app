@@ -1469,9 +1469,9 @@
                            (normalizedName.includes('basic') && existingName.includes('basic')) ||
                            (normalizedName.includes('adult') && existingName.includes('adult')) ||
                            (normalizedName.includes('movies') && existingName.includes('movies')) ||
-                           // Sports Plus is different from Sports - only match exact "sports" (not "sports plus")
-                           ((normalizedName === 'sports' || normalizedName.includes('sports ')) && existingName === 'sports') ||
-                           (normalizedName === 'sports' && (existingName === 'sports' || existingName.includes('sports '))) ||
+                           // Sports and Sports Plus are DIFFERENT packages - exact match only
+                           (normalizedName === 'sports' && existingName === 'sports') ||
+                           (normalizedName === 'sports plus' && existingName === 'sports plus') ||
                            false;
                 });
                 
@@ -4409,9 +4409,9 @@
             .then(data => {
                 const libraries = [];
                 
-                // Process actual Plex library sections
-                if (data.MediaContainer && data.MediaContainer.LibrarySection) {
-                    data.MediaContainer.LibrarySection.forEach(section => {
+                // Process actual Plex library sections (API returns Directory, not LibrarySection)
+                if (data.MediaContainer && data.MediaContainer.Directory) {
+                    data.MediaContainer.Directory.forEach(section => {
                         // Filter for movie and show libraries
                         if (section.type === 'movie' || section.type === 'show') {
                             libraries.push({
@@ -4426,11 +4426,27 @@
                             });
                         }
                     });
+                } else if (data.MediaContainer && data.MediaContainer.LibrarySection) {
+                    // Fallback for other response formats
+                    data.MediaContainer.LibrarySection.forEach(section => {
+                        if (section.type === 'movie' || section.type === 'show') {
+                            libraries.push({
+                                id: section.key,
+                                name: section.title,
+                                type: section.type,
+                                count: section.viewCount || 0,
+                                isAdult: section.title.toLowerCase().includes('adult') || 
+                                        section.title.toLowerCase().includes('xxx') ||
+                                        section.title.toLowerCase().includes('18+')
+                            });
+                        }
+                    });
                 }
                 
                 // If no movie/show libraries found, show message to user
                 if (libraries.length === 0) {
                     console.log('📂 No movie or show library sections found in Plex');
+                    console.log('🔍 Plex API Response:', data);
                     showNotification('⚠️ No movie/show libraries found. Please create a Movies library section in your Plex server first.', 'warning');
                     return;
                 }
@@ -6145,16 +6161,16 @@ Network: Always Streaming → Optimized for instant access`;
             const moviesAddon = document.getElementById('moviesAddon')?.checked;
             const adultAddon = document.getElementById('adultAddon')?.checked;
             
-            // Get actual package prices from created packages
+            // Get actual package prices from created packages - NO DEFAULT FALLBACK PRICES
             const packages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
-            let basePrice = 25; // Default fallback
-            let secondTVPrice = 15; // Default fallback
-            let thirdTVPrice = 10; // Default fallback
+            let basePrice = 0; // No default - show 0 if not set
+            let secondTVPrice = 0; // No default
+            let thirdTVPrice = 0; // No default
             const addonPrices = {
-                sports: 8,
-                sports_plus: 10,
-                arabic: 8,
-                movies: 8,
+                sports: 0,
+                sports_plus: 0,
+                arabic: 0,
+                movies: 0,
                 adult: 0
             };
             
