@@ -1,8 +1,64 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-26T00:57:30.708Z",
-  "customers": [],
-  "clientAuthCustomers": [],
+  "exportDate": "2026-03-26T22:04:42.971Z",
+  "customers": [
+    {
+      "id": "CUST_1774561795203",
+      "username": "sam",
+      "name": "salame abdul khalek",
+      "phone": "03062897",
+      "plan": "Basic TV Package",
+      "addons": "Arabic Package, Movies Package, Adult Content Package",
+      "monthlyPrice": 27.5,
+      "totalPrice": 27.5,
+      "expiryDate": "2026-04-26",
+      "password": "123456",
+      "macAddress": "",
+      "adultPassword": "112233",
+      "status": "active",
+      "duration": "1 Month",
+      "durationMonths": 1,
+      "createdAt": "2026-03-26T21:49:55.203Z"
+    }
+  ],
+  "clientAuthCustomers": [
+    {
+      "id": "CUST_1774486731076",
+      "name": "salame abdul khalek",
+      "username": "kevin",
+      "password": "123456",
+      "phone": "",
+      "plan": "Basic TV, 2nd TV",
+      "addons": "Movies, Adult",
+      "totalPrice": 25.5,
+      "monthlyPrice": 25.5,
+      "expiryDate": "2026-04-26",
+      "duration": "1 month",
+      "durationMonths": 1,
+      "resellerId": "reseller001",
+      "createdAt": "2026-03-26T00:58:51.076Z",
+      "status": "active",
+      "updatedAt": "2026-03-26T01:01:07.095Z"
+    },
+    {
+      "id": "CUST_1774561795203",
+      "username": "sam",
+      "name": "salame abdul khalek",
+      "phone": "03062897",
+      "plan": "Basic TV Package",
+      "addons": "Arabic Package, Movies Package, Adult Content Package",
+      "monthlyPrice": 27.5,
+      "totalPrice": 27.5,
+      "expiryDate": "2026-04-26",
+      "password": "123456",
+      "macAddress": "",
+      "adultPassword": "112233",
+      "status": "active",
+      "duration": "1 Month",
+      "durationMonths": 1,
+      "createdAt": "2026-03-26T21:49:55.203Z"
+    }
+  ],
   "packages": [
     {
       "name": "Basic",
@@ -83,6 +139,26 @@
       "rejectionReason": null,
       "createdAt": "2026-03-26T00:52:41.053Z",
       "id": "PKG_1774486361053"
+    },
+    {
+      "name": "Sports Plus",
+      "price": 25,
+      "duration": "1 Month",
+      "features": "",
+      "secondTVPrice": 25,
+      "thirdTVPrice": 25,
+      "sportsPrice": 0,
+      "moviesPrice": 0,
+      "isAdult": "",
+      "adultPackagePrice": 0,
+      "approved": true,
+      "approvedDate": "2026-03-26T22:03:03.306Z",
+      "approvedBy": "admin",
+      "rejectedDate": null,
+      "rejectedBy": null,
+      "rejectionReason": null,
+      "createdAt": "2026-03-26T22:03:03.306Z",
+      "id": "PKG_1774562583306"
     }
   ],
   "resellers": {
@@ -94,7 +170,7 @@
       "status": "active",
       "commissionRate": 20,
       "updatedAt": "2026-03-26T00:53:37.455Z",
-      "walletBalance": 118
+      "walletBalance": 92.5
     },
     "reseller002": {
       "name": "Reseller 002",
