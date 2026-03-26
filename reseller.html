@@ -915,14 +915,14 @@
         let creditHistory = [];
         let adminData = null;
         
-        // Package prices (loaded from admin)
+        // Package prices (loaded from admin) - NO DEMO PRICES
         let packagePrices = {
-            basic: 25,
-            secondTV: 15,
-            thirdTV: 10,
-            sports: 8,
-            sportsPlus: 8,
-            arabic: 8,
+            basic: 0,
+            secondTV: 0,
+            thirdTV: 0,
+            sports: 0,
+            sportsPlus: 0,
+            arabic: 0,
             adult: 0
         };
         
@@ -1117,15 +1117,15 @@
         function loadPackagePrices() {
             console.log('Loading package prices, packages:', JSON.stringify(adminData.packages, null, 2));
             
-            // Reset to defaults
+            // Reset to 0 (no demo prices)
             packagePrices = {
-                basic: 25,
-                secondTV: 15,
-                thirdTV: 10,
-                sports: 8,
-                sportsPlus: 8,
-                movies: 8,
-                arabic: 8,
+                basic: 0,
+                secondTV: 0,
+                thirdTV: 0,
+                sports: 0,
+                sportsPlus: 0,
+                movies: 0,
+                arabic: 0,
                 adult: 0
             };
             
@@ -1207,47 +1207,47 @@
                     (p.name && p.name.toLowerCase().includes('adult'))
                 );
                 
-                // Set prices from found packages
+                // Set prices from found packages - NO FALLBACK PRICES
                 if (basicPkg) {
-                    packagePrices.basic = parseFloat(basicPkg.price || basicPkg.packagePrice || 25);
+                    packagePrices.basic = parseFloat(basicPkg.price || basicPkg.packagePrice || 0);
                     // Get 2nd and 3rd TV prices from Basic package fields
-                    packagePrices.secondTV = parseFloat(basicPkg.secondTVPrice || basicPkg.secondTVPrice || 15);
-                    packagePrices.thirdTV = parseFloat(basicPkg.thirdTVPrice || basicPkg.thirdTVPrice || 10);
+                    packagePrices.secondTV = parseFloat(basicPkg.secondTVPrice || 0);
+                    packagePrices.thirdTV = parseFloat(basicPkg.thirdTVPrice || 0);
                     console.log('Basic package found:', basicPkg.name, 'price:', packagePrices.basic, '2nd TV:', packagePrices.secondTV, '3rd TV:', packagePrices.thirdTV);
                 }
                 
                 // Legacy support: check for separate 2nd/3rd packages if Basic doesn't have the prices
                 if (secondPkg && !basicPkg?.secondTVPrice) {
-                    packagePrices.secondTV = parseFloat(secondPkg.price || secondPkg.packagePrice || 15);
+                    packagePrices.secondTV = parseFloat(secondPkg.price || secondPkg.packagePrice || 0);
                     console.log('2nd TV package found:', secondPkg.name, 'price:', packagePrices.secondTV);
                 }
                 
                 if (thirdPkg && !basicPkg?.thirdTVPrice) {
-                    packagePrices.thirdTV = parseFloat(thirdPkg.price || thirdPkg.packagePrice || 10);
+                    packagePrices.thirdTV = parseFloat(thirdPkg.price || thirdPkg.packagePrice || 0);
                     console.log('3rd TV package found:', thirdPkg.name, 'price:', packagePrices.thirdTV);
                 }
                 
                 if (sportsPkg) {
-                    packagePrices.sports = parseFloat(sportsPkg.price || sportsPkg.packagePrice || 8);
+                    packagePrices.sports = parseFloat(sportsPkg.price || sportsPkg.packagePrice || 0);
                     console.log('Sports package found:', sportsPkg.name, 'price:', packagePrices.sports);
                 }
                 
                 if (sportsPlusPkg) {
-                    packagePrices.sportsPlus = parseFloat(sportsPlusPkg.price || sportsPlusPkg.packagePrice || 8);
+                    packagePrices.sportsPlus = parseFloat(sportsPlusPkg.price || sportsPlusPkg.packagePrice || 0);
                     console.log('Sports Plus package found:', sportsPlusPkg.name, 'price:', packagePrices.sportsPlus);
                     // Show Sports Plus option
                     if (sportsPlusOption) sportsPlusOption.style.display = 'flex';
                 }
                 
                 if (moviesPkg) {
-                    packagePrices.movies = parseFloat(moviesPkg.price || moviesPkg.packagePrice || 8);
+                    packagePrices.movies = parseFloat(moviesPkg.price || moviesPkg.packagePrice || 0);
                     console.log('Movies package found:', moviesPkg.name, 'price:', packagePrices.movies);
                     // Show Movies option
                     if (moviesOption) moviesOption.style.display = 'flex';
                 }
                 
                 if (arabicPkg) {
-                    packagePrices.arabic = parseFloat(arabicPkg.price || arabicPkg.packagePrice || 8);
+                    packagePrices.arabic = parseFloat(arabicPkg.price || arabicPkg.packagePrice || 0);
                     console.log('Arabic package found:', arabicPkg.name, 'price:', packagePrices.arabic);
                     // Show Arabic option
                     if (arabicOption) arabicOption.style.display = 'flex';
