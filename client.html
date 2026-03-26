@@ -6210,6 +6210,23 @@
                     localStorage.setItem('plexAdultSection', data.plexConfig.adultSection);
                 }
                 
+                // CRITICAL: Import Plex cache so movies appear before login
+                if (data.plexMoviesCache && Array.isArray(data.plexMoviesCache)) {
+                    localStorage.setItem('plexMoviesCache', JSON.stringify(data.plexMoviesCache));
+                    localStorage.setItem('plexCachedMovies', JSON.stringify(data.plexMoviesCache));
+                    console.log(`✅ Synced ${data.plexMoviesCache.length} movies to cache`);
+                }
+                if (data.plexAdultCache && Array.isArray(data.plexAdultCache)) {
+                    localStorage.setItem('plexAdultCache', JSON.stringify(data.plexAdultCache));
+                    localStorage.setItem('plexCachedAdult', JSON.stringify(data.plexAdultCache));
+                    console.log(`✅ Synced ${data.plexAdultCache.length} adult videos to cache`);
+                }
+                if (data.plexArabicCache && Array.isArray(data.plexArabicCache)) {
+                    localStorage.setItem('plexArabicCache', JSON.stringify(data.plexArabicCache));
+                    localStorage.setItem('plexCachedArabic', JSON.stringify(data.plexArabicCache));
+                    console.log(`✅ Synced ${data.plexArabicCache.length} Arabic channels to cache`);
+                }
+                
                 // CRITICAL: Import reseller-created customers so they can login on this device
                 if (data.clientAuthCustomers && Array.isArray(data.clientAuthCustomers)) {
                     // Merge with existing clientAuthCustomers (don't overwrite, just add new ones)
@@ -6290,8 +6307,16 @@
         // Global function for app initialization - defined early for onload access
         window.initApp = async function() {
             
-            // Auto-sync on startup (silent, non-blocking)
-            autoSyncData();
+            // Auto-sync on startup - WAIT for it to complete before loading content
+            console.log('🔄 Starting auto-sync...');
+            const syncResult = await autoSyncData();
+            if (syncResult) {
+                console.log('✅ Auto-sync completed, reloading Plex content...');
+                // Reload Plex content after sync
+                if (typeof loadPlexLibraryContent === 'function') {
+                    loadPlexLibraryContent();
+                }
+            }
             
             // DEBUG: Show all localStorage keys
             console.log('🔑 ALL localStorage keys:', Object.keys(localStorage));

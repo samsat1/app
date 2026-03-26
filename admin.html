@@ -3606,6 +3606,12 @@
                 
                 // Prepare data (clean JSON without special characters)
                 // NOTE: Don't include githubToken in the export - GitHub will revoke it from public repos!
+                
+                // Get Plex cache data for client viewing
+                const plexMoviesCache = JSON.parse(localStorage.getItem('plexMoviesCache') || '[]');
+                const plexAdultCache = JSON.parse(localStorage.getItem('plexAdultCache') || '[]');
+                const plexArabicCache = JSON.parse(localStorage.getItem('plexArabicCache') || '[]');
+                
                 const exportData = {
                     version: '1.0',
                     exportDate: new Date().toISOString(),
@@ -3622,6 +3628,10 @@
                     plexMoviesSection: localStorage.getItem('plexMoviesSection') || '',
                     plexAdultSection: localStorage.getItem('plexAdultSection') || '',
                     plexArabicSection: localStorage.getItem('plexArabicSection') || '',
+                    // Include Plex cache so movies appear on second device before login
+                    plexMoviesCache: plexMoviesCache,
+                    plexAdultCache: plexAdultCache,
+                    plexArabicCache: plexArabicCache,
                     tvSyncUrl: `https://raw.githubusercontent.com/${username}/${repo}/main/admin_data.json`,
                     githubUsername: username,
                     githubRepo: repo
