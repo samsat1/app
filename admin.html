@@ -1469,9 +1469,12 @@
                            (normalizedName.includes('basic') && existingName.includes('basic')) ||
                            (normalizedName.includes('adult') && existingName.includes('adult')) ||
                            (normalizedName.includes('movies') && existingName.includes('movies')) ||
-                           // Sports and Sports Plus are DIFFERENT packages - exact match only
+                           // Sports and Sports Plus are DIFFERENT packages
+                           // Match exact "sports" (but not "sports plus")
                            (normalizedName === 'sports' && existingName === 'sports') ||
-                           (normalizedName === 'sports plus' && existingName === 'sports plus') ||
+                           (normalizedName.includes('sports ') && existingName.includes('sports ')) ||
+                           // Match exact "sports plus" (with anything after)
+                           (normalizedName.startsWith('sports plus') && existingName.startsWith('sports plus')) ||
                            false;
                 });
                 
@@ -6174,33 +6177,21 @@ Network: Always Streaming → Optimized for instant access`;
                 adult: 0
             };
             
-            // Get adult packages from adminPackages for adult addon pricing
-            let adultPrice = 0;
-            try {
-                const adminPackages = JSON.parse(localStorage.getItem('adminPackages')) || [];
-                const adultPackages = adminPackages.filter(pkg => 
-                    pkg.isAdult === true || 
-                    pkg.name.toLowerCase().includes('adult') || 
-                    pkg.name.toLowerCase().includes('xxx') ||
-                    (pkg.adultPackagePrice && pkg.adultPackagePrice > 0)
-                );
-                if (adultPackages.length > 0) {
-                    adultPrice = adultPackages[0].adultPackagePrice || 0;
-                }
-            } catch (e) {
-                console.error('Error loading adult packages for pricing:', e);
-            }
-            addonPrices.adult = adultPrice;
             
-            // Find the Basic package by name to get correct base prices
+            // Find each package type separately to get correct prices
             let basicPackage = null;
+            let sportsPackage = null;
+            let sportsPlusPackage = null;
+            let arabicPackage = null;
+            let moviesPackage = null;
+            let adultPackageObj = null;
+            
             if (packages.length > 0) {
-                // First try to find a package with "Basic" in the name (case-insensitive)
+                // Find Basic package for base prices
                 basicPackage = packages.find(pkg => 
                     pkg.name && pkg.name.toLowerCase().includes('basic')
                 );
-                
-                // If no Basic package found, use the first non-adult package
+                // Fall back to first non-adult package
                 if (!basicPackage) {
                     basicPackage = packages.find(pkg => 
                         !pkg.isAdult && 
@@ -6208,27 +6199,65 @@ Network: Always Streaming → Optimized for instant access`;
                         !pkg.name.toLowerCase().includes('xxx')
                     );
                 }
-                
-                // Fall back to first package if no suitable package found
+                // Fall back to first package
                 if (!basicPackage) {
                     basicPackage = packages[0];
                 }
                 
-                // Get prices from the found Basic package
-                if (basicPackage) {
-                    basePrice = basicPackage.price || basePrice;
-                    secondTVPrice = basicPackage.secondTVPrice || secondTVPrice;
-                    thirdTVPrice = basicPackage.thirdTVPrice || thirdTVPrice;
-                    
-                    // Use package-specific addon prices if available
-                    if (basicPackage.sportsPrice) addonPrices.sports = basicPackage.sportsPrice;
-                    if (basicPackage.sportsPlusPrice) addonPrices.sports_plus = basicPackage.sportsPlusPrice;
-                    if (basicPackage.arabicPrice) addonPrices.arabic = basicPackage.arabicPrice;
-                    if (basicPackage.moviesPrice) addonPrices.movies = basicPackage.moviesPrice;
-                }
+                // Find Sports package
+                sportsPackage = packages.find(pkg => 
+                    pkg.name && pkg.name.toLowerCase().includes('sports') && 
+                    !pkg.name.toLowerCase().includes('plus')
+                );
+                
+                // Find Sports Plus package (must check BEFORE Sports to avoid partial match)
+                sportsPlusPackage = packages.find(pkg => 
+                    pkg.name && (pkg.name.toLowerCase().includes('sports plus') || pkg.name.toLowerCase().includes('sports+'))
+                );
+                
+                // Find Arabic package
+                arabicPackage = packages.find(pkg => 
+                    pkg.name && pkg.name.toLowerCase().includes('arabic')
+                );
+                
+                // Find Movies package
+                moviesPackage = packages.find(pkg => 
+                    pkg.name && pkg.name.toLowerCase().includes('movie')
+                );
+                
+                // Find Adult package
+                adultPackageObj = packages.find(pkg => 
+                    pkg.isAdult === true || 
+                    pkg.name.toLowerCase().includes('adult') || 
+                    pkg.name.toLowerCase().includes('xxx')
+                );
             }
             
-            // Also check input fields for custom prices
+            // Get prices from packages
+            if (basicPackage) {
+                basePrice = basicPackage.price || 0;
+                secondTVPrice = basicPackage.secondTVPrice || 0;
+                thirdTVPrice = basicPackage.thirdTVPrice || 0;
+            }
+            
+            // Get addon prices from their own packages
+            if (sportsPackage) {
+                addonPrices.sports = sportsPackage.price || sportsPackage.sportsPrice || 0;
+            }
+            if (sportsPlusPackage) {
+                addonPrices.sports_plus = sportsPlusPackage.price || sportsPlusPackage.sportsPlusPrice || 0;
+            }
+            if (arabicPackage) {
+                addonPrices.arabic = arabicPackage.price || arabicPackage.arabicPrice || 0;
+            }
+            if (moviesPackage) {
+                addonPrices.movies = moviesPackage.price || moviesPackage.moviesPrice || 0;
+            }
+            if (adultPackageObj) {
+                addonPrices.adult = adultPackageObj.price || adultPackageObj.adultPackagePrice || 0;
+            }
+            
+            // Also check input fields for custom prices (override package prices)
             const sportsPriceInput = document.getElementById('sportsPrice');
             const sportsPlusPriceInput = document.getElementById('sportsPlusPrice');
             const arabicPriceInput = document.getElementById('arabicPrice');
