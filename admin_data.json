@@ -1,7 +1,26 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-26T22:07:35.734Z",
-  "customers": [],
+  "exportDate": "2026-03-26T22:41:40.229Z",
+  "customers": [
+    {
+      "id": "CUST_1774564695817",
+      "username": "samm",
+      "name": "salame abdul khalek",
+      "phone": "03062897",
+      "plan": "Basic TV Package",
+      "addons": "Sports Plus Package, Arabic Package, Movies Package, Adult Content Package",
+      "monthlyPrice": 45.5,
+      "totalPrice": 45.5,
+      "expiryDate": "2026-04-26",
+      "password": "123456",
+      "macAddress": "",
+      "adultPassword": "112233",
+      "status": "active",
+      "duration": "1 Month",
+      "durationMonths": 1,
+      "createdAt": "2026-03-26T22:38:15.817Z"
+    }
+  ],
   "clientAuthCustomers": [
     {
       "id": "CUST_1774486731076",
@@ -38,6 +57,24 @@
       "duration": "1 Month",
       "durationMonths": 1,
       "createdAt": "2026-03-26T21:49:55.203Z"
+    },
+    {
+      "id": "CUST_1774564695817",
+      "username": "samm",
+      "name": "salame abdul khalek",
+      "phone": "03062897",
+      "plan": "Basic TV Package",
+      "addons": "Sports Plus Package, Arabic Package, Movies Package, Adult Content Package",
+      "monthlyPrice": 45.5,
+      "totalPrice": 45.5,
+      "expiryDate": "2026-04-26",
+      "password": "123456",
+      "macAddress": "",
+      "adultPassword": "112233",
+      "status": "active",
+      "duration": "1 Month",
+      "durationMonths": 1,
+      "createdAt": "2026-03-26T22:38:15.817Z"
     }
   ],
   "packages": [
@@ -120,6 +157,26 @@
       "rejectionReason": null,
       "createdAt": "2026-03-26T00:52:41.053Z",
       "id": "PKG_1774486361053"
+    },
+    {
+      "name": "Sports Plus",
+      "price": 25,
+      "duration": "1 Month",
+      "features": "",
+      "secondTVPrice": 25,
+      "thirdTVPrice": 25,
+      "sportsPrice": 25,
+      "moviesPrice": 0,
+      "isAdult": "",
+      "adultPackagePrice": 0,
+      "approved": true,
+      "approvedDate": "2026-03-26T22:37:05.389Z",
+      "approvedBy": "admin",
+      "rejectedDate": null,
+      "rejectedBy": null,
+      "rejectionReason": null,
+      "createdAt": "2026-03-26T22:37:05.389Z",
+      "id": "PKG_1774564625389"
     }
   ],
   "resellers": {
