@@ -1,26 +1,7 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-26T22:41:40.229Z",
-  "customers": [
-    {
-      "id": "CUST_1774564695817",
-      "username": "samm",
-      "name": "salame abdul khalek",
-      "phone": "03062897",
-      "plan": "Basic TV Package",
-      "addons": "Sports Plus Package, Arabic Package, Movies Package, Adult Content Package",
-      "monthlyPrice": 45.5,
-      "totalPrice": 45.5,
-      "expiryDate": "2026-04-26",
-      "password": "123456",
-      "macAddress": "",
-      "adultPassword": "112233",
-      "status": "active",
-      "duration": "1 Month",
-      "durationMonths": 1,
-      "createdAt": "2026-03-26T22:38:15.817Z"
-    }
-  ],
+  "exportDate": "2026-03-26T23:20:15.021Z",
+  "customers": [],
   "clientAuthCustomers": [
     {
       "id": "CUST_1774486731076",
@@ -163,20 +144,20 @@
       "price": 25,
       "duration": "1 Month",
       "features": "",
-      "secondTVPrice": 25,
-      "thirdTVPrice": 25,
-      "sportsPrice": 25,
+      "secondTVPrice": 0,
+      "thirdTVPrice": 0,
+      "sportsPrice": 0,
       "moviesPrice": 0,
       "isAdult": "",
       "adultPackagePrice": 0,
       "approved": true,
-      "approvedDate": "2026-03-26T22:37:05.389Z",
+      "approvedDate": "2026-03-26T23:13:56.501Z",
       "approvedBy": "admin",
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-03-26T22:37:05.389Z",
-      "id": "PKG_1774564625389"
+      "createdAt": "2026-03-26T23:13:56.501Z",
+      "id": "PKG_1774566836501"
     }
   ],
   "resellers": {
