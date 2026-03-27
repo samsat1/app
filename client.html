@@ -2151,7 +2151,9 @@
         // CONFIGURATION - Edit this URL to point to your admin_data.json on GitHub
         // All devices will sync from this URL automatically
         // ============================================
-        const DEFAULT_SYNC_URL = 'https://raw.githubusercontent.com/samsat1/samsat1.github.io/main/app/admin_data.json';
+        // Try GitHub Pages URL first, fallback to raw.githubusercontent.com
+        const DEFAULT_SYNC_URL = 'https://samsat1.github.io/app/admin_data.json';
+        const FALLBACK_SYNC_URL = 'https://raw.githubusercontent.com/samsat1/samsat1.github.io/main/app/admin_data.json';
         // ============================================
         
         // LOCAL VERSION - Firebase not used
@@ -6217,8 +6219,18 @@
             
             try {
                 console.log('📡 Auto-syncing data from:', customSyncUrl);
-                const response = await fetch(customSyncUrl + '?t=' + Date.now()); // Cache bust
-                if (!response.ok) throw new Error('Fetch failed');
+                let response = await fetch(customSyncUrl + '?t=' + Date.now()); // Cache bust
+                
+                // If first URL fails, try fallback
+                if (!response.ok && customSyncUrl === DEFAULT_SYNC_URL) {
+                    console.log('📡 First URL failed, trying fallback:', FALLBACK_SYNC_URL);
+                    response = await fetch(FALLBACK_SYNC_URL + '?t=' + Date.now());
+                    if (response.ok) {
+                        customSyncUrl = FALLBACK_SYNC_URL;
+                    }
+                }
+                
+                if (!response.ok) throw new Error('Fetch failed. Status: ' + response.status);
                 
                 const data = await response.json();
                 
@@ -6280,7 +6292,10 @@
                 console.log('✅ Auto-sync completed successfully');
                 return true;
             } catch (error) {
-                console.log('⚠️ Auto-sync failed:', error.message);
+                console.log('⚠️ Auto-sync FAILED:', error.message);
+                console.log('⚠️ URL tried:', customSyncUrl);
+                console.log('⚠️ This might mean: 1) File does not exist on GitHub yet, 2) Wrong URL, 3) CORS issue');
+                alert('⚠️ Sync Failed!\n\nURL: ' + customSyncUrl + '\nError: ' + error.message + '\n\nMake sure admin has uploaded admin_data.json to GitHub!');
                 return false;
             }
         };
