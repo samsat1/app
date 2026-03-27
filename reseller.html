@@ -1180,10 +1180,12 @@
                     !p.isAdult
                 );
                 
-                // Sports Plus package
+                // Sports Plus package - match various naming patterns
                 const sportsPlusPkg = adminData.packages.find(p => 
                     p.name && 
-                    p.name.toLowerCase().includes('sports plus') && 
+                    (p.name.toLowerCase().includes('sports plus') || 
+                     p.name.toLowerCase().includes('sports+') ||
+                     (p.name.toLowerCase().includes('sports') && p.name.toLowerCase().includes('plus'))) && 
                     !p.isAdult
                 );
                 
@@ -1768,6 +1770,7 @@
                 second: false,
                 third: false,
                 sports: false,
+                sportsPlus: false,
                 movies: false,
                 adult: false
             };
@@ -1776,7 +1779,8 @@
             if (customer.plan && customer.plan.includes('Basic')) selectedPackages.basic = true;
             if (customer.plan && customer.plan.includes('2nd')) selectedPackages.second = true;
             if (customer.plan && customer.plan.includes('3rd')) selectedPackages.third = true;
-            if (customer.addons && customer.addons.includes('Sports')) selectedPackages.sports = true;
+            if (customer.addons && customer.addons.includes('Sports Plus')) selectedPackages.sportsPlus = true;
+            if (customer.addons && customer.addons.includes('Sports') && !customer.addons.includes('Sports Plus')) selectedPackages.sports = true;
             if (customer.addons && customer.addons.includes('Movies')) selectedPackages.movies = true;
             if (customer.addons && customer.addons.includes('Adult')) selectedPackages.adult = true;
             
@@ -1784,6 +1788,7 @@
             document.getElementById('basicTVOption')?.classList.toggle('selected', selectedPackages.basic);
             document.getElementById('secondTVOption')?.classList.toggle('selected', selectedPackages.second);
             document.getElementById('thirdTVOption')?.classList.toggle('selected', selectedPackages.third);
+            document.getElementById('sportsPlusOption')?.classList.toggle('selected', selectedPackages.sportsPlus);
             document.getElementById('sportsOption')?.classList.toggle('selected', selectedPackages.sports);
             document.getElementById('moviesOption')?.classList.toggle('selected', selectedPackages.movies);
             document.getElementById('adultOption')?.classList.toggle('selected', selectedPackages.adult);
@@ -1792,11 +1797,13 @@
             if (!selectedPackages.basic) {
                 document.getElementById('secondTVOption')?.classList.add('disabled');
                 document.getElementById('thirdTVOption')?.classList.add('disabled');
+                document.getElementById('sportsPlusOption')?.classList.add('disabled');
                 document.getElementById('sportsOption')?.classList.add('disabled');
                 document.getElementById('moviesOption')?.classList.add('disabled');
                 document.getElementById('adultOption')?.classList.add('disabled');
             } else {
                 document.getElementById('secondTVOption')?.classList.remove('disabled');
+                document.getElementById('sportsPlusOption')?.classList.remove('disabled');
                 document.getElementById('sportsOption')?.classList.remove('disabled');
                 document.getElementById('moviesOption')?.classList.remove('disabled');
                 document.getElementById('adultOption')?.classList.remove('disabled');
@@ -1862,6 +1869,14 @@
                     newAddons.push('Sports');
                 } else if (selectedPackages.sports) {
                     newAddons.push('Sports');
+                }
+                
+                // Check Sports Plus
+                if (selectedPackages.sportsPlus && !oldAddons.includes('Sports Plus')) {
+                    additionalCost += packagePrices.sportsPlus * selectedDuration;
+                    newAddons.push('Sports Plus');
+                } else if (selectedPackages.sportsPlus) {
+                    newAddons.push('Sports Plus');
                 }
                 
                 // Check Movies
@@ -2260,6 +2275,5 @@
             }, 3000);
         }
     </script>
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"e72945439c264b3b85d2e3b689102d27","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
