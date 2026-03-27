@@ -1172,7 +1172,7 @@
                      p.name.toLowerCase().includes('3rd device'))
                 );
                 
-                // Sports package
+                // Sports package - must NOT contain "plus" anywhere (to exclude Sports Plus HD, Sports Plus 4K, etc.)
                 const sportsPkg = adminData.packages.find(p => 
                     p.name && 
                     p.name.toLowerCase().includes('sport') && 
@@ -1180,13 +1180,11 @@
                     !p.isAdult
                 );
                 
-                // Sports Plus package - match various naming patterns
+                // Sports Plus package - must start with "sports plus" (to include Sports Plus HD, Sports Plus 4K, etc.)
                 const sportsPlusPkg = adminData.packages.find(p => 
                     p.name && 
-                    (p.name.toLowerCase().includes('sports plus') || 
-                     p.name.toLowerCase().includes('sports+') ||
-                     (p.name.toLowerCase().includes('sports') && p.name.toLowerCase().includes('plus'))) && 
-                    !p.isAdult
+                    !p.isAdult &&
+                    p.name.toLowerCase().startsWith('sports plus')
                 );
                 
                 // Movies package (adult or regular)

@@ -2147,6 +2147,13 @@
 
     <!-- LOCAL VERSION - No Firebase SDK needed -->
     <script>
+        // ============================================
+        // CONFIGURATION - Edit this URL to point to your admin_data.json on GitHub
+        // All devices will sync from this URL automatically
+        // ============================================
+        const DEFAULT_SYNC_URL = 'https://raw.githubusercontent.com/samsat1/samsat1.github.io/main/app/admin_data.json';
+        // ============================================
+        
         // LOCAL VERSION - Firebase not used
         // Using localStorage for all data storage
         const firebaseConfig = {};
@@ -6177,12 +6184,35 @@
         // Auto-sync function - runs on startup
         // Syncs from GitHub to load Plex settings and customer data
         window.autoSyncData = async function() {
-            // Check for sync URL - support both 'syncUrl' and 'tvSyncUrl' for compatibility with admin panel
-            const customSyncUrl = localStorage.getItem('syncUrl') || localStorage.getItem('tvSyncUrl');
+            // Check for sync URL in URL params first (for first-time setup)
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlSyncUrl = urlParams.get('syncUrl');
+            if (urlSyncUrl) {
+                localStorage.setItem('syncUrl', urlSyncUrl);
+                // Also save tvSyncUrl for compatibility
+                localStorage.setItem('tvSyncUrl', urlSyncUrl);
+                console.log('📡 Sync URL saved from URL parameter:', urlSyncUrl);
+                // Clean up URL without reloading
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
             
+            // Check for sync URL - support both 'syncUrl' and 'tvSyncUrl' for compatibility with admin panel
+            let customSyncUrl = localStorage.getItem('syncUrl') || localStorage.getItem('tvSyncUrl');
+            
+            // Use default URL if no sync URL configured (for GitHub Pages auto-sync)
             if (!customSyncUrl) {
-                console.log('⚠️ No sync URL configured - Plex settings and customer data will only work if previously synced');
-                return false;
+                customSyncUrl = DEFAULT_SYNC_URL;
+                console.log('📡 Using default sync URL:', customSyncUrl);
+            }
+            
+            // Also check if admin panel pushed URL via postMessage
+            const pushedUrl = sessionStorage.getItem('pushedSyncUrl');
+            if (pushedUrl && !localStorage.getItem('syncUrl')) {
+                localStorage.setItem('syncUrl', pushedUrl);
+                localStorage.setItem('tvSyncUrl', pushedUrl);
+                customSyncUrl = pushedUrl;
+                sessionStorage.removeItem('pushedSyncUrl');
+                console.log('📡 Sync URL received from admin:', pushedUrl);
             }
             
             try {
@@ -6191,6 +6221,13 @@
                 if (!response.ok) throw new Error('Fetch failed');
                 
                 const data = await response.json();
+                
+                // CRITICAL: Save sync URL from data (in case it was updated)
+                if (data.tvSyncUrl) {
+                    localStorage.setItem('tvSyncUrl', data.tvSyncUrl);
+                    localStorage.setItem('syncUrl', data.tvSyncUrl);
+                    console.log('📡 Saved sync URL from synced data:', data.tvSyncUrl);
+                }
                 
                 // Sync packages from admin
                 if (data.packages && Array.isArray(data.packages)) {
@@ -6202,6 +6239,7 @@
                 if (data.plexToken) localStorage.setItem('plexToken', data.plexToken);
                 if (data.plexMoviesSection) localStorage.setItem('plexMoviesSection', data.plexMoviesSection);
                 if (data.plexAdultSection) localStorage.setItem('plexAdultSection', data.plexAdultSection);
+                if (data.plexArabicSection) localStorage.setItem('plexArabicSection', data.plexArabicSection);
                 if (data.plexConfig) {
                     localStorage.setItem('plexConfig', JSON.stringify(data.plexConfig));
                     localStorage.setItem('plexServerUrl', data.plexConfig.localUrl || data.plexConfig.serverUrl);
@@ -8164,6 +8202,5 @@
             -webkit-backdrop-filter: none !important;
         }
     </style>
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"e72945439c264b3b85d2e3b689102d27","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
