@@ -5448,19 +5448,24 @@
 
         // Handle Plex content - fetch direct MP4 URL
         async function handlePlexContent(content) {
-            // ALWAYS use correct server URL - never use 127.0.0.1
-            const CORRECT_SERVER = 'http://192.168.1.100:32400';
-            const token = content.plexToken || localStorage.getItem('plexToken') || 'xcak2s6WSj7hzAinAigm';
-            const serverUrl = CORRECT_SERVER; // Force correct server
+            // Use Plex server URL from localStorage (set by admin panel)
+            let serverUrl = localStorage.getItem('plexLocalUrl') || localStorage.getItem('plexServerUrl');
+            // Fallback to a common local IP if not set
+            if (!serverUrl) {
+                serverUrl = 'http://192.168.1.100:32400';
+            }
+            const token = content.plexToken || localStorage.getItem('plexToken') || '';
             
             console.log('📺 Playing Plex content:', content.name);
-            console.log('📺 Server:', serverUrl, 'Token:', token.substring(0, 8) + '...');
+            console.log('📺 Server:', serverUrl, 'Token:', token ? token.substring(0, 8) + '...' : 'none');
             
             try {
                 // Method 1: Try the stored HLS transcode URL directly (no fetch needed)
                 if (content.url && content.url.includes('transcode')) {
-                    // Fix any wrong 127.0.0.1 URLs in cached content
-                    let fixedUrl = content.url.replace('http://127.0.0.1:32400', serverUrl);
+                    // Fix any wrong URLs in cached content - replace 127.0.0.1, localhost with correct server
+                    let fixedUrl = content.url
+                        .replace(/http:\/\/127\.0\.0\.1:\d+/g, serverUrl)
+                        .replace(/http:\/\/localhost:\d+/g, serverUrl);
                     console.log('✅ Using stored transcode URL (fixed)');
                     handleHLSStream(fixedUrl);
                     return;
@@ -5468,6 +5473,11 @@
                 
                 // Method 2: Construct direct playback URL (no fetch needed)
                 // Plex supports direct file access via this endpoint
+                if (!token) {
+                    console.error('❌ No Plex token found!');
+                    showError('Plex token not configured. Please check admin settings.');
+                    return;
+                }
                 const directStreamUrl = `${serverUrl}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${content.id}&mediaIndex=0&partIndex=0&protocol=hls&fastSeek=1&directPlay=0&directStream=1&X-Plex-Token=${token}`;
                 
                 console.log('✅ Playing via transcode URL:', directStreamUrl);
@@ -6248,13 +6258,15 @@
                 
                 // Import Plex settings from admin
                 if (data.plexServerUrl) localStorage.setItem('plexServerUrl', data.plexServerUrl);
+                if (data.plexLocalUrl) localStorage.setItem('plexLocalUrl', data.plexLocalUrl);
                 if (data.plexToken) localStorage.setItem('plexToken', data.plexToken);
                 if (data.plexMoviesSection) localStorage.setItem('plexMoviesSection', data.plexMoviesSection);
                 if (data.plexAdultSection) localStorage.setItem('plexAdultSection', data.plexAdultSection);
                 if (data.plexArabicSection) localStorage.setItem('plexArabicSection', data.plexArabicSection);
                 if (data.plexConfig) {
                     localStorage.setItem('plexConfig', JSON.stringify(data.plexConfig));
-                    localStorage.setItem('plexServerUrl', data.plexConfig.localUrl || data.plexConfig.serverUrl);
+                    localStorage.setItem('plexServerUrl', data.plexConfig.serverUrl);
+                    localStorage.setItem('plexLocalUrl', data.plexConfig.localUrl);
                     localStorage.setItem('plexToken', data.plexConfig.token);
                     localStorage.setItem('plexMoviesSection', data.plexConfig.moviesSection);
                     localStorage.setItem('plexAdultSection', data.plexConfig.adultSection);
