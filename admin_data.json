@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-29T21:31:51.463Z",
+  "exportDate": "2026-03-29T21:33:11.669Z",
   "customers": [
     {
       "id": "CUST_1774567584618",
@@ -235,23 +235,22 @@
     },
     {
       "name": "Sports",
-      "price": 6.5,
+      "price": 6,
       "duration": "1 Month",
       "features": "",
       "secondTVPrice": 5,
       "thirdTVPrice": 5,
-      "sportsPrice": 6.5,
+      "sportsPrice": 8,
       "moviesPrice": 0,
       "isAdult": "",
       "adultPackagePrice": 0,
       "approved": true,
-      "approvedDate": "2026-03-29T21:31:02.649Z",
+      "approvedDate": "2026-03-29T21:33:07.286Z",
       "approvedBy": "admin",
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-03-29T21:31:02.649Z",
-      "id": "PKG_1774819862649"
+      "createdAt": "2026-03-29T21:33:07.286Z"
     },
     {
       "name": "Sports Plus",
