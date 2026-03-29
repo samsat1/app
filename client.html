@@ -287,8 +287,8 @@
                 // Check if customer exists and password matches
                 if (customer && customer.password === password) {
                     // AUTOMATIC DEVICE LOCK - Silent Protection
-                    // Generates unique device fingerprint and locks account to first device
-                    // No admin setup needed - fully automatic - nobody knows why it fails
+                    // Generates unique device fingerprint and locks account to multiple devices based on subscription
+                    // Basic TV = 1 device, 2nd TV = 2 devices, 3rd TV = 3 devices (same WiFi only)
                     
                     // Generate or get this device's unique fingerprint
                     let deviceFingerprint = localStorage.getItem('iwatch_device_fp');
@@ -323,10 +323,20 @@
                         localStorage.setItem('iwatch_device_fp', deviceFingerprint);
                     }
                     
-                    // Check device lock for this customer
+                    // Calculate max devices based on subscription
+                    const plan = customer.plan || '';
+                    let maxDevices = 1; // Default to 1 device (Basic TV)
+                    if (plan.includes('Basic') && plan.includes('2nd') && plan.includes('3rd')) {
+                        maxDevices = 3;
+                    } else if (plan.includes('Basic') && plan.includes('2nd')) {
+                        maxDevices = 2;
+                    }
+                    
+                    // Get stored devices (stored as comma-separated fingerprints)
                     const lockKey = 'iwatch_lock_' + customer.id;
                     const lockTimeKey = 'iwatch_locktime_' + customer.id;
-                    let storedFingerprint = localStorage.getItem(lockKey);
+                    let storedDevices = localStorage.getItem(lockKey) || '';
+                    let deviceList = storedDevices ? storedDevices.split(',') : [];
                     const lockTime = parseInt(localStorage.getItem(lockTimeKey) || '0');
                     
                     // Check if admin requested device reset (new TV scenario)
@@ -334,20 +344,30 @@
                         // Admin reset the device lock - clear old lock and allow new device
                         localStorage.removeItem(lockKey);
                         localStorage.removeItem(lockTimeKey);
-                        storedFingerprint = null;
+                        storedDevices = '';
+                        deviceList = [];
                         console.log('Device lock reset by admin');
                     }
                     
-                    if (!storedFingerprint) {
-                        // FIRST LOGIN or RESET - Lock this account to this device automatically
-                        localStorage.setItem(lockKey, deviceFingerprint);
-                        localStorage.setItem(lockTimeKey, Date.now().toString());
-                        console.log('Device locked for customer');
-                    } else if (storedFingerprint !== deviceFingerprint) {
-                        // DIFFERENT DEVICE - Block silently with generic error
-                        // Don't reveal it's a device check - just say invalid credentials
-                        console.log('Access denied');
-                        return null; // Will show "Invalid credentials" - nobody knows why
+                    // Check if this device is already registered
+                    if (deviceList.includes(deviceFingerprint)) {
+                        // Device already registered - allow access
+                        console.log('Device already registered, allowing access');
+                    } else {
+                        // New device - check if we can add it
+                        if (deviceList.length >= maxDevices) {
+                            // Maximum devices reached for this subscription
+                            console.log('Maximum devices (' + maxDevices + ') reached for this subscription');
+                            // Show specific error message
+                            showDeviceLimitError(maxDevices);
+                            return null;
+                        } else {
+                            // Add this device to the registered list
+                            deviceList.push(deviceFingerprint);
+                            localStorage.setItem(lockKey, deviceList.join(','));
+                            localStorage.setItem(lockTimeKey, Date.now().toString());
+                            console.log('New device registered. Total devices: ' + deviceList.length + '/' + maxDevices);
+                        }
                     }
                     
                     // Check if customer has active subscription
@@ -5659,7 +5679,9 @@
             
             // TV BROWSERS & NATIVE HLS: Use direct playback (MUCH FASTER)
             if (isLGTV || isSamsungTV || hasNativeHLS || isSafari) {
-                console.log('📺 TV/Native HLS detected - using fast native playback');
+                console.log('📺 TV/Native HLS detected - using native playback');
+                console.log('📺 User Agent:', navigator.userAgent);
+                console.log('📺 Video URL:', content.url ? content.url.substring(0, 100) + '...' : 'none');
                 
                 // Destroy HLS.js instance if running (prevents conflicts)
                 if (hls) {
@@ -5678,9 +5700,17 @@
                 // Play immediately
                 const playPromise = video.play();
                 if (playPromise !== undefined) {
-                    playPromise.catch(e => {
-                        console.log('Autoplay blocked - tap to play');
+                    playPromise.then(() => {
+                        console.log('✅ Video started playing!');
+                    }).catch(e => {
+                        console.log('⚠️ Native play failed:', e.message);
+                        console.log('⚠️ Will try HLS.js as fallback...');
+                        // Fallback to HLS.js
+                        tryHLSJsFallback(content.url);
                     });
+                } else {
+                    // No play promise - older browser
+                    showTVPlayPrompt(content);
                 }
                 
                 // Update now playing info
@@ -5710,7 +5740,16 @@
                 hls.attachMedia(video);
                 
                 hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                    video.play().catch(e => console.log('Autoplay blocked'));
+                    console.log('✅ HLS.js loaded, starting playback...');
+                    const playPromise = video.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                            console.log('✅ HLS playback started!');
+                        }).catch(e => {
+                            console.log('⚠️ HLS Autoplay blocked:', e.message);
+                            showTVPlayPrompt(content);
+                        });
+                    }
                 });
                 
                 hls.on(Hls.Events.ERROR, (event, data) => {
@@ -5726,7 +5765,7 @@
                             hls.destroy();
                             video.src = content.url;
                             video.load();
-                            video.play().catch(e => {});
+                            video.play().catch(e => showTVPlayPrompt(content));
                         }
                     }
                 });
@@ -5735,11 +5774,51 @@
                 console.log('📺 Using native video fallback');
                 video.src = content.url;
                 video.load();
+                const playPromise = video.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(e => showTVPlayPrompt(content));
+                }
                 video.play().catch(e => console.log('Autoplay blocked'));
             }
             
             // Update now playing info
             updateNowPlaying(content);
+        }
+        
+        // Fallback function to try HLS.js when native playback fails
+        function tryHLSJsFallback(url) {
+            console.log('🔄 Trying HLS.js fallback...');
+            
+            if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+                const video = player.el().querySelector('video');
+                
+                if (hls) {
+                    hls.destroy();
+                }
+                
+                hls = new Hls({
+                    enableWorker: false,
+                    lowLatencyMode: false,
+                    maxBufferLength: 10,
+                    maxMaxBufferLength: 30
+                });
+                
+                hls.loadSource(url);
+                hls.attachMedia(video);
+                
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    console.log('✅ HLS.js fallback loaded successfully');
+                    video.play().catch(e => console.log('Autoplay blocked'));
+                });
+                
+                hls.on(Hls.Events.ERROR, (event, data) => {
+                    if (data.fatal) {
+                        console.error('❌ HLS.js fallback error:', data);
+                    }
+                });
+            } else {
+                console.log('⚠️ HLS.js not supported on this browser');
+            }
         }
 
         // Show loading indicator for on-demand content
@@ -5807,7 +5886,8 @@
 
         // Handle MP4 content playback
         function handleMP4Content(content) {
-            console.log('🎬 handleMP4Content called for:', content.name, content.url);
+            console.log('🎬 handleMP4Content called:', content.name);
+            console.log('🎬 Content URL:', content.url);
             
             // HIDE OVERLAY IMMEDIATELY
             const overlay = document.getElementById('videoOverlay');
@@ -5815,6 +5895,7 @@
                 overlay.classList.remove('show');
                 overlay.classList.add('playing');
                 overlay.style.display = 'none';
+                overlay.style.visibility = 'hidden';
             }
             
             // DESTROY HLS.js if running (prevents conflicts)
@@ -5827,43 +5908,148 @@
                 window.hlsInstance = null;
             }
             
-            // Get video element - prefer direct access for LG webOS
+            // Detect ALL TV browsers - expanded detection
+            const userAgent = navigator.userAgent;
+            const isTV = /Web0S|webOS|LG|NetCast|Tizen|Samsung|SmartTV|Android TV|Hisense|VIZIO|Philips|Panasonic|Sharp|Toshiba|Roku|LGWEBOS|SALTO|Amazon Fire TV|firetv|Google TV/i.test(userAgent);
+            
+            console.log('📺 User Agent:', userAgent);
+            console.log('📺 Is TV detected:', isTV);
+            
+            // FOR ALL TV BROWSERS: Use native video element directly (bypass Video.js)
+            if (isTV) {
+                console.log('📺 TV detected - using NATIVE video element');
+                
+                // Find or create native video element
+                let video = document.getElementById('nativeVideo');
+                if (!video) {
+                    // Create native video element if not exists
+                    video = document.createElement('video');
+                    video.id = 'nativeVideo';
+                    video.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:black;z-index:9999;';
+                    document.body.appendChild(video);
+                }
+                
+                // Ensure video is visible and on top
+                video.style.display = 'block';
+                video.style.visibility = 'visible';
+                video.style.opacity = '1';
+                video.style.position = 'fixed';
+                video.style.top = '0';
+                video.style.left = '0';
+                video.style.width = '100%';
+                video.style.height = '100%';
+                video.style.zIndex = '9999';
+                video.style.background = 'black';
+                video.controls = true;
+                video.autoplay = true;
+                video.preload = 'auto';
+                
+                // Set source
+                video.src = content.url;
+                video.load();
+                
+                console.log('📺 Video element prepared, URL set');
+                
+                // Try to play
+                const playPromise = video.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        console.log('✅ TV Video playing!');
+                    }).catch(e => {
+                        console.log('⚠️ TV play failed:', e.message);
+                        // Show play prompt
+                        showTVPlayPrompt(content);
+                    });
+                }
+                
+                updateNowPlaying(content);
+                return;
+            }
+            
+            // DESKTOP/OTHER: Use Video.js
             const video = document.getElementById('videoPlayer') || 
                           (player ? player.el().querySelector('video') : null) ||
                           document.querySelector('.video-player video');
             
             if (!video) {
-                console.error('No video element found for MP4 playback');
+                console.error('❌ No video element found');
+                showError('Video player not available');
                 return;
             }
             
-            // Detect TV browsers
-            const isTV = /Web0S|webOS|LG|Tizen|Samsung|SmartTV/i.test(navigator.userAgent);
+            console.log('🎬 Using Video.js for playback');
             
-            // FOR TV BROWSERS: Use direct video element (FASTER than Video.js)
-            if (isTV) {
-                console.log('📺 TV detected - using direct MP4 playback');
-                video.preload = 'auto';
-                video.src = content.url;
-                video.load();
-                video.play().catch(e => console.log('Autoplay blocked'));
-                updateNowPlaying(content);
-                return;
+            // Ensure video container is visible
+            const videoContainer = document.querySelector('.video-js');
+            if (videoContainer) {
+                videoContainer.style.display = 'block';
+                videoContainer.style.visibility = 'visible';
             }
             
-            // DESKTOP: Use Video.js
             if (player) {
-                console.log('🎬 Using Video.js for MP4 playback');
                 player.src({ src: content.url, type: 'video/mp4' });
-                player.play().catch(e => console.log('Autoplay blocked'));
+                const playPromise = player.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(e => {
+                        console.log('Autoplay blocked:', e.message);
+                        showTVPlayPrompt(content);
+                    });
+                }
             } else {
-                console.log('🎬 Using raw video element for MP4');
                 video.src = content.url;
                 video.load();
-                video.play().catch(e => console.log('Autoplay blocked'));
+                video.play().catch(e => showTVPlayPrompt(content));
             }
             
             updateNowPlaying(content);
+        }
+        
+        // Show "Press OK to play" prompt for TV browsers when autoplay is blocked
+        function showTVPlayPrompt(content) {
+            const overlay = document.getElementById('videoOverlay');
+            if (!overlay) return;
+            
+            overlay.style.display = 'flex';
+            overlay.style.background = 'rgba(0, 0, 0, 0.9)';
+            overlay.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <div style="font-size: 60px; margin-bottom: 20px;">▶️</div>
+                    <div style="font-size: 24px; color: white; margin-bottom: 20px;">Press OK or Enter to play</div>
+                    <div style="font-size: 18px; color: #00F5A0;">${content.name || 'Video'}</div>
+                    <div style="font-size: 14px; color: rgba(255,255,255,0.6); margin-top: 10px;">Tap anywhere or press any key</div>
+                </div>
+            `;
+            overlay.classList.add('show');
+            
+            // Store current content for playback
+            window.tvPendingContent = content;
+            
+            // One-time click/touch handler to play
+            const playHandler = function() {
+                overlay.classList.remove('show');
+                overlay.style.display = 'none';
+                overlay.removeEventListener('click', playHandler);
+                overlay.removeEventListener('touchstart', playHandler);
+                document.removeEventListener('keydown', keyHandler);
+                
+                // Resume playback
+                const video = document.getElementById('videoPlayer') || 
+                              (player ? player.el().querySelector('video') : null);
+                if (video) {
+                    video.play().catch(e => console.log('Play failed:', e));
+                }
+            };
+            
+            // Keyboard handler for TV remotes
+            const keyHandler = function(e) {
+                if (e.key === 'Enter' || e.key === 'OK' || e.key === 'MediaPlay' || e.key === 'Play') {
+                    playHandler();
+                }
+            };
+            
+            overlay.addEventListener('click', playHandler);
+            overlay.addEventListener('touchstart', playHandler);
+            document.addEventListener('keydown', keyHandler);
         }
 
         function updateNowPlaying(content) {
@@ -6182,10 +6368,15 @@
             console.log('Error:', message);
             alert(message);
         }
-
-        function showError(message) {
-            console.log('Error:', message);
-            alert(message);
+	
+        // Show error when device limit is reached
+        function showDeviceLimitError(maxDevices) {
+            const errorMsg = `Maximum devices reached!\n\n` +
+                `Your subscription allows ${maxDevices} TV${maxDevices > 1 ? '(s)' : ''}.\n\n` +
+                `To add this TV, please contact your administrator to:\n` +
+                `• Upgrade your subscription, or\n` +
+                `• Remove a registered TV from your account`;
+            alert(errorMsg);
         }
 
         function showSuccess(message) {
