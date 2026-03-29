@@ -662,6 +662,7 @@
             <div class="price-item" style="background: rgba(33,150,243,0.2); padding: 5px 10px; border-radius: 5px; font-size: 11px; color: #2196f3;">2nd TV: $<span id="displaySecondTVPrice">-</span></div>
             <div class="price-item" style="background: rgba(33,150,243,0.2); padding: 5px 10px; border-radius: 5px; font-size: 11px; color: #2196f3;">3rd TV: $<span id="displayThirdTVPrice">-</span></div>
             <div class="price-item" style="background: rgba(255,152,0,0.2); padding: 5px 10px; border-radius: 5px; font-size: 11px; color: #ff9800;">Sports: $<span id="displaySportsPrice">-</span></div>
+            <div class="price-item" style="background: rgba(255,87,34,0.2); padding: 5px 10px; border-radius: 5px; font-size: 11px; color: #ff5722;">Sports+: $<span id="displaySportsPlusPrice">-</span></div>
             <div class="price-item" style="background: rgba(156,39,176,0.2); padding: 5px 10px; border-radius: 5px; font-size: 11px; color: #9c27b0;">Movies: $<span id="displayMoviesPrice">-</span></div>
             <div class="price-item" style="background: rgba(0,188,212,0.2); padding: 5px 10px; border-radius: 5px; font-size: 11px; color: #00bcd4;">Arabic: $<span id="displayArabicPrice">-</span></div>
             <div class="price-item" style="background: rgba(244,67,54,0.2); padding: 5px 10px; border-radius: 5px; font-size: 11px; color: #f44336;">Adult: $<span id="displayAdultPrice">-</span></div>
@@ -1291,6 +1292,7 @@
             const displaySecondTVPrice = document.getElementById('displaySecondTVPrice');
             const displayThirdTVPrice = document.getElementById('displayThirdTVPrice');
             const displaySportsPrice = document.getElementById('displaySportsPrice');
+            const displaySportsPlusPrice = document.getElementById('displaySportsPlusPrice');
             const displayMoviesPrice = document.getElementById('displayMoviesPrice');
             const displayArabicPrice = document.getElementById('displayArabicPrice');
             const displayAdultPrice = document.getElementById('displayAdultPrice');
@@ -1299,6 +1301,7 @@
             if (displaySecondTVPrice) displaySecondTVPrice.textContent = packagePrices.secondTV;
             if (displayThirdTVPrice) displayThirdTVPrice.textContent = packagePrices.thirdTV;
             if (displaySportsPrice) displaySportsPrice.textContent = packagePrices.sports;
+            if (displaySportsPlusPrice) displaySportsPlusPrice.textContent = packagePrices.sportsPlus;
             if (displayMoviesPrice) displayMoviesPrice.textContent = packagePrices.movies;
             if (displayArabicPrice) displayArabicPrice.textContent = packagePrices.arabic;
             if (displayAdultPrice) displayAdultPrice.textContent = packagePrices.adult;
