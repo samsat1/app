@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-27T21:14:14.002Z",
+  "exportDate": "2026-03-29T21:29:04.214Z",
   "customers": [
     {
       "id": "CUST_1774567584618",
@@ -8,17 +8,19 @@
       "name": "salame abdul khalek",
       "phone": "555-1234",
       "plan": "Basic TV Package, 2nd TV, 3rd TV",
-      "addons": "Sports Plus Package, Arabic Package, Movies Package, Adult Content Package",
-      "monthlyPrice": 55.5,
-      "totalPrice": 55.5,
-      "expiryDate": "2026-04-26",
-      "password": "admin123",
+      "addons": "Sports Package, Movies Package, Adult Content Package",
+      "monthlyPrice": 25,
+      "totalPrice": 25,
+      "expiryDate": "2026-04-27",
+      "password": "123456",
       "macAddress": "",
       "adultPassword": "112233",
       "status": "active",
       "duration": "1 Month",
       "durationMonths": 1,
-      "createdAt": "2026-03-26T23:26:24.618Z"
+      "createdAt": "2026-03-26T23:26:24.618Z",
+      "resetDeviceLock": 1774647867971,
+      "updatedAt": "2026-03-27T21:44:27.971Z"
     },
     {
       "id": "CUST_1774567753260",
@@ -40,6 +42,44 @@
     }
   ],
   "clientAuthCustomers": [
+    {
+      "id": "CUST_1774567584618",
+      "username": "samn",
+      "name": "salame abdul khalek",
+      "phone": "555-1234",
+      "plan": "Basic TV Package, 2nd TV, 3rd TV",
+      "addons": "Sports Package, Movies Package, Adult Content Package",
+      "monthlyPrice": 25,
+      "totalPrice": 25,
+      "expiryDate": "2026-04-27",
+      "password": "123456",
+      "macAddress": "",
+      "adultPassword": "112233",
+      "status": "active",
+      "duration": "1 Month",
+      "durationMonths": 1,
+      "createdAt": "2026-03-26T23:26:24.618Z",
+      "resetDeviceLock": 1774647867971,
+      "updatedAt": "2026-03-27T21:44:27.971Z"
+    },
+    {
+      "id": "CUST_1774567753260",
+      "username": "kevinn",
+      "name": "salame abdul khalek",
+      "phone": "09090909",
+      "plan": "Basic TV Package, 2nd TV, 3rd TV",
+      "addons": "Sports Plus Package, Arabic Package, Movies Package, Adult Content Package",
+      "monthlyPrice": 55.5,
+      "totalPrice": 55.5,
+      "expiryDate": "2026-04-26",
+      "password": "123456",
+      "macAddress": "",
+      "adultPassword": "112233",
+      "status": "active",
+      "duration": "1 Month",
+      "durationMonths": 1,
+      "createdAt": "2026-03-26T23:29:13.260Z"
+    },
     {
       "id": "CUST_1774486731076",
       "name": "salame abdul khalek",
@@ -93,42 +133,6 @@
       "duration": "1 Month",
       "durationMonths": 1,
       "createdAt": "2026-03-26T22:38:15.817Z"
-    },
-    {
-      "id": "CUST_1774567584618",
-      "username": "samn",
-      "name": "salame abdul khalek",
-      "phone": "555-1234",
-      "plan": "Basic TV Package, 2nd TV, 3rd TV",
-      "addons": "Sports Plus Package, Arabic Package, Movies Package, Adult Content Package",
-      "monthlyPrice": 55.5,
-      "totalPrice": 55.5,
-      "expiryDate": "2026-04-26",
-      "password": "admin123",
-      "macAddress": "",
-      "adultPassword": "112233",
-      "status": "active",
-      "duration": "1 Month",
-      "durationMonths": 1,
-      "createdAt": "2026-03-26T23:26:24.618Z"
-    },
-    {
-      "id": "CUST_1774567753260",
-      "username": "kevinn",
-      "name": "salame abdul khalek",
-      "phone": "09090909",
-      "plan": "Basic TV Package, 2nd TV, 3rd TV",
-      "addons": "Sports Plus Package, Arabic Package, Movies Package, Adult Content Package",
-      "monthlyPrice": 55.5,
-      "totalPrice": 55.5,
-      "expiryDate": "2026-04-26",
-      "password": "123456",
-      "macAddress": "",
-      "adultPassword": "112233",
-      "status": "active",
-      "duration": "1 Month",
-      "durationMonths": 1,
-      "createdAt": "2026-03-26T23:29:13.260Z"
     },
     {
       "id": "CUST_1774644642092",
@@ -361,19 +365,7 @@
       "walletBalance": 0
     }
   },
-  "creditTransfers": [
-    {
-      "id": "credit_1774486427018",
-      "resellerId": "reseller001",
-      "amount": 118,
-      "type": "credit",
-      "date": "2026-03-26T00:53:47.018Z",
-      "note": "Admin credit transfer",
-      "timestamp": 1774486427018,
-      "previousBalance": 0,
-      "newBalance": 118
-    }
-  ],
+  "creditTransfers": [],
   "resellerTransactions": [],
   "plexServerUrl": "http://192.168.1.100:32400",
   "plexLocalUrl": "http://192.168.1.100:32400",
