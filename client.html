@@ -2742,6 +2742,7 @@
 
                 const pkgName = (packageData.name || '').toLowerCase();
                 const customerAddons = (customer.addons || '').toLowerCase();
+                const customerPlan = (customer.plan || '').toLowerCase();
                 
                 // Check subscription expiry first
                 if (customer.expiryDate) {
@@ -2750,6 +2751,18 @@
                     if (expiryDate <= today) {
                         return { hasAccess: false, reason: 'Subscription expired' };
                     }
+                }
+
+                // Check if customer is on 2nd TV or 3rd TV plan - Sports packages should be blocked
+                const isSecondTV = customerPlan.includes('second') || customerPlan.includes('2nd');
+                const isThirdTV = customerPlan.includes('third') || customerPlan.includes('3rd');
+                const isSportsPackage = pkgName.includes('sport') && !pkgName.includes('movie');
+                const hasSportsAddon = customerAddons.includes('sports');
+                
+                // Block Sports and Sports Plus packages on 2nd TV and 3rd TV plans
+                if ((isSecondTV || isThirdTV) && isSportsPackage && hasSportsAddon) {
+                    console.log('🚫 Blocking Sports package on 2nd/3rd TV plan:', packageData.name);
+                    return { hasAccess: false, reason: 'Sports not available on 2nd/3rd TV plans' };
                 }
 
                 // ADULT content - requires explicit Adult addon
@@ -2928,6 +2941,21 @@
                 if (customer.expiryDate) {
                     const expiryDate = new Date(customer.expiryDate);
                     if (expiryDate <= new Date()) return false;
+                }
+
+                // Check if customer is on 2nd TV or 3rd TV plan - Sports packages should be blocked
+                const customerPlan = (customer.plan || '').toLowerCase();
+                const customerAddons = (customer.addons || '').toLowerCase();
+                const contentName = (contentItem.name || '').toLowerCase();
+                const isSecondTV = customerPlan.includes('second') || customerPlan.includes('2nd');
+                const isThirdTV = customerPlan.includes('third') || customerPlan.includes('3rd');
+                const isSportsContent = contentName.includes('sport') && !contentName.includes('movie');
+                const hasSportsAddon = customerAddons.includes('sports');
+                
+                // Block Sports and Sports Plus content on 2nd TV and 3rd TV plans
+                if ((isSecondTV || isThirdTV) && isSportsContent && hasSportsAddon) {
+                    console.log('🚫 Blocking Sports content on 2nd/3rd TV plan:', contentItem.name);
+                    return false;
                 }
 
                 // Adult content check
@@ -5915,30 +5943,33 @@
             console.log('📺 User Agent:', userAgent);
             console.log('📺 Is TV detected:', isTV);
             
-            // FOR ALL TV BROWSERS: Use native video element directly (bypass Video.js)
+            // FOR ALL TV BROWSERS: Use native video element in PREVIEW mode (not fullscreen)
             if (isTV) {
-                console.log('📺 TV detected - using NATIVE video element');
+                console.log('📺 TV detected - using NATIVE video element in PREVIEW mode');
                 
-                // Find or create native video element
+                // Find or create native video element - position in PREVIEW area (not fullscreen)
                 let video = document.getElementById('nativeVideo');
                 if (!video) {
                     // Create native video element if not exists
                     video = document.createElement('video');
                     video.id = 'nativeVideo';
-                    video.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:black;z-index:9999;';
                     document.body.appendChild(video);
                 }
                 
-                // Ensure video is visible and on top
+                // Position in the video preview area (not fullscreen)
+                // Use the same position as the video player container
+                const videoContainer = document.querySelector('.video-container');
+                if (videoContainer) {
+                    const rect = videoContainer.getBoundingClientRect();
+                    video.style.cssText = `position:absolute;top:${rect.top}px;left:${rect.left}px;width:${rect.width}px;height:${rect.height}px;background:black;z-index:100;`;
+                } else {
+                    // Fallback: position at bottom right like preview player
+                    video.style.cssText = 'position:fixed;bottom:20px;right:20px;width:320px;height:180px;background:black;z-index:100;';
+                }
+                
                 video.style.display = 'block';
                 video.style.visibility = 'visible';
                 video.style.opacity = '1';
-                video.style.position = 'fixed';
-                video.style.top = '0';
-                video.style.left = '0';
-                video.style.width = '100%';
-                video.style.height = '100%';
-                video.style.zIndex = '9999';
                 video.style.background = 'black';
                 video.controls = true;
                 video.autoplay = true;
@@ -5948,13 +5979,13 @@
                 video.src = content.url;
                 video.load();
                 
-                console.log('📺 Video element prepared, URL set');
+                console.log('📺 Video element prepared in PREVIEW mode, URL set');
                 
                 // Try to play
                 const playPromise = video.play();
                 if (playPromise !== undefined) {
                     playPromise.then(() => {
-                        console.log('✅ TV Video playing!');
+                        console.log('✅ TV Video playing in preview!');
                     }).catch(e => {
                         console.log('⚠️ TV play failed:', e.message);
                         // Show play prompt
@@ -7495,6 +7526,23 @@
                     return;
                 }
                 
+                // Check for native video element (TV preview mode) - stop it first
+                const nativeVideo = document.getElementById('nativeVideo');
+                if (nativeVideo && nativeVideo.src) {
+                    console.log('📺 Stopping native video preview');
+                    nativeVideo.pause();
+                    nativeVideo.src = '';
+                    nativeVideo.load();
+                    // Hide native video
+                    nativeVideo.style.display = 'none';
+                    // Show Video.js player instead
+                    const videoEl = document.getElementById('videoPlayer');
+                    if (videoEl) videoEl.style.display = 'block';
+                    document.querySelectorAll('.video-js, .video-player').forEach(el => {
+                        el.style.display = 'block';
+                    });
+                }
+                
                 // Check for open modals
                 const loginModal = document.getElementById('loginModal');
                 const adultModal = document.getElementById('adultModal');
@@ -7508,6 +7556,10 @@
                     hideLoginModal();
                 } else if (player && player.isFullscreen()) {
                     player.exitFullscreen();
+                } else if (document.fullscreenElement || document.webkitFullscreenElement) {
+                    // Exit browser fullscreen
+                    if (document.exitFullscreen) document.exitFullscreen();
+                    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
                 } else if (adultUnlocked) {
                     exitAdultContent();
                 }
