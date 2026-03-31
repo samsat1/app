@@ -2271,14 +2271,7 @@
                 <div class="adult-icon">🔒</div>
                 <div class="adult-status">Locked</div>
             </div>
-            
-            <!-- Change Password Button (discreet lock icon) -->
-            <button class="logout-btn" id="changePasswordBtn" onclick="showChangeAdultPassword()" style="display: none;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                </svg>
-                🔑
-            </button>
+            <!-- Change Password Button removed from header - now only appears in adult modal -->
         </div>
     </header>
 
@@ -4405,19 +4398,7 @@
                 }
             }
             
-            // Show/hide change password button - show when logged in or when adult is unlocked
-            const changePasswordBtn = document.getElementById('changePasswordBtn');
-            if (changePasswordBtn) {
-                // Show button when logged in OR when adult content is unlocked
-                // This ensures the button appears after entering password
-                if (isLoggedIn || adultUnlocked || localStorage.getItem('customAdultPassword')) {
-                    changePasswordBtn.classList.add('show');
-                    changePasswordBtn.style.display = 'flex';
-                } else {
-                    changePasswordBtn.classList.remove('show');
-                    changePasswordBtn.style.display = 'none';
-                }
-            }
+            // Change Password button removed from header - now only appears in adult modal
             
             if (isLoggedIn && currentUser) {
                 // Clear any previous state first
@@ -4799,7 +4780,6 @@
                 updateAdultIndicator();
                 hideAdultModal();
                 showSuccess('Adult content unlocked');
-                updateUserInterface(); // Update UI to show change password button
                 renderContent();
             } else {
                 showError('Invalid password. Please try again.');
