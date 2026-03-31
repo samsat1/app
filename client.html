@@ -5943,61 +5943,7 @@
             console.log('📺 User Agent:', userAgent);
             console.log('📺 Is TV detected:', isTV);
             
-            // FOR ALL TV BROWSERS: Use native video element in PREVIEW mode (not fullscreen)
-            if (isTV) {
-                console.log('📺 TV detected - using NATIVE video element in PREVIEW mode');
-                
-                // Find or create native video element - position in PREVIEW area (not fullscreen)
-                let video = document.getElementById('nativeVideo');
-                if (!video) {
-                    // Create native video element if not exists
-                    video = document.createElement('video');
-                    video.id = 'nativeVideo';
-                    document.body.appendChild(video);
-                }
-                
-                // Position in the video preview area (not fullscreen)
-                // Use the same position as the video player container
-                const videoContainer = document.querySelector('.video-container');
-                if (videoContainer) {
-                    const rect = videoContainer.getBoundingClientRect();
-                    video.style.cssText = `position:absolute;top:${rect.top}px;left:${rect.left}px;width:${rect.width}px;height:${rect.height}px;background:black;z-index:100;`;
-                } else {
-                    // Fallback: position at bottom right like preview player
-                    video.style.cssText = 'position:fixed;bottom:20px;right:20px;width:320px;height:180px;background:black;z-index:100;';
-                }
-                
-                video.style.display = 'block';
-                video.style.visibility = 'visible';
-                video.style.opacity = '1';
-                video.style.background = 'black';
-                video.controls = true;
-                video.autoplay = true;
-                video.preload = 'auto';
-                
-                // Set source
-                video.src = content.url;
-                video.load();
-                
-                console.log('📺 Video element prepared in PREVIEW mode, URL set');
-                
-                // Try to play
-                const playPromise = video.play();
-                if (playPromise !== undefined) {
-                    playPromise.then(() => {
-                        console.log('✅ TV Video playing in preview!');
-                    }).catch(e => {
-                        console.log('⚠️ TV play failed:', e.message);
-                        // Show play prompt
-                        showTVPlayPrompt(content);
-                    });
-                }
-                
-                updateNowPlaying(content);
-                return;
-            }
-            
-            // DESKTOP/OTHER: Use Video.js
+            // Use the existing Video.js player for all browsers (TV and desktop)
             const video = document.getElementById('videoPlayer') || 
                           (player ? player.el().querySelector('video') : null) ||
                           document.querySelector('.video-player video');
@@ -6008,28 +5954,60 @@
                 return;
             }
             
-            console.log('🎬 Using Video.js for playback');
+            console.log('🎬 Using existing Video.js player for playback');
             
             // Ensure video container is visible
             const videoContainer = document.querySelector('.video-js');
             if (videoContainer) {
                 videoContainer.style.display = 'block';
                 videoContainer.style.visibility = 'visible';
+                videoContainer.style.opacity = '1';
             }
             
-            if (player) {
-                player.src({ src: content.url, type: 'video/mp4' });
-                const playPromise = player.play();
+            // Also show .video-container
+            const vc = document.querySelector('.video-container');
+            if (vc) {
+                vc.style.display = 'block';
+                vc.style.visibility = 'visible';
+            }
+            
+            // For TV browsers, use native playback directly on video element
+            if (isTV) {
+                console.log('📺 TV detected - using native playback on existing video element');
+                
+                // Show the video element
+                video.style.display = 'block';
+                video.style.visibility = 'visible';
+                
+                // Set source directly
+                video.src = content.url;
+                video.load();
+                
+                // Play immediately
+                const playPromise = video.play();
                 if (playPromise !== undefined) {
-                    playPromise.catch(e => {
-                        console.log('Autoplay blocked:', e.message);
+                    playPromise.then(() => {
+                        console.log('✅ TV Video playing in preview!');
+                    }).catch(e => {
+                        console.log('⚠️ TV play failed:', e.message);
                         showTVPlayPrompt(content);
                     });
                 }
             } else {
-                video.src = content.url;
-                video.load();
-                video.play().catch(e => showTVPlayPrompt(content));
+                // Desktop browsers: use Video.js
+                if (player) {
+                    player.src({ type: 'video/mp4', src: content.url });
+                    player.play().catch(e => {
+                        console.log('⚠️ Video.js play failed:', e.message);
+                    });
+                } else {
+                    // Fallback to native video
+                    video.src = content.url;
+                    video.load();
+                    video.play().catch(e => {
+                        console.log('⚠️ Native play failed:', e.message);
+                    });
+                }
             }
             
             updateNowPlaying(content);
@@ -7526,21 +7504,33 @@
                     return;
                 }
                 
-                // Check for native video element (TV preview mode) - stop it first
-                const nativeVideo = document.getElementById('nativeVideo');
-                if (nativeVideo && nativeVideo.src) {
-                    console.log('📺 Stopping native video preview');
-                    nativeVideo.pause();
-                    nativeVideo.src = '';
-                    nativeVideo.load();
-                    // Hide native video
-                    nativeVideo.style.display = 'none';
-                    // Show Video.js player instead
-                    const videoEl = document.getElementById('videoPlayer');
-                    if (videoEl) videoEl.style.display = 'block';
-                    document.querySelectorAll('.video-js, .video-player').forEach(el => {
-                        el.style.display = 'block';
-                    });
+                // Stop video playback and hide video player
+                const videoEl = document.getElementById('videoPlayer');
+                if (videoEl && videoEl.src) {
+                    console.log('📺 Stopping video playback');
+                    videoEl.pause();
+                    videoEl.src = '';
+                    videoEl.load();
+                    // Hide video player
+                    videoEl.style.display = 'none';
+                }
+                
+                // Also stop HLS.js if running
+                if (hls) {
+                    hls.destroy();
+                    hls = null;
+                }
+                
+                // Hide video containers
+                document.querySelectorAll('.video-js, .video-player, .video-container').forEach(el => {
+                    el.style.display = 'none';
+                });
+                
+                // Show the overlay again
+                const overlay = document.getElementById('videoOverlay');
+                if (overlay) {
+                    overlay.style.display = 'flex';
+                    overlay.classList.remove('playing');
                 }
                 
                 // Check for open modals
