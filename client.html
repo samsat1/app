@@ -2306,6 +2306,10 @@
                     <button class="source-tab adult-tab" onclick="switchSource('adult')" data-source="adult" id="adultTab" style="display: none;">
                         🔞 Adult
                     </button>
+                    <!-- Change Password Button - only visible when viewing adult section -->
+                    <button class="source-tab" onclick="showChangeAdultPassword()" id="adultChangePasswordBtn" style="display: none; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: #fff;">
+                        🔑 Change Password
+                    </button>
                 </div>
             </div>
             
@@ -4877,6 +4881,11 @@
             if (adultTab) {
                 adultTab.style.display = 'block';
             }
+            // Also show Change Password button when adult is unlocked
+            const changePassBtn = document.getElementById('adultChangePasswordBtn');
+            if (changePassBtn) {
+                changePassBtn.style.display = 'block';
+            }
         }
 
         function hideAdultTab() {
@@ -4887,6 +4896,11 @@
                 if (currentSource === 'adult') {
                     switchSource('basic');
                 }
+            }
+            // Also hide Change Password button
+            const changePassBtn = document.getElementById('adultChangePasswordBtn');
+            if (changePassBtn) {
+                changePassBtn.style.display = 'none';
             }
         }
 
@@ -4903,6 +4917,12 @@
                 tab.classList.remove('active');
             });
             document.querySelector(`[data-source="${source}"]`).classList.add('active');
+            
+            // Show/hide Change Password button based on current source
+            const changePassBtn = document.getElementById('adultChangePasswordBtn');
+            if (changePassBtn) {
+                changePassBtn.style.display = (source === 'adult' && adultUnlocked) ? 'block' : 'none';
+            }
             
             renderContent();
         }
