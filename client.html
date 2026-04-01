@@ -2271,7 +2271,11 @@
                 <div class="adult-icon">🔒</div>
                 <div class="adult-status">Locked</div>
             </div>
-            <!-- Change Password Button removed from header - now only appears in adult modal -->
+            
+            <!-- Change Password Button - only visible in header when adult section is active -->
+            <button class="source-tab" onclick="showChangeAdultPassword()" id="adultChangePasswordBtn" style="display: none; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 8px 16px; border-radius: 6px; font-size: 13px;">
+                🔑 Change Password
+            </button>
         </div>
     </header>
 
@@ -2305,10 +2309,6 @@
                     <!-- Adult tab - hidden by default, appears only when password is entered -->
                     <button class="source-tab adult-tab" onclick="switchSource('adult')" data-source="adult" id="adultTab" style="display: none;">
                         🔞 Adult
-                    </button>
-                    <!-- Change Password Button - only visible when viewing adult section -->
-                    <button class="source-tab" onclick="showChangeAdultPassword()" id="adultChangePasswordBtn" style="display: none; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: #fff;">
-                        🔑 Change Password
                     </button>
                 </div>
             </div>
@@ -2754,7 +2754,7 @@
                 const isSecondTV = customerPlan.includes('second') || customerPlan.includes('2nd');
                 const isThirdTV = customerPlan.includes('third') || customerPlan.includes('3rd');
                 const isSportsPackage = pkgName.includes('sport') && !pkgName.includes('movie');
-                const hasSportsAddon = customerAddons.includes('sports');
+                const hasSportsAddon = customerAddons.includes('sports') || customerAddons.includes('sports plus');
                 
                 // Block Sports and Sports Plus packages on 2nd TV and 3rd TV plans
                 if ((isSecondTV || isThirdTV) && isSportsPackage && hasSportsAddon) {
@@ -5943,18 +5943,29 @@
             console.log('📺 User Agent:', userAgent);
             console.log('📺 Is TV detected:', isTV);
             
-            // Use the existing Video.js player for all browsers (TV and desktop)
-            const video = document.getElementById('videoPlayer') || 
-                          (player ? player.el().querySelector('video') : null) ||
-                          document.querySelector('.video-player video');
+            // Get the actual native video element (not Video.js wrapper)
+            let nativeVideo = null;
             
-            if (!video) {
+            // Try to get the video element from Video.js player first
+            if (player && player.el) {
+                nativeVideo = player.el().querySelector('video');
+            }
+            
+            // Fallback to direct element lookup
+            if (!nativeVideo) {
+                nativeVideo = document.getElementById('videoPlayer');
+            }
+            if (!nativeVideo) {
+                nativeVideo = document.querySelector('.video-player video');
+            }
+            
+            if (!nativeVideo) {
                 console.error('❌ No video element found');
                 showError('Video player not available');
                 return;
             }
             
-            console.log('🎬 Using existing Video.js player for playback');
+            console.log('🎬 Using video element for playback');
             
             // Ensure video container is visible
             const videoContainer = document.querySelector('.video-js');
@@ -5973,18 +5984,18 @@
             
             // For TV browsers, use native playback directly on video element
             if (isTV) {
-                console.log('📺 TV detected - using native playback on existing video element');
+                console.log('📺 TV detected - using native playback');
                 
                 // Show the video element
-                video.style.display = 'block';
-                video.style.visibility = 'visible';
+                nativeVideo.style.display = 'block';
+                nativeVideo.style.visibility = 'visible';
                 
-                // Set source directly
-                video.src = content.url;
-                video.load();
+                // Set source directly on native video element
+                nativeVideo.src = content.url;
+                nativeVideo.load();
                 
                 // Play immediately
-                const playPromise = video.play();
+                const playPromise = nativeVideo.play();
                 if (playPromise !== undefined) {
                     playPromise.then(() => {
                         console.log('✅ TV Video playing in preview!');
@@ -5994,17 +6005,17 @@
                     });
                 }
             } else {
-                // Desktop browsers: use Video.js
-                if (player) {
+                // Desktop browsers: use Video.js API
+                if (player && typeof player.src === 'function') {
                     player.src({ type: 'video/mp4', src: content.url });
                     player.play().catch(e => {
                         console.log('⚠️ Video.js play failed:', e.message);
                     });
                 } else {
                     // Fallback to native video
-                    video.src = content.url;
-                    video.load();
-                    video.play().catch(e => {
+                    nativeVideo.src = content.url;
+                    nativeVideo.load();
+                    nativeVideo.play().catch(e => {
                         console.log('⚠️ Native play failed:', e.message);
                     });
                 }
