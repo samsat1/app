@@ -1495,6 +1495,46 @@
         .volume-slider {
             width: 80px;
         }
+        
+        /* Fullscreen Controls Overlay - TV Remote Navigation */
+        .fullscreen-controls {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 30px;
+            border-radius: 50px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .fullscreen-controls.show {
+            opacity: 1;
+        }
+        
+        .fs-control-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            padding: 15px 25px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            min-width: 80px;
+        }
+        
+        .fs-control-btn:hover,
+        .fs-control-btn:focus {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+            outline: 3px solid #ffff00;
+            outline-offset: 2px;
+        }
 
         .volume-display {
             min-width: 35px;
@@ -2364,6 +2404,13 @@
                         <h2 class="overlay-title" style="color: #667eea;">iWATCH TV</h2>
                         <p class="overlay-description" style="color: #888;">Select a channel from the list to start watching</p>
                     </div>
+                </div>
+                
+                <!-- Fullscreen Controls Overlay - TV Remote Controls -->
+                <div class="fullscreen-controls" id="fullscreenControls" style="display: none;">
+                    <button class="fs-control-btn" onclick="exitFullscreenMode()" title="Back">⬅️ Back</button>
+                    <button class="fs-control-btn" onclick="togglePlay()" title="Play/Pause" id="fsPlayPauseBtn">▶️ Play</button>
+                    <button class="fs-control-btn" onclick="toggleMute()" title="Mute/Unmute">🔊 Mute</button>
                 </div>
             </div>
             
@@ -5380,6 +5427,10 @@
                 return;
             }
             
+            console.log('📺 playContent called with ID:', contentId);
+            console.log('📺 Current source:', currentSource);
+            console.log('📺 Adult unlocked:', adultUnlocked);
+            
             // Search in current source first, then fallback to movies/adult for Plex content
             let content = contentData[currentSource]?.content?.find(item => String(item.id) === String(contentId));
             
@@ -5393,6 +5444,20 @@
             if (!content && contentData.adult?.content) {
                 content = contentData.adult.content.find(item => String(item.id) === String(contentId));
                 if (content) console.log('📺 Found content in adult section:', content.name);
+            }
+            
+            // Debug: show content details
+            if (content) {
+                console.log('📺 Content details:', {
+                    name: content.name,
+                    type: content.type,
+                    url: content.url ? content.url.substring(0, 100) + '...' : 'none',
+                    category: content.category,
+                    adult: content.adult,
+                    sectionId: content.sectionId
+                });
+            } else {
+                console.error('❌ Content not found with ID:', contentId);
             }
             
             // Also search in live section
@@ -5688,9 +5753,14 @@
             // Get video element
             const video = player ? player.el().querySelector('video') : document.getElementById('videoPlayer');
             if (!video) {
-                console.error('Video element not found');
+                console.error('❌ Video element not found');
+                showError('Video player not available. Please refresh the page.');
                 return;
             }
+            
+            console.log('📺 Video element found:', video.tagName);
+            console.log('📺 Video src before:', video.src || 'none');
+            console.log('📺 Content URL:', content.url);
             
             // Check if it's Plex content - use direct MP4 instead of HLS transcode
             if (content.sectionId) {
@@ -5724,6 +5794,12 @@
                 // DIRECT NATIVE PLAYBACK - fastest for LG/Samsung
                 video.src = content.url;
                 video.load();
+                
+                // Add error listener
+                video.onerror = function() {
+                    console.error('❌ Video load error:', video.error);
+                    showError('Failed to load video. URL may be invalid or server unreachable.');
+                };
                 
                 // Play immediately
                 const playPromise = video.play();
@@ -5994,6 +6070,12 @@
                 nativeVideo.src = content.url;
                 nativeVideo.load();
                 
+                // Add error listener
+                nativeVideo.onerror = function() {
+                    console.error('❌ MP4 Video load error:', nativeVideo.error);
+                    showError('Failed to load MP4 video. URL may be invalid or server unreachable.');
+                };
+                
                 // Play immediately
                 const playPromise = nativeVideo.play();
                 if (playPromise !== undefined) {
@@ -6138,6 +6220,77 @@
                 // Fallback to Video.js
                 player.requestFullscreen();
             }
+        };
+
+        // Fullscreen Controls Management for TV
+        window.showFullscreenControls = function() {
+            const controls = document.getElementById('fullscreenControls');
+            if (controls) {
+                controls.style.display = 'flex';
+                setTimeout(() => controls.classList.add('show'), 10);
+            }
+        };
+
+        window.hideFullscreenControls = function() {
+            const controls = document.getElementById('fullscreenControls');
+            if (controls) {
+                controls.classList.remove('show');
+                setTimeout(() => controls.style.display = 'none', 300);
+            }
+        };
+
+        window.exitFullscreenMode = function() {
+            console.log('📺 Exiting fullscreen via controls');
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            else if (player && player.exitFullscreen) player.exitFullscreen();
+            hideFullscreenControls();
+        };
+
+        // Listen for fullscreen changes to show/hide controls
+        document.addEventListener('fullscreenchange', function() {
+            if (document.fullscreenElement) {
+                console.log('📺 Entered fullscreen - showing controls');
+                showFullscreenControls();
+            } else {
+                console.log('📺 Exited fullscreen - hiding controls');
+                hideFullscreenControls();
+            }
+        });
+
+        document.addEventListener('webkitfullscreenchange', function() {
+            if (document.webkitFullscreenElement) {
+                console.log('📺 Entered fullscreen (webkit) - showing controls');
+                showFullscreenControls();
+            } else {
+                console.log('📺 Exited fullscreen (webkit) - hiding controls');
+                hideFullscreenControls();
+            }
+        });
+
+        // Toggle Play/Pause for TV remote
+        window.togglePlay = function() {
+            const video = document.getElementById('videoPlayer');
+            const playPauseBtn = document.getElementById('fsPlayPauseBtn');
+            
+            if (!video) return;
+            
+            if (video.paused) {
+                video.play();
+                if (playPauseBtn) playPauseBtn.textContent = '⏸️ Pause';
+            } else {
+                video.pause();
+                if (playPauseBtn) playPauseBtn.textContent = '▶️ Play';
+            }
+        };
+
+        // Toggle Mute for TV remote
+        window.toggleMute = function() {
+            const video = document.getElementById('videoPlayer');
+            if (!video) return;
+            
+            video.muted = !video.muted;
+            console.log('📺 Mute toggled:', video.muted);
         };
 
         // Fullscreen channel switching
