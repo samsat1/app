@@ -1535,6 +1535,113 @@
             outline: 3px solid #ffff00;
             outline-offset: 2px;
         }
+        
+        /* Netflix-Style Video Controls */
+        .netflix-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.9));
+            padding: 60px 30px 20px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            z-index: 100;
+        }
+        
+        .netflix-controls.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .netflix-progress-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .netflix-progress-bar {
+            flex: 1;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            cursor: pointer;
+            position: relative;
+            transition: height 0.2s ease;
+        }
+        
+        .netflix-progress-bar:hover {
+            height: 6px;
+        }
+        
+        .netflix-progress-played {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: #e50914;
+            border-radius: 2px;
+            transition: width 0.1s linear;
+        }
+        
+        .netflix-progress-buffered {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 2px;
+        }
+        
+        .netflix-progress-handle {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 14px;
+            height: 14px;
+            background: #e50914;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        
+        .netflix-progress-bar:hover .netflix-progress-handle {
+            opacity: 1;
+        }
+        
+        .netflix-time-display {
+            color: #fff;
+            font-size: 14px;
+            min-width: 100px;
+            text-align: right;
+            font-family: sans-serif;
+        }
+        
+        .netflix-buttons {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .netflix-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 24px;
+            transition: all 0.3s ease;
+        }
+        
+        .netflix-btn:hover,
+        .netflix-btn:focus {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+            outline: 3px solid #ffff00;
+            outline-offset: 2px;
+        }
 
         .volume-display {
             min-width: 35px;
@@ -2411,6 +2518,24 @@
                     <button class="fs-control-btn" onclick="exitFullscreenMode()" title="Back">⬅️ Back</button>
                     <button class="fs-control-btn" onclick="togglePlay()" title="Play/Pause" id="fsPlayPauseBtn">▶️ Play</button>
                     <button class="fs-control-btn" onclick="toggleMute()" title="Mute/Unmute">🔊 Mute</button>
+                </div>
+                
+                <!-- Netflix-Style Progress Bar & Controls -->
+                <div class="netflix-controls" id="netflixControls">
+                    <div class="netflix-progress-container" id="netflixProgressContainer">
+                        <div class="netflix-progress-bar" id="netflixProgressBar">
+                            <div class="netflix-progress-played" id="netflixProgressPlayed"></div>
+                            <div class="netflix-progress-buffered" id="netflixProgressBuffered"></div>
+                            <div class="netflix-progress-handle" id="netflixProgressHandle"></div>
+                        </div>
+                        <div class="netflix-time-display" id="netflixTimeDisplay">
+                            <span id="netflixCurrentTime">00:00</span> / <span id="netflixDuration">00:00</span>
+                        </div>
+                    </div>
+                    <div class="netflix-buttons">
+                        <button class="netflix-btn" onclick="netflixTogglePlay()" title="Play/Pause" id="netflixPlayBtn">▶️</button>
+                        <button class="netflix-btn" onclick="netflixExitFullscreen()" title="Back to Interface">⬅️</button>
+                    </div>
                 </div>
             </div>
             
@@ -4157,10 +4282,12 @@
                     category: isAdult ? 'adult' : 'movie',
                     isAdult: isAdult,
                     adult: isAdult,
+                    sectionId: libraryKey, // Mark as Plex content for proper routing
                     type: 'mp4',
                     thumb: item.thumb ? `${serverUrl}${item.thumb}?X-Plex-Token=${token}` : '',
                     art: item.art ? `${serverUrl}${item.art}?X-Plex-Token=${token}` : '',
                     url: item.Media?.[0]?.Part?.[0]?.key ? `${serverUrl}${item.Media[0].Part[0].key}?X-Plex-Token=${token}` : '',
+                    plexToken: token, // Store token for playback
                     streamingMode: 'on-demand',
                     year: item.year,
                     duration: item.duration,
@@ -6012,6 +6139,13 @@
                 window.hlsInstance = null;
             }
             
+            // Check if it's Plex content - use Plex playback handler
+            if (content.sectionId) {
+                console.log('🎬 Detected Plex MP4 content, redirecting to Plex handler...');
+                handlePlexContent(content);
+                return;
+            }
+            
             // Detect ALL TV browsers - expanded detection
             const userAgent = navigator.userAgent;
             const isTV = /Web0S|webOS|LG|NetCast|Tizen|Samsung|SmartTV|Android TV|Hisense|VIZIO|Philips|Panasonic|Sharp|Toshiba|Roku|LGWEBOS|SALTO|Amazon Fire TV|firetv|Google TV/i.test(userAgent);
@@ -6292,6 +6426,116 @@
             video.muted = !video.muted;
             console.log('📺 Mute toggled:', video.muted);
         };
+
+        // Netflix-Style Controls
+        let netflixHideTimeout = null;
+        const NETFLIX_HIDE_DELAY = 4000; // Auto-hide after 4 seconds
+
+        window.showNetflixControls = function() {
+            const controls = document.getElementById('netflixControls');
+            if (controls) {
+                controls.classList.add('show');
+                resetNetflixHideTimer();
+            }
+        };
+
+        window.hideNetflixControls = function() {
+            const controls = document.getElementById('netflixControls');
+            if (controls) {
+                controls.classList.remove('show');
+            }
+            if (netflixHideTimeout) {
+                clearTimeout(netflixHideTimeout);
+                netflixHideTimeout = null;
+            }
+        };
+
+        window.resetNetflixHideTimer = function() {
+            if (netflixHideTimeout) {
+                clearTimeout(netflixHideTimeout);
+            }
+            netflixHideTimeout = setTimeout(() => {
+                hideNetflixControls();
+            }, NETFLIX_HIDE_DELAY);
+        };
+
+        window.netflixTogglePlay = function() {
+            const video = document.getElementById('videoPlayer');
+            const playBtn = document.getElementById('netflixPlayBtn');
+            
+            if (!video) return;
+            
+            if (video.paused) {
+                video.play();
+                if (playBtn) playBtn.textContent = '⏸️';
+            } else {
+                video.pause();
+                if (playBtn) playBtn.textContent = '▶️';
+            }
+            resetNetflixHideTimer();
+        };
+
+        window.netflixExitFullscreen = function() {
+            console.log('📺 Exiting fullscreen via Netflix controls');
+            exitFullscreenMode();
+        };
+
+        window.updateNetflixProgress = function() {
+            const video = document.getElementById('videoPlayer');
+            if (!video) return;
+            
+            const current = document.getElementById('netflixCurrentTime');
+            const duration = document.getElementById('netflixDuration');
+            const played = document.getElementById('netflixProgressPlayed');
+            
+            if (current) current.textContent = formatTime(video.currentTime);
+            if (duration) duration.textContent = formatTime(video.duration || 0);
+            if (played) {
+                const percent = video.duration ? (video.currentTime / video.duration) * 100 : 0;
+                played.style.width = percent + '%';
+            }
+        };
+
+        function formatTime(seconds) {
+            if (isNaN(seconds) || !isFinite(seconds)) return '00:00';
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            if (h > 0) {
+                return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // Update Netflix progress every second when video is playing
+        setInterval(updateNetflixProgress, 1000);
+
+        // Show Netflix controls on arrow key press
+        document.addEventListener('keydown', function(e) {
+            // Check if in fullscreen mode
+            const inFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+            
+            if (inFullscreen) {
+                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                    e.preventDefault();
+                    showNetflixControls();
+                } else if (e.key === 'Enter' || e.key === 'OK') {
+                    // Toggle play on Enter key
+                    netflixTogglePlay();
+                    showNetflixControls();
+                } else if (e.key === 'Backspace' || e.key === 'Escape') {
+                    exitFullscreenMode();
+                }
+            }
+        });
+
+        // Show Netflix controls when clicking/touching video in fullscreen
+        document.getElementById('videoPlayer')?.addEventListener('click', function() {
+            const inFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+            if (inFullscreen) {
+                showNetflixControls();
+            }
+        });
 
         // Fullscreen channel switching
         window.fullscreenChannelUp = function() {
