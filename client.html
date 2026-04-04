@@ -1248,6 +1248,11 @@
             overflow: hidden;
             margin-bottom: 25px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+        }
+        
+        .video-container:active {
+            cursor: pointer;
         }
 
         .video-player {
@@ -2494,7 +2499,23 @@
         <!-- Player Area -->
         <section class="player-area">
             <!-- Video Player -->
-            <div class="video-container" ondblclick="toggleVideoFullscreen()">
+            <div class="video-container" ondblclick="toggleVideoFullscreen()" onclick="handleVideoContainerClick()">
+                <script>
+                    let videoContainerClickTimer = null;
+                    function handleVideoContainerClick() {
+                        const inFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+                        if (inFullscreen) {
+                            const controls = document.getElementById('netflixControls');
+                            if (controls && controls.classList.contains('show')) {
+                                // Controls are visible, hide them
+                                hideNetflixControls();
+                            } else {
+                                // Controls are hidden, show them
+                                showNetflixControls();
+                            }
+                        }
+                    }
+                </script>
                 <video 
                     id="videoPlayer" 
                     class="video-player video-js vjs-default-skin" 
@@ -5698,34 +5719,88 @@
             
             console.log('📺 Playing Plex content:', content.name);
             console.log('📺 Server:', serverUrl, 'Token:', token ? token.substring(0, 8) + '...' : 'none');
+            console.log('📺 Content ID:', content.id, 'RatingKey:', content.ratingKey);
             
-            try {
-                // Method 1: Try the stored HLS transcode URL directly (no fetch needed)
-                if (content.url && content.url.includes('transcode')) {
-                    // Fix any wrong URLs in cached content - replace 127.0.0.1, localhost with correct server
-                    let fixedUrl = content.url
-                        .replace(/http:\/\/127\.0\.0\.1:\d+/g, serverUrl)
-                        .replace(/http:\/\/localhost:\d+/g, serverUrl);
-                    console.log('✅ Using stored transcode URL (fixed)');
-                    handleHLSStream(fixedUrl);
+            // Check if URL already exists and is valid
+            if (content.url && content.url.startsWith('http')) {
+                console.log('📺 Using existing content URL:', content.url.substring(0, 80) + '...');
+                
+                // Get video element
+                const video = player ? player.el().querySelector('video') : document.getElementById('videoPlayer');
+                if (!video) {
+                    console.error('❌ Video element not found');
+                    showError('Video player not available');
                     return;
                 }
                 
-                // Method 2: Construct direct playback URL (no fetch needed)
-                // Plex supports direct file access via this endpoint
+                // Detect TV browsers
+                const isTV = /Web0S|webOS|LG|NetCast|Tizen|Samsung|SmartTV|Android TV|Hisense|VIZIO|Philips|Panasonic|Sharp|Toshiba|Roku|LGWEBOS|SALTO|Amazon Fire TV|firetv|Google TV/i.test(navigator.userAgent);
+                
+                if (isTV) {
+                    // TV browsers - use native playback
+                    console.log('📺 TV detected - using native playback for Plex');
+                    video.src = content.url;
+                    video.load();
+                    
+                    video.oncanplay = function() {
+                        console.log('✅ Video ready to play');
+                        video.play().catch(e => console.log('⚠️ Play failed:', e));
+                    };
+                    
+                    video.onerror = function() {
+                        console.error('❌ Video load error:', video.error);
+                        showError('Failed to load video. Please check Plex server connection.');
+                    };
+                } else {
+                    // Desktop - use Video.js
+                    console.log('🖥️ Desktop detected - using Video.js for Plex');
+                    if (player && typeof player.src === 'function') {
+                        player.src({ type: 'video/mp4', src: content.url });
+                        player.play().catch(e => {
+                            console.log('⚠️ Video.js play failed, trying native:', e);
+                            video.src = content.url;
+                            video.load();
+                            video.play().catch(err => showError('Failed to play video'));
+                        });
+                    } else {
+                        video.src = content.url;
+                        video.load();
+                        video.play().catch(e => showError('Failed to play video'));
+                    }
+                }
+                return;
+            }
+            
+            // If no URL, try to construct transcode URL
+            try {
+                // Extract ratingKey from content.id or use stored ratingKey
+                let ratingKey = content.ratingKey;
+                if (!ratingKey && content.id) {
+                    const parts = content.id.split('_');
+                    ratingKey = parts[parts.length - 1];
+                }
+                
                 if (!token) {
                     console.error('❌ No Plex token found!');
                     showError('Plex token not configured. Please check admin settings.');
                     return;
                 }
-                const directStreamUrl = `${serverUrl}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${content.id}&mediaIndex=0&partIndex=0&protocol=hls&fastSeek=1&directPlay=0&directStream=1&X-Plex-Token=${token}`;
                 
-                console.log('✅ Playing via transcode URL:', directStreamUrl);
-                handleHLSStream(directStreamUrl);
+                if (!ratingKey) {
+                    console.error('❌ No rating key found for content:', content.name);
+                    showError('Content metadata error. Please refresh the content library.');
+                    return;
+                }
+                
+                // Construct HLS transcode URL
+                const transcodeUrl = `${serverUrl}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${ratingKey}&mediaIndex=0&partIndex=0&protocol=hls&fastSeek=1&directPlay=0&directStream=1&X-Plex-Token=${token}`;
+                
+                console.log('✅ Playing via transcode URL:', transcodeUrl);
+                handleHLSStream(transcodeUrl);
                 
             } catch (error) {
                 console.error('Plex playback error:', error);
-                showError('Failed to load content: ' + error.message);
+                showError('Failed to load Plex content: ' + error.message);
             }
         }
         
@@ -6386,9 +6461,11 @@
             if (document.fullscreenElement) {
                 console.log('📺 Entered fullscreen - showing controls');
                 showFullscreenControls();
+                showNetflixControls();
             } else {
                 console.log('📺 Exited fullscreen - hiding controls');
                 hideFullscreenControls();
+                hideNetflixControls();
             }
         });
 
@@ -6396,9 +6473,11 @@
             if (document.webkitFullscreenElement) {
                 console.log('📺 Entered fullscreen (webkit) - showing controls');
                 showFullscreenControls();
+                showNetflixControls();
             } else {
                 console.log('📺 Exited fullscreen (webkit) - hiding controls');
                 hideFullscreenControls();
+                hideNetflixControls();
             }
         });
 
@@ -6433,8 +6512,17 @@
 
         window.showNetflixControls = function() {
             const controls = document.getElementById('netflixControls');
+            const video = document.getElementById('videoPlayer');
+            const playBtn = document.getElementById('netflixPlayBtn');
+            
             if (controls) {
                 controls.classList.add('show');
+                
+                // Update play button state
+                if (video && playBtn) {
+                    playBtn.textContent = video.paused ? '▶️' : '⏸️';
+                }
+                
                 resetNetflixHideTimer();
             }
         };
@@ -6487,12 +6575,18 @@
             const current = document.getElementById('netflixCurrentTime');
             const duration = document.getElementById('netflixDuration');
             const played = document.getElementById('netflixProgressPlayed');
+            const playBtn = document.getElementById('netflixPlayBtn');
             
             if (current) current.textContent = formatTime(video.currentTime);
             if (duration) duration.textContent = formatTime(video.duration || 0);
             if (played) {
                 const percent = video.duration ? (video.currentTime / video.duration) * 100 : 0;
                 played.style.width = percent + '%';
+            }
+            
+            // Update play button state
+            if (playBtn) {
+                playBtn.textContent = video.paused ? '▶️' : '⏸️';
             }
         };
 
@@ -6509,6 +6603,21 @@
 
         // Update Netflix progress every second when video is playing
         setInterval(updateNetflixProgress, 1000);
+
+        // Listen for video play/pause events to update controls
+        document.getElementById('videoPlayer')?.addEventListener('play', function() {
+            const playBtn = document.getElementById('netflixPlayBtn');
+            if (playBtn) playBtn.textContent = '⏸️';
+            // Show controls briefly when play starts
+            showNetflixControls();
+        });
+
+        document.getElementById('videoPlayer')?.addEventListener('pause', function() {
+            const playBtn = document.getElementById('netflixPlayBtn');
+            if (playBtn) playBtn.textContent = '▶️';
+            // Show controls when paused
+            showNetflixControls();
+        });
 
         // Show Netflix controls on arrow key press
         document.addEventListener('keydown', function(e) {
@@ -6530,10 +6639,22 @@
         });
 
         // Show Netflix controls when clicking/touching video in fullscreen
+        let lastClickTime = 0;
         document.getElementById('videoPlayer')?.addEventListener('click', function() {
             const inFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
             if (inFullscreen) {
-                showNetflixControls();
+                const currentTime = new Date().getTime();
+                const timeDiff = currentTime - lastClickTime;
+                
+                if (timeDiff < 300 && timeDiff > 0) {
+                    // Double click - exit fullscreen
+                    console.log('📺 Double click - exiting fullscreen');
+                    exitFullscreenMode();
+                } else {
+                    // Single click - show controls
+                    showNetflixControls();
+                }
+                lastClickTime = currentTime;
             }
         });
 
