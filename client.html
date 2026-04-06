@@ -2552,7 +2552,7 @@
                     <button class="fs-control-btn" onclick="toggleMute()" title="Mute/Unmute">🔊 Mute</button>
                 </div>
                 
-                <!-- Netflix-Style Progress Bar & Controls -->
+                <!-- Netflix-Style Progress Bar & Controls - Hidden by default, show on interaction -->
                 <div class="netflix-controls hidden" id="netflixControls">
                     <div class="netflix-progress-container" id="netflixProgressContainer">
                         <div class="netflix-progress-bar" id="netflixProgressBar" onclick="netflixSeek(event)">
@@ -2566,7 +2566,7 @@
                     </div>
                     <div class="netflix-buttons">
                         <button class="netflix-btn" onclick="netflixTogglePlay()" title="Play/Pause" id="netflixPlayBtn">▶️</button>
-                        <button class="netflix-btn" onclick="netflixExitFullscreen()" title="Back to Interface">⬅️</button>
+                        <button class="netflix-btn" onclick="netflixExitFullscreen()" title="Exit Fullscreen">⬅️</button>
                     </div>
                 </div>
             </div>
@@ -6636,10 +6636,24 @@
             
             if (container) {
                 container.addEventListener('click', handleVideoClick);
+                // Show Netflix controls on mouse move (like Netflix)
+                container.addEventListener('mousemove', function() {
+                    const inFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+                    if (inFullscreen) {
+                        showNetflixControls();
+                    }
+                });
                 console.log('📺 Click handler attached to videoContainer');
             }
             if (video) {
                 video.addEventListener('click', handleVideoClick);
+                // Show Netflix controls on mouse move (like Netflix)
+                video.addEventListener('mousemove', function() {
+                    const inFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+                    if (inFullscreen) {
+                        showNetflixControls();
+                    }
+                });
                 console.log('📺 Click handler attached to videoPlayer');
             }
             
@@ -6747,6 +6761,7 @@
             const controls = document.getElementById('netflixControls');
             const video = getVideoElement();
             const playBtn = document.getElementById('netflixPlayBtn');
+            const inFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
             
             if (controls) {
                 controls.classList.remove('hidden');
@@ -6761,7 +6776,10 @@
                 // Start progress updates
                 startNetflixProgressUpdates();
                 
-                resetNetflixHideTimer();
+                // Only auto-hide when in fullscreen mode
+                if (inFullscreen) {
+                    resetNetflixHideTimer();
+                }
             }
         };
 
