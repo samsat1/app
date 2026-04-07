@@ -1,0 +1,2103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAMSAT Client Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #2c3e50, #34495e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 3px solid #dee2e6;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            background: #e9ecef;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border-right: 1px solid #dee2e6;
+        }
+
+        .nav-tab:last-child {
+            border-right: none;
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: #007bff;
+            transform: translateY(-2px);
+        }
+
+        .nav-tab:hover {
+            background: #f1f3f4;
+        }
+
+        .content {
+            padding: 30px;
+            min-height: 600px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0,123,255,0.3);
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #28a745, #1e7e34);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #ffc107, #e0a800);
+            color: #212529;
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .client-item {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+            border-left: 5px solid #007bff;
+            transition: all 0.3s ease;
+        }
+
+        .client-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .client-header {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .client-details {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .client-actions {
+            text-align: right;
+            margin-top: 15px;
+        }
+
+        .village-filter {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 8px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .print-preview {
+            border: 2px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .invoice-a5 {
+            width: 148mm;
+            max-width: 100%;
+            margin: 0 auto;
+            font-size: 11px;
+            line-height: 1.2;
+            padding: 8mm;
+            border: 1px solid #ddd;
+            background: white;
+            page-break-after: always;
+            position: relative;
+        }
+
+        .invoice-number-box {
+            position: absolute;
+            top: 4mm;
+            left: 8mm;
+            border: 2px solid #333;
+            padding: 3px 8px;
+            font-size: 12px;
+            font-weight: bold;
+            background: white;
+            border-radius: 3px;
+        }
+
+        .invoice-header {
+            text-align: center;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 8px;
+        }
+
+        .invoice-header h2 {
+            font-size: 24px;
+            margin-bottom: 3px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .invoice-content {
+            margin: 15px 0;
+        }
+
+        .invoice-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 5px 0;
+            border-bottom: 1px dotted #ccc;
+        }
+
+        .invoice-row strong {
+            font-weight: bold;
+        }
+
+        .invoice-row span {
+            font-weight: normal;
+        }
+
+        .client-name {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid #c3e6cb;
+        }
+
+        .export-section {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 2px solid #ffeaa7;
+        }
+
+        .export-section h4 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+
+        .form-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .form-buttons .btn {
+            min-width: 140px;
+        }
+
+        #returnToPositionBtn {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        #returnToPositionBtn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            background: linear-gradient(135deg, #138496, #117a8b);
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .print-area, .print-area * {
+                visibility: visible;
+            }
+            .print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            @page { size: A5; margin: 1mm; }
+        }
+
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 SAMSAT Client Manager</h1>
+            <p>Phone: 03/062897 | Professional Client & Village Management System</p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('dashboard')">📊 Dashboard</button>
+            <button class="nav-tab" onclick="showTab('clients')">👥 Manage Clients</button>
+            <button class="nav-tab" onclick="showTab('villages')">🏘️ Villages</button>
+            <button class="nav-tab" onclick="showTab('invoices')">📄 Monthly Invoices</button>
+            <button class="nav-tab" onclick="showTab('reports')">📈 Village Reports</button>
+            <button class="nav-tab" onclick="showTab('backup')">💾 Backup & Restore</button>
+        </div>
+
+        <div class="content">
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content active">
+                <h2>📊 Dashboard Overview</h2>
+                <div class="stats" id="dashboardStats">
+                    <!-- Stats will be populated by JavaScript -->
+                </div>
+                
+                <div class="two-column">
+                    <div>
+                        <h3>⚡ Quick Actions</h3>
+                        <button class="btn btn-primary" onclick="showTab('clients')">➕ Add New Client</button>
+                        <button class="btn btn-success" onclick="showTab('villages')">🏘️ Manage Villages</button>
+                        <button class="btn btn-warning" onclick="showTab('invoices')">📄 Create Invoice</button>
+                        <button class="btn btn-primary" onclick="showTab('reports')">📈 View Reports</button>
+                        <button class="btn btn-danger" onclick="showTab('backup')">💾 Backup Data</button>
+                    </div>
+                    
+                    <div>
+                        <h3>📱 System Information</h3>
+                        <div class="client-item">
+                            <strong>💾 Data Storage:</strong> Browser Local Storage<br>
+                            <strong>🖨️ Print Format:</strong> A5 (displays as A7)<br>
+                            <strong>📞 Contact:</strong> 03/062897<br>
+                            <strong>🏢 Company:</strong> SAMSAT<br>
+                            <strong>✨ Version:</strong> Final Edition with Export/Import
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clients Tab -->
+            <div id="clients" class="tab-content">
+                <h2>👥 Client Management</h2>
+                
+                <div class="two-column">
+                    <div>
+                        <h3>➕ Add New Client</h3>
+                        <form id="clientForm">
+                            <div class="form-group">
+                                <label>👤 First Name:</label>
+                                <input type="text" id="firstName" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>👤 Last Name:</label>
+                                <input type="text" id="lastName" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>📍 Address:</label>
+                                <textarea id="address" rows="3" required></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>🏘️ Village:</label>
+                                <input type="text" id="clientVillage" placeholder="Type village name..." list="villageList" required>
+                                <datalist id="villageList">
+                                    <!-- Village options will be populated by JavaScript -->
+                                </datalist>
+                                <small style="color: #666; font-size: 0.9em;">💡 Type the village name (will be added automatically if new)</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>💰 Monthly Price:</label>
+                                <input type="number" id="price" step="0.01" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>📦 Box Number:</label>
+                                <input type="text" id="boxNumber" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>🔢 Invoice Number (Optional):</label>
+                                <input type="text" id="invoiceNumber" placeholder="Enter invoice number...">
+                                <small style="color: #666; font-size: 0.9em;">💡 This number will appear in a box on the printed invoice</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>📝 Notes:</label>
+                                <textarea id="notes" rows="2"></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="clientPaused" style="margin-right: 8px;">
+                                    ⏸️ Pause Client (Hide from reports and printing)
+                                </label>
+                                <small style="color: #666; font-size: 0.9em;">💡 Paused clients keep all their information but won't appear in reports or printing</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>🔢 Insert at Position (Optional):</label>
+                                <input type="number" id="insertPosition" min="1" placeholder="Leave empty to add at end">
+                                <small style="color: #666; font-size: 0.9em;">💡 Enter position number (1-100) to insert client here. All clients from this position will be moved down by 1.</small>
+                            </div>
+                            
+                            <div class="form-buttons">
+                                <button type="submit" class="btn btn-success">💾 Save Client</button>
+                                <button type="button" class="btn btn-warning" onclick="clearClientForm()">🔄 Clear Form</button>
+                                <button type="button" id="returnToPositionBtn" class="btn btn-info" onclick="returnToLastPosition()" style="display: none;">
+                                    ↩️ Return to Last Position
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div>
+                        <h3>🔍 Client Search & Filter</h3>
+                        <div class="village-filter">
+                            <div class="form-group">
+                                <label>🏘️ Filter by Village:</label>
+                                <select id="villageFilter" onchange="filterClients()">
+                                    <option value="">All Villages</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>🔍 Search Clients:</label>
+                                <input type="text" id="clientSearch" placeholder="Search by name, address..." onkeyup="filterClients()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="client-list">
+                    <h3>📋 Client List</h3>
+                    <div id="clientsList">
+                        <!-- Clients will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Villages Tab -->
+            <div id="villages" class="tab-content">
+                <h2>🏘️ Village Management</h2>
+                
+                <div class="two-column">
+                    <div>
+                        <h3>➕ Add New Village</h3>
+                        <div class="form-group">
+                            <label>🏘️ Village Name:</label>
+                            <input type="text" id="newVillageName" placeholder="Enter village name">
+                        </div>
+                        <button class="btn btn-success" onclick="addVillage()">💾 Add Village</button>
+                    </div>
+                    
+                    <div>
+                        <h3>📊 Village Statistics</h3>
+                        <div id="villageStats">
+                            <!-- Village stats will be populated -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="client-list">
+                    <h3>🏘️ Existing Villages</h3>
+                    <div id="villagesList">
+                        <!-- Villages will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoices Tab -->
+            <div id="invoices" class="tab-content">
+                <h2>📄 Monthly Invoices</h2>
+                
+                <div class="two-column">
+                    <div>
+                        <h3>⚙️ Invoice Settings</h3>
+                        <div class="form-group">
+                            <label>🏘️ Select Village:</label>
+                            <select id="invoiceVillage">
+                                <option value="">All Villages</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>📅 Month:</label>
+                            <select id="invoiceMonth">
+                                <option value="1">January</option>
+                                <option value="2">February</option>
+                                <option value="3">March</option>
+                                <option value="4">April</option>
+                                <option value="5">May</option>
+                                <option value="6">June</option>
+                                <option value="7">July</option>
+                                <option value="8">August</option>
+                                <option value="9">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>📅 Year:</label>
+                            <input type="number" id="invoiceYear" value="2025" min="2020" max="2030">
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="generateInvoices()">📄 Generate Invoices</button>
+                        <button class="btn btn-warning" onclick="printInvoices()">🖨️ Print All</button>
+                        
+                        <!-- Single Invoice Print Section -->
+                        <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 2px solid #e9ecef;">
+                            <h4>⚡ Print Single Invoice</h4>
+                            <div class="form-group">
+                                <label>👤 Search Client by Name:</label>
+                                <input type="text" id="singleInvoiceClient" list="single-invoice-clients" 
+                                       placeholder="Type client name to search..." 
+                                       style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+                                <datalist id="single-invoice-clients"></datalist>
+                            </div>
+                            <button class="btn btn-success" onclick="printSingleInvoice()">🖨️ Print Single Invoice</button>
+                        </div>
+                        
+                        <!-- Print by Village Section -->
+                        <div style="margin-top: 20px; padding: 20px; background: #f0f8ff; border-radius: 8px; border: 2px solid #007bff;">
+                            <h4>🏘️ Print by Village</h4>
+                            <div class="form-group">
+                                <label>🏘️ Select Village:</label>
+                                <select id="villageInvoiceFilter">
+                                    <option value="">Select a village...</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" onclick="printVillageInvoices()">🖨️ Print Village Invoices</button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3>ℹ️ Invoice Information</h3>
+                        <div class="client-item">
+                            <strong>📄 Format:</strong> A5 (prints like A7)<br>
+                            <strong>🏢 Header:</strong> SAMSAT<br>
+                            <strong>📞 Phone:</strong> 03/062897<br>
+                            <strong>📦 Includes:</strong> Name, Price, Month/Year, Box Number<br>
+                            <strong>🏘️ Village:</strong> Village name included
+                        </div>
+                        
+                        <h3>🖨️ Print Options</h3>
+                        <div class="client-item">
+                            <strong>⚡ Single Invoice:</strong> Print one client's invoice<br>
+                            <strong>🏘️ Village Invoices:</strong> Print all clients from selected village<br>
+                            <strong>📄 Print All:</strong> Print invoices for all clients<br>
+                            <strong>📊 Report Print:</strong> Print village reports
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="invoicesPreview" class="print-preview" style="display: none;">
+                    <h3>📄 Invoice Preview</h3>
+                    <div id="invoicesContent">
+                        <!-- Invoices will be generated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Tab -->
+            <div id="reports" class="tab-content">
+                <h2>📈 Village Reports</h2>
+                
+                <div class="two-column">
+                    <div>
+                        <h3>⚙️ Report Settings</h3>
+                        <div class="form-group">
+                            <label>🏘️ Select Village:</label>
+                            <select id="reportVillage">
+                                <option value="">All Villages</option>
+                            </select>
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="generateReport()">📊 Generate Report</button>
+                        <button class="btn btn-warning" onclick="printReport()">🖨️ Print Report</button>
+                    </div>
+                    
+                    <div>
+                        <h3>ℹ️ Report Information</h3>
+                        <div class="client-item">
+                            <strong>📊 Content:</strong> Client count, total revenue, detailed list<br>
+                            <strong>🏘️ Village Filter:</strong> All villages or specific village<br>
+                            <strong>🖨️ Print Ready:</strong> Formatted for printing<br>
+                            <strong>📅 Date:</strong> Current date included
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="reportContent" class="print-preview" style="display: none;">
+                    <h3>📈 Generated Report</h3>
+                    <div id="reportDisplay">
+                        <!-- Report will be generated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backup & Restore Tab -->
+            <div id="backup" class="tab-content">
+                <h2>💾 Backup & Restore</h2>
+                
+                <div class="two-column">
+                    <div>
+                        <h3>📤 Export Data (Backup)</h3>
+                        <div class="export-section">
+                            <h4>💾 Save Your Data</h4>
+                            <p>Export your client and village data to JSON files for safekeeping.</p>
+                            
+                            <button class="btn btn-success" onclick="exportAllData()">📁 Export All Data</button>
+                            <button class="btn btn-primary" onclick="exportClientsOnly()">👥 Export Clients Only</button>
+                            <button class="btn btn-warning" onclick="exportVillagesOnly()">🏘️ Export Villages Only</button>
+                            
+                            <small style="display: block; margin-top: 10px; color: #856404;">
+                                💡 Files will be downloaded to your computer automatically
+                            </small>
+                        </div>
+                        
+                        <h3>📊 Current Data Summary</h3>
+                        <div id="dataSummary" class="client-item">
+                            <!-- Data summary will be populated -->
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3>📥 Import Data (Restore)</h3>
+                        <div class="export-section">
+                            <h4>🔄 Restore Your Data</h4>
+                            <p>Import previously exported data files to restore your information.</p>
+                            
+                            <div class="form-group">
+                                <label>📁 Select Backup File:</label>
+                                <input type="file" id="importFile" accept=".json" onchange="importData()">
+                                <small style="color: #856404;">Select a previously exported JSON file</small>
+                            </div>
+                            
+                            <button class="btn btn-danger" onclick="clearAllData()" style="margin-top: 20px;">🗑️ Clear All Data</button>
+                            <small style="display: block; margin-top: 5px; color: #721c24;">
+                                ⚠️ This will delete all clients and villages. Export first!
+                            </small>
+                        </div>
+                        
+                        <h3>💡 Backup Tips</h3>
+                        <div class="client-item">
+                            <strong>📅 Regular Backups:</strong> Export weekly to avoid data loss<br>
+                            <strong>📁 Safe Storage:</strong> Keep files in Documents/SAMSAT_Backups/<br>
+                            <strong>🔄 Test Restore:</strong> Occasionally test importing backups<br>
+                            <strong>📱 Multiple Copies:</strong> Store in different locations
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let clients = [];
+        let villages = [];
+        let currentEditingClient = null;
+        let lastScrollPosition = 0;
+        let editedClientId = null;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            updateDashboard();
+            populateVillageDropdowns();
+            populateSingleInvoiceClients();
+            updateDataSummary();
+        });
+
+        // Data Management
+        function loadData() {
+            const savedClients = localStorage.getItem('samsat_clients_final');
+            const savedVillages = localStorage.getItem('samsat_villages_final');
+            
+            if (savedClients) {
+                clients = JSON.parse(savedClients);
+            }
+            
+            if (savedVillages) {
+                villages = JSON.parse(savedVillages);
+            }
+            
+            renderClients();
+            renderVillages();
+        }
+
+        function saveData() {
+            localStorage.setItem('samsat_clients_final', JSON.stringify(clients));
+            localStorage.setItem('samsat_villages_final', JSON.stringify(villages));
+        }
+
+        // Tab Management
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all nav tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked nav tab
+            event.target.classList.add('active');
+            
+            // Update specific tab content
+            if (tabName === 'dashboard') {
+                updateDashboard();
+            } else if (tabName === 'backup') {
+                updateDataSummary();
+            }
+        }
+
+        // Dashboard Functions
+        function updateDashboard() {
+            const totalClients = clients.length;
+            const activeClients = clients.filter(client => !client.paused);
+            const pausedClients = clients.filter(client => client.paused);
+            const totalVillages = villages.length;
+            const totalRevenue = activeClients.reduce((sum, client) => sum + parseFloat(client.price || 0), 0);
+            const avgPrice = activeClients.length > 0 ? totalRevenue / activeClients.length : 0;
+
+            document.getElementById('dashboardStats').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${activeClients.length}</div>
+                    <div class="stat-label">👥 Active Clients</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${pausedClients.length}</div>
+                    <div class="stat-label">⏸️ Paused Clients</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${totalVillages}</div>
+                    <div class="stat-label">🏘️ Total Villages</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">$${totalRevenue.toFixed(2)}</div>
+                    <div class="stat-label">💰 Active Revenue</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">$${avgPrice.toFixed(2)}</div>
+                    <div class="stat-label">📊 Average Price</div>
+                </div>
+            `;
+        }
+
+        // Client Management
+        document.getElementById('clientForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const address = document.getElementById('address').value.trim();
+            const village = document.getElementById('clientVillage').value.trim();
+            const price = parseFloat(document.getElementById('price').value);
+            const boxNumber = document.getElementById('boxNumber').value.trim();
+            const invoiceNumber = document.getElementById('invoiceNumber').value.trim();
+            const notes = document.getElementById('notes').value.trim();
+            const insertPosition = parseInt(document.getElementById('insertPosition').value);
+            
+            // Add village if it doesn't exist
+            if (village && !villages.includes(village)) {
+                villages.push(village);
+                villages.sort();
+                populateVillageDropdowns();
+                showMessage(`✅ Village "${village}" added automatically!`, 'success');
+            }
+            
+            const clientData = {
+                id: currentEditingClient ? currentEditingClient.id : Date.now().toString(),
+                firstName,
+                lastName,
+                address,
+                village,
+                price,
+                boxNumber,
+                invoiceNumber,
+                notes,
+                paused: document.getElementById('clientPaused').checked,
+                createdAt: currentEditingClient ? currentEditingClient.createdAt : new Date().toISOString()
+            };
+            
+            // Store if we were editing (before setting to null)
+            const wasEditing = !!currentEditingClient;
+            
+            if (currentEditingClient) {
+                // Update existing client
+                const clientIndex = clients.findIndex(c => c.id === currentEditingClient.id);
+                const currentPosition = clients[clientIndex].position;
+                
+                if (insertPosition && insertPosition !== currentPosition) {
+                    // Remove client from current position
+                    clients.splice(clientIndex, 1);
+                    // Insert at new position
+                    const adjustedPosition = Math.min(insertPosition - 1, clients.length);
+                    clients.splice(adjustedPosition, 0, clientData);
+                } else {
+                    // Just update data without changing position
+                    clients[clientIndex] = clientData;
+                }
+                
+                currentEditingClient = null;
+            } else {
+                // Add new client
+                if (insertPosition && insertPosition > 0) {
+                    // Insert at specific position
+                    const adjustedPosition = Math.min(insertPosition - 1, clients.length);
+                    clients.splice(adjustedPosition, 0, clientData);
+                    showMessage(`✅ Client "${firstName} ${lastName}" inserted at position ${insertPosition}!`, 'success');
+                } else {
+                    // Add at end
+                    clients.push(clientData);
+                    showMessage(`✅ Client "${firstName} ${lastName}" added successfully!`, 'success');
+                }
+            }
+            
+            // Assign position numbers
+            clients.forEach((client, index) => {
+                client.position = index + 1;
+            });
+            
+            // Store editing information before clearing
+            const savedScrollPosition = lastScrollPosition;
+            const savedEditedClientId = editedClientId;
+            
+            saveData();
+            renderClients();
+            clearClientForm();
+            updateDashboard();
+            populateSingleInvoiceClients();
+            
+            // Handle save completion - only if we were editing
+            if (wasEditing) {
+                // Restore the position data and show the button
+                lastScrollPosition = savedScrollPosition;
+                editedClientId = savedEditedClientId;
+                document.getElementById('returnToPositionBtn').style.display = 'inline-block';
+                showMessage(`✅ Client "${firstName} ${lastName}" updated successfully! Use the "Return to Last Position" button to go back to your previous location.`, 'success');
+            } else {
+                // If we weren't editing, show regular success message
+                showMessage(`✅ Client "${firstName} ${lastName}" added successfully!`, 'success');
+            }
+        });
+
+        function renderClients() {
+            const clientsList = document.getElementById('clientsList');
+            const villageFilter = document.getElementById('villageFilter').value;
+            const searchTerm = document.getElementById('clientSearch').value.toLowerCase();
+            
+            let filteredClients = clients;
+            
+            if (villageFilter) {
+                filteredClients = filteredClients.filter(client => client.village === villageFilter);
+            }
+            
+            if (searchTerm) {
+                filteredClients = filteredClients.filter(client =>
+                    client.firstName.toLowerCase().includes(searchTerm) ||
+                    client.lastName.toLowerCase().includes(searchTerm) ||
+                    client.address.toLowerCase().includes(searchTerm) ||
+                    client.village.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            if (filteredClients.length === 0) {
+                clientsList.innerHTML = '<div class="client-item">📭 No clients found. Add your first client to get started!</div>';
+                return;
+            }
+            
+            clientsList.innerHTML = filteredClients.map(client => `
+                <div class="client-item" data-client-id="${client.id}" style="${client.paused ? 'opacity: 0.6; border-left: 4px solid #ffc107;' : ''}">
+                    <div class="client-header">
+                        #${client.position} - ${client.firstName} ${client.lastName}
+                        ${client.paused ? '<span style="color: #ffc107; font-weight: bold;">⏸️ PAUSED</span>' : ''}
+                    </div>
+                    <div class="client-details">
+                        <strong>📍 Address:</strong> ${client.address}<br>
+                        <strong>🏘️ Village:</strong> ${client.village}<br>
+                        <strong>💰 Monthly Price:</strong> $${client.price.toFixed(2)}<br>
+                        <strong>📦 Box Number:</strong> ${client.boxNumber}<br>
+                        ${client.invoiceNumber ? `<strong>🔢 Invoice Number:</strong> ${client.invoiceNumber}<br>` : ''}
+                        ${client.notes ? `<strong>📝 Notes:</strong> ${client.notes}<br>` : ''}
+                        <strong>📅 Added:</strong> ${new Date(client.createdAt).toLocaleDateString()}
+                    </div>
+                    <div class="client-actions">
+                        <button class="btn btn-primary" onclick="editClient('${client.id}')">✏️ Edit</button>
+                        <button class="btn ${client.paused ? 'btn-success' : 'btn-warning'}" onclick="toggleClientPause('${client.id}')">
+                            ${client.paused ? '▶️ Resume' : '⏸️ Pause'}
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteClient('${client.id}')">🗑️ Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function editClient(clientId) {
+            const client = clients.find(c => c.id === clientId);
+            if (!client) return;
+            
+            // Store current scroll position to return to after saving
+            lastScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+            editedClientId = clientId;
+            
+            currentEditingClient = client;
+            
+            document.getElementById('firstName').value = client.firstName;
+            document.getElementById('lastName').value = client.lastName;
+            document.getElementById('address').value = client.address;
+            document.getElementById('clientVillage').value = client.village;
+            document.getElementById('price').value = client.price;
+            document.getElementById('boxNumber').value = client.boxNumber;
+            document.getElementById('invoiceNumber').value = client.invoiceNumber || '';
+            document.getElementById('notes').value = client.notes || '';
+            document.getElementById('clientPaused').checked = client.paused || false;
+            document.getElementById('insertPosition').value = client.position;
+            
+            // Show the return to position button since we're editing
+            document.getElementById('returnToPositionBtn').style.display = 'inline-block';
+            
+            // Switch to clients tab and scroll to the form
+            showTab('clients');
+            setTimeout(() => {
+                document.getElementById('clientForm').scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+            }, 100);
+            
+            showMessage(`✏️ Editing client: ${client.firstName} ${client.lastName}`, 'success');
+        }
+
+        function deleteClient(clientId) {
+            const client = clients.find(c => c.id === clientId);
+            if (!client) return;
+            
+            if (confirm(`Are you sure you want to delete ${client.firstName} ${client.lastName}?`)) {
+                clients = clients.filter(c => c.id !== clientId);
+                
+                // Reassign position numbers
+                clients.forEach((client, index) => {
+                    client.position = index + 1;
+                });
+                
+                saveData();
+                renderClients();
+                updateDashboard();
+                populateSingleInvoiceClients();
+                showMessage(`🗑️ Client deleted successfully!`, 'success');
+            }
+        }
+
+        function toggleClientPause(clientId) {
+            const client = clients.find(c => c.id === clientId);
+            if (!client) return;
+            
+            client.paused = !client.paused;
+            
+            saveData();
+            renderClients();
+            updateDashboard();
+            populateSingleInvoiceClients();
+            
+            const action = client.paused ? 'paused' : 'resumed';
+            showMessage(`${client.paused ? '⏸️' : '▶️'} Client "${client.firstName} ${client.lastName}" ${action}!`, 'success');
+        }
+
+        function clearClientForm() {
+            document.getElementById('clientForm').reset();
+            document.getElementById('clientPaused').checked = false;
+            currentEditingClient = null;
+            document.getElementById('insertPosition').value = '';
+            // Reset scroll tracking variables
+            lastScrollPosition = 0;
+            editedClientId = null;
+            // Hide the return to position button
+            document.getElementById('returnToPositionBtn').style.display = 'none';
+        }
+
+        function returnToLastPosition() {
+            if (lastScrollPosition > 0) {
+                window.scrollTo({ 
+                    top: lastScrollPosition, 
+                    behavior: 'smooth' 
+                });
+                
+                // Highlight the edited client briefly
+                if (editedClientId) {
+                    setTimeout(() => {
+                        const editedRow = document.querySelector(`[data-client-id="${editedClientId}"]`);
+                        if (editedRow) {
+                            editedRow.style.backgroundColor = '#ffeb3b';
+                            editedRow.style.transition = 'background-color 0.3s ease';
+                            setTimeout(() => {
+                                editedRow.style.backgroundColor = '';
+                            }, 2000);
+                        }
+                    }, 500);
+                }
+                
+                showMessage(`↩️ Returned to your previous position in the client list!`, 'success');
+                
+                // Reset the scroll tracking variables
+                lastScrollPosition = 0;
+                editedClientId = null;
+                // Hide the button after use
+                document.getElementById('returnToPositionBtn').style.display = 'none';
+            } else {
+                showMessage(`ℹ️ No previous position to return to.`, 'info');
+            }
+        }
+
+        function filterClients() {
+            renderClients();
+        }
+
+        // Village Management
+        function addVillage() {
+            const villageName = document.getElementById('newVillageName').value.trim();
+            
+            if (!villageName) {
+                showMessage('❌ Please enter a village name!', 'error');
+                return;
+            }
+            
+            if (villages.includes(villageName)) {
+                showMessage('❌ Village already exists!', 'error');
+                return;
+            }
+            
+            villages.push(villageName);
+            villages.sort();
+            
+            saveData();
+            renderVillages();
+            populateVillageDropdowns();
+            
+            document.getElementById('newVillageName').value = '';
+            showMessage(`✅ Village "${villageName}" added successfully!`, 'success');
+        }
+
+        function renderVillages() {
+            const villagesList = document.getElementById('villagesList');
+            const villageStats = document.getElementById('villageStats');
+            
+            if (villages.length === 0) {
+                villagesList.innerHTML = '<div class="client-item">🏘️ No villages yet. Add your first village!</div>';
+                villageStats.innerHTML = '<div class="client-item">📊 Add villages to see statistics</div>';
+                return;
+            }
+            
+            // Calculate village statistics
+            const villageData = villages.map(village => {
+                const villageClients = clients.filter(client => client.village === village);
+                const totalRevenue = villageClients.reduce((sum, client) => sum + parseFloat(client.price || 0), 0);
+                return {
+                    name: village,
+                    clientCount: villageClients.length,
+                    totalRevenue: totalRevenue
+                };
+            });
+            
+            villagesList.innerHTML = villageData.map(village => `
+                <div class="client-item">
+                    <div class="client-header">🏘️ ${village.name}</div>
+                    <div class="client-details">
+                        <strong>👥 Clients:</strong> ${village.clientCount}<br>
+                        <strong>💰 Total Revenue:</strong> $${village.totalRevenue.toFixed(2)}<br>
+                        <strong>📊 Average Price:</strong> $${village.clientCount > 0 ? (village.totalRevenue / village.clientCount).toFixed(2) : '0.00'}
+                    </div>
+                    <div class="client-actions">
+                        <button class="btn btn-danger" onclick="deleteVillage('${village.name}')">🗑️ Delete Village</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            villageStats.innerHTML = `
+                <div class="client-item">
+                    <strong>📊 Total Villages:</strong> ${villages.length}<br>
+                    <strong>🏆 Largest Village:</strong> ${villageData.reduce((max, v) => v.clientCount > max.clientCount ? v : max, villageData[0]).name} (${Math.max(...villageData.map(v => v.clientCount))} clients)<br>
+                    <strong>💰 Highest Revenue:</strong> ${villageData.reduce((max, v) => v.totalRevenue > max.totalRevenue ? v : max, villageData[0]).name} ($${Math.max(...villageData.map(v => v.totalRevenue)).toFixed(2)})
+                </div>
+            `;
+        }
+
+        function deleteVillage(villageName) {
+            const villageClients = clients.filter(client => client.village === villageName);
+            
+            if (villageClients.length > 0) {
+                showMessage(`❌ Cannot delete village "${villageName}" because it has ${villageClients.length} clients. Please move or delete the clients first.`, 'error');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to delete village "${villageName}"?`)) {
+                villages = villages.filter(v => v !== villageName);
+                saveData();
+                renderVillages();
+                populateVillageDropdowns();
+                showMessage(`🗑️ Village "${villageName}" deleted successfully!`, 'success');
+            }
+        }
+
+        function populateVillageDropdowns() {
+            const dropdowns = [
+                'villageList',
+                'villageFilter', 
+                'invoiceVillage',
+                'reportVillage',
+                'villageInvoiceFilter'
+            ];
+            
+            dropdowns.forEach(dropdownId => {
+                const dropdown = document.getElementById(dropdownId);
+                if (!dropdown) return;
+                
+                if (dropdown.tagName === 'DATALIST') {
+                    dropdown.innerHTML = villages.map(village => 
+                        `<option value="${village}">`
+                    ).join('');
+                } else {
+                    const currentValue = dropdown.value;
+                    const isFilter = dropdownId.includes('Filter') || dropdownId.includes('Village');
+                    
+                    dropdown.innerHTML = isFilter ? 
+                        '<option value="">All Villages</option>' + villages.map(village => 
+                            `<option value="${village}">${village}</option>`
+                        ).join('') :
+                        '<option value="">Select a village...</option>' + villages.map(village => 
+                            `<option value="${village}">${village}</option>`
+                        ).join('');
+                    
+                    if (currentValue && villages.includes(currentValue)) {
+                        dropdown.value = currentValue;
+                    }
+                }
+            });
+        }
+
+        // Invoice Management
+        function generateInvoices() {
+            const selectedVillage = document.getElementById('invoiceVillage').value;
+            const month = parseInt(document.getElementById('invoiceMonth').value);
+            const year = parseInt(document.getElementById('invoiceYear').value);
+            
+            let invoiceClients = clients.filter(client => !client.paused); // Exclude paused clients
+            if (selectedVillage) {
+                invoiceClients = invoiceClients.filter(client => client.village === selectedVillage);
+            }
+            
+            if (invoiceClients.length === 0) {
+                showMessage('❌ No active clients found for the selected criteria!', 'error');
+                return;
+            }
+            
+            const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            const invoicesHtml = invoiceClients.map(client => `
+                <div class="invoice-a5">
+                    ${client.invoiceNumber ? `<div class="invoice-number-box">#${client.invoiceNumber}</div>` : ''}
+                    <div class="invoice-header">
+                        <h2>SAMSAT</h2>
+                        <div>📞 Phone: 03/062897</div>
+                    </div>
+                    <div class="invoice-content">
+                        <div class="invoice-row">
+                            <strong>👤 NAME:</strong>
+                            <span class="client-name">${client.firstName} ${client.lastName}</span>
+                        </div>
+                        <div class="invoice-row">
+                            <strong>💰 PRICE:</strong>
+                            <span>$${client.price.toFixed(2)}</span>
+                        </div>
+                        <div class="invoice-row">
+                            <strong>📅 MONTH/YEAR:</strong>
+                            <span>${monthNames[month]} ${year}</span>
+                        </div>
+                        <div class="invoice-row">
+                            <strong>📦 BOX NUMBER:</strong>
+                            <span>${client.boxNumber}</span>
+                        </div>
+                        <div class="invoice-row">
+                            <strong>🏘️ VILLAGE:</strong>
+                            <span>${client.village}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('invoicesContent').innerHTML = invoicesHtml;
+            document.getElementById('invoicesPreview').style.display = 'block';
+            
+            showMessage(`✅ Generated ${invoiceClients.length} invoices for ${selectedVillage || 'all villages'}!`, 'success');
+        }
+
+        function printInvoices() {
+            const invoicesContent = document.getElementById('invoicesContent').innerHTML;
+            
+            if (!invoicesContent.trim()) {
+                showMessage('❌ Please generate invoices first!', 'error');
+                return;
+            }
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>SAMSAT Invoices</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 0; }
+                        .invoice-a5 {
+                            width: 180mm;
+                            font-size: 13px;
+                            line-height: 1.3;
+                            padding: 8mm 15mm;
+                            margin: 0 auto 15mm auto;
+                            page-break-after: always;
+                            text-align: center;
+                            position: relative;
+                            border: 1px solid #ddd;
+                            background: white;
+                        }
+                        .invoice-number-box {
+                            position: absolute;
+                            top: 6mm;
+                            left: 12mm;
+                            border: 2px solid #333;
+                            padding: 4px 10px;
+                            font-size: 14px;
+                            font-weight: bold;
+                            background: white;
+                            border-radius: 4px;
+                        }
+                        .invoice-header {
+                            text-align: center;
+                            margin-bottom: 12mm;
+                            border-bottom: 3px solid #333;
+                            padding-bottom: 6mm;
+                        }
+                        .invoice-header h2 {
+                            font-size: 32px;
+                            margin-bottom: 4mm;
+                            font-weight: bold;
+                            letter-spacing: 3px;
+                        }
+                        .invoice-header div {
+                            font-size: 16px;
+                            font-weight: bold;
+                        }
+                        .invoice-content {
+                            margin: 12mm 8mm;
+                            text-align: left;
+                        }
+                        .invoice-row {
+                            display: block;
+                            margin-bottom: 8mm;
+                            padding: 4mm 6mm;
+                            border-bottom: 2px dotted #999;
+                            line-height: 1.4;
+                            text-align: center;
+                            background: #f9f9f9;
+                        }
+                        .invoice-row strong {
+                            display: inline-block;
+                            width: 40%;
+                            font-weight: bold;
+                            text-align: left;
+                            margin-right: 4mm;
+                            font-size: 15px;
+                        }
+                        .invoice-row span {
+                            display: inline-block;
+                            width: 55%;
+                            word-wrap: break-word;
+                            text-align: left;
+                            font-size: 15px;
+                        }
+                        .client-name {
+                            font-size: 22px;
+                            font-weight: bold;
+                        }
+                        @media print {
+                            @page { 
+                                size: A4; 
+                                margin: 8mm; 
+                            }
+                            body {
+                                margin: 0;
+                                padding: 0;
+                            }
+                            .invoice-a5 {
+                                width: 194mm;
+                                margin-bottom: 10mm;
+                                border: 2px solid #333;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${invoicesContent}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function populateSingleInvoiceClients() {
+            const datalist = document.getElementById('single-invoice-clients');
+            datalist.innerHTML = '';
+            
+            const activeClients = clients.filter(client => !client.paused);
+            activeClients.forEach(client => {
+                const option = document.createElement('option');
+                option.value = `${client.firstName} ${client.lastName}`;
+                option.setAttribute('data-client-id', client.id);
+                datalist.appendChild(option);
+            });
+        }
+
+        function printSingleInvoice() {
+            const clientName = document.getElementById('singleInvoiceClient').value.trim();
+            if (!clientName) {
+                showMessage('❌ Please type a client name first!', 'error');
+                return;
+            }
+
+            const client = clients.find(c => 
+                `${c.firstName} ${c.lastName}`.toLowerCase() === clientName.toLowerCase()
+            );
+            
+            if (!client) {
+                showMessage('❌ Client not found! Please check the name and try again.', 'error');
+                return;
+            }
+
+            const month = parseInt(document.getElementById('invoiceMonth').value);
+            const year = parseInt(document.getElementById('invoiceYear').value);
+            const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December'];
+
+            const invoiceHtml = `
+                <div class="invoice-a5">
+                    ${client.invoiceNumber ? `<div class="invoice-number-box">#${client.invoiceNumber}</div>` : ''}
+                    <div class="invoice-header">
+                        <h2>SAMSAT</h2>
+                        <div>📞 Phone: 03/062897</div>
+                    </div>
+                    <div class="invoice-content">
+                        <div class="invoice-row">
+                            <strong>👤 NAME:</strong>
+                            <span class="client-name">${client.firstName} ${client.lastName}</span>
+                        </div>
+                        <div class="invoice-row">
+                            <strong>💰 PRICE:</strong>
+                            <span>$${client.price.toFixed(2)}</span>
+                        </div>
+                        <div class="invoice-row">
+                            <strong>📅 MONTH/YEAR:</strong>
+                            <span>${monthNames[month]} ${year}</span>
+                        </div>
+                        <div class="invoice-row">
+                            <strong>📦 BOX NUMBER:</strong>
+                            <span>${client.boxNumber}</span>
+                        </div>
+                        <div class="invoice-row">
+                            <strong>🏘️ VILLAGE:</strong>
+                            <span>${client.village}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>SAMSAT Invoice - ${client.firstName} ${client.lastName}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 0; }
+                        .invoice-a5 {
+                            width: 90mm;
+                            font-size: 11px;
+                            line-height: 1.2;
+                            padding: 3mm 12mm;
+                            margin: 0 auto;
+                            page-break-after: always;
+                            text-align: center;
+                            position: relative;
+                        }
+                        .invoice-number-box {
+                            position: absolute;
+                            top: 4mm;
+                            left: 8mm;
+                            border: 2px solid #333;
+                            padding: 3px 8px;
+                            font-size: 12px;
+                            font-weight: bold;
+                            background: white;
+                            border-radius: 3px;
+                        }
+                        .invoice-header {
+                            text-align: center;
+                            margin-bottom: 8px;
+                            border-bottom: 2px solid #333;
+                            padding-bottom: 4px;
+                        }
+                        .invoice-header h2 {
+                            font-size: 24px;
+                            margin-bottom: 2px;
+                            font-weight: bold;
+                            letter-spacing: 2px;
+                        }
+                        .invoice-content {
+                            margin: 8px 6mm;
+                            text-align: left;
+                        }
+                        .invoice-row {
+                            display: block;
+                            margin-bottom: 5px;
+                            padding: 2px 2mm;
+                            border-bottom: 1px dotted #ccc;
+                            line-height: 1.3;
+                            text-align: center;
+                        }
+                        .invoice-row strong {
+                            display: inline-block;
+                            width: 40%;
+                            font-weight: bold;
+                            text-align: left;
+                            margin-right: 2mm;
+                        }
+                        .invoice-row span {
+                            display: inline-block;
+                            width: 55%;
+                            word-wrap: break-word;
+                            text-align: left;
+                        }
+                        .client-name {
+                            font-size: 20px;
+                            font-weight: bold;
+                        }
+                        @media print {
+                            @page { size: A5; margin: 1mm; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${invoiceHtml}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+            
+            showMessage(`✅ Printing invoice for ${client.firstName} ${client.lastName}!`, 'success');
+        }
+
+        function printVillageInvoices() {
+            const selectedVillage = document.getElementById('villageInvoiceFilter').value;
+            
+            if (!selectedVillage) {
+                showMessage('❌ Please select a village first!', 'error');
+                return;
+            }
+            
+            const villageClients = clients.filter(client => client.village === selectedVillage && !client.paused); // Exclude paused clients
+            
+            if (villageClients.length === 0) {
+                showMessage(`❌ No clients found in village "${selectedVillage}"!`, 'error');
+                return;
+            }
+            
+            const month = parseInt(document.getElementById('invoiceMonth').value);
+            const year = parseInt(document.getElementById('invoiceYear').value);
+            const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            const invoicesHtml = villageClients.map(client => `
+                <div class="invoice-a5">
+                    ${client.invoiceNumber ? `<div class="invoice-number-box">#${client.invoiceNumber}</div>` : ''}
+                    <div class="invoice-header">
+                        <h2>SAMSAT</h2>
+                        <div>📞 Phone: 03/062897</div>
+                    </div>
+                    <div class="invoice-content">
+                        <div class="invoice-row">
+                            <strong>👤 NAME:</strong>
+                            <span class="client-name">${client.firstName} ${client.lastName}</span>
+                        </div>
+                        <div class="invoice-row">
+                            <strong>💰 PRICE:</strong>
+                            <span>$${client.price.toFixed(2)}</span>
+                        </div>
+                        <div class="invoice-row">
+                            <strong>📅 MONTH/YEAR:</strong>
+                            <span>${monthNames[month]} ${year}</span>
+                        </div>
+                        <div class="invoice-row">
+                            <strong>📦 BOX NUMBER:</strong>
+                            <span>${client.boxNumber}</span>
+                        </div>
+                        <div class="invoice-row">
+                            <strong>🏘️ VILLAGE:</strong>
+                            <span>${client.village}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>SAMSAT Invoices - ${selectedVillage}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 0; }
+                        .invoice-a5 {
+                            width: 90mm;
+                            font-size: 11px;
+                            line-height: 1.2;
+                            padding: 3mm 12mm;
+                            margin: 0 auto;
+                            page-break-after: always;
+                            text-align: center;
+                            position: relative;
+                        }
+                        .invoice-number-box {
+                            position: absolute;
+                            top: 4mm;
+                            left: 8mm;
+                            border: 2px solid #333;
+                            padding: 3px 8px;
+                            font-size: 12px;
+                            font-weight: bold;
+                            background: white;
+                            border-radius: 3px;
+                        }
+                        .invoice-header {
+                            text-align: center;
+                            margin-bottom: 8px;
+                            border-bottom: 2px solid #333;
+                            padding-bottom: 4px;
+                        }
+                        .invoice-header h2 {
+                            font-size: 24px;
+                            margin-bottom: 2px;
+                            font-weight: bold;
+                            letter-spacing: 2px;
+                        }
+                        .invoice-content {
+                            margin: 8px 6mm;
+                            text-align: left;
+                        }
+                        .invoice-row {
+                            display: block;
+                            margin-bottom: 5px;
+                            padding: 2px 2mm;
+                            border-bottom: 1px dotted #ccc;
+                            line-height: 1.3;
+                            text-align: center;
+                        }
+                        .invoice-row strong {
+                            display: inline-block;
+                            width: 40%;
+                            font-weight: bold;
+                            text-align: left;
+                            margin-right: 2mm;
+                        }
+                        .invoice-row span {
+                            display: inline-block;
+                            width: 55%;
+                            word-wrap: break-word;
+                            text-align: left;
+                        }
+                        .client-name {
+                            font-size: 20px;
+                            font-weight: bold;
+                        }
+                        @media print {
+                            @page { size: A5; margin: 1mm; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${invoicesHtml}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+            
+            showMessage(`✅ Printing ${villageClients.length} invoices for village "${selectedVillage}"!`, 'success');
+        }
+
+        // Report Generation
+        function generateReport() {
+            const selectedVillage = document.getElementById('reportVillage').value;
+            
+            let reportData;
+            if (selectedVillage) {
+                reportData = { [selectedVillage]: clients.filter(c => c.village === selectedVillage && !c.paused) };
+            } else {
+                reportData = {};
+                villages.forEach(village => {
+                    reportData[village] = clients.filter(c => c.village === village && !c.paused);
+                });
+            }
+            
+            let reportHtml = `
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h2>📈 SAMSAT Village Report</h2>
+                    <p><strong>📅 Generated:</strong> ${new Date().toLocaleDateString()}</p>
+                    <p><strong>🏘️ Village:</strong> ${selectedVillage || 'All Villages'}</p>
+                </div>
+            `;
+            
+            let totalClients = 0;
+            let totalRevenue = 0;
+            
+            Object.keys(reportData).forEach(village => {
+                const villageClients = reportData[village];
+                const villageRevenue = villageClients.reduce((sum, client) => sum + parseFloat(client.price || 0), 0);
+                
+                totalClients += villageClients.length;
+                totalRevenue += villageRevenue;
+                
+                reportHtml += `
+                    <div style="margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                        <h3>🏘️ ${village}</h3>
+                        <p><strong>👥 Total Clients:</strong> ${villageClients.length}</p>
+                        <p><strong>💰 Total Revenue:</strong> $${villageRevenue.toFixed(2)}</p>
+                        <p><strong>📊 Average Price:</strong> $${villageClients.length > 0 ? (villageRevenue / villageClients.length).toFixed(2) : '0.00'}</p>
+                        
+                        <h4>📋 Client List:</h4>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                            <thead>
+                                <tr style="background: #f8f9fa;">
+                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">#</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Name</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Address</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Price</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Box #</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${villageClients.map(client => `
+                                    <tr>
+                                        <td style="border: 1px solid #ddd; padding: 8px;">${client.position}</td>
+                                        <td style="border: 1px solid #ddd; padding: 8px;">${client.firstName} ${client.lastName}</td>
+                                        <td style="border: 1px solid #ddd; padding: 8px;">${client.address}</td>
+                                        <td style="border: 1px solid #ddd; padding: 8px;">$${client.price.toFixed(2)}</td>
+                                        <td style="border: 1px solid #ddd; padding: 8px;">${client.boxNumber}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            });
+            
+            reportHtml += `
+                <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 2px solid #007bff;">
+                    <h3>📊 Summary</h3>
+                    <p><strong>🏘️ Total Villages:</strong> ${Object.keys(reportData).length}</p>
+                    <p><strong>👥 Total Clients:</strong> ${totalClients}</p>
+                    <p><strong>💰 Total Revenue:</strong> $${totalRevenue.toFixed(2)}</p>
+                    <p><strong>📊 Average Revenue per Village:</strong> $${Object.keys(reportData).length > 0 ? (totalRevenue / Object.keys(reportData).length).toFixed(2) : '0.00'}</p>
+                </div>
+            `;
+            
+            document.getElementById('reportDisplay').innerHTML = reportHtml;
+            document.getElementById('reportContent').style.display = 'block';
+            
+            showMessage('✅ Report generated successfully!', 'success');
+        }
+
+        function printReport() {
+            const reportContent = document.getElementById('reportDisplay').innerHTML;
+            
+            if (!reportContent.trim()) {
+                showMessage('❌ Please generate a report first!', 'error');
+                return;
+            }
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>SAMSAT Village Report</title>
+                    <style>
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            margin: 20px;
+                            color: #000 !important;
+                        }
+                        table { 
+                            width: 100%; 
+                            border-collapse: collapse; 
+                            margin: 10px 0;
+                            border: 1px solid #000 !important;
+                        }
+                        th, td { 
+                            border: 1px solid #000 !important; 
+                            padding: 8px; 
+                            text-align: left;
+                            color: #000 !important;
+                        }
+                        th { 
+                            background: #f0f0f0 !important;
+                            font-weight: bold !important;
+                        }
+                        h2, h3, h4 { 
+                            color: #000 !important; 
+                            margin: 10px 0;
+                        }
+                        p, div { 
+                            color: #000 !important; 
+                        }
+                        strong { 
+                            color: #000 !important; 
+                        }
+                        @media print {
+                            * {
+                                -webkit-print-color-adjust: exact !important;
+                                print-color-adjust: exact !important;
+                            }
+                            @page { 
+                                size: A4; 
+                                margin: 12mm 8mm; 
+                            }
+                            body {
+                                font-size: 12px !important;
+                                line-height: 1.4 !important;
+                                margin: 0 !important;
+                                padding: 0 !important;
+                                color: #000 !important;
+                            }
+                            table {
+                                width: 100% !important;
+                                border-collapse: collapse !important;
+                                margin: 15px 0 !important;
+                                page-break-inside: avoid;
+                                border: 1px solid #000 !important;
+                            }
+                            th, td {
+                                border: 1px solid #000 !important;
+                                padding: 6px 4px !important;
+                                text-align: left !important;
+                                font-size: 11px !important;
+                                line-height: 1.2 !important;
+                                vertical-align: top !important;
+                                color: #000 !important;
+                            }
+                            th {
+                                background: #f0f0f0 !important;
+                                font-weight: bold !important;
+                                font-size: 12px !important;
+                                color: #000 !important;
+                            }
+                            h2 {
+                                font-size: 18px !important;
+                                margin: 10px 0 !important;
+                                page-break-after: avoid;
+                                color: #000 !important;
+                            }
+                            h3 {
+                                font-size: 16px !important;
+                                margin: 15px 0 8px 0 !important;
+                                page-break-after: avoid;
+                                color: #000 !important;
+                            }
+                            h4 {
+                                font-size: 14px !important;
+                                margin: 12px 0 6px 0 !important;
+                                page-break-after: avoid;
+                                color: #000 !important;
+                            }
+                            div {
+                                page-break-inside: avoid;
+                                margin-bottom: 8px !important;
+                                color: #000 !important;
+                            }
+                            tr {
+                                page-break-inside: avoid;
+                            }
+                            p, strong {
+                                color: #000 !important;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${reportContent}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // Export/Import Functions
+        function updateDataSummary() {
+            const totalClients = clients.length;
+            const totalVillages = villages.length;
+            const totalRevenue = clients.reduce((sum, client) => sum + parseFloat(client.price || 0), 0);
+            const lastBackup = localStorage.getItem('samsat_last_backup') || 'Never';
+            
+            document.getElementById('dataSummary').innerHTML = `
+                <strong>👥 Total Clients:</strong> ${totalClients}<br>
+                <strong>🏘️ Total Villages:</strong> ${totalVillages}<br>
+                <strong>💰 Total Revenue:</strong> $${totalRevenue.toFixed(2)}<br>
+                <strong>📅 Last Backup:</strong> ${lastBackup}<br>
+                <strong>💾 Storage Used:</strong> ${((JSON.stringify(clients).length + JSON.stringify(villages).length) / 1024).toFixed(2)} KB
+            `;
+        }
+
+        function exportAllData() {
+            const exportData = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                exportType: 'complete',
+                clients: clients,
+                villages: villages,
+                metadata: {
+                    totalClients: clients.length,
+                    totalVillages: villages.length,
+                    totalRevenue: clients.reduce((sum, client) => sum + parseFloat(client.price || 0), 0)
+                }
+            };
+            
+            downloadJSON(exportData, `SAMSAT_Complete_Backup_${getDateString()}.json`);
+            localStorage.setItem('samsat_last_backup', new Date().toLocaleDateString());
+            updateDataSummary();
+            showMessage('✅ Complete backup exported successfully!', 'success');
+        }
+
+        function exportClientsOnly() {
+            const exportData = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                exportType: 'clients_only',
+                clients: clients,
+                metadata: {
+                    totalClients: clients.length,
+                    totalRevenue: clients.reduce((sum, client) => sum + parseFloat(client.price || 0), 0)
+                }
+            };
+            
+            downloadJSON(exportData, `SAMSAT_Clients_Backup_${getDateString()}.json`);
+            showMessage('✅ Clients backup exported successfully!', 'success');
+        }
+
+        function exportVillagesOnly() {
+            const exportData = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                exportType: 'villages_only',
+                villages: villages,
+                metadata: {
+                    totalVillages: villages.length
+                }
+            };
+            
+            downloadJSON(exportData, `SAMSAT_Villages_Backup_${getDateString()}.json`);
+            showMessage('✅ Villages backup exported successfully!', 'success');
+        }
+
+        function importData() {
+            const file = document.getElementById('importFile').files[0];
+            if (!file) return;
+
+            if (!file.name.endsWith('.json')) {
+                showMessage('❌ Please select a valid JSON backup file!', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    if (!data.version || !data.exportDate) {
+                        showMessage('❌ Invalid backup file format!', 'error');
+                        return;
+                    }
+                    
+                    if (clients.length > 0 || villages.length > 0) {
+                        if (!confirm('⚠️ This will replace all existing data. Are you sure you want to continue?')) {
+                            return;
+                        }
+                    }
+                    
+                    let importedClients = 0;
+                    let importedVillages = 0;
+                    
+                    if (data.clients && Array.isArray(data.clients)) {
+                        clients = data.clients;
+                        importedClients = clients.length;
+                    }
+                    
+                    if (data.villages && Array.isArray(data.villages)) {
+                        villages = data.villages;
+                        importedVillages = villages.length;
+                    }
+                    
+                    saveData();
+                    loadData();
+                    updateDashboard();
+                    populateVillageDropdowns();
+                    populateSingleInvoiceClients();
+                    updateDataSummary();
+                    
+                    showMessage(`✅ Data imported successfully!\n👥 Clients: ${importedClients}\n🏘️ Villages: ${importedVillages}`, 'success');
+                    
+                    document.getElementById('importFile').value = '';
+                    
+                } catch (error) {
+                    showMessage('❌ Error reading backup file. Please check the file format.', 'error');
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+
+        function clearAllData() {
+            if (!confirm('⚠️ WARNING: This will delete ALL clients and villages permanently!\n\nAre you absolutely sure? This cannot be undone!')) {
+                return;
+            }
+            
+            if (!confirm('🔴 FINAL WARNING: You are about to delete everything!\n\nClick OK only if you have exported your data first.')) {
+                return;
+            }
+            
+            clients = [];
+            villages = [];
+            
+            localStorage.removeItem('samsat_clients_final');
+            localStorage.removeItem('samsat_villages_final');
+            localStorage.removeItem('samsat_last_backup');
+            
+            loadData();
+            updateDashboard();
+            populateVillageDropdowns();
+            populateSingleInvoiceClients();
+            updateDataSummary();
+            
+            showMessage('🗑️ All data has been cleared!', 'success');
+        }
+
+        function downloadJSON(data, filename) {
+            const jsonString = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function getDateString() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const day = now.getDate().toString().padStart(2, '0');
+            const hour = now.getHours().toString().padStart(2, '0');
+            const minute = now.getMinutes().toString().padStart(2, '0');
+            return `${year}${month}${day}_${hour}${minute}`;
+        }
+
+        // Utility Functions
+        function showMessage(message, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type === 'error' ? 'error-message' : 'success-message';
+            messageDiv.textContent = message;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                document.body.removeChild(messageDiv);
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
