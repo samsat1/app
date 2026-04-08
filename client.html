@@ -1501,6 +1501,80 @@
             width: 80px;
         }
         
+        /* Simple Player Controls - Always Visible in Video Container */
+        .simple-player-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.85));
+            padding: 50px 20px 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        .simple-timeline {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .simple-progress {
+            flex: 1;
+            height: 5px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .simple-progress:hover {
+            height: 8px;
+        }
+        
+        .simple-progress-played {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: #e50914;
+            border-radius: 3px;
+            width: 0%;
+        }
+        
+        .simple-time {
+            color: #fff;
+            font-size: 13px;
+            min-width: 90px;
+            text-align: right;
+        }
+        
+        .simple-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-start;
+        }
+        
+        .simple-btn {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+        
+        .simple-btn:hover,
+        .simple-btn:focus {
+            background: rgba(255,255,255,0.3);
+            outline: 3px solid #ffff00;
+            outline-offset: 2px;
+        }
+        
         /* Fullscreen Controls Overlay - TV Remote Navigation */
         /* Fullscreen Controls Overlay - TV Remote Controls */
         .fullscreen-controls {
@@ -1551,129 +1625,8 @@
             outline-offset: 2px;
         }
         
-        /* Netflix-Style Video Controls */
-        .netflix-controls {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(transparent, rgba(0,0,0,0.9));
-            padding: 60px 30px 20px;
-            opacity: 1;
-            visibility: visible;
-            z-index: 999999;
-            display: block;
-            pointer-events: auto;
-        }
-        
-        .netflix-controls.hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
-        
-        /* Ensure controls appear in fullscreen mode */
-        :fullscreen .netflix-controls,
-        :-webkit-full-screen .netflix-controls {
-            z-index: 2147483647 !important;
-            position: fixed !important;
-            bottom: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            width: 100% !important;
-            height: auto !important;
-            opacity: 1 !important;
-            visibility: visible !important;
-            pointer-events: auto !important;
-        }
-        
-        .netflix-progress-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .netflix-progress-bar {
-            flex: 1;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 2px;
-            cursor: pointer;
-            position: relative;
-            transition: height 0.2s ease;
-        }
-        
-        .netflix-progress-bar:hover {
-            height: 6px;
-        }
-        
-        .netflix-progress-played {
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            background: #e50914;
-            border-radius: 2px;
-            transition: width 0.1s linear;
-        }
-        
-        .netflix-progress-buffered {
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.5);
-            border-radius: 2px;
-        }
-        
-        .netflix-progress-handle {
-            position: absolute;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            width: 14px;
-            height: 14px;
-            background: #e50914;
-            border-radius: 50%;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-        }
-        
-        .netflix-progress-bar:hover .netflix-progress-handle {
-            opacity: 1;
-        }
-        
-        .netflix-time-display {
-            color: #fff;
-            font-size: 14px;
-            min-width: 100px;
-            text-align: right;
-            font-family: sans-serif;
-        }
-        
-        .netflix-buttons {
-            display: flex;
-            gap: 20px;
-        }
-        
-        .netflix-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: #fff;
-            padding: 12px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 24px;
-            transition: all 0.3s ease;
-        }
-        
-        .netflix-btn:hover,
-        .netflix-btn:focus {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.1);
-            outline: 3px solid #ffff00;
-            outline-offset: 2px;
-        }
+        /* Netflix-Style Video Controls - REMOVED - Using simple controls instead */
+        /* All Netflix CSS removed - using simple-player-controls instead */
 
         .volume-display {
             min-width: 35px;
@@ -2552,21 +2505,22 @@
                     <button class="fs-control-btn" onclick="toggleMute()" title="Mute/Unmute">🔊 Mute</button>
                 </div>
                 
-                <!-- Netflix-Style Progress Bar & Controls - Hidden by default, show on interaction -->
-                <div class="netflix-controls hidden" id="netflixControls">
-                    <div class="netflix-progress-container" id="netflixProgressContainer">
-                        <div class="netflix-progress-bar" id="netflixProgressBar" onclick="netflixSeek(event)">
-                            <div class="netflix-progress-played" id="netflixProgressPlayed"></div>
-                            <div class="netflix-progress-buffered" id="netflixProgressBuffered"></div>
-                            <div class="netflix-progress-handle" id="netflixProgressHandle"></div>
+                <!-- Simple Video Player Controls - Always Visible -->
+                <div class="simple-player-controls" id="simplePlayerControls">
+                    <!-- Timeline -->
+                    <div class="simple-timeline" id="simpleTimeline">
+                        <div class="simple-progress" id="simpleProgress" onclick="simpleSeek(event)">
+                            <div class="simple-progress-played" id="simpleProgressPlayed"></div>
                         </div>
-                        <div class="netflix-time-display" id="netflixTimeDisplay">
-                            <span id="netflixCurrentTime">00:00</span> / <span id="netflixDuration">00:00</span>
+                        <div class="simple-time">
+                            <span id="simpleCurrentTime">00:00</span> / <span id="simpleDuration">00:00</span>
                         </div>
                     </div>
-                    <div class="netflix-buttons">
-                        <button class="netflix-btn" onclick="netflixTogglePlay()" title="Play/Pause" id="netflixPlayBtn">▶️</button>
-                        <button class="netflix-btn" onclick="netflixExitFullscreen()" title="Exit Fullscreen">⬅️</button>
+                    <!-- Control Buttons -->
+                    <div class="simple-buttons">
+                        <button class="simple-btn" onclick="simpleTogglePlay()" title="Play/Pause" id="simplePlayBtn">▶️</button>
+                        <button class="simple-btn" onclick="simpleToggleMute()" title="Mute">🔊</button>
+                        <button class="simple-btn" onclick="simpleToggleFullscreen()" title="Fullscreen">⛶</button>
                     </div>
                 </div>
             </div>
@@ -6494,257 +6448,7 @@
             }
         };
 
-        // Fullscreen Controls Management for TV
-        window.showFullscreenControls = function() {
-            const controls = document.getElementById('fullscreenControls');
-            if (controls) {
-                controls.classList.remove('hidden');
-            }
-        };
-
-        window.hideFullscreenControls = function() {
-            const controls = document.getElementById('fullscreenControls');
-            if (controls) {
-                controls.classList.add('hidden');
-            }
-        };
-
-        window.exitFullscreenMode = function() {
-            console.log('📺 Exiting fullscreen via controls');
-            try {
-                const inFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
-                if (inFullscreen) {
-                    if (document.exitFullscreen) {
-                        document.exitFullscreen().catch(e => console.log('Exit fullscreen:', e));
-                    } else if (document.webkitExitFullscreen) {
-                        document.webkitExitFullscreen().catch(e => console.log('Exit fullscreen (webkit):', e));
-                    } else if (player && player.exitFullscreen) {
-                        player.exitFullscreen().catch(e => console.log('Exit fullscreen (player):', e));
-                    }
-                } else {
-                    console.log('📺 Not in fullscreen mode, hiding controls only');
-                }
-            } catch (e) {
-                console.log('📺 Exit fullscreen error (ignored):', e.message);
-            }
-            hideFullscreenControls();
-            hideNetflixControls();
-        };
-
-        // Listen for fullscreen changes to show/hide controls
-        document.addEventListener('fullscreenchange', function() {
-            if (document.fullscreenElement) {
-                console.log('📺 Entered fullscreen - showing controls');
-                showFullscreenControls();
-                showNetflixControls();
-            } else {
-                console.log('📺 Exited fullscreen - hiding controls');
-                hideFullscreenControls();
-                hideNetflixControls();
-            }
-        });
-
-        document.addEventListener('webkitfullscreenchange', function() {
-            if (document.webkitFullscreenElement) {
-                console.log('📺 Entered fullscreen (webkit) - showing controls');
-                showFullscreenControls();
-                showNetflixControls();
-            } else {
-                console.log('📺 Exited fullscreen (webkit) - hiding controls');
-                hideFullscreenControls();
-                hideNetflixControls();
-            }
-        });
-
-        // Unified Click Handler for Video Container - handles single/double click
-        let videoLastClickTime = 0;
-        let videoClickTimer = null;
-        
-        window.handleVideoClick = function(event) {
-            const inFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
-            
-            // Prevent default and stop propagation
-            if (event) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            
-            const now = Date.now();
-            
-            // Detect double click (within 300ms)
-            if (now - videoLastClickTime < 300) {
-                // Double click detected
-                console.log('📺 Double click detected');
-                videoLastClickTime = 0;
-                
-                if (videoClickTimer) {
-                    clearTimeout(videoClickTimer);
-                    videoClickTimer = null;
-                }
-                
-                if (inFullscreen) {
-                    // Double click in fullscreen - exit fullscreen
-                    console.log('📺 Double click - exiting fullscreen');
-                    exitFullscreenMode();
-                } else {
-                    // Double click outside fullscreen - enter fullscreen
-                    console.log('📺 Double click - entering fullscreen');
-                    toggleVideoFullscreen();
-                }
-                return;
-            }
-            
-            // First click - start timer for double click detection
-            videoLastClickTime = now;
-            
-            if (videoClickTimer) {
-                clearTimeout(videoClickTimer);
-            }
-            
-            videoClickTimer = setTimeout(function() {
-                // Single click action (after confirming not a double click)
-                console.log('📺 Single click action');
-                
-                if (inFullscreen) {
-                    // In fullscreen - toggle controls visibility
-                    const controls = document.getElementById('netflixControls');
-                    if (controls && controls.classList.contains('hidden')) {
-                        showNetflixControls();
-                    } else {
-                        hideNetflixControls();
-                    }
-                } else {
-                    // Not in fullscreen - enter fullscreen
-                    console.log('📺 Single click - entering fullscreen');
-                    toggleVideoFullscreen();
-                }
-                
-                videoLastClickTime = 0;
-            }, 300);
-        };
-        
-        // Attach click handler to video container and video element
-        document.addEventListener('DOMContentLoaded', function() {
-            const container = document.getElementById('videoContainer');
-            const video = document.getElementById('videoPlayer');
-            const netflixPlayBtn = document.getElementById('netflixPlayBtn');
-            const netflixExitBtn = document.querySelector('.netflix-btn[onclick="netflixExitFullscreen()"]');
-            const netflixProgressBar = document.getElementById('netflixProgressBar');
-            const fsPlayPauseBtn = document.getElementById('fsPlayPauseBtn');
-            const fsMuteBtn = document.querySelector('.fs-control-btn[onclick="toggleMute()"]');
-            const fsBackBtn = document.querySelector('.fs-control-btn[onclick="exitFullscreenMode()"]');
-            
-            if (container) {
-                container.addEventListener('click', handleVideoClick);
-                // Show Netflix controls on mouse move (like Netflix)
-                container.addEventListener('mousemove', function() {
-                    const inFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
-                    if (inFullscreen) {
-                        showNetflixControls();
-                    }
-                });
-                console.log('📺 Click handler attached to videoContainer');
-            }
-            if (video) {
-                video.addEventListener('click', handleVideoClick);
-                // Show Netflix controls on mouse move (like Netflix)
-                video.addEventListener('mousemove', function() {
-                    const inFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
-                    if (inFullscreen) {
-                        showNetflixControls();
-                    }
-                });
-                console.log('📺 Click handler attached to videoPlayer');
-            }
-            
-            // Netflix controls button event listeners
-            if (netflixPlayBtn) {
-                netflixPlayBtn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    netflixTogglePlay();
-                });
-                console.log('📺 Event listener attached to netflixPlayBtn');
-            }
-            
-            // Find and attach to Netflix exit button
-            const netflixButtons = document.querySelectorAll('.netflix-btn');
-            netflixButtons.forEach(function(btn) {
-                if (btn.getAttribute('onclick') === 'netflixExitFullscreen()') {
-                    btn.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        netflixExitFullscreen();
-                    });
-                    console.log('📺 Event listener attached to Netflix exit button');
-                }
-            });
-            
-            // Fullscreen controls button event listeners
-            const fsButtons = document.querySelectorAll('.fs-control-btn');
-            fsButtons.forEach(function(btn) {
-                const onclick = btn.getAttribute('onclick');
-                if (onclick === 'exitFullscreenMode()') {
-                    btn.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        exitFullscreenMode();
-                    });
-                } else if (onclick === 'togglePlay()') {
-                    btn.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        togglePlay();
-                    });
-                } else if (onclick === 'toggleMute()') {
-                    btn.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        toggleMute();
-                    });
-                }
-            });
-            console.log('📺 Event listeners attached to fullscreen control buttons');
-            
-            // Progress bar click for seeking
-            if (netflixProgressBar) {
-                netflixProgressBar.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    netflixSeek(e);
-                });
-                console.log('📺 Event listener attached to netflixProgressBar');
-            }
-        });
-
-        // Toggle Play/Pause for TV remote
-        window.togglePlay = function() {
-            // Get the actual video element (Video.js wraps it)
-            const video = getVideoElement();
-            const playPauseBtn = document.getElementById('fsPlayPauseBtn');
-            
-            if (!video) {
-                console.log('❌ Video element not found');
-                return;
-            }
-            
-            if (video.paused) {
-                video.play().then(() => {
-                    if (playPauseBtn) playPauseBtn.textContent = '⏸️ Pause';
-                }).catch(e => console.log('⚠️ Play failed:', e));
-            } else {
-                video.pause();
-                if (playPauseBtn) playPauseBtn.textContent = '▶️ Play';
-            }
-        };
-
-        // Toggle Mute for TV remote
-        window.toggleMute = function() {
-            const video = getVideoElement();
-            if (!video) return;
-            
-            video.muted = !video.muted;
-            console.log('📺 Mute toggled:', video.muted);
-        };
-
-        // Netflix-Style Controls
-        let netflixHideTimeout = null;
-        const NETFLIX_HIDE_DELAY = 4000; // Auto-hide after 4 seconds
-
+        // SIMPLE PLAYER CONTROLS - Always Visible
         // Helper function to get actual video element (works with Video.js)
         function getVideoElement() {
             let video = null;
@@ -6757,152 +6461,49 @@
             return video;
         }
 
-        window.showNetflixControls = function() {
-            const controls = document.getElementById('netflixControls');
+        // Simple Controls - Always Visible
+        window.simpleTogglePlay = function() {
             const video = getVideoElement();
-            const playBtn = document.getElementById('netflixPlayBtn');
-            const inFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
-            
-            if (controls) {
-                controls.classList.remove('hidden');
-                controls.style.opacity = '1';
-                controls.style.visibility = 'visible';
-                
-                // Update play button state
-                if (video && playBtn) {
-                    playBtn.textContent = video.paused ? '▶️' : '⏸️';
-                }
-                
-                // Start progress updates
-                startNetflixProgressUpdates();
-                
-                // Only auto-hide when in fullscreen mode
-                if (inFullscreen) {
-                    resetNetflixHideTimer();
-                }
-            }
-        };
-
-        window.hideNetflixControls = function() {
-            const controls = document.getElementById('netflixControls');
-            if (controls) {
-                controls.classList.add('hidden');
-                controls.style.opacity = '0';
-                controls.style.visibility = 'hidden';
-            }
-            if (netflixHideTimeout) {
-                clearTimeout(netflixHideTimeout);
-                netflixHideTimeout = null;
-            }
-            // Stop progress updates when hidden
-            stopNetflixProgressUpdates();
-        };
-
-        window.resetNetflixHideTimer = function() {
-            if (netflixHideTimeout) {
-                clearTimeout(netflixHideTimeout);
-            }
-            netflixHideTimeout = setTimeout(() => {
-                const inFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
-                if (inFullscreen) {
-                    hideNetflixControls();
-                }
-            }, NETFLIX_HIDE_DELAY);
-        };
-
-        window.netflixTogglePlay = function() {
-            // Get the actual video element (Video.js wraps it)
-            let video = null;
-            if (player && player.el) {
-                video = player.el().querySelector('video');
-            }
-            if (!video) {
-                video = document.getElementById('videoPlayer');
-            }
-            
-            const playBtn = document.getElementById('netflixPlayBtn');
-            
-            if (!video) {
-                console.log('❌ Video element not found');
-                alert('Video player not available');
-                return;
-            }
-            
-            console.log('📺 Toggle play, video element:', video.tagName, 'paused:', video.paused);
+            const playBtn = document.getElementById('simplePlayBtn');
+            if (!video) return;
             
             if (video.paused) {
                 video.play().then(() => {
-                    console.log('✅ Video started playing');
                     if (playBtn) playBtn.textContent = '⏸️';
-                }).catch(e => {
-                    console.log('⚠️ Play failed:', e);
-                });
+                }).catch(e => console.log('Play failed:', e));
             } else {
                 video.pause();
-                console.log('⏸️ Video paused');
                 if (playBtn) playBtn.textContent = '▶️';
             }
-            resetNetflixHideTimer();
         };
 
-        window.netflixSeek = function(event) {
-            // Get the actual video element (Video.js wraps it)
-            let video = null;
-            if (player && player.el) {
-                video = player.el().querySelector('video');
-            }
-            if (!video) {
-                video = document.getElementById('videoPlayer');
-            }
+        window.simpleToggleMute = function() {
+            const video = getVideoElement();
+            if (!video) return;
+            video.muted = !video.muted;
+        };
+
+        window.simpleToggleFullscreen = function() {
+            const video = getVideoElement();
+            if (!video) return;
             
-            const progressBar = document.getElementById('netflixProgressBar');
-            
-            if (!video || !progressBar) {
-                console.log('❌ Video or progress bar not found');
-                return;
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                if (document.exitFullscreen) document.exitFullscreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            } else {
+                if (video.requestFullscreen) video.requestFullscreen();
+                else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen();
             }
+        };
+
+        window.simpleSeek = function(event) {
+            const video = getVideoElement();
+            const progress = document.getElementById('simpleProgress');
+            if (!video || !progress) return;
             
-            const rect = progressBar.getBoundingClientRect();
+            const rect = progress.getBoundingClientRect();
             const percent = (event.clientX - rect.left) / rect.width;
-            const seekTime = percent * video.duration;
-            
-            console.log('📺 Seeking to:', seekTime, 'seconds');
-            video.currentTime = seekTime;
-            resetNetflixHideTimer();
-        };
-
-        window.netflixExitFullscreen = function() {
-            console.log('📺 Exiting fullscreen via Netflix controls');
-            exitFullscreenMode();
-        };
-
-        window.updateNetflixProgress = function() {
-            // Get the actual video element (Video.js wraps it)
-            let video = null;
-            if (player && player.el) {
-                video = player.el().querySelector('video');
-            }
-            if (!video) {
-                video = document.getElementById('videoPlayer');
-            }
-            if (!video || !video.tagName) return;
-            
-            const current = document.getElementById('netflixCurrentTime');
-            const duration = document.getElementById('netflixDuration');
-            const played = document.getElementById('netflixProgressPlayed');
-            const playBtn = document.getElementById('netflixPlayBtn');
-            
-            if (current) current.textContent = formatTime(video.currentTime);
-            if (duration) duration.textContent = formatTime(video.duration || 0);
-            if (played) {
-                const percent = video.duration ? (video.currentTime / video.duration) * 100 : 0;
-                played.style.width = percent + '%';
-            }
-            
-            // Update play button state
-            if (playBtn) {
-                playBtn.textContent = video.paused ? '▶️' : '⏸️';
-            }
+            video.currentTime = percent * video.duration;
         };
 
         function formatTime(seconds) {
@@ -6916,53 +6517,130 @@
             return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
 
-        // Update Netflix progress every second when video is playing
-        let netflixProgressInterval = null;
-        function startNetflixProgressUpdates() {
-            if (netflixProgressInterval) clearInterval(netflixProgressInterval);
-            netflixProgressInterval = setInterval(updateNetflixProgress, 1000);
+        window.updateSimpleProgress = function() {
+            const video = getVideoElement();
+            if (!video || !video.tagName) return;
+            
+            const current = document.getElementById('simpleCurrentTime');
+            const duration = document.getElementById('simpleDuration');
+            const played = document.getElementById('simpleProgressPlayed');
+            const playBtn = document.getElementById('simplePlayBtn');
+            
+            if (current) current.textContent = formatTime(video.currentTime);
+            if (duration) duration.textContent = formatTime(video.duration || 0);
+            if (played) {
+                const percent = video.duration ? (video.currentTime / video.duration) * 100 : 0;
+                played.style.width = percent + '%';
+            }
+            if (playBtn) {
+                playBtn.textContent = video.paused ? '▶️' : '⏸️';
+            }
+        };
+
+        // Update progress every second
+        let simpleProgressInterval = null;
+        function startSimpleProgressUpdates() {
+            if (simpleProgressInterval) clearInterval(simpleProgressInterval);
+            simpleProgressInterval = setInterval(updateSimpleProgress, 1000);
+            updateSimpleProgress();
         }
-        function stopNetflixProgressUpdates() {
-            if (netflixProgressInterval) {
-                clearInterval(netflixProgressInterval);
-                netflixProgressInterval = null;
+        function stopSimpleProgressUpdates() {
+            if (simpleProgressInterval) {
+                clearInterval(simpleProgressInterval);
+                simpleProgressInterval = null;
             }
         }
 
-        // Listen for video play/pause events to update controls
-        // Use getVideoElement() to get the actual video element (not Video.js wrapper)
-        function setupVideoEventListeners() {
+        // Setup video event listeners for simple controls
+        function setupSimpleVideoListeners() {
             const video = getVideoElement();
             if (video) {
                 video.addEventListener('play', function() {
-                    const playBtn = document.getElementById('netflixPlayBtn');
+                    startSimpleProgressUpdates();
+                    const playBtn = document.getElementById('simplePlayBtn');
                     if (playBtn) playBtn.textContent = '⏸️';
-                    // Show controls briefly when play starts
-                    showNetflixControls();
                 });
-
                 video.addEventListener('pause', function() {
-                    const playBtn = document.getElementById('netflixPlayBtn');
+                    const playBtn = document.getElementById('simplePlayBtn');
                     if (playBtn) playBtn.textContent = '▶️';
-                    // Show controls when paused
-                    showNetflixControls();
                 });
-                
                 video.addEventListener('ended', function() {
-                    console.log('📺 Video ended');
-                    showNetflixControls();
-                });
-                
-                video.addEventListener('timeupdate', function() {
-                    // Progress updates are handled by setInterval
+                    stopSimpleProgressUpdates();
                 });
             }
         }
-        
-        // Setup event listeners when player is ready
-        setupVideoEventListeners();
+        setupSimpleVideoListeners();
 
-        // Note: Keydown and click handling are done via the global keydown listener (below) and onclick attribute on the video element
+        // Exit fullscreen function
+        window.exitFullscreenMode = function() {
+            console.log('📺 Exiting fullscreen via controls');
+            try {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen().catch(e => console.log('Exit fullscreen:', e));
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen().catch(e => console.log('Exit fullscreen (webkit):', e));
+                } else if (player && player.exitFullscreen) {
+                    player.exitFullscreen().catch(e => console.log('Exit fullscreen (player):', e));
+                }
+            } catch (e) {
+                console.log('📺 Exit fullscreen error (ignored):', e.message);
+            }
+        };
+
+        // Fullscreen Controls Management for TV
+        window.showFullscreenControls = function() {
+            const controls = document.getElementById('fullscreenControls');
+            if (controls) controls.classList.remove('hidden');
+        };
+
+        window.hideFullscreenControls = function() {
+            const controls = document.getElementById('fullscreenControls');
+            if (controls) controls.classList.add('hidden');
+        };
+
+        // Listen for fullscreen changes
+        document.addEventListener('fullscreenchange', function() {
+            if (document.fullscreenElement) {
+                console.log('📺 Entered fullscreen');
+                showFullscreenControls();
+            } else {
+                console.log('📺 Exited fullscreen');
+                hideFullscreenControls();
+            }
+        });
+
+        document.addEventListener('webkitfullscreenchange', function() {
+            if (document.webkitFullscreenElement) {
+                console.log('📺 Entered fullscreen (webkit)');
+                showFullscreenControls();
+            } else {
+                console.log('📺 Exited fullscreen (webkit)');
+                hideFullscreenControls();
+            }
+        });
+
+        // Toggle Play/Pause for TV remote
+        window.togglePlay = function() {
+            const video = getVideoElement();
+            const playPauseBtn = document.getElementById('fsPlayPauseBtn');
+            if (!video) return;
+            
+            if (video.paused) {
+                video.play().then(() => {
+                    if (playPauseBtn) playPauseBtn.textContent = '⏸️ Pause';
+                }).catch(e => console.log('Play failed:', e));
+            } else {
+                video.pause();
+                if (playPauseBtn) playPauseBtn.textContent = '▶️ Play';
+            }
+        };
+
+        // Toggle Mute for TV remote
+        window.toggleMute = function() {
+            const video = getVideoElement();
+            if (!video) return;
+            video.muted = !video.muted;
+        };
 
         // Fullscreen channel switching
         window.fullscreenChannelUp = function() {
@@ -6971,9 +6649,7 @@
             const currentIndex = content.findIndex(c => c.id === currentContent?.id);
             const prevIndex = currentIndex > 0 ? currentIndex - 1 : content.length - 1;
             const prevContent = content[prevIndex];
-            if (prevContent) {
-                playFullscreen(prevContent.id);
-            }
+            if (prevContent) playFullscreen(prevContent.id);
         };
         
         window.fullscreenChannelDown = function() {
@@ -6982,40 +6658,9 @@
             const currentIndex = content.findIndex(c => c.id === currentContent?.id);
             const nextIndex = currentIndex < content.length - 1 ? currentIndex + 1 : 0;
             const nextContent = content[nextIndex];
-            if (nextContent) {
-                playFullscreen(nextContent.id);
-            }
+            if (nextContent) playFullscreen(nextContent.id);
         };
         
-        // Global keydown for fullscreen controls and channel switching
-        document.addEventListener('keydown', function(e) {
-            // Only handle when in fullscreen
-            if (!document.fullscreenElement && !document.webkitFullscreenElement) return;
-            
-            const keyCode = e.keyCode || e.which;
-            
-            // Show controls on any key press in fullscreen
-            showNetflixControls();
-            
-            if (e.key === 'ArrowUp' || keyCode === 19) {
-                e.preventDefault();
-                fullscreenChannelUp();
-            } else if (e.key === 'ArrowDown' || keyCode === 20) {
-                e.preventDefault();
-                fullscreenChannelDown();
-            } else if (e.key === 'Escape' || e.key === 'Backspace' || keyCode === 4) {
-                e.preventDefault();
-                exitFullscreenMode();
-            } else if (e.key === 'Enter' || e.key === 'OK') {
-                e.preventDefault();
-                netflixTogglePlay();
-            } else if (e.key === ' ') {
-                // Spacebar - toggle play
-                e.preventDefault();
-                netflixTogglePlay();
-            }
-        });
-
         // Global function for starting playback - defined early for onclick access
         window.startPlaying = function() {
             if (!isLoggedIn) {
