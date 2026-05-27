@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-03-29T22:37:29.944Z",
+  "exportDate": "2026-05-27T16:07:49.054Z",
   "customers": [
     {
       "id": "CUST_1774567584618",
@@ -282,7 +282,7 @@
       "status": "active",
       "commissionRate": 20,
       "updatedAt": "2026-03-26T00:53:37.455Z",
-      "walletBalance": 42
+      "walletBalance": 0
     },
     "reseller002": {
       "name": "Reseller 002",
@@ -386,9 +386,9 @@
   },
   "creditTransfers": [],
   "resellerTransactions": [],
-  "plexServerUrl": "http://192.168.1.100:32400",
-  "plexLocalUrl": "http://192.168.1.100:32400",
-  "plexToken": "KjLPcx7wboj6LSebiEs8",
+  "plexServerUrl": "http://192.168.2.100:32400",
+  "plexLocalUrl": "http://192.168.2.100:32400",
+  "plexToken": "hD-VHctZGGSGv5uSKVTw",
   "plexMoviesSection": "5",
   "plexAdultSection": "4",
   "plexArabicSection": "7",
