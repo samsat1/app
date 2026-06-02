@@ -646,6 +646,12 @@
     </div>
 
     <script>
+        (function clearAdminCacheOnLoad() {
+    // Clear customers cache on every admin load
+    localStorage.removeItem('adminCustomers');
+    localStorage.removeItem('RESELLER_ACCOUNTS');
+    localStorage.removeItem('resellerCredentials');
+})();
         // Global Reseller Accounts Data
         // Load RESELLER_ACCOUNTS from localStorage or use defaults
         let RESELLER_ACCOUNTS = {};
