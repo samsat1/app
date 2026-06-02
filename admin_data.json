@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-02T04:22:06.464Z",
+  "exportDate": "2026-06-02T04:36:08.594Z",
   "customers": [
     {
       "id": "CUST_1780364014622",
@@ -19,26 +19,6 @@
       "duration": "9 Months",
       "durationMonths": 9,
       "createdAt": "2026-06-02T01:33:34.622Z"
-    },
-    {
-      "id": "CUST_1780373714645",
-      "username": "Kevin",
-      "name": "Kevin",
-      "phone": "777777",
-      "plan": "Basic TV Package, 2nd TV, 3rd TV",
-      "addons": "Sports Package, Sports Plus Package, Movies Package, Arabic Package, Adult Content Package",
-      "monthlyPrice": 61.7,
-      "totalPrice": 61.7,
-      "expiryDate": "2026-07-02",
-      "password": "123456",
-      "macAddress": "",
-      "adultPassword": "1818",
-      "status": "active",
-      "duration": "1 Month",
-      "durationMonths": 1,
-      "createdAt": "2026-06-02T04:15:14.645Z",
-      "resetDeviceLock": 1780373954060,
-      "updatedAt": "2026-06-02T04:19:14.060Z"
     }
   ],
   "packages": [
