@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-02T04:37:27.883Z",
+  "exportDate": "2026-06-02T04:40:13.807Z",
   "customers": [
     {
       "id": "CUST_1780364014622",
@@ -254,8 +254,8 @@
   },
   "creditTransfers": [],
   "resellerTransactions": [],
-  "plexServerUrl": "http://192.168.2.100:32400",
-  "plexLocalUrl": "http://192.168.2.100:32400",
+  "plexServerUrl": "http://192.168.1.100:32400",
+  "plexLocalUrl": "http://192.168.1.100:32400",
   "plexToken": "hD-VHctZGGSGv5uSKVTw",
   "plexMoviesSection": "5",
   "plexAdultSection": "4",
