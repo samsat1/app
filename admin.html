@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 8.5 - FIXED: Cache Clearing on Login 2026-06-02 -->
-<!-- FIXES: 1. Auto cache clear on login 2. Fresh data fetch on each login -->
+<!-- VERSION 8.4 - Enhanced Reseller Management with Credit History 2026-03-19 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -62,6 +61,7 @@
             overflow-x: hidden;
         }
 
+        /* Performance optimizations */
         .admin-container {
             min-height: 100vh;
         }
@@ -76,7 +76,6 @@
             overflow-y: auto;
             z-index: 1000;
             transition: transform 0.3s ease;
-            width: 280px;
         }
 
         .admin-header {
@@ -157,10 +156,12 @@
         .admin-main {
             padding: 40px;
             overflow-y: auto;
-            margin-left: 280px;
+            margin-left: 300px;
             min-height: 100vh;
             position: relative;
             z-index: 1;
+            width: calc(100% - 300px);
+            box-sizing: border-box;
         }
 
         .dashboard-header {
@@ -270,6 +271,121 @@
             font-size: 1.8rem;
         }
 
+        /* Mobile Responsive Design */
+        @media (max-width: 768px) {
+            .admin-container {
+            }
+
+            .admin-sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 280px;
+                height: 100vh;
+                transform: translateX(-100%);
+                z-index: 1001;
+            }
+
+            .admin-sidebar.show {
+                transform: translateX(0);
+            }
+
+            .admin-main {
+                margin-left: 0;
+                padding: 20px;
+                width: 100%;
+            }
+
+            .dashboard-title {
+                font-size: 2rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+
+            .stat-card {
+                padding: 20px;
+            }
+
+            .stat-value {
+                font-size: 1.8rem;
+            }
+
+            .section-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-card {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .admin-main {
+                padding: 15px;
+            }
+
+            .dashboard-title {
+                font-size: 1.8rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .section-card {
+                padding: 15px;
+            }
+        }
+
+        /* Mobile menu toggle */
+        .mobile-menu-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1002;
+            background: var(--admin-color);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: block;
+            }
+        }
+
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--admin-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         /* Button styles */
         .btn {
             padding: 8px 15px;
@@ -310,6 +426,18 @@
             font-size: 11px;
             font-weight: 600;
             display: inline-block;
+            text-align: center;
+        }
+        
+        .expiry-yellow {
+            background: linear-gradient(135deg, #ffc107, #ffca28);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+            text-align: center;
         }
         
         .expiry-red {
@@ -320,78 +448,18 @@
             font-size: 11px;
             font-weight: 600;
             display: inline-block;
+            text-align: center;
         }
-
-        /* Mobile Responsive Design */
-        @media (max-width: 768px) {
-            .admin-sidebar {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 280px;
-                height: 100vh;
-                transform: translateX(-100%);
-                z-index: 1001;
-            }
-
-            .admin-sidebar.show {
-                transform: translateX(0);
-            }
-
-            .admin-main {
-                margin-left: 0;
-                padding: 20px;
-            }
-
-            .dashboard-title {
-                font-size: 2rem;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 15px;
-            }
-
-            .section-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Mobile menu toggle */
-        .mobile-menu-toggle {
-            display: none;
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1002;
-            background: var(--admin-color);
+        
+        .expiry-white {
+            background: linear-gradient(135deg, #9e9e9e, #bdbdbd);
             color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        @media (max-width: 768px) {
-            .mobile-menu-toggle {
-                display: block;
-            }
-        }
-
-        /* Loading animation */
-        .loading {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
             display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid var(--admin-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            text-align: center;
         }
     </style>
 </head>
@@ -434,6 +502,12 @@
                     </button>
                 </div>
                 <div class="nav-item">
+                    <button class="nav-btn" onclick="showSection('package-auth', event)">
+                        <span class="nav-icon">🔐</span>
+                        Package Authentication
+                    </button>
+                </div>
+                <div class="nav-item">
                     <button class="nav-btn" onclick="showSection('devices', event)">
                         <span class="nav-icon">📱</span>
                         Device Management
@@ -446,9 +520,51 @@
                     </button>
                 </div>
                 <div class="nav-item">
+                    <button class="nav-btn" onclick="showSection('credit', event)">
+                        <span class="nav-icon">💰</span>
+                        Credit Manager
+                    </button>
+                </div>
+                <div class="nav-item">
+                    <button class="nav-btn" onclick="showSection('satellite', event)">
+                        <span class="nav-icon">🛰️</span>
+                        Satellite Config
+                    </button>
+                </div>
+                <div class="nav-item">
+                    <button class="nav-btn" onclick="showSection('content-folders', event)">
+                        <span class="nav-icon">📁</span>
+                        Content Folders
+                    </button>
+                </div>
+                <div class="nav-item">
+                    <button class="nav-btn" onclick="showSection('plex', event)">
+                        <span class="nav-icon">📺</span>
+                        Plex Management
+                    </button>
+                </div>
+                <div class="nav-item">
+                    <button class="nav-btn" onclick="showSection('qam', event)">
+                        <span class="nav-icon">📡</span>
+                        QAM Configuration
+                    </button>
+                </div>
+                <div class="nav-item">
+                    <button class="nav-btn" onclick="showSection('analytics', event)">
+                        <span class="nav-icon">📈</span>
+                        Analytics
+                    </button>
+                </div>
+                <div class="nav-item">
                     <button class="nav-btn" onclick="showSection('settings', event)">
                         <span class="nav-icon">⚙️</span>
                         Settings
+                    </button>
+                </div>
+                <div class="nav-item">
+                    <button class="nav-btn" onclick="showSection('logs', event)">
+                        <span class="nav-icon">📋</span>
+                        System Logs
                     </button>
                 </div>
             </nav>
@@ -464,12 +580,12 @@
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon users">👥</div>
-                    <div class="stat-value" id="totalUsers">0</div>
+                    <div class="stat-value">0</div>
                     <div class="stat-label">Total Users</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon content">📦</div>
-                    <div class="stat-value" id="totalPackages">0</div>
+                    <div class="stat-value">0</div>
                     <div class="stat-label">Packages</div>
                 </div>
                 <div class="stat-card">
@@ -496,6 +612,7 @@
                         <button onclick="showSection('users')" class="btn btn-primary">View Users</button>
                         <button onclick="showSection('packages')" class="btn btn-warning">Manage Packages</button>
                         <button onclick="showSection('resellers')" class="btn btn-info">Manage Resellers</button>
+                        <button onclick="showSection('satellite')" class="btn btn-success">🛰️ Satellite Config</button>
                     </div>
                 </div>
                 
@@ -507,8 +624,8 @@
                             <span style="color: #4caf50;">✅ Online</span>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
-                            <span>Cache System:</span>
-                            <span style="color: #4caf50;">✅ Fresh Data</span>
+                            <span>Credit System:</span>
+                            <span style="color: #4caf50;">✅ Active</span>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span>Reseller Panels:</span>
@@ -518,6 +635,10 @@
                             <span>Package System:</span>
                             <span style="color: #4caf50;">✅ Ready</span>
                         </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Satellite System:</span>
+                            <span style="color: #4caf50;">✅ 400 HD Ready</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -525,114 +646,696 @@
     </div>
 
     <script>
-        // Global Variables
-        let isLoggedIn = false;
-        let currentUser = null;
+        // Global Reseller Accounts Data
+        // Load RESELLER_ACCOUNTS from localStorage or use defaults
+        let RESELLER_ACCOUNTS = {};
         
-        // FIXED: Cache clearing function - clears old data on login for fresh data
-        function clearAdminCache() {
-            console.log('🧹 Clearing admin cache for fresh data...');
-            
-            // Clear all cached data to ensure fresh fetch on login
-            localStorage.removeItem('adminCustomers');
-            localStorage.removeItem('adminPackages');
-            localStorage.removeItem('packages');
-            localStorage.removeItem('customers');
-            localStorage.removeItem('RESELLER_ACCOUNTS');
-            localStorage.removeItem('resellerCredentials');
-            localStorage.removeItem('contentData');
-            localStorage.removeItem('lastSyncTime');
-            localStorage.removeItem('packageContentMappings');
-            localStorage.removeItem('packageAuthBroadcast');
-            
-            console.log('✅ Admin cache cleared successfully');
+        // Load from localStorage first
+        const savedAccounts = localStorage.getItem('RESELLER_ACCOUNTS');
+        if (savedAccounts) {
+            try {
+                RESELLER_ACCOUNTS = JSON.parse(savedAccounts);
+                console.log('📊 Loaded RESELLER_ACCOUNTS from localStorage');
+                
+                // If no resellers in localStorage, load defaults
+                if (Object.keys(RESELLER_ACCOUNTS).length === 0) {
+                    console.log('📊 No resellers found, loading defaults');
+                    initializeDefaultAccounts();
+                }
+            } catch (e) {
+                console.error('❌ Failed to parse RESELLER_ACCOUNTS from localStorage:', e);
+                initializeDefaultAccounts();
+            }
+        } else {
+            console.log('📊 No saved RESELLER_ACCOUNTS found, initializing defaults');
+            initializeDefaultAccounts();
         }
         
-        // FIXED: Fresh data load function - loads from sync source
-        async function loadFreshData() {
-            console.log('📡 Loading fresh data from sync source...');
-            
+        function initializeDefaultAccounts() {
+            RESELLER_ACCOUNTS = {
+                'reseller001': { name: 'Reseller 001', id: 'reseller001', username: 'reseller001', password: 'res001_pass', status: 'active', commissionRate: 20 },
+                'reseller002': { name: 'Reseller 002', id: 'reseller002', username: 'reseller002', password: 'res002_pass', status: 'active', commissionRate: 20 },
+                'reseller003': { name: 'Reseller 003', id: 'reseller003', username: 'reseller003', password: 'res003_pass', status: 'active', commissionRate: 20 },
+                'reseller004': { name: 'Reseller 004', id: 'reseller004', username: 'reseller004', password: 'res004_pass', status: 'active', commissionRate: 20 },
+                'reseller005': { name: 'Reseller 005', id: 'reseller005', username: 'reseller005', password: 'res005_pass', status: 'active', commissionRate: 20 },
+                'reseller006': { name: 'Reseller 006', id: 'reseller006', username: 'reseller006', password: 'res006_pass', status: 'active', commissionRate: 20 },
+                'reseller007': { name: 'Reseller 007', id: 'reseller007', username: 'reseller007', password: 'res007_pass', status: 'active', commissionRate: 20 },
+                'reseller008': { name: 'Reseller 008', id: 'reseller008', username: 'reseller008', password: 'res008_pass', status: 'active', commissionRate: 20 },
+                'reseller009': { name: 'Reseller 009', id: 'reseller009', username: 'reseller009', password: 'res009_pass', status: 'active', commissionRate: 20 },
+                'reseller010': { name: 'Reseller 010', id: 'reseller010', username: 'reseller010', password: 'res010_pass', status: 'active', commissionRate: 20 },
+                'reseller011': { name: 'Reseller 011', id: 'reseller011', username: 'reseller011', password: 'res011_pass', status: 'active', commissionRate: 20 },
+                'reseller012': { name: 'Reseller 012', id: 'reseller012', username: 'reseller012', password: 'res012_pass', status: 'active', commissionRate: 20 }
+            };
+            saveResellerAccounts();
+        }
+        
+        function saveResellerAccounts() {
             try {
-                // Get sync URL from localStorage
-                const syncUrl = localStorage.getItem('adminPanelUrl') || localStorage.getItem('githubSyncUrl');
+                localStorage.setItem('RESELLER_ACCOUNTS', JSON.stringify(RESELLER_ACCOUNTS));
+                console.log('💾 Saved RESELLER_ACCOUNTS to localStorage');
                 
-                if (syncUrl) {
-                    // Fetch fresh customers data
-                    const customersResponse = await fetch(syncUrl + '/customers.json');
-                    if (customersResponse.ok) {
-                        const customersData = await customersResponse.json();
-                        localStorage.setItem('adminCustomers', JSON.stringify(customersData));
-                        console.log('✅ Loaded ' + customersData.length + ' customers from sync');
-                    }
-                    
-                    // Fetch fresh packages data
-                    const packagesResponse = await fetch(syncUrl + '/packages.json');
-                    if (packagesResponse.ok) {
-                        const packagesData = await packagesResponse.json();
-                        localStorage.setItem('adminPackages', JSON.stringify(packagesData));
-                        console.log('✅ Loaded ' + packagesData.length + ' packages from sync');
+                // Trigger storage event for real-time sync across tabs
+                localStorage.setItem('RESELLER_ACCOUNTS_sync', Date.now());
+                localStorage.removeItem('RESELLER_ACCOUNTS_sync');
+            } catch (e) {
+                console.error('❌ Failed to save RESELLER_ACCOUNTS to localStorage:', e);
+            }
+        }
+
+        // Enhanced Password Management System
+        const passwordManager = {
+            passwords: {
+                'adminLogin': 'admin123',
+                'masterPassword': 'master2025'
+            },
+            resellerCredentials: {},
+            currentSession: null,
+            
+            initialize: function() {
+                console.log('🔧 PasswordManager initializing...');
+                this.initializeCredentials();
+                console.log('✅ PasswordManager initialized');
+            },
+            
+            initializeCredentials: function() {
+                const savedCredentials = localStorage.getItem('resellerCredentials');
+                if (savedCredentials) {
+                    try {
+                        this.resellerCredentials = JSON.parse(savedCredentials);
+                    } catch (e) {
+                        console.error('Error loading reseller credentials:', e);
+                        this.resellerCredentials = {};
                     }
                 } else {
-                    console.log('⚠️ No sync URL configured, using default data');
+                    this.resellerCredentials['reseller'] = {
+                        username: 'reseller',
+                        password: 'reseller123',
+                        createdAt: new Date().toISOString()
+                    };
+                    this.saveCredentials();
                 }
-            } catch (error) {
-                console.log('⚠️ Could not load from sync, using local data');
-            }
+            },
             
-            // Update localStorage sync timestamp
-            localStorage.setItem('lastSyncTime', Date.now().toString());
-        }
-        
-        // Initialize customers from localStorage or load fresh
-        let customers = [];
-        let packages = [];
-        
-        // Load data on initialization
-        async function initializeData() {
-            console.log('🚀 Initializing admin panel data...');
-            
-            // Clear cache first
-            clearAdminCache();
-            
-            // Load fresh data
-            await loadFreshData();
-            
-            // Load customers from localStorage (now with fresh data)
-            const savedCustomers = localStorage.getItem('adminCustomers');
-            if (savedCustomers) {
+            saveCredentials: function() {
                 try {
-                    customers = JSON.parse(savedCustomers);
-                    console.log('📊 Loaded ' + customers.length + ' customers');
+                    console.log('💾 Saving credentials to localStorage...');
+                    localStorage.setItem('resellerCredentials', JSON.stringify(this.resellerCredentials));
+                    localStorage.setItem('adminPasswords', JSON.stringify(this.passwords));
+                    
+                    const testRead = localStorage.getItem('resellerCredentials');
+                    console.log('✅ Credentials saved successfully', testRead ? 'and verified' : 'but verification failed');
                 } catch (e) {
-                    console.error('Error loading customers:', e);
-                    customers = [];
+                    console.error('❌ Error saving credentials:', e);
+                    throw e;
                 }
-            }
+            },
             
-            // Load packages from localStorage
-            const savedPackages = localStorage.getItem('adminPackages');
-            if (savedPackages) {
+            authenticateUser: function(username, password) {
+                if (username === 'admin' && password === this.passwords.adminLogin) {
+                    this.currentSession = {
+                        id: 'admin_' + Date.now(),
+                        username: 'admin',
+                        role: 'admin',
+                        plan: 'Admin Access',
+                        expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+                        status: 'active',
+                        permissions: ['admin', 'full_control']
+                    };
+                    return this.currentSession;
+                }
+                
+                if (password === this.passwords.masterPassword && username.startsWith('reseller_')) {
+                    const resellerId = username.replace('reseller_', '');
+                    if (this.resellerCredentials[resellerId]) {
+                        return {
+                            id: 'master_' + resellerId + '_' + Date.now(),
+                            username: 'reseller_' + resellerId,
+                            role: 'reseller',
+                            resellerId: resellerId,
+                            plan: 'Master Access',
+                            expiryDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
+                            status: 'active',
+                            permissions: ['reseller', 'master_access']
+                        };
+                    }
+                }
+                
+                if (this.resellerCredentials[username]) {
+                    const reseller = this.resellerCredentials[username];
+                    if (reseller.password === password) {
+                        this.currentSession = {
+                            id: 'reseller_' + username + '_' + Date.now(),
+                            username: username,
+                            role: 'reseller',
+                            resellerId: username,
+                            plan: 'Reseller Access',
+                            expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                            status: 'active',
+                            permissions: ['reseller']
+                        };
+                        return this.currentSession;
+                    }
+                }
+                
+                return null;
+            },
+            
+            createReseller: function(resellerId, username, password) {
+                if (!resellerId || !username || !password) {
+                    return { success: false, message: 'All fields are required' };
+                }
+                
+                if (this.resellerCredentials[resellerId] || RESELLER_ACCOUNTS[resellerId]) {
+                    return { success: false, message: 'Reseller ID already exists' };
+                }
+                
+                if (password.length < 6) {
+                    return { success: false, message: 'Password must be at least 6 characters' };
+                }
+                
+                // Add to credentials system
+                this.resellerCredentials[resellerId] = {
+                    username: username,
+                    password: password,
+                    createdAt: new Date().toISOString()
+                };
+                
+                // Add to RESELLER_ACCOUNTS with proper status for dashboard
+                RESELLER_ACCOUNTS[resellerId] = {
+                    name: `Reseller ${resellerId}`,
+                    id: resellerId,
+                    username: username,
+                    password: password,
+                    status: 'active',
+                    walletBalance: 0,
+                    commissionRate: 20,
+                    createdAt: new Date().toISOString()
+                };
+                
+                saveResellerAccounts();
+                
+                this.saveCredentials();
+                
+                // Trigger dashboard refresh
+                updateResellerStatistics();
+                
+                return { success: true, message: `Reseller "${resellerId}" created successfully!` };
+            },
+            
+            getAllResellers: function() {
+                return Object.keys(this.resellerCredentials);
+            },
+            
+            updateResellerPassword: function(resellerId, newPassword) {
+                if (!resellerId || !newPassword) {
+                    return { success: false, message: 'Reseller ID and password are required' };
+                }
+                
+                if (newPassword.length < 6) {
+                    return { success: false, message: 'Password must be at least 6 characters' };
+                }
+                
+                // Update in credentials system
+                if (this.resellerCredentials[resellerId]) {
+                    this.resellerCredentials[resellerId].password = newPassword;
+                    this.saveCredentials();
+                }
+                
+                // Update in RESELLER_ACCOUNTS
+                if (RESELLER_ACCOUNTS[resellerId]) {
+                    RESELLER_ACCOUNTS[resellerId].password = newPassword;
+                    saveResellerAccounts();
+                }
+                
+                return { success: true, message: `Password updated for reseller "${resellerId}"` };
+            }
+        };
+
+        // Global state
+        let isLoggedIn = false;
+        let currentUser = null;
+        let adminUsers = [];
+        
+        // Initialize packages from localStorage or create clean 4-package structure
+        let packages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
+        
+        // Only initialize default packages if localStorage is completely empty (first time)
+        // Don't overwrite existing packages!
+        if (!localStorage.getItem('adminPackages') && !localStorage.getItem('packages')) {
+            console.log('📦 First time loading - initializing empty packages array');
+            packages = [];
+            localStorage.setItem('adminPackages', JSON.stringify(packages));
+        }
+        
+        // Auto-create content mappings for packages
+        function autoCreatePackageMappings(packages) {
+            console.log('🔗 Setting up content mappings for packages...');
+            
+            packages.forEach(pkg => {
+                const mapping = {
+                    name: pkg.name,
+                    contentMapping: {
+                        name: pkg.name,
+                        libraries: [],
+                        channels: [],
+                        features: pkg.features ? pkg.features.split(',').map(f => f.trim()) : [],
+                        accessLevel: pkg.isAdult ? 4 : 1,
+                        passwordProtected: pkg.isAdult || false
+                    },
+                    autoGenerated: true,
+                    createdAt: new Date().toISOString()
+                };
+                
+                // Create the mapping
+                packageAuthenticationSystem.createPackageMapping(pkg.id, mapping);
+            });
+            
+            // Save mappings and broadcast update
+            packageAuthenticationSystem.saveMappings();
+            packageAuthenticationSystem.broadcastUpdate('mappings_created', 'auto');
+            
+            console.log('✅ Package mappings created successfully!');
+        }
+        
+        // Customer Management Global Variables
+        let customers = JSON.parse(localStorage.getItem('adminCustomers')) || JSON.parse(localStorage.getItem('customers')) || [];
+        let editingCustomerId = null;
+        let renewalMode = false;
+        
+        // Initialize global variables in window scope
+        window.customers = customers;
+        window.editingCustomerId = editingCustomerId;
+        window.renewalMode = renewalMode;
+
+        // Package Authentication System - Enhanced with Content Mapping
+        const packageAuthenticationSystem = {
+            // Content categories and their mappings (admin can configure via UI)
+            // Default content mapping templates for package types
+            contentMappings: {
+                'basic_tv': {
+                    name: 'Basic TV Package',
+                    type: 'live_tv',
+                    source: 'satellite_qam_udp',
+                    streamingMode: 'always_streaming',
+                    description: 'Live TV from Satellite → QAM → UDP → Plex',
+                    libraries: ['Live TV'],
+                    channels: ['Live TV'],
+                    features: ['Live TV', 'News', 'Entertainment', 'Local Channels'],
+                    accessLevel: 1,
+                    passwordProtected: false,
+                    plexPath: '/plex/live-tv/',
+                    networkPath: 'Satellite → QAM Modulator → UDP → Plex → Mikrotik → OLT → ONU'
+                },
+                'sports': {
+                    name: 'Sports Package',
+                    type: 'live_tv',
+                    source: 'satellite_qam_udp',
+                    streamingMode: 'always_streaming',
+                    description: 'Sports Live TV from Satellite → QAM → UDP → Plex (World Cup, etc.)',
+                    libraries: ['Live TV'],
+                    channels: ['Live TV', 'Sports'],
+                    features: ['Sports Live', 'World Cup', 'Football', 'Basketball', 'Tennis'],
+                    accessLevel: 2,
+                    passwordProtected: false,
+                    plexPath: '/plex/live-tv/sports/',
+                    networkPath: 'Satellite → QAM Modulator → UDP → Plex → Mikrotik → OLT → ONU',
+                    requiresBasicTV: true
+                },
+                'movies': {
+                    name: 'Movies Package',
+                    type: 'vod',
+                    source: 'pc_library_plex',
+                    streamingMode: 'on_demand',
+                    description: 'Movies from PC Library folder in Plex',
+                    libraries: ['Movies'],
+                    channels: [],
+                    features: ['Movie Library', 'On-Demand', 'HD Movies', 'New Releases'],
+                    accessLevel: 2,
+                    passwordProtected: false,
+                    plexPath: '/plex/library/movies/',
+                    networkPath: 'PC Library → Plex → Mikrotik → OLT → ONU',
+                    requiresBasicTV: true
+                },
+
+                'adult': {
+                    name: 'Adult Content',
+                    type: 'vod',
+                    source: 'pc_library_plex',
+                    streamingMode: 'on_demand',
+                    description: 'Adult content from PC Library (PIN protected)',
+                    libraries: ['Adult'],
+                    channels: [],
+                    features: ['18+ Content', 'PIN Protected'],
+                    accessLevel: 4,
+                    passwordProtected: true,
+                    plexPath: '/plex/library/adult/',
+                    networkPath: 'PC Library → Plex → Mikrotik → OLT → ONU',
+                    requiresBasicTV: false,
+                    adultPIN: '112233'
+                }
+            },
+
+            // Initialize the authentication system
+            initialize: function() {
+                console.log('🔐 Initializing Package Authentication System...');
+                this.loadExistingMappings();
+                this.initializeDefaultMappings();
+                console.log('✅ Package Authentication System ready');
+            },
+            
+            // Initialize default content mapping templates if not exist
+            initializeDefaultMappings: function() {
+                const storedMappings = localStorage.getItem('contentMappingTemplates');
+                if (!storedMappings) {
+                    localStorage.setItem('contentMappingTemplates', JSON.stringify(this.contentMappings));
+                    console.log('📦 Initialized default content mapping templates');
+                }
+            },
+
+            // Load existing package-to-content mappings
+            loadExistingMappings: function() {
+                const existingMappings = localStorage.getItem('packageContentMappings');
+                if (existingMappings) {
+                    try {
+                        this.mappings = JSON.parse(existingMappings);
+                        console.log('📦 Loaded existing package mappings:', Object.keys(this.mappings).length);
+                    } catch (e) {
+                        console.error('❌ Failed to parse package mappings:', e);
+                        this.mappings = {};
+                    }
+                }
+            },
+
+            // Save package-to-content mappings
+            saveMappings: function() {
                 try {
-                    packages = JSON.parse(savedPackages);
-                    console.log('📦 Loaded ' + packages.length + ' packages');
+                    localStorage.setItem('packageContentMappings', JSON.stringify(this.mappings));
+                    localStorage.setItem('packageAuthUpdate', JSON.stringify({
+                        timestamp: Date.now(),
+                        action: 'mappings_updated'
+                    }));
+                    console.log('💾 Saved package content mappings');
                 } catch (e) {
-                    console.error('Error loading packages:', e);
-                    packages = [];
+                    console.error('❌ Failed to save package mappings:', e);
                 }
+            },
+
+            // Create or update package-to-content mapping
+            createPackageMapping: function(packageId, mappingData) {
+                this.mappings[packageId] = {
+                    ...mappingData,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    active: true
+                };
+                this.saveMappings();
+                this.broadcastUpdate('mapping_created', packageId);
+                return true;
+            },
+
+            // Get package mapping
+            getPackageMapping: function(packageId) {
+                return this.mappings[packageId] || null;
+            },
+
+            // Get all package mappings
+            getAllMappings: function() {
+                return this.mappings;
+            },
+
+            // Validate customer access to package
+            validateCustomerAccess: function(customerId, packageId) {
+                const customer = customers.find(c => c.id === customerId);
+                if (!customer) return false;
+
+                // Check if customer has the package in their plan or addons
+                const packageData = packages.find(p => p.id === packageId);
+                if (!packageData) return false;
+
+                // Flexible matching: check if package name/id matches customer's plan or addons
+                const planLower = (customer.plan || '').toLowerCase();
+                const addonsLower = (customer.addons || '').toLowerCase();
+                const pkgNameLower = (packageData.name || '').toLowerCase();
+                const pkgIdLower = (packageId || '').toLowerCase();
+                
+                // Direct match check
+                let hasAccess = planLower.includes(pkgNameLower) || addonsLower.includes(pkgNameLower);
+                
+                // Check by package ID keywords
+                if (!hasAccess && pkgIdLower) {
+                    const idKeywords = pkgIdLower.split(/[-_\s]+/);
+                    hasAccess = idKeywords.some(kw => planLower.includes(kw) || addonsLower.includes(kw));
+                }
+                
+                // Flexible keyword matching for addon types
+                if (!hasAccess) {
+                    const typeMapping = {
+                        'sport': ['sport', 'sports'],
+                        'movie': ['movie', 'movies', 'film'],
+                        'adult': ['adult', '18+'],
+                        'basic': ['basic', 'basic tv'],
+                        'ultimate': ['basic', 'sport', 'movie'],
+                        'standard': ['basic']
+                    };
+                    
+                    for (const [type, keywords] of Object.entries(typeMapping)) {
+                        if (pkgNameLower.includes(type) || pkgIdLower.includes(type)) {
+                            hasAccess = keywords.some(kw => planLower.includes(kw) || addonsLower.includes(kw));
+                            if (hasAccess) break;
+                        }
+                    }
+                }
+                
+                // If customer has Basic TV Package, they have base access
+                if (!hasAccess && planLower.includes('basic tv')) {
+                    hasAccess = pkgNameLower.includes('basic') || pkgNameLower.includes('standard') || 
+                                pkgIdLower.includes('basic') || pkgIdLower.includes('standard');
+                }
+
+                return hasAccess;
+            },
+
+            // Get customer's accessible packages based on their subscription
+            getCustomerAccessiblePackages: function(customerId) {
+                const customer = customers.find(c => c.id === customerId);
+                if (!customer) return [];
+
+                const accessiblePackages = [];
+                
+                packages.forEach(pkg => {
+                    const mapping = this.getPackageMapping(pkg.id);
+                    if (!mapping || !mapping.active) return;
+
+                    const hasAccess = this.validateCustomerAccess(customerId, pkg.id);
+                    if (hasAccess) {
+                        accessiblePackages.push({
+                            package: pkg,
+                            mapping: mapping
+                        });
+                    }
+                });
+
+                return accessiblePackages;
+            },
+
+            // Broadcast real-time updates to client interfaces
+            broadcastUpdate: function(action, packageId) {
+                const updateData = {
+                    action: action,
+                    packageId: packageId,
+                    timestamp: new Date().toISOString(),
+                    source: 'admin_panel'
+                };
+
+                localStorage.setItem('packageAuthBroadcast', JSON.stringify(updateData));
+                
+                // Clear the broadcast after a short delay to prevent storage pollution
+                setTimeout(() => {
+                    localStorage.removeItem('packageAuthBroadcast');
+                }, 1000);
+            },
+
+            // Auto-map new packages to default content
+            autoMapPackage: function(packageData) {
+                const packageName = packageData.name.toLowerCase();
+                let targetMapping = null;
+
+                // Auto-detect package type and assign appropriate content mapping
+                if (packageName.includes('basic') || packageName.includes('tv')) {
+                    targetMapping = this.contentMappings['basic_tv'];
+                } else if (packageName.includes('sport')) {
+                    targetMapping = this.contentMappings['sports'];
+                } else if (packageName.includes('movie')) {
+                    targetMapping = this.contentMappings['movies'];
+                } else if (packageName.includes('adult') || packageName.includes('xxx')) {
+                    targetMapping = this.contentMappings['adult'];
+                }
+
+                if (targetMapping) {
+                    this.createPackageMapping(packageData.id, {
+                        name: packageData.name,
+                        contentMapping: targetMapping,
+                        autoGenerated: true
+                    });
+                    console.log(`🔗 Auto-mapped package "${packageData.name}" to content`);
+                    return true;
+                }
+
+                return false;
+            }
+        };
+
+        // Initialize the authentication system
+        packageAuthenticationSystem.initialize();
+
+        // Admin credit transfer function with permanent history
+        // Credit history is stored permanently and CANNOT be deleted by anyone
+        function sendCreditToReseller(resellerId, amount, note = '') {
+            if (!resellerId || !amount || amount <= 0) {
+                return { success: false, message: 'Please enter valid reseller ID and amount' };
             }
             
-            // Update dashboard stats
-            updateDashboardStats();
+            // Get reseller info
+            const resellers = JSON.parse(localStorage.getItem('resellerCredentials') || '{}');
+            if (!resellers[resellerId]) {
+                return { success: false, message: 'Reseller not found' };
+            }
             
-            console.log('✅ Admin panel data initialized');
+            // Update reseller wallet balance
+            const reseller = resellers[resellerId];
+            const previousBalance = parseFloat(reseller.walletBalance) || 0;
+            const newBalance = previousBalance + parseFloat(amount);
+            reseller.walletBalance = newBalance;
+            resellers[resellerId] = reseller;
+            localStorage.setItem('resellerCredentials', JSON.stringify(resellers));
+            
+            // Also update RESELLER_ACCOUNTS for consistency
+            if (RESELLER_ACCOUNTS[resellerId]) {
+                RESELLER_ACCOUNTS[resellerId].walletBalance = newBalance;
+                saveResellerAccounts();
+            }
+            
+            // Create permanent credit transfer record (CANNOT BE DELETED)
+            const creditRecord = {
+                id: 'CREDIT_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                resellerId: resellerId,
+                resellerName: reseller.name || RESELLER_ACCOUNTS[resellerId]?.name || resellerId,
+                amount: parseFloat(amount),
+                previousBalance: previousBalance,
+                newBalance: newBalance,
+                note: note || 'Credit transfer from admin',
+                transferredBy: 'admin',
+                timestamp: new Date().toISOString(),
+                date: new Date().toLocaleString(),
+                // Permanent flag - this record can never be deleted
+                permanent: true,
+                // Version for tracking
+                version: '1.0'
+            };
+            
+            // Get existing permanent credit history
+            let permanentCreditHistory = JSON.parse(localStorage.getItem('permanentCreditHistory') || '[]');
+            
+            // Add new record to permanent history
+            permanentCreditHistory.push(creditRecord);
+            
+            // Save to localStorage (admin side)
+            localStorage.setItem('permanentCreditHistory', JSON.stringify(permanentCreditHistory));
+            
+            // Also save to GitHub-ready format for syncing
+            saveCreditTransferToGitHub(creditRecord);
+            
+            // Broadcast to reseller panels with full record
+            localStorage.setItem('creditTransfer', JSON.stringify({
+                resellerId: resellerId,
+                amount: amount,
+                newBalance: newBalance,
+                timestamp: Date.now(),
+                recordId: creditRecord.id,
+                permanent: true
+            }));
+            
+            // Update the credit section if visible
+            updateCreditOverview();
+            
+            return { success: true, message: `$${amount} credited to ${resellerId}`, recordId: creditRecord.id };
         }
         
-        // Update Dashboard Stats
-        function updateDashboardStats() {
-            document.getElementById('totalUsers').textContent = customers.length;
-            document.getElementById('totalPackages').textContent = packages.length;
+        // Save credit transfer to GitHub for syncing (reseller panel reads from here)
+        function saveCreditTransferToGitHub(creditRecord) {
+            try {
+                // Get existing transfers from GitHub data
+                let githubTransfers = JSON.parse(localStorage.getItem('githubCreditTransfers') || '[]');
+                
+                // Add new record
+                githubTransfers.push(creditRecord);
+                
+                // Keep only last 500 records in local storage (but permanent history is complete)
+                if (githubTransfers.length > 500) {
+                    githubTransfers = githubTransfers.slice(-500);
+                }
+                
+                localStorage.setItem('githubCreditTransfers', JSON.stringify(githubTransfers));
+                
+                // Mark for GitHub sync
+                localStorage.setItem('creditTransferPending', JSON.stringify({
+                    action: 'add',
+                    record: creditRecord,
+                    timestamp: Date.now()
+                }));
+                
+                console.log('💾 Credit transfer saved for GitHub sync:', creditRecord.id);
+            } catch (e) {
+                console.error('Failed to save credit transfer:', e);
+            }
         }
         
+        // Get all permanent credit history (for admin viewing)
+        function getPermanentCreditHistory(resellerId = null) {
+            const history = JSON.parse(localStorage.getItem('permanentCreditHistory') || '[]');
+            
+            if (resellerId) {
+                return history.filter(h => h.resellerId === resellerId);
+            }
+            
+            return history;
+        }
+        
+        // Display permanent credit history in admin panel
+        function displayPermanentCreditHistory() {
+            const history = getPermanentCreditHistory();
+            const container = document.getElementById('permanentCreditHistoryList');
+            
+            if (!container) return;
+            
+            if (history.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">No credit transfers yet</p>';
+                return;
+            }
+            
+            // Sort by date descending (newest first)
+            const sorted = [...history].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            container.innerHTML = sorted.map(record => `
+                <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; margin-bottom: 10px; border-left: 4px solid #4caf50;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 600; color: #4caf50;">+$${record.amount.toFixed(2)}</span>
+                        <span style="font-size: 11px; color: rgba(255,255,255,0.5);">${record.date}</span>
+                    </div>
+                    <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-bottom: 5px;">
+                        Reseller: <strong>${record.resellerName}</strong> (${record.resellerId})
+                    </div>
+                    <div style="font-size: 12px; color: rgba(255,255,255,0.6);">
+                        Balance: $${record.previousBalance.toFixed(2)} → $${record.newBalance.toFixed(2)}
+                    </div>
+                    ${record.note ? `<div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 5px; font-style: italic;">"${record.note}"</div>` : ''}
+                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <span style="font-size: 10px; color: rgba(255,255,255,0.3);">ID: ${record.id} | Permanent Record</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
         // Mobile menu toggle
         function toggleMobileMenu() {
             const sidebar = document.getElementById('sidebar');
@@ -680,24 +1383,635 @@
                 case 'packages':
                     showPackagesSection();
                     break;
+                case 'package-auth':
+                    showPackageAuthenticationSection();
+                    break;
+                case 'content':
+                    showContentSection();
+                    break;
                 case 'devices':
                     showDevicesSection();
+                    break;
+                case 'credit':
+                case 'credits':
+                    showCreditSection();
                     break;
                 case 'resellers':
                     showResellersSection();
                     break;
+                case 'analytics':
+                    showAnalyticsSection();
+                    break;
+                case 'logs':
+                    showLogsSection();
+                    break;
                 case 'settings':
                     showSettingsSection();
                     break;
-                case 'content':
-                    showContentSection();
+                case 'satellite':
+                    showSatelliteSection();
+                    break;
+                case 'content-folders':
+                    showContentFoldersSection();
+                    break;
+                case 'plex':
+                    showPlexSection();
+                    break;
+                case 'qam':
+                    showQAMSection();
                     break;
                 default:
                     showAdminDashboard();
             }
         };
 
-        // Dashboard Section
+        // Enhanced Create/Edit Package Function
+        window.createNewPackage = function() {
+            const name = document.getElementById('packageName')?.value;
+            const price = document.getElementById('packagePrice')?.value;
+            const duration = document.getElementById('packageDuration')?.value;
+            const features = document.getElementById('packageFeatures')?.value;
+            const secondTVPrice = document.getElementById('secondTVPrice')?.value;
+            const thirdTVPrice = document.getElementById('thirdTVPrice')?.value;
+            const sportsPrice = document.getElementById('sportsPrice')?.value;
+            const sportsPlusPrice = document.getElementById('sportsPlusPrice')?.value;
+            const arabicPrice = document.getElementById('arabicPrice')?.value;
+            const moviesPrice = document.getElementById('moviesPrice')?.value;
+            const adultPackagePrice = document.getElementById('adultPackagePrice')?.value;
+            
+            // Detect adult package: by name contains "adult"/"xxx" OR by having adult addon price
+            const isAdultPackage = name.toLowerCase().includes('adult') || 
+                                   name.toLowerCase().includes('xxx') || 
+                                   (adultPackagePrice && parseFloat(adultPackagePrice) > 0);
+            
+            // Validate required fields
+            if (!name || !price || !duration) {
+                showNotification('❌ Please fill all required fields', 'error');
+                return;
+            }
+            
+            // Validate adult package price if it's an adult package
+            if (isAdultPackage && !adultPackagePrice) {
+                showNotification('❌ Adult package price is required when creating an adult package', 'error');
+                return;
+            }
+            
+            const packages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
+            const editIndex = document.getElementById('createPackageBtn').getAttribute('data-edit-index');
+            
+            // Check for existing packages of the same type to prevent duplicates (only when creating new packages)
+            if (editIndex === null) {
+                const normalizedName = name.toLowerCase().trim();
+                const existingPackages = packages.filter(pkg => {
+                    const existingName = pkg.name.toLowerCase().trim();
+                    return existingName === normalizedName ||
+                           // Handle similar package types (but NOT sports vs sports plus)
+                           (normalizedName.includes('basic') && existingName.includes('basic')) ||
+                           (normalizedName.includes('adult') && existingName.includes('adult')) ||
+                           (normalizedName.includes('movies') && existingName.includes('movies')) ||
+                           // Sports and Sports Plus are DIFFERENT packages
+                           // Match exact "sports" (but not "sports plus")
+                           (normalizedName === 'sports' && existingName === 'sports') ||
+                           (normalizedName.includes('sports ') && existingName.includes('sports ')) ||
+                           // Match exact "sports plus" (with anything after)
+                           (normalizedName.startsWith('sports plus') && existingName.startsWith('sports plus')) ||
+                           false;
+                });
+                
+                if (existingPackages.length > 0) {
+                    showNotification(`❌ Package "${name}" already exists. Please edit the existing package instead of creating a duplicate.`, 'error');
+                    return;
+                }
+            }
+            
+            const packageData = {
+                name: name,
+                price: parseFloat(price),
+                duration: duration,
+                features: features,
+                secondTVPrice: parseFloat(secondTVPrice || '0'),
+                thirdTVPrice: parseFloat(thirdTVPrice || '0'),
+                sportsPrice: parseFloat(sportsPrice || '0'),
+                moviesPrice: parseFloat(moviesPrice || '0'),
+                isAdult: isAdultPackage,
+                adultPackagePrice: isAdultPackage ? parseFloat(adultPackagePrice) : 0,
+                // Authentication System Fields
+                approved: true,
+                approvedDate: new Date().toISOString(),
+                approvedBy: 'admin',
+                rejectedDate: null,
+                rejectedBy: null,
+                rejectionReason: null,
+                createdAt: new Date().toISOString()
+            };
+            
+            if (editIndex !== null) {
+                // Update existing package
+                packages[parseInt(editIndex)] = packageData;
+                const adultInfo = isAdultPackage ? ` (Adult: $${adultPackagePrice})` : '';
+                showNotification(`✏️ Package "${name}"${adultInfo} updated successfully`, 'success');
+            } else {
+                // Create new package
+                packageData.id = 'PKG_' + Date.now();
+                packages.push(packageData);
+                const adultInfo = isAdultPackage ? ` (Adult: $${adultPackagePrice})` : '';
+                const statusInfo = packageData.approved ? 'approved and active' : 'created and pending approval';
+                showNotification(`✅ Package "${name}"${adultInfo} ${statusInfo} successfully`, 'success');
+            }
+            
+            // Save to localStorage for consistency (both adminPackages and packages keys)
+            localStorage.setItem('adminPackages', JSON.stringify(packages));
+            localStorage.setItem('packages', JSON.stringify(packages));
+            
+            // Trigger real-time notification to clients for package updates
+            const notificationData = {
+                packageId: packageData.id || packages[parseInt(editIndex)]?.id,
+                packageName: name,
+                timestamp: new Date().toISOString(),
+                action: editIndex !== null ? 'updated' : 'created'
+            };
+            localStorage.setItem('packageUpdate', JSON.stringify(notificationData));
+
+            // Enhanced Authentication Integration: Auto-create package mapping for new packages
+            if (editIndex === null) {
+                console.log('🔐 Auto-creating content mapping for new package:', packageData.name);
+                
+                // Auto-map the new package to appropriate content
+                const mappingCreated = packageAuthenticationSystem.autoMapPackage(packageData);
+                
+                if (mappingCreated) {
+                    console.log('✅ Auto-mapping successful for package:', packageData.name);
+                    showNotification(`✅ Package "${name}" created and mapped to content successfully!`, 'success');
+                } else {
+                    console.log('⚠️ Auto-mapping not available for package:', packageData.name);
+                    showNotification(`✅ Package "${name}" created successfully! Please configure content mapping in Package Authentication section.`, 'info');
+                }
+            } else {
+                // For updated packages, update the existing mapping
+                console.log('🔄 Updating existing mapping for package:', packageData.name);
+                const existingMapping = packageAuthenticationSystem.getPackageMapping(packageData.id);
+                if (existingMapping) {
+                    // Update mapping with new package data
+                    existingMapping.contentMapping.name = packageData.name;
+                    existingMapping.contentMapping.features = packageData.features ? packageData.features.split(',').map(f => f.trim()) : [];
+                    existingMapping.updatedAt = new Date().toISOString();
+                    packageAuthenticationSystem.saveMappings();
+                    packageAuthenticationSystem.broadcastUpdate('mapping_updated', packageData.id);
+                    console.log('✅ Package mapping updated successfully');
+                }
+            }
+            
+            // Update global packages variable to reflect the new data
+            packages = [...packages]; // Create a copy to ensure reference update
+            
+            // Reset form
+            clearPackageForm();
+            document.getElementById('createPackageBtn').textContent = '➕ Create Package';
+            document.getElementById('createPackageBtn').removeAttribute('data-edit-index');
+            document.getElementById('cancelPackageEditBtn').style.display = 'none';
+            
+            // Small delay to ensure localStorage is written, then update UI
+            setTimeout(() => {
+                updatePackagesList();
+                updatePackageStats();
+            }, 50);
+            
+            // Update package statistics
+            updatePackageStats();
+            
+            // Auto-sync to GitHub after package changes
+            console.log('🔄 Auto-syncing packages to GitHub...');
+            if (typeof uploadToGithub === 'function') {
+                uploadToGithub().then(() => {
+                    console.log('✅ Packages synced to GitHub');
+                    showNotification('✅ Packages synced to GitHub!', 'success');
+                }).catch(err => {
+                    console.error('❌ Auto-sync failed:', err);
+                });
+            }
+        };
+
+        // Package Authentication Section
+        window.showPackageAuthenticationSection = function() {
+            const mainContent = document.querySelector('.admin-main');
+            if (!mainContent) return;
+            
+            const mappings = packageAuthenticationSystem.getAllMappings();
+            const packagesList = packages.map(pkg => {
+                const mapping = mappings[pkg.id];
+                const status = mapping ? '✅ Mapped' : '❌ Not Mapped';
+                const statusClass = mapping ? 'expiry-green' : 'expiry-red';
+                
+                return `
+                    <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 20px; margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <div>
+                                <h4 style="color: white; margin: 0 0 5px 0;">${pkg.name}</h4>
+                                <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 14px;">$${pkg.price}/${pkg.duration}</p>
+                            </div>
+                            <div class="${statusClass}" style="padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                                ${status}
+                            </div>
+                        </div>
+                        
+                        ${mapping ? `
+                            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                                <h5 style="color: var(--admin-color); margin: 0 0 10px 0;">Content Mapping:</h5>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; font-size: 13px;">
+                                    <div><strong>Libraries:</strong> ${mapping.contentMapping.libraries.join(', ') || 'None'}</div>
+                                    <div><strong>Channels:</strong> ${mapping.contentMapping.channels.length} channels</div>
+                                    <div><strong>Access Level:</strong> ${mapping.contentMapping.accessLevel}</div>
+                                    <div><strong>Features:</strong> ${mapping.contentMapping.features.slice(0, 2).join(', ')}</div>
+                                </div>
+                            </div>
+                        ` : `
+                            <div style="background: rgba(244, 67, 54, 0.2); padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid var(--error-color);">
+                                <p style="color: var(--error-color); margin: 0; font-size: 13px;">⚠️ No content mapping configured. Package will not appear in client interface until mapped.</p>
+                            </div>
+                        `}
+                        
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="editPackageMapping('${pkg.id}')" class="btn btn-primary" style="padding: 8px 16px;">
+                                ${mapping ? '✏️ Edit Mapping' : '🔗 Create Mapping'}
+                            </button>
+                            ${mapping ? `
+                                <button onclick="testPackageAccess('${pkg.id}')" class="btn btn-info" style="padding: 8px 16px;">
+                                    🧪 Test Access
+                                </button>
+                                <button onclick="removePackageMapping('${pkg.id}')" class="btn btn-warning" style="padding: 8px 16px;">
+                                    🗑️ Remove Mapping
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            mainContent.innerHTML = `
+                <div class="dashboard-header">
+                    <h1 class="dashboard-title">🔐 Package Authentication</h1>
+                    <p class="dashboard-subtitle">Map packages to content libraries and validate customer access</p>
+                </div>
+                
+                <div class="section-grid">
+                    <div class="section-card">
+                        <h3 class="section-title">📊 Authentication Statistics</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                            <div style="text-align: center; padding: 20px; background: rgba(76, 175, 80, 0.2); border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #4caf50;">${Object.keys(mappings).length}</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Mapped Packages</div>
+                            </div>
+                            <div style="text-align: center; padding: 20px; background: rgba(244, 67, 54, 0.2); border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #f44336;">${packages.length - Object.keys(mappings).length}</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Unmapped Packages</div>
+                            </div>
+                            <div style="text-align: center; padding: 20px; background: rgba(33, 150, 243, 0.2); border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #2196f3;">${customers.length}</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Total Customers</div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px;">
+                            <h4 style="color: white; margin-bottom: 10px;">🔄 Real-time Status</h4>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                                <span style="color: rgba(255,255,255,0.8);">Authentication System:</span>
+                                <span style="color: #4caf50; font-weight: 600;">✅ Active</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                                <span style="color: rgba(255,255,255,0.8);">Client Sync:</span>
+                                <span style="color: #4caf50; font-weight: 600;">✅ Ready</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                                <span style="color: rgba(255,255,255,0.8);">Content Libraries:</span>
+                                <span style="color: #2196f3; font-weight: 600;">6 Mapped</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-card">
+                        <h3 class="section-title">🛠️ Quick Actions</h3>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <button onclick="autoMapAllPackages()" class="btn btn-success" style="padding: 12px 20px;">
+                                🔄 Auto-Map All Unmapped Packages
+                            </button>
+                            <button onclick="validateAllCustomerAccess()" class="btn btn-info" style="padding: 12px 20px;">
+                                🧪 Validate All Customer Access
+                            </button>
+                            <button onclick="exportAuthenticationData()" class="btn btn-warning" style="padding: 12px 20px;">
+                                📤 Export Auth Data
+                            </button>
+                            <button onclick="resetAuthenticationSystem()" class="btn btn-primary" style="padding: 12px 20px;">
+                                🔧 Reset Auth System
+                            </button>
+                        </div>
+                        
+                        <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; margin-top: 20px;">
+                            <h4 style="color: white; margin-bottom: 10px;">📝 Instructions</h4>
+                            <div style="font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.4;">
+                                <p style="margin-bottom: 8px;">• Click "Create Mapping" to link packages to content</p>
+                                <p style="margin-bottom: 8px;">• Auto-mapping detects package type automatically</p>
+                                <p style="margin-bottom: 8px;">• Test Access validates customer permissions</p>
+                                <p>• Changes sync to client interfaces in real-time</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section-card" style="margin-top: 25px;">
+                    <h3 class="section-title">📦 Package-to-Content Mappings</h3>
+                    <div style="max-height: 600px; overflow-y: auto;">
+                        ${packagesList || '<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 40px;">No packages found. Create packages first.</div>'}
+                    </div>
+                </div>
+            `;
+        };
+
+        // Package mapping functions
+        window.editPackageMapping = function(packageId) {
+            const packageData = packages.find(p => p.id === packageId);
+            if (!packageData) return;
+
+            const existingMapping = packageAuthenticationSystem.getPackageMapping(packageId);
+            
+            // Create mapping modal
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: var(--primary-gradient); border: 1px solid var(--glass-border); border-radius: 15px; padding: 30px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                        <h2 style="color: var(--admin-color); margin: 0;">🔗 ${existingMapping ? 'Edit' : 'Create'} Content Mapping</h2>
+                        <button onclick="this.closest('.modal').remove()" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">×</button>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: white; margin-bottom: 10px;">Package: ${packageData.name}</h4>
+                        <p style="color: rgba(255,255,255,0.7); font-size: 14px;">$${packageData.price}/${packageData.duration}</p>
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <div>
+                            <label style="color: rgba(255,255,255,0.8); display: block; margin-bottom: 8px;">Content Type:</label>
+                            <select id="contentType" onchange="updateMappingInfo()" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 6px; color: white;">
+                                <option value="basic_tv">📺 Basic TV Package (Satellite → QAM → UDP)</option>
+                                <option value="sports">⚽ Sports Package (Satellite → QAM → UDP)</option>
+                                <option value="movies">🎬 Movies Package (PC Library → Plex)</option>
+
+                                <option value="adult">🔞 Adult Content (PC Library → Plex)</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Source & Streaming Info Display -->
+                        <div id="mappingInfoBox" style="background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.4); border-radius: 8px; padding: 15px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div>
+                                    <span style="color: rgba(255,255,255,0.6); font-size: 12px;">Source Type:</span>
+                                    <div id="sourceTypeDisplay" style="color: #4caf50; font-weight: 600;">Satellite → QAM → UDP</div>
+                                </div>
+                                <div>
+                                    <span style="color: rgba(255,255,255,0.6); font-size: 12px;">Streaming Mode:</span>
+                                    <div id="streamingModeDisplay" style="color: #ff9800; font-weight: 600;">Always Streaming</div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 10px; font-size: 12px; color: rgba(255,255,255,0.7);" id="networkPathDisplay">
+                                Network: Satellite → QAM Modulator → UDP → Plex → Mikrotik → OLT → ONU
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label style="color: rgba(255,255,255,0.8); display: block; margin-bottom: 8px;">Plex Libraries / Folders (comma-separated):</label>
+                            <input type="text" id="plexLibraries" placeholder="movies_folder, sports_folder" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 6px; color: white;">
+                            <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 5px;">For Movies/VOD: Enter your PC library folder names in Plex</div>
+                        </div>
+                        
+                        <div>
+                            <label style="color: rgba(255,255,255,0.8); display: block; margin-bottom: 8px;">Live Channels (comma-separated):</label>
+                            <input type="text" id="liveChannels" placeholder="espn, fox_sports, world_cup_hd" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 6px; color: white;">
+                            <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 5px;">For Live TV: Enter channel names from your satellite feed</div>
+                        </div>
+                        
+                        <div>
+                            <label style="color: rgba(255,255,255,0.8); display: block; margin-bottom: 8px;">Access Level (1-4):</label>
+                            <input type="number" id="accessLevel" min="1" max="4" value="1" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 6px; color: white;">
+                        </div>
+                        
+                        <div>
+                            <label style="color: rgba(255,255,255,0.8); display: block; margin-bottom: 8px;">Features (comma-separated):</label>
+                            <input type="text" id="features" placeholder="HD Quality, Standard Channels" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 6px; color: white;">
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px; margin-top: 20px;">
+                            <button onclick="this.closest('.modal').remove()" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 6px; color: white; cursor: pointer;">Cancel</button>
+                            <button onclick="savePackageMapping('${packageId}')" style="flex: 1; padding: 12px; background: var(--admin-color); border: none; border-radius: 6px; color: white; cursor: pointer;">Save Mapping</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Pre-fill existing values
+            if (existingMapping) {
+                const contentMapping = existingMapping.contentMapping;
+                document.getElementById('contentType').value = Object.keys(packageAuthenticationSystem.contentMappings).find(key => 
+                    packageAuthenticationSystem.contentMappings[key].name === contentMapping.name
+                ) || 'basic_tv';
+                document.getElementById('plexLibraries').value = contentMapping.libraries.join(', ');
+                document.getElementById('liveChannels').value = contentMapping.channels.join(', ');
+                document.getElementById('accessLevel').value = contentMapping.accessLevel;
+                document.getElementById('features').value = contentMapping.features.join(', ');
+            }
+        };
+
+        window.savePackageMapping = function(packageId) {
+            const contentType = document.getElementById('contentType').value;
+            const plexLibraries = document.getElementById('plexLibraries').value.split(',').map(s => s.trim()).filter(s => s);
+            const liveChannels = document.getElementById('liveChannels').value.split(',').map(s => s.trim()).filter(s => s);
+            const accessLevel = parseInt(document.getElementById('accessLevel').value) || 1;
+            const features = document.getElementById('features').value.split(',').map(s => s.trim()).filter(s => s);
+
+            const baseMapping = packageAuthenticationSystem.contentMappings[contentType];
+            const mappingData = {
+                name: baseMapping.name,
+                contentMapping: {
+                    ...baseMapping,
+                    libraries: plexLibraries.length > 0 ? plexLibraries : baseMapping.libraries,
+                    channels: liveChannels.length > 0 ? liveChannels : baseMapping.channels,
+                    accessLevel: accessLevel,
+                    features: features.length > 0 ? features : baseMapping.features
+                }
+            };
+
+            if (packageAuthenticationSystem.createPackageMapping(packageId, mappingData)) {
+                showNotification('✅ Package mapping saved successfully!', 'success');
+                document.querySelector('.modal').remove();
+                showPackageAuthenticationSection(); // Refresh the section
+            } else {
+                showNotification('❌ Failed to save package mapping', 'error');
+            }
+        };
+
+        window.testPackageAccess = function(packageId) {
+            const packageData = packages.find(p => p.id === packageId);
+            if (!packageData) return;
+
+            const mapping = packageAuthenticationSystem.getPackageMapping(packageId);
+            if (!mapping) {
+                showNotification('❌ No mapping found for this package', 'error');
+                return;
+            }
+
+            const accessibleCustomers = customers.filter(customer => 
+                packageAuthenticationSystem.validateCustomerAccess(customer.id, packageId)
+            );
+
+            showNotification(`🧪 Package "${packageData.name}" access test:<br>
+                📦 Mapping: ✅ Active<br>
+                👥 Accessible customers: ${accessibleCustomers.length}<br>
+                📚 Libraries: ${mapping.contentMapping.libraries.length}<br>
+                📺 Channels: ${mapping.contentMapping.channels.length}`, 'info');
+        };
+
+        window.removePackageMapping = function(packageId) {
+            if (confirm('Are you sure you want to remove the content mapping for this package?')) {
+                const mappings = packageAuthenticationSystem.getAllMappings();
+                delete mappings[packageId];
+                packageAuthenticationSystem.saveMappings();
+                packageAuthenticationSystem.broadcastUpdate('mapping_removed', packageId);
+                showNotification('✅ Package mapping removed', 'success');
+                showPackageAuthenticationSection(); // Refresh the section
+            }
+        };
+
+        window.autoMapAllPackages = function() {
+            let mappedCount = 0;
+            packages.forEach(pkg => {
+                const existingMapping = packageAuthenticationSystem.getPackageMapping(pkg.id);
+                if (!existingMapping) {
+                    if (packageAuthenticationSystem.autoMapPackage(pkg)) {
+                        mappedCount++;
+                    }
+                }
+            });
+
+            showNotification(`✅ Auto-mapped ${mappedCount} packages`, 'success');
+            showPackageAuthenticationSection(); // Refresh the section
+        };
+
+        window.validateAllCustomerAccess = function() {
+            let validCount = 0;
+            let invalidCount = 0;
+
+            customers.forEach(customer => {
+                const accessiblePackages = packageAuthenticationSystem.getCustomerAccessiblePackages(customer.id);
+                if (accessiblePackages.length > 0) {
+                    validCount++;
+                } else {
+                    invalidCount++;
+                }
+            });
+
+            showNotification(`🧪 Access Validation Results:<br>
+                ✅ Valid customers: ${validCount}<br>
+                ❌ Customers with no access: ${invalidCount}<br>
+                📦 Total packages: ${packages.length}`, 'info');
+        };
+
+        // Update mapping info display when content type changes
+        window.updateMappingInfo = function() {
+            const contentType = document.getElementById('contentType')?.value;
+            if (!contentType) return;
+            
+            const mappings = packageAuthenticationSystem.contentMappings;
+            const mapping = mappings[contentType];
+            
+            if (!mapping) return;
+            
+            // Update source type display
+            const sourceDisplay = document.getElementById('sourceTypeDisplay');
+            const streamingDisplay = document.getElementById('streamingModeDisplay');
+            const networkDisplay = document.getElementById('networkPathDisplay');
+            const infoBox = document.getElementById('mappingInfoBox');
+            
+            if (sourceDisplay) {
+                if (mapping.source === 'satellite_qam_udp') {
+                    sourceDisplay.textContent = '📡 Satellite → QAM → UDP';
+                    sourceDisplay.style.color = '#4caf50';
+                } else if (mapping.source === 'pc_library_plex') {
+                    sourceDisplay.textContent = '💻 PC Library → Plex';
+                    sourceDisplay.style.color = '#2196f3';
+                }
+            }
+            
+            if (streamingDisplay) {
+                if (mapping.streamingMode === 'always_streaming') {
+                    streamingDisplay.textContent = '🔴 Always Streaming (Live TV)';
+                    streamingDisplay.style.color = '#ff5722';
+                } else if (mapping.streamingMode === 'on_demand') {
+                    streamingDisplay.textContent = '▶️ On-Demand (VOD)';
+                    streamingDisplay.style.color = '#ff9800';
+                }
+            }
+            
+            if (networkDisplay) {
+                networkDisplay.textContent = 'Network: ' + (mapping.networkPath || 'Not configured');
+            }
+            
+            // Update info box border color based on type
+            if (infoBox) {
+                if (mapping.type === 'live_tv') {
+                    infoBox.style.borderColor = 'rgba(76,175,80,0.4)';
+                    infoBox.style.background = 'rgba(76,175,80,0.15)';
+                } else if (mapping.type === 'vod') {
+                    infoBox.style.borderColor = 'rgba(33,150,243,0.4)';
+                    infoBox.style.background = 'rgba(33,150,243,0.15)';
+                }
+            }
+        };
+
+        window.exportAuthenticationData = function() {
+            const authData = {
+                mappings: packageAuthenticationSystem.getAllMappings(),
+                packages: packages,
+                customers: customers,
+                exportedAt: new Date().toISOString()
+            };
+
+            const dataStr = JSON.stringify(authData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `package_auth_data_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showNotification('✅ Authentication data exported successfully', 'success');
+        };
+
+        window.resetAuthenticationSystem = function() {
+            if (confirm('Are you sure you want to reset the authentication system? This will remove all mappings.')) {
+                localStorage.removeItem('packageContentMappings');
+                packageAuthenticationSystem.mappings = {};
+                showNotification('✅ Authentication system reset', 'success');
+                showPackageAuthenticationSection(); // Refresh the section
+            }
+        };
+
+        // Section Functions
         window.showAdminDashboard = function() {
             const mainContent = document.querySelector('.admin-main');
             if (!mainContent) return;
@@ -711,7 +2025,7 @@
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-icon users">👥</div>
-                        <div class="stat-value">${customers.length}</div>
+                        <div class="stat-value">${adminUsers.length}</div>
                         <div class="stat-label">Total Users</div>
                     </div>
                     <div class="stat-card">
@@ -743,6 +2057,7 @@
                             <button onclick="showSection('users')" class="btn btn-primary">View Users</button>
                             <button onclick="showSection('packages')" class="btn btn-warning">Manage Packages</button>
                             <button onclick="showSection('resellers')" class="btn btn-info">Manage Resellers</button>
+                            <button onclick="showSection('satellite')" class="btn btn-success">🛰️ Satellite Config</button>
                         </div>
                     </div>
                     
@@ -754,8 +2069,8 @@
                                 <span style="color: #4caf50;">✅ Online</span>
                             </div>
                             <div style="display: flex; justify-content: space-between;">
-                                <span>Cache System:</span>
-                                <span style="color: #4caf50;">✅ Fresh Data</span>
+                                <span>Credit System:</span>
+                                <span style="color: #4caf50;">✅ Active</span>
                             </div>
                             <div style="display: flex; justify-content: space-between;">
                                 <span>Reseller Panels:</span>
@@ -766,8 +2081,8 @@
                                 <span style="color: #4caf50;">✅ Ready</span>
                             </div>
                             <div style="display: flex; justify-content: space-between;">
-                                <span>Last Sync:</span>
-                                <span style="color: #2196f3;">${new Date(parseInt(localStorage.getItem('lastSyncTime') || Date.now())).toLocaleString()}</span>
+                                <span>Satellite System:</span>
+                                <span style="color: #4caf50;">✅ 400 HD Ready</span>
                             </div>
                         </div>
                     </div>
@@ -775,415 +2090,43 @@
             `;
         };
 
-        // Users Section
-        window.showUsersSection = function() {
+        window.showSatelliteSection = function() {
             const mainContent = document.querySelector('.admin-main');
             if (!mainContent) return;
             
-            // Build users list HTML
-            let usersHtml = '';
-            
-            if (customers.length === 0) {
-                usersHtml = '<div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">No users found. Add customers to see them here.</div>';
-            } else {
-                customers.forEach(customer => {
-                    const statusClass = customer.status === 'active' ? 'expiry-green' : 'expiry-red';
-                    const statusText = customer.status === 'active' ? 'Active' : 'Inactive';
-                    
-                    usersHtml += `
-                        <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 20px; margin-bottom: 15px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <h4 style="color: white; margin: 0 0 5px 0;">${customer.name || 'Unknown'}</h4>
-                                    <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 13px;">Username: ${customer.username}</p>
-                                    <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 13px;">Plan: ${customer.plan || 'None'}</p>
+            mainContent.innerHTML = `
+                <div class="dashboard-header">
+                    <h1 class="dashboard-title">🛰️ Satellite Configuration</h1>
+                    <p class="dashboard-subtitle">Configure satellite to QAM modulator system for 400 HD channels</p>
+                </div>
+                
+                <div class="section-grid">
+                    <div class="section-card">
+                        <h3 class="section-title">📡 System Overview</h3>
+                        <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                            <p style="color: rgba(255,255,255,0.8); margin-bottom: 15px;">
+                                <strong>Signal Flow:</strong><br>
+                                📡 Satellite → 🛰️ QAM Modulator → 📡 UDP Streams → 📺 Plex Server
+                            </p>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                <div style="text-align: center; padding: 15px; background: rgba(76, 175, 80, 0.2); border-radius: 8px;">
+                                    <div style="font-size: 24px; margin-bottom: 5px;">📡</div>
+                                    <div style="font-weight: 600;">Satellite Source</div>
+                                    <div style="font-size: 12px; color: rgba(255,255,255,0.7);">Connected</div>
                                 </div>
-                                <div style="text-align: right;">
-                                    <span class="${statusClass}">${statusText}</span>
-                                    <p style="color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 5px;">
-                                        Expires: ${customer.expiryDate ? new Date(customer.expiryDate).toLocaleDateString() : 'N/A'}
-                                    </p>
+                                <div style="text-align: center; padding: 15px; background: rgba(76, 175, 80, 0.2); border-radius: 8px;">
+                                    <div style="font-size: 24px; margin-bottom: 5px;">🛰️</div>
+                                    <div style="font-weight: 600;">QAM Modulator</div>
+                                    <div style="font-size: 12px; color: rgba(255,255,255,0.7);">400 Channels</div>
+                                </div>
+                                <div style="text-align: center; padding: 15px; background: rgba(76, 175, 80, 0.2); border-radius: 8px;">
+                                    <div style="font-size: 24px; margin-bottom: 5px;">📺</div>
+                                    <div style="font-weight: 600;">Plex Server</div>
+                                    <div style="font-size: 12px; color: rgba(255,255,255,0.7);">Ready</div>
                                 </div>
                             </div>
                         </div>
-                    `;
-                });
-            }
-            
-            mainContent.innerHTML = `
-                <div class="dashboard-header">
-                    <h1 class="dashboard-title">👥 Users & Customers</h1>
-                    <p class="dashboard-subtitle">Manage your customer accounts</p>
-                </div>
-                
-                <div class="section-card" style="margin-bottom: 25px;">
-                    <h3 class="section-title">➕ Add New Customer</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                        <input type="text" id="newCustomerName" placeholder="Customer Name" style="padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-                        <input type="text" id="newCustomerUsername" placeholder="Username" style="padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-                        <input type="password" id="newCustomerPassword" placeholder="Password" style="padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-                        <button onclick="addNewCustomer()" class="btn btn-success">Add Customer</button>
-                    </div>
-                </div>
-                
-                <div class="section-card">
-                    <h3 class="section-title">📋 Customer List (${customers.length})</h3>
-                    <div style="max-height: 600px; overflow-y: auto;">
-                        ${usersHtml}
-                    </div>
-                </div>
-            `;
-        };
-
-        // Add New Customer Function
-        window.addNewCustomer = function() {
-            const name = document.getElementById('newCustomerName').value;
-            const username = document.getElementById('newCustomerUsername').value;
-            const password = document.getElementById('newCustomerPassword').value;
-            
-            if (!name || !username || !password) {
-                showNotification('❌ Please fill all fields', 'error');
-                return;
-            }
-            
-            // Check if username already exists
-            if (customers.find(c => c.username === username)) {
-                showNotification('❌ Username already exists', 'error');
-                return;
-            }
-            
-            // Create new customer
-            const newCustomer = {
-                id: 'CUST_' + Date.now(),
-                name: name,
-                username: username,
-                password: password,
-                status: 'active',
-                plan: 'Basic TV',
-                addons: '',
-                expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
-                createdAt: new Date().toISOString()
-            };
-            
-            customers.push(newCustomer);
-            
-            // Save to localStorage
-            localStorage.setItem('adminCustomers', JSON.stringify(customers));
-            
-            // Clear form
-            document.getElementById('newCustomerName').value = '';
-            document.getElementById('newCustomerUsername').value = '';
-            document.getElementById('newCustomerPassword').value = '';
-            
-            showNotification('✅ Customer added successfully', 'success');
-            
-            // Refresh users list
-            showUsersSection();
-        };
-
-        // Packages Section
-        window.showPackagesSection = function() {
-            const mainContent = document.querySelector('.admin-main');
-            if (!mainContent) return;
-            
-            // Build packages list HTML
-            let packagesHtml = '';
-            
-            if (packages.length === 0) {
-                packagesHtml = '<div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">No packages found.</div>';
-            } else {
-                packages.forEach(pkg => {
-                    packagesHtml += `
-                        <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 20px; margin-bottom: 15px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <h4 style="color: white; margin: 0 0 5px 0;">${pkg.name}</h4>
-                                    <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 13px;">$${pkg.price}/${pkg.duration || 'month'}</p>
-                                </div>
-                                <span class="expiry-green">Active</span>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-            
-            mainContent.innerHTML = `
-                <div class="dashboard-header">
-                    <h1 class="dashboard-title">📦 Packages & Pricing</h1>
-                    <p class="dashboard-subtitle">Manage subscription packages</p>
-                </div>
-                
-                <div class="section-card" style="margin-bottom: 25px;">
-                    <h3 class="section-title">➕ Create New Package</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                        <input type="text" id="newPackageName" placeholder="Package Name" style="padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-                        <input type="number" id="newPackagePrice" placeholder="Price ($)" style="padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-                        <input type="text" id="newPackageDuration" placeholder="Duration (e.g., 30 days)" style="padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-                        <button onclick="addNewPackage()" class="btn btn-success">Create Package</button>
-                    </div>
-                </div>
-                
-                <div class="section-card">
-                    <h3 class="section-title">📋 Package List (${packages.length})</h3>
-                    <div style="max-height: 600px; overflow-y: auto;">
-                        ${packagesHtml}
-                    </div>
-                </div>
-            `;
-        };
-
-        // Add New Package Function
-        window.addNewPackage = function() {
-            const name = document.getElementById('newPackageName').value;
-            const price = document.getElementById('newPackagePrice').value;
-            const duration = document.getElementById('newPackageDuration').value;
-            
-            if (!name || !price) {
-                showNotification('❌ Please fill required fields', 'error');
-                return;
-            }
-            
-            // Create new package
-            const newPackage = {
-                id: 'PKG_' + Date.now(),
-                name: name,
-                price: parseFloat(price),
-                duration: duration || '30 days',
-                features: '',
-                createdAt: new Date().toISOString()
-            };
-            
-            packages.push(newPackage);
-            
-            // Save to localStorage
-            localStorage.setItem('adminPackages', JSON.stringify(packages));
-            
-            // Clear form
-            document.getElementById('newPackageName').value = '';
-            document.getElementById('newPackagePrice').value = '';
-            document.getElementById('newPackageDuration').value = '';
-            
-            showNotification('✅ Package created successfully', 'success');
-            
-            // Refresh packages list
-            showPackagesSection();
-        };
-
-        // Devices Section
-        window.showDevicesSection = function() {
-            const mainContent = document.querySelector('.admin-main');
-            if (!mainContent) return;
-            
-            mainContent.innerHTML = `
-                <div class="dashboard-header">
-                    <h1 class="dashboard-title">📱 Device Management</h1>
-                    <p class="dashboard-subtitle">Manage customer device authorizations</p>
-                </div>
-                
-                <div class="section-card">
-                    <h3 class="section-title">🔄 Device Reset</h3>
-                    <p style="color: rgba(255,255,255,0.7); margin-bottom: 20px;">
-                        Reset device authorization for customers who need to add a new TV. This will allow them to register a new device.
-                    </p>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                        <input type="text" id="resetCustomerUsername" placeholder="Customer Username" style="padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-                        <button onclick="resetCustomerDevice()" class="btn btn-warning">Reset Device Lock</button>
-                    </div>
-                    <div id="resetResult" style="margin-top: 20px;"></div>
-                </div>
-            `;
-        };
-
-        // Reset Customer Device Function
-        window.resetCustomerDevice = function() {
-            const username = document.getElementById('resetCustomerUsername').value;
-            
-            if (!username) {
-                showNotification('❌ Please enter customer username', 'error');
-                return;
-            }
-            
-            // Find customer
-            const customer = customers.find(c => c.username === username);
-            
-            if (!customer) {
-                document.getElementById('resetResult').innerHTML = '<p style="color: #f44336;">❌ Customer not found</p>';
-                return;
-            }
-            
-            // Set reset flag - client will check this on next login
-            customer.resetDeviceLock = Date.now();
-            
-            // Save updated customer data
-            localStorage.setItem('adminCustomers', JSON.stringify(customers));
-            
-            document.getElementById('resetResult').innerHTML = `
-                <p style="color: #4caf50;">
-                    ✅ Device lock reset for ${customer.name} (${customer.username}). 
-                    They can now register a new device on their next login.
-                </p>
-            `;
-            
-            showNotification('✅ Device lock reset successfully', 'success');
-        };
-
-        // Resellers Section
-        window.showResellersSection = function() {
-            const mainContent = document.querySelector('.admin-main');
-            if (!mainContent) return;
-            
-            mainContent.innerHTML = `
-                <div class="dashboard-header">
-                    <h1 class="dashboard-title">🏢 Reseller Management</h1>
-                    <p class="dashboard-subtitle">Manage your resellers</p>
-                </div>
-                
-                <div class="section-card">
-                    <h3 class="section-title">📋 Reseller Accounts (12)</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
-                        <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px;">
-                            <h4 style="color: white;">Reseller 001</h4>
-                            <p style="color: rgba(255,255,255,0.7); font-size: 12px;">Username: reseller001</p>
-                            <span class="expiry-green" style="margin-top: 8px;">Active</span>
-                        </div>
-                        <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px;">
-                            <h4 style="color: white;">Reseller 002</h4>
-                            <p style="color: rgba(255,255,255,0.7); font-size: 12px;">Username: reseller002</p>
-                            <span class="expiry-green" style="margin-top: 8px;">Active</span>
-                        </div>
-                        <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px;">
-                            <h4 style="color: white;">Reseller 003</h4>
-                            <p style="color: rgba(255,255,255,0.7); font-size: 12px;">Username: reseller003</p>
-                            <span class="expiry-green" style="margin-top: 8px;">Active</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        };
-
-        // Settings Section
-        window.showSettingsSection = function() {
-            const mainContent = document.querySelector('.admin-main');
-            if (!mainContent) return;
-            
-            mainContent.innerHTML = `
-                <div class="dashboard-header">
-                    <h1 class="dashboard-title">⚙️ Settings</h1>
-                    <p class="dashboard-subtitle">Configure admin panel settings</p>
-                </div>
-                
-                <div class="section-card" style="margin-bottom: 25px;">
-                    <h3 class="section-title">🔗 Sync Configuration</h3>
-                    <div style="display: grid; gap: 15px;">
-                        <input type="text" id="syncUrl" placeholder="GitHub Sync URL" value="${localStorage.getItem('githubSyncUrl') || ''}" style="padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
-                        <button onclick="saveSyncUrl()" class="btn btn-primary">Save Sync URL</button>
-                    </div>
-                </div>
-                
-                <div class="section-card">
-                    <h3 class="section-title">🧹 Cache Management</h3>
-                    <p style="color: rgba(255,255,255,0.7); margin-bottom: 15px;">
-                        Clear cached data to ensure fresh data is loaded from sync source.
-                    </p>
-                    <div style="display: flex; gap: 10px;">
-                        <button onclick="forceRefreshData()" class="btn btn-success">🔄 Force Refresh Data</button>
-                        <button onclick="clearAllCache()" class="btn btn-warning">🗑️ Clear All Cache</button>
-                    </div>
-                </div>
-            `;
-        };
-
-        // Save Sync URL
-        window.saveSyncUrl = function() {
-            const url = document.getElementById('syncUrl').value;
-            localStorage.setItem('githubSyncUrl', url);
-            showNotification('✅ Sync URL saved', 'success');
-        };
-
-        // Force Refresh Data
-        window.forceRefreshData = async function() {
-            showNotification('🔄 Refreshing data...', 'info');
-            clearAdminCache();
-            await loadFreshData();
-            updateDashboardStats();
-            showNotification('✅ Data refreshed successfully', 'success');
-        };
-
-        // Clear All Cache
-        window.clearAllCache = function() {
-            clearAdminCache();
-            showNotification('🗑️ All cache cleared', 'success');
-        };
-
-        // Content Section
-        window.showContentSection = function() {
-            const mainContent = document.querySelector('.admin-main');
-            if (!mainContent) return;
-            
-            mainContent.innerHTML = `
-                <div class="dashboard-header">
-                    <h1 class="dashboard-title">📺 Content Library</h1>
-                    <p class="dashboard-subtitle">Manage your content library</p>
-                </div>
-                
-                <div class="section-card">
-                    <h3 class="section-title">📡 Content Sources</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-                        <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 20px;">
-                            <h4 style="color: white;">🛰️ Satellite / QAM</h4>
-                            <p style="color: rgba(255,255,255,0.7); font-size: 13px;">Live TV from satellite receivers</p>
-                            <span class="expiry-green" style="margin-top: 10px;">400 Channels</span>
-                        </div>
-                        <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 20px;">
-                            <h4 style="color: white;">💻 Plex Server</h4>
-                            <p style="color: rgba(255,255,255,0.7); font-size: 13px;">Movies and TV shows from Plex</p>
-                            <span class="expiry-green" style="margin-top: 10px;">Configured</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        };
-
-        // Show Notification
-        window.showNotification = function(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: ${type === 'error' ? '#f44336' : type === 'success' ? '#4caf50' : '#2196f3'};
-                color: white;
-                padding: 15px 25px;
-                border-radius: 10px;
-                z-index: 10001;
-                animation: slideIn 0.3s ease;
-                max-width: 400px;
-            `;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.animation = 'slideOut 0.3s ease';
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
-        };
-
-        // Add animation styles
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideIn {
-                from { transform: translateX(400px); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-            @keyframes slideOut {
-                from { transform: translateX(0); opacity: 1; }
-                to { transform: translateX(400px); opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
-
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', initializeData);
-    </script>
-</body>
-</html>
+                        
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button onclick="testSatelliteConnection()" class="btn btn-success">🛰️ Test Satellite</button>
+                            <button onclick="configureQAMChannels()" class="btn
