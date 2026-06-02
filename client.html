@@ -326,8 +326,7 @@
                     // Calculate max devices based on subscription
                     const plan = customer.plan || '';
                     let maxDevices = 1; // Default to 1 device (Basic TV)
-                    if (plan.includes('Basic') && plan.includes('2nd') && plan.includes('3rd')) {
-                        maxDevices = 3;
+                    if (plan.includes('Basic') && (plan.includes('2nd') || plan.includes('Second') || plan.includes('3rd') || plan.includes('Third'))) {
                     } else if (plan.includes('Basic') && plan.includes('2nd')) {
                         maxDevices = 2;
                     }
