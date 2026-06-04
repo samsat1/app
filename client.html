@@ -326,7 +326,8 @@
                     // Calculate max devices based on subscription
                     const plan = customer.plan || '';
                     let maxDevices = 1; // Default to 1 device (Basic TV)
-                    if (plan.includes('Basic') && (plan.includes('2nd') || plan.includes('Second') || plan.includes('3rd') || plan.includes('Third'))) {
+                    if (plan.includes('Basic') && plan.includes('2nd') && plan.includes('3rd')) {
+                        maxDevices = 3;
                     } else if (plan.includes('Basic') && plan.includes('2nd')) {
                         maxDevices = 2;
                     }
@@ -6870,9 +6871,6 @@
         function showDeviceLimitError(maxDevices) {
             const errorMsg = `Maximum devices reached!\n\n` +
                 `Your subscription allows ${maxDevices} TV${maxDevices > 1 ? '(s)' : ''}.\n\n` +
-                `• 1 TV subscription = 1 device only\n` +
-                `• 2 TV subscription = 2 devices only\n` +
-                `• 3 TV subscription = 3 devices only\n\n` +
                 `To add this TV, please contact your administrator to:\n` +
                 `• Upgrade your subscription, or\n` +
                 `• Remove a registered TV from your account`;
@@ -7065,16 +7063,6 @@
             
             // Auto-sync on startup - WAIT for it to complete before loading content
             console.log('🔄 Starting auto-sync...');
-            
-            // FORCE REFRESH: Clear old caches on every startup to get fresh channel list
-            console.log('🔄 Force refreshing channel data...');
-            localStorage.removeItem('plexMoviesCache');
-            localStorage.removeItem('plexAdultCache');
-            localStorage.removeItem('plexArabicCache');
-            localStorage.removeItem('plexCachedMovies');
-            localStorage.removeItem('plexCachedAdult');
-            localStorage.removeItem('plexCachedArabic');
-            
             const syncResult = await autoSyncData();
             if (syncResult) {
                 console.log('✅ Auto-sync completed, reloading Plex content...');
