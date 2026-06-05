@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-05T00:51:09.727Z",
+  "exportDate": "2026-06-05T00:53:11.344Z",
   "customers": [
     {
       "id": "CUST_1780620419690",
@@ -19,6 +19,24 @@
       "duration": "9 Months",
       "durationMonths": 9,
       "createdAt": "2026-06-05T00:46:59.691Z"
+    },
+    {
+      "id": "CUST_1780620784467",
+      "username": "samM",
+      "name": "samM",
+      "phone": "888888",
+      "plan": "Basic TV Package, 2nd TV",
+      "addons": "Movies Package, Adult Content Package",
+      "monthlyPrice": 20,
+      "totalPrice": 180,
+      "expiryDate": "2027-03-05",
+      "password": "123456",
+      "macAddress": "",
+      "adultPassword": "112233",
+      "status": "active",
+      "duration": "9 Months",
+      "durationMonths": 9,
+      "createdAt": "2026-06-05T00:53:04.467Z"
     }
   ],
   "clientAuthCustomers": [
@@ -168,6 +186,24 @@
       "duration": "9 Months",
       "durationMonths": 9,
       "createdAt": "2026-06-05T00:46:59.691Z"
+    },
+    {
+      "id": "CUST_1780620784467",
+      "username": "samM",
+      "name": "samM",
+      "phone": "888888",
+      "plan": "Basic TV Package, 2nd TV",
+      "addons": "Movies Package, Adult Content Package",
+      "monthlyPrice": 20,
+      "totalPrice": 180,
+      "expiryDate": "2027-03-05",
+      "password": "123456",
+      "macAddress": "",
+      "adultPassword": "112233",
+      "status": "active",
+      "duration": "9 Months",
+      "durationMonths": 9,
+      "createdAt": "2026-06-05T00:53:04.467Z"
     }
   ],
   "packages": [
