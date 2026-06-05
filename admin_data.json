@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-05T00:26:16.995Z",
+  "exportDate": "2026-06-05T00:42:28.140Z",
   "customers": [
     {
       "id": "CUST_1780539558137",
@@ -535,24 +535,6 @@
       "year": 2025,
       "duration": 7221888,
       "ratingKey": "2853"
-    },
-    {
-      "id": "plex_5_3306",
-      "name": "Good News",
-      "description": "In the 1970s, a covert team is determined to land a hijacked plane by any means necessary.",
-      "category": "movie",
-      "isAdult": false,
-      "isArabic": false,
-      "adult": false,
-      "arabic": false,
-      "type": "mp4",
-      "thumb": "http://192.168.1.100:32400/library/metadata/3306/thumb/1780041515?X-Plex-Token=ixdVSv_KT-sfs_btZozb",
-      "art": "http://192.168.1.100:32400/library/metadata/3306/art/1780041515?X-Plex-Token=ixdVSv_KT-sfs_btZozb",
-      "url": "http://192.168.1.100:32400/library/parts/5398/1780039293/file.mp4?X-Plex-Token=ixdVSv_KT-sfs_btZozb",
-      "streamingMode": "on-demand",
-      "year": 2025,
-      "duration": 8332365,
-      "ratingKey": "3306"
     },
     {
       "id": "plex_5_2861",
