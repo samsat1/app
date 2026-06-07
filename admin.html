@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 8.2 - Added Local URL Field + Fixed URL Building 2025-12-06 -->
+<!-- VERSION 8.4 - Enhanced Reseller Management with Credit History 2026-03-19 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -937,10 +937,10 @@
                     type: 'live_tv',
                     source: 'satellite_qam_udp',
                     streamingMode: 'always_streaming',
-                    description: 'Live TV from Satellite + Movies from Plex',
-                    libraries: ['Live TV', 'Movies'],
-                    channels: ['Live TV', 'Movies'],
-                    features: ['Live TV', 'News', 'Entertainment', 'Local Channels', 'Movies'],
+                    description: 'Live TV from Satellite → QAM → UDP → Plex',
+                    libraries: ['Live TV'],
+                    channels: ['Live TV'],
+                    features: ['Live TV', 'News', 'Entertainment', 'Local Channels'],
                     accessLevel: 1,
                     passwordProtected: false,
                     plexPath: '/plex/live-tv/',
@@ -991,37 +991,7 @@
                     plexPath: '/plex/library/adult/',
                     networkPath: 'PC Library → Plex → Mikrotik → OLT → ONU',
                     requiresBasicTV: false,
-                    adultPIN: '1818'
-                },
-                'sports_plus': {
-                    name: 'Sports Plus Package',
-                    type: 'live_tv',
-                    source: 'satellite_qam_udp',
-                    streamingMode: 'always_streaming',
-                    description: 'Extra Sports Live TV from Satellite → QAM → UDP → Plex',
-                    libraries: ['Live TV'],
-                    channels: ['Live TV', 'Sports Plus'],
-                    features: ['Sports Live', 'Extra Channels', 'Premium Sports'],
-                    accessLevel: 2,
-                    passwordProtected: false,
-                    plexPath: '/plex/live-tv/sports-plus/',
-                    networkPath: 'Satellite → QAM Modulator → UDP → Plex → Mikrotik → OLT → ONU',
-                    requiresBasicTV: true
-                },
-                'arabic': {
-                    name: 'Arabic Package',
-                    type: 'vod',
-                    source: 'pc_library_plex',
-                    streamingMode: 'on_demand',
-                    description: 'Arabic content from PC Library folder in Plex',
-                    libraries: ['Arabic'],
-                    channels: [],
-                    features: ['Arabic Library', 'On-Demand', 'Arabic Movies', 'Arabic Series'],
-                    accessLevel: 3,
-                    passwordProtected: false,
-                    plexPath: '/plex/library/arabic/',
-                    networkPath: 'PC Library → Plex → Mikrotik → OLT → ONU',
-                    requiresBasicTV: false
+                    adultPIN: '112233'
                 }
             },
 
@@ -1218,8 +1188,9 @@
         // Initialize the authentication system
         packageAuthenticationSystem.initialize();
 
-        // Admin credit transfer function
-        function sendCreditToReseller(resellerId, amount) {
+        // Admin credit transfer function with permanent history
+        // Credit history is stored permanently and CANNOT be deleted by anyone
+        function sendCreditToReseller(resellerId, amount, note = '') {
             if (!resellerId || !amount || amount <= 0) {
                 return { success: false, message: 'Please enter valid reseller ID and amount' };
             }
@@ -1232,19 +1203,137 @@
             
             // Update reseller wallet balance
             const reseller = resellers[resellerId];
-            reseller.walletBalance = (parseFloat(reseller.walletBalance) || 0) + parseFloat(amount);
+            const previousBalance = parseFloat(reseller.walletBalance) || 0;
+            const newBalance = previousBalance + parseFloat(amount);
+            reseller.walletBalance = newBalance;
             resellers[resellerId] = reseller;
             localStorage.setItem('resellerCredentials', JSON.stringify(resellers));
             
-            // Broadcast to reseller panels
+            // Also update RESELLER_ACCOUNTS for consistency
+            if (RESELLER_ACCOUNTS[resellerId]) {
+                RESELLER_ACCOUNTS[resellerId].walletBalance = newBalance;
+                saveResellerAccounts();
+            }
+            
+            // Create permanent credit transfer record (CANNOT BE DELETED)
+            const creditRecord = {
+                id: 'CREDIT_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                resellerId: resellerId,
+                resellerName: reseller.name || RESELLER_ACCOUNTS[resellerId]?.name || resellerId,
+                amount: parseFloat(amount),
+                previousBalance: previousBalance,
+                newBalance: newBalance,
+                note: note || 'Credit transfer from admin',
+                transferredBy: 'admin',
+                timestamp: new Date().toISOString(),
+                date: new Date().toLocaleString(),
+                // Permanent flag - this record can never be deleted
+                permanent: true,
+                // Version for tracking
+                version: '1.0'
+            };
+            
+            // Get existing permanent credit history
+            let permanentCreditHistory = JSON.parse(localStorage.getItem('permanentCreditHistory') || '[]');
+            
+            // Add new record to permanent history
+            permanentCreditHistory.push(creditRecord);
+            
+            // Save to localStorage (admin side)
+            localStorage.setItem('permanentCreditHistory', JSON.stringify(permanentCreditHistory));
+            
+            // Also save to GitHub-ready format for syncing
+            saveCreditTransferToGitHub(creditRecord);
+            
+            // Broadcast to reseller panels with full record
             localStorage.setItem('creditTransfer', JSON.stringify({
                 resellerId: resellerId,
                 amount: amount,
-                newBalance: reseller.walletBalance,
-                timestamp: Date.now()
+                newBalance: newBalance,
+                timestamp: Date.now(),
+                recordId: creditRecord.id,
+                permanent: true
             }));
             
-            return { success: true, message: `$${amount} credited to ${resellerId}` };
+            // Update the credit section if visible
+            updateCreditOverview();
+            
+            return { success: true, message: `$${amount} credited to ${resellerId}`, recordId: creditRecord.id };
+        }
+        
+        // Save credit transfer to GitHub for syncing (reseller panel reads from here)
+        function saveCreditTransferToGitHub(creditRecord) {
+            try {
+                // Get existing transfers from GitHub data
+                let githubTransfers = JSON.parse(localStorage.getItem('githubCreditTransfers') || '[]');
+                
+                // Add new record
+                githubTransfers.push(creditRecord);
+                
+                // Keep only last 500 records in local storage (but permanent history is complete)
+                if (githubTransfers.length > 500) {
+                    githubTransfers = githubTransfers.slice(-500);
+                }
+                
+                localStorage.setItem('githubCreditTransfers', JSON.stringify(githubTransfers));
+                
+                // Mark for GitHub sync
+                localStorage.setItem('creditTransferPending', JSON.stringify({
+                    action: 'add',
+                    record: creditRecord,
+                    timestamp: Date.now()
+                }));
+                
+                console.log('💾 Credit transfer saved for GitHub sync:', creditRecord.id);
+            } catch (e) {
+                console.error('Failed to save credit transfer:', e);
+            }
+        }
+        
+        // Get all permanent credit history (for admin viewing)
+        function getPermanentCreditHistory(resellerId = null) {
+            const history = JSON.parse(localStorage.getItem('permanentCreditHistory') || '[]');
+            
+            if (resellerId) {
+                return history.filter(h => h.resellerId === resellerId);
+            }
+            
+            return history;
+        }
+        
+        // Display permanent credit history in admin panel
+        function displayPermanentCreditHistory() {
+            const history = getPermanentCreditHistory();
+            const container = document.getElementById('permanentCreditHistoryList');
+            
+            if (!container) return;
+            
+            if (history.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">No credit transfers yet</p>';
+                return;
+            }
+            
+            // Sort by date descending (newest first)
+            const sorted = [...history].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            container.innerHTML = sorted.map(record => `
+                <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; margin-bottom: 10px; border-left: 4px solid #4caf50;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 600; color: #4caf50;">+$${record.amount.toFixed(2)}</span>
+                        <span style="font-size: 11px; color: rgba(255,255,255,0.5);">${record.date}</span>
+                    </div>
+                    <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-bottom: 5px;">
+                        Reseller: <strong>${record.resellerName}</strong> (${record.resellerId})
+                    </div>
+                    <div style="font-size: 12px; color: rgba(255,255,255,0.6);">
+                        Balance: $${record.previousBalance.toFixed(2)} → $${record.newBalance.toFixed(2)}
+                    </div>
+                    ${record.note ? `<div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 5px; font-style: italic;">"${record.note}"</div>` : ''}
+                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <span style="font-size: 10px; color: rgba(255,255,255,0.3);">ID: ${record.id} | Permanent Record</span>
+                    </div>
+                </div>
+            `).join('');
         }
 
         // Mobile menu toggle
@@ -1345,6 +1434,8 @@
             const secondTVPrice = document.getElementById('secondTVPrice')?.value;
             const thirdTVPrice = document.getElementById('thirdTVPrice')?.value;
             const sportsPrice = document.getElementById('sportsPrice')?.value;
+            const sportsPlusPrice = document.getElementById('sportsPlusPrice')?.value;
+            const arabicPrice = document.getElementById('arabicPrice')?.value;
             const moviesPrice = document.getElementById('moviesPrice')?.value;
             const adultPackagePrice = document.getElementById('adultPackagePrice')?.value;
             
@@ -1374,12 +1465,17 @@
                 const existingPackages = packages.filter(pkg => {
                     const existingName = pkg.name.toLowerCase().trim();
                     return existingName === normalizedName ||
-                           // Handle similar package types
+                           // Handle similar package types (but NOT sports vs sports plus)
                            (normalizedName.includes('basic') && existingName.includes('basic')) ||
                            (normalizedName.includes('adult') && existingName.includes('adult')) ||
                            (normalizedName.includes('movies') && existingName.includes('movies')) ||
-                           (normalizedName.includes('sports') && existingName.includes('sports')) ||
-                           false; // Removed premium check
+                           // Sports and Sports Plus are DIFFERENT packages
+                           // Match exact "sports" (but not "sports plus")
+                           (normalizedName === 'sports' && existingName === 'sports') ||
+                           (normalizedName.includes('sports ') && existingName.includes('sports ')) ||
+                           // Match exact "sports plus" (with anything after)
+                           (normalizedName.startsWith('sports plus') && existingName.startsWith('sports plus')) ||
+                           false;
                 });
                 
                 if (existingPackages.length > 0) {
@@ -3427,6 +3523,7 @@
                 if (data.plexToken) localStorage.setItem('plexToken', data.plexToken);
                 if (data.plexMoviesSection) localStorage.setItem('plexMoviesSection', data.plexMoviesSection);
                 if (data.plexAdultSection) localStorage.setItem('plexAdultSection', data.plexAdultSection);
+                if (data.plexArabicSection) localStorage.setItem('plexArabicSection', data.plexArabicSection);
                 
                 console.log('✅ Auto-load complete!');
                 showNotification('📥 Data loaded from GitHub', 'success');
@@ -3512,10 +3609,18 @@
                 
                 // Prepare data (clean JSON without special characters)
                 // NOTE: Don't include githubToken in the export - GitHub will revoke it from public repos!
+                
+                // Get Plex cache data for client viewing
+                const plexMoviesCache = JSON.parse(localStorage.getItem('plexMoviesCache') || '[]');
+                const plexAdultCache = JSON.parse(localStorage.getItem('plexAdultCache') || '[]');
+                const plexArabicCache = JSON.parse(localStorage.getItem('plexArabicCache') || '[]');
+                
                 const exportData = {
                     version: '1.0',
                     exportDate: new Date().toISOString(),
                     customers: JSON.parse(localStorage.getItem('adminCustomers') || '[]'),
+                    // Include reseller-created customers so they can sync to client panel
+                    clientAuthCustomers: JSON.parse(localStorage.getItem('clientAuthCustomers') || '[]'),
                     packages: JSON.parse(localStorage.getItem('adminPackages') || '[]'),
                     resellers: resellersData,
                     creditTransfers: creditTransfers,
@@ -3525,6 +3630,11 @@
                     plexToken: localStorage.getItem('plexToken') || '',
                     plexMoviesSection: localStorage.getItem('plexMoviesSection') || '',
                     plexAdultSection: localStorage.getItem('plexAdultSection') || '',
+                    plexArabicSection: localStorage.getItem('plexArabicSection') || '',
+                    // Include Plex cache so movies appear on second device before login
+                    plexMoviesCache: plexMoviesCache,
+                    plexAdultCache: plexAdultCache,
+                    plexArabicCache: plexArabicCache,
                     tvSyncUrl: `https://raw.githubusercontent.com/${username}/${repo}/main/admin_data.json`,
                     githubUsername: username,
                     githubRepo: repo
@@ -3689,7 +3799,8 @@
                         serverUrl: localStorage.getItem('plexServerUrl') || '',
                         token: localStorage.getItem('plexToken') || '',
                         moviesSection: localStorage.getItem('plexMoviesSection') || '',
-                        adultSection: localStorage.getItem('plexAdultSection') || ''
+                        adultSection: localStorage.getItem('plexAdultSection') || '',
+                        arabicSection: localStorage.getItem('plexArabicSection') || ''
                     },
                     contentMappings: JSON.parse(localStorage.getItem('packageContentMappings') || '{}'),
                     adminCredentials: JSON.parse(localStorage.getItem('adminPasswords') || '{}'),
@@ -3752,6 +3863,7 @@
                         if (data.plexConfig.token) localStorage.setItem('plexToken', data.plexConfig.token);
                         if (data.plexConfig.moviesSection) localStorage.setItem('plexMoviesSection', data.plexConfig.moviesSection);
                         if (data.plexConfig.adultSection) localStorage.setItem('plexAdultSection', data.plexConfig.adultSection);
+                        if (data.plexConfig.arabicSection) localStorage.setItem('plexArabicSection', data.plexConfig.arabicSection);
                     }
                     if (data.contentMappings) {
                         localStorage.setItem('packageContentMappings', JSON.stringify(data.contentMappings));
@@ -4300,9 +4412,9 @@
             .then(data => {
                 const libraries = [];
                 
-                // Process actual Plex library sections
-                if (data.MediaContainer && data.MediaContainer.LibrarySection) {
-                    data.MediaContainer.LibrarySection.forEach(section => {
+                // Process actual Plex library sections (API returns Directory, not LibrarySection)
+                if (data.MediaContainer && data.MediaContainer.Directory) {
+                    data.MediaContainer.Directory.forEach(section => {
                         // Filter for movie and show libraries
                         if (section.type === 'movie' || section.type === 'show') {
                             libraries.push({
@@ -4317,57 +4429,40 @@
                             });
                         }
                     });
+                } else if (data.MediaContainer && data.MediaContainer.LibrarySection) {
+                    // Fallback for other response formats
+                    data.MediaContainer.LibrarySection.forEach(section => {
+                        if (section.type === 'movie' || section.type === 'show') {
+                            libraries.push({
+                                id: section.key,
+                                name: section.title,
+                                type: section.type,
+                                count: section.viewCount || 0,
+                                isAdult: section.title.toLowerCase().includes('adult') || 
+                                        section.title.toLowerCase().includes('xxx') ||
+                                        section.title.toLowerCase().includes('18+')
+                            });
+                        }
+                    });
                 }
                 
-                // If no real libraries found, create from your actual folders
+                // If no movie/show libraries found, show message to user
                 if (libraries.length === 0) {
-                    console.log('📂 No library sections found, checking for your actual folders...');
-                    
-                    // Check for your actual folders that exist in Plex
-                    libraries.push({
-                        id: 'movies_folder',
-                        name: 'Movies',
-                        type: 'movie',
-                        count: 0,
-                        isAdult: false,
-                        actualFolder: true
-                    });
-                    
-                    libraries.push({
-                        id: 'arabic_folder',
-                        name: 'Arabic',
-                        type: 'movie',
-                        count: 0,
-                        isAdult: false,
-                        actualFolder: true
-                    });
-                    
-                    libraries.push({
-                        id: 'adult_folder', 
-                        name: 'Adult',
-                        type: 'movie',
-                        count: 0,
-                        isAdult: true,
-                        actualFolder: true
-                    });
+                    console.log('📂 No movie or show library sections found in Plex');
+                    console.log('🔍 Plex API Response:', data);
+                    showNotification('⚠️ No movie/show libraries found. Please create a Movies library section in your Plex server first.', 'warning');
+                    return;
                 }
                 
-                // Now get actual content counts for movies, arabic and adult folders
+                // Now get actual content counts for movies and adult folders
                 const moviesLibrary = libraries.find(lib => 
                     lib.name.toLowerCase().includes('movie') || 
-                    lib.name.toLowerCase().includes('videos') ||
-                    (lib.actualFolder && lib.name === 'Movies')
-                );
-                
-                const arabicLibrary = libraries.find(lib => 
-                    lib.name.toLowerCase().includes('arabic') ||
-                    (lib.actualFolder && lib.name === 'Arabic')
+                    lib.name.toLowerCase().includes('videos')
                 );
                 
                 const adultLibrary = libraries.find(lib => 
                     lib.isAdult || 
-                    lib.name.toLowerCase().includes('adult') ||
-                    (lib.actualFolder && lib.name === 'Adult')
+                    lib.name.toLowerCase().includes('adult')
                 );
                 
                 // Fetch actual content count for Movies via CORS proxy
@@ -4384,22 +4479,6 @@
                         console.log(`📊 Real Movies count: ${moviesLibrary.count}`);
                     })
                     .catch(err => console.log('Movies count fetch error:', err));
-                }
-                
-                // Fetch actual content count for Arabic via CORS proxy
-                if (arabicLibrary) {
-                    const arabicContentUrl = `${serverUrl}/library/sections/${arabicLibrary.id}/all?X-Plex-Token=${accessToken}`;
-                    fetch(getProxiedUrl(arabicContentUrl), {})
-                    .then(response => response.text())
-                    .then(xmlText => {
-                        // Count MediaContainer size for actual count
-                        const match = xmlText.match(/size="(\d+)"/);
-                        if (match) {
-                            arabicLibrary.count = parseInt(match[1]);
-                        }
-                        console.log(`📊 Real Arabic count: ${arabicLibrary.count}`);
-                    })
-                    .catch(err => console.log('Arabic count fetch error:', err));
                 }
                 
                 // Fetch actual content count for Adult via CORS proxy
@@ -4439,14 +4518,6 @@
                     { 
                         id: 'movies_folder',
                         name: 'Movies', 
-                        type: 'movie', 
-                        count: 0, 
-                        isAdult: false,
-                        note: 'Found in your Plex library'
-                    },
-                    { 
-                        id: 'arabic_folder', 
-                        name: 'Arabic', 
                         type: 'movie', 
                         count: 0, 
                         isAdult: false,
@@ -4493,7 +4564,9 @@
                     description: item.summary || 'No description available',
                     category: isAdult ? 'adult' : (isArabic ? 'arabic' : 'movie'),
                     isAdult: isAdult,
+                    isArabic: isArabic,
                     adult: isAdult,
+                    arabic: isArabic,
                     type: 'mp4',
                     thumb: item.thumb ? `${serverUrl}${item.thumb}?X-Plex-Token=${accessToken}` : '',
                     art: item.art ? `${serverUrl}${item.art}?X-Plex-Token=${accessToken}` : '',
@@ -4504,11 +4577,11 @@
                     ratingKey: item.ratingKey
                 }));
                 
-                // Store in localStorage for client to use - use correct cache key
+                // Store in localStorage for client to use - use correct cache key based on libraryType
                 let cacheKey;
-                if (isAdult) {
+                if (libraryType === 'adult') {
                     cacheKey = 'plexAdultCache';
-                } else if (isArabic) {
+                } else if (libraryType === 'arabic') {
                     cacheKey = 'plexArabicCache';
                 } else {
                     cacheKey = 'plexMoviesCache';
@@ -4560,26 +4633,21 @@
                     s.title.toLowerCase().includes('movie')
                 );
                 
-                // Find and cache Arabic library
-                const arabicLib = sections.find(s => 
-                    s.title.toLowerCase().includes('arabic')
-                );
-                
                 // Find and cache Adult library
                 const adultLib = sections.find(s => 
                     s.title.toLowerCase().includes('adult')
                 );
                 
-                let moviesCount = 0, arabicCount = 0, adultCount = 0;
+                // Find and cache Arabic library
+                const arabicLib = sections.find(s => 
+                    s.title.toLowerCase().includes('arabic')
+                );
+                
+                let moviesCount = 0, adultCount = 0, arabicCount = 0;
                 
                 if (moviesLib) {
                     const content = await cacheLibraryContent(serverUrl, accessToken, moviesLib.key, 'movies');
                     moviesCount = content.length;
-                }
-                
-                if (arabicLib) {
-                    const content = await cacheLibraryContent(serverUrl, accessToken, arabicLib.key, 'arabic');
-                    arabicCount = content.length;
                 }
                 
                 if (adultLib) {
@@ -4587,7 +4655,12 @@
                     adultCount = content.length;
                 }
                 
-                showNotification(`✅ Cached ${moviesCount} movies, ${arabicCount} Arabic, and ${adultCount} adult videos for client`, 'success');
+                if (arabicLib) {
+                    const content = await cacheLibraryContent(serverUrl, accessToken, arabicLib.key, 'arabic');
+                    arabicCount = content.length;
+                }
+                
+                showNotification(`✅ Cached ${moviesCount} movies, ${adultCount} adult, and ${arabicCount} Arabic videos for client`, 'success');
                 
             } catch(error) {
                 console.error('Cache error:', error);
@@ -4687,28 +4760,25 @@
         function updateCacheCounts() {
             try {
                 const movies = JSON.parse(localStorage.getItem('plexMoviesCache')) || [];
-                const arabic = JSON.parse(localStorage.getItem('plexArabicCache')) || [];
                 const adult = JSON.parse(localStorage.getItem('plexAdultCache')) || [];
+                const arabic = JSON.parse(localStorage.getItem('plexArabicCache')) || [];
                 
                 document.getElementById('moviesCount').textContent = `Movies cached: ${movies.length}`;
-                document.getElementById('arabicCount').textContent = `Arabic videos cached: ${arabic.length}`;
                 document.getElementById('adultCount').textContent = `Adult videos cached: ${adult.length}`;
+                if (document.getElementById('arabicCount')) {
+                    document.getElementById('arabicCount').textContent = `Arabic videos cached: ${arabic.length}`;
+                }
             } catch(e) {}
         }
         
         function viewCachedContent() {
             const movies = JSON.parse(localStorage.getItem('plexMoviesCache')) || [];
-            const arabic = JSON.parse(localStorage.getItem('plexArabicCache')) || [];
             const adult = JSON.parse(localStorage.getItem('plexAdultCache')) || [];
+            const arabic = JSON.parse(localStorage.getItem('plexArabicCache')) || [];
             
             let html = '<strong>🎬 Movies (' + movies.length + '):</strong><br>';
             movies.forEach((m, i) => {
                 html += `${i+1}. ${m.name}<br>`;
-            });
-            
-            html += '<br><strong>🕌 Arabic (' + arabic.length + '):</strong><br>';
-            arabic.forEach((a, i) => {
-                html += `${i+1}. ${a.name}<br>`;
             });
             
             html += '<br><strong>🔞 Adult (' + adult.length + '):</strong><br>';
@@ -4716,7 +4786,12 @@
                 html += `${i+1}. ${a.name}<br>`;
             });
             
-            if (movies.length === 0 && arabic.length === 0 && adult.length === 0) {
+            html += '<br><strong>🔶 Arabic (' + arabic.length + '):</strong><br>';
+            arabic.forEach((a, i) => {
+                html += `${i+1}. ${a.name}<br>`;
+            });
+            
+            if (movies.length === 0 && adult.length === 0 && arabic.length === 0) {
                 html = 'No cached content. Add videos using the forms above.';
             }
             
@@ -4727,11 +4802,8 @@
         function clearCachedContent() {
             if (confirm('Are you sure you want to clear all cached videos?')) {
                 localStorage.removeItem('plexMoviesCache');
-                localStorage.removeItem('plexArabicCache');
                 localStorage.removeItem('plexAdultCache');
-                localStorage.removeItem('plexCachedMovies');
-                localStorage.removeItem('plexCachedArabic');
-                localStorage.removeItem('plexCachedAdult');
+                localStorage.removeItem('plexArabicCache');
                 updateCacheCounts();
                 document.getElementById('cachedContentPreview').style.display = 'none';
                 showNotification('🗑️ All cached content cleared', 'info');
@@ -4741,11 +4813,11 @@
         // Export cache data for local client use
         function exportCacheData() {
             const movies = JSON.parse(localStorage.getItem('plexMoviesCache') || '[]');
-            const arabic = JSON.parse(localStorage.getItem('plexArabicCache') || '[]');
             const adult = JSON.parse(localStorage.getItem('plexAdultCache') || '[]');
+            const arabic = JSON.parse(localStorage.getItem('plexArabicCache') || '[]');
             const plexConfig = JSON.parse(localStorage.getItem('plexConfig') || '{}');
             
-            if (movies.length === 0 && arabic.length === 0 && adult.length === 0) {
+            if (movies.length === 0 && adult.length === 0 && arabic.length === 0) {
                 showNotification('❌ No cached content to export', 'error');
                 return;
             }
@@ -4755,11 +4827,11 @@
                 exportDate: new Date().toISOString(),
                 plexConfig: plexConfig,
                 plexMoviesCache: movies,
-                plexArabicCache: arabic,
                 plexAdultCache: adult,
+                plexArabicCache: arabic,
                 plexCachedMovies: movies,
-                plexCachedArabic: arabic,
-                plexCachedAdult: adult
+                plexCachedAdult: adult,
+                plexCachedArabic: arabic
             };
             
             const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
@@ -4770,7 +4842,7 @@
             a.click();
             URL.revokeObjectURL(url);
             
-            showNotification(`📤 Exported ${movies.length} movies + ${arabic.length} Arabic + ${adult.length} adult videos`, 'success');
+            showNotification(`📤 Exported ${movies.length} movies + ${adult.length} adult + ${arabic.length} Arabic videos`, 'success');
         }
         
         // ========== IMPORT FROM PLEX XML ==========
@@ -4781,9 +4853,9 @@
             localUrl: localStorage.getItem('plexLocalUrl') || 'http://127.0.0.1:32400',
             token: localStorage.getItem('plexToken') || '',
             sections: {
-                movies: localStorage.getItem('plexMoviesSection') || '',
-                arabic: localStorage.getItem('plexArabicSection') || '',
-                adult: localStorage.getItem('plexAdultSection') || ''
+                movies: parseInt(localStorage.getItem('plexMoviesSection')) || 26,
+                adult: parseInt(localStorage.getItem('plexAdultSection')) || 21,
+                arabic: parseInt(localStorage.getItem('plexArabicSection')) || 7
             }
         };
         
@@ -4858,10 +4930,10 @@
             let sectionId;
             if (libraryType === 'movies') {
                 sectionId = PLEX_CONFIG.sections.movies;
-            } else if (libraryType === 'arabic') {
-                sectionId = PLEX_CONFIG.sections.arabic;
             } else if (libraryType === 'adult') {
                 sectionId = PLEX_CONFIG.sections.adult;
+            } else if (libraryType === 'arabic') {
+                sectionId = PLEX_CONFIG.sections.arabic;
             }
             
             try {
@@ -4950,12 +5022,11 @@
             let section;
             if (type === 'movies') {
                 section = PLEX_CONFIG.sections.movies;
-            } else if (type === 'arabic') {
-                section = PLEX_CONFIG.sections.arabic;
             } else if (type === 'adult') {
                 section = PLEX_CONFIG.sections.adult;
+            } else if (type === 'arabic') {
+                section = PLEX_CONFIG.sections.arabic;
             }
-            
             // Use localhost since Plex is running locally
             const url = `${PLEX_CONFIG.localUrl}/library/sections/${section}/all?X-Plex-Token=${PLEX_CONFIG.token}`;
             
@@ -5531,8 +5602,8 @@ Network: Always Streaming → Optimized for instant access`;
             const thirdTV = document.getElementById('thirdTVCheckbox');
             const sportsAddon = document.getElementById('sportsAddon');
             const sportsPlusAddon = document.getElementById('sportsPlusAddon');
-            const moviesAddon = document.getElementById('moviesAddon');
             const arabicAddon = document.getElementById('arabicAddon');
+            const moviesAddon = document.getElementById('moviesAddon');
             const adultAddon = document.getElementById('adultAddon');
             
             const customerName = document.getElementById('customerName')?.value;
@@ -5541,7 +5612,7 @@ Network: Always Streaming → Optimized for instant access`;
             const customerExpiry = document.getElementById('customerExpiry')?.value;
             const customerPassword = document.getElementById('customerPassword')?.value;
             const customerMacAddress = document.getElementById('customerMacAddress')?.value?.toUpperCase()?.trim() || '';
-            const customerAdultPassword = document.getElementById('customerAdultPassword')?.value || '1818';
+            const customerAdultPassword = document.getElementById('customerAdultPassword')?.value || '112233';
             const resetDeviceLock = document.getElementById('resetDeviceLock')?.checked || false;
             
             if (!customerName || !customerUsername || !customerExpiry || !customerPassword) {
@@ -5570,8 +5641,8 @@ Network: Always Streaming → Optimized for instant access`;
                 const selectedAddons = [];
                 if (sportsAddon && sportsAddon.checked) selectedAddons.push('Sports');
                 if (sportsPlusAddon && sportsPlusAddon.checked) selectedAddons.push('Sports Plus');
-                if (moviesAddon && moviesAddon.checked) selectedAddons.push('Movies');
                 if (arabicAddon && arabicAddon.checked) selectedAddons.push('Arabic');
+                if (moviesAddon && moviesAddon.checked) selectedAddons.push('Movies');
                 if (adultAddon && adultAddon.checked) selectedAddons.push('Adult Content');
                 
                 if (selectedAddons.length > 0) {
@@ -5580,15 +5651,15 @@ Network: Always Streaming → Optimized for instant access`;
             } else {
                 // If Basic TV is not selected, check if any addons are somehow selected (shouldn't be possible with UI)
                 const addonChecked = (sportsAddon && sportsAddon.checked) || (sportsPlusAddon && sportsPlusAddon.checked) || 
-                                     (moviesAddon && moviesAddon.checked) || (arabicAddon && arabicAddon.checked) ||
+                                     (arabicAddon && arabicAddon.checked) || (moviesAddon && moviesAddon.checked) || 
                                      (adultAddon && adultAddon.checked);
                 if (addonChecked) {
                     showNotification('🚨 CRITICAL ERROR: Addons cannot be selected without Basic TV Package! This should not be possible.', 'error');
                     // Reset all addons as safety measure
                     if (sportsAddon) sportsAddon.checked = false;
                     if (sportsPlusAddon) sportsPlusAddon.checked = false;
-                    if (moviesAddon) moviesAddon.checked = false;
                     if (arabicAddon) arabicAddon.checked = false;
+                    if (moviesAddon) moviesAddon.checked = false;
                     if (adultAddon) adultAddon.checked = false;
                     updateDeviceSelection();
                     return;
@@ -5621,8 +5692,8 @@ Network: Always Streaming → Optimized for instant access`;
             const selectedAddons = [];
             if (document.getElementById('sportsAddon')?.checked) selectedAddons.push('Sports Package');
             if (document.getElementById('sportsPlusAddon')?.checked) selectedAddons.push('Sports Plus Package');
-            if (document.getElementById('moviesAddon')?.checked) selectedAddons.push('Movies Package');
             if (document.getElementById('arabicAddon')?.checked) selectedAddons.push('Arabic Package');
+            if (document.getElementById('moviesAddon')?.checked) selectedAddons.push('Movies Package');
             if (document.getElementById('adultAddon')?.checked) selectedAddons.push('Adult Content Package');
             
             // Calculate total price and duration
@@ -5685,6 +5756,23 @@ Network: Always Streaming → Optimized for instant access`;
                         durationMonths: calculation.durationMonths,
                         updatedAt: new Date().toISOString()
                     };
+                    
+                    // ALSO update in clientAuthCustomers for client login
+                    const updatedCustomer = window.customers[customerIndex];
+                    const clientAuthCustomers = JSON.parse(localStorage.getItem('clientAuthCustomers') || '[]');
+                    const clientAuthIndex = clientAuthCustomers.findIndex(c => c.id === updatedCustomer.id);
+                    if (clientAuthIndex !== -1) {
+                        clientAuthCustomers[clientAuthIndex] = updatedCustomer;
+                        localStorage.setItem('clientAuthCustomers', JSON.stringify(clientAuthCustomers));
+                    }
+                    
+                    // Also update in iptvCustomers
+                    const globalCustomers = JSON.parse(localStorage.getItem('iptvCustomers') || '[]');
+                    const globalIndex = globalCustomers.findIndex(c => c.id === updatedCustomer.id);
+                    if (globalIndex !== -1) {
+                        globalCustomers[globalIndex] = updatedCustomer;
+                        localStorage.setItem('iptvCustomers', JSON.stringify(globalCustomers));
+                    }
                     
                     const actionText = isRenewal ? 'renewed' : 'updated';
                     const deviceResetMsg = resetDeviceLock ? ' (Device lock will be reset on next login)' : '';
@@ -5752,7 +5840,14 @@ Network: Always Streaming → Optimized for instant access`;
             // Save to localStorage
             localStorage.setItem('adminCustomers', JSON.stringify(window.customers));
             
-            // ALSO save to global customer storage for client access
+            // ALSO save to clientAuthCustomers for CLIENT LOGIN (reseller-created customers use this too)
+            const clientAuthCustomers = JSON.parse(localStorage.getItem('clientAuthCustomers') || '[]');
+            const existingClientAuthIds = new Set(clientAuthCustomers.map(c => c.id));
+            const newClientAuthCustomers = window.customers.filter(c => !existingClientAuthIds.has(c.id));
+            clientAuthCustomers.push(...newClientAuthCustomers);
+            localStorage.setItem('clientAuthCustomers', JSON.stringify(clientAuthCustomers));
+            
+            // ALSO save to global customer storage for backward compatibility
             const globalCustomers = JSON.parse(localStorage.getItem('iptvCustomers')) || [];
             // Merge customers (avoid duplicates by ID)
             const existingCustomerIds = new Set(globalCustomers.map(c => c.id));
@@ -5849,21 +5944,21 @@ Network: Always Streaming → Optimized for instant access`;
             const basicTV = document.getElementById('basicTVCheckbox');
             const sportsAddon = document.getElementById('sportsAddon');
             const sportsPlusAddon = document.getElementById('sportsPlusAddon');
-            const moviesAddon = document.getElementById('moviesAddon');
             const arabicAddon = document.getElementById('arabicAddon');
+            const moviesAddon = document.getElementById('moviesAddon');
             const sportsAddonContainer = document.getElementById('sportsAddonContainer');
             const sportsPlusAddonContainer = document.getElementById('sportsPlusAddonContainer');
-            const moviesAddonContainer = document.getElementById('moviesAddonContainer');
             const arabicAddonContainer = document.getElementById('arabicAddonContainer');
+            const moviesAddonContainer = document.getElementById('moviesAddonContainer');
             const sportsAddonLabel = document.getElementById('sportsAddonLabel');
             const sportsPlusAddonLabel = document.getElementById('sportsPlusAddonLabel');
-            const moviesAddonLabel = document.getElementById('moviesAddonLabel');
             const arabicAddonLabel = document.getElementById('arabicAddonLabel');
+            const moviesAddonLabel = document.getElementById('moviesAddonLabel');
             const addonStatusMessage = document.getElementById('addonStatusMessage');
             
             if (!basicTV.checked) {
                 // Disable regular addons when Basic TV is not selected (adult has separate logic)
-                [sportsAddon, sportsPlusAddon, moviesAddon, arabicAddon].forEach(checkbox => {
+                [sportsAddon, sportsPlusAddon, arabicAddon, moviesAddon].forEach(checkbox => {
                     if (checkbox) {
                         checkbox.disabled = true;
                         checkbox.checked = false;
@@ -5871,10 +5966,10 @@ Network: Always Streaming → Optimized for instant access`;
                 });
                 
                 // Update labels and containers
-                const labels = [sportsAddonLabel, sportsPlusAddonLabel, moviesAddonLabel, arabicAddonLabel];
-                const containers = [sportsAddonContainer, sportsPlusAddonContainer, moviesAddonContainer, arabicAddonContainer];
+                const labels = [sportsAddonLabel, sportsPlusAddonLabel, arabicAddonLabel, moviesAddonLabel];
+                const containers = [sportsAddonContainer, sportsPlusAddonContainer, arabicAddonContainer, moviesAddonContainer];
                 
-                const labelTextsLocked = ['🔒 Sports Package - LOCKED', '🔒 Sports Plus Package - LOCKED', '🔒 Movies Package - LOCKED', '🔒 Arabic Package - LOCKED'];
+                const labelTextsLocked = ['🔒 Sports Package - LOCKED', '🏆 Sports Plus Package - LOCKED', '🕌 Arabic Package - LOCKED', '🔒 Movies Package - LOCKED'];
                 
                 labels.forEach((label, index) => {
                     if (label) {
@@ -5895,17 +5990,17 @@ Network: Always Streaming → Optimized for instant access`;
                 }
             } else {
                 // Enable regular addons when Basic TV is selected (adult has separate logic)
-                [sportsAddon, sportsPlusAddon, moviesAddon, arabicAddon].forEach(checkbox => {
+                [sportsAddon, sportsPlusAddon, arabicAddon, moviesAddon].forEach(checkbox => {
                     if (checkbox) {
                         checkbox.disabled = false;
                     }
                 });
                 
                 // Update labels and containers
-                const labels = [sportsAddonLabel, sportsPlusAddonLabel, moviesAddonLabel, arabicAddonLabel];
-                const containers = [sportsAddonContainer, sportsPlusAddonContainer, moviesAddonContainer, arabicAddonContainer];
+                const labels = [sportsAddonLabel, sportsPlusAddonLabel, arabicAddonLabel, moviesAddonLabel];
+                const containers = [sportsAddonContainer, sportsPlusAddonContainer, arabicAddonContainer, moviesAddonContainer];
                 
-                const labelTextsUnlocked = ['🏆 Sports Package', '🏆 Sports Plus Package', '🎬 Movies Package', '🕌 Arabic Package'];
+                const labelTextsUnlocked = ['⚽ Sports Package', '🏆 Sports Plus Package', '🕌 Arabic Package', '🎬 Movies Package'];
                 
                 labels.forEach((label, index) => {
                     if (label) {
@@ -5977,7 +6072,7 @@ Network: Always Streaming → Optimized for instant access`;
                     adultPasswordSection.style.display = 'block';
                     // Set default password if empty
                     if (adultPasswordInput && !adultPasswordInput.value) {
-                        adultPasswordInput.value = '1818';
+                        adultPasswordInput.value = '112233';
                     }
                 } else {
                     adultPasswordSection.style.display = 'none';
@@ -6005,19 +6100,30 @@ Network: Always Streaming → Optimized for instant access`;
             const totalPriceContainer = document.getElementById('totalPrice');
             
             if (monthlyPriceElement) {
-                monthlyPriceElement.textContent = `Monthly: $${calculation.monthlyPrice.toFixed(2)}`;
+                if (calculation.monthlyPrice > 0) {
+                    monthlyPriceElement.textContent = `Monthly: $${calculation.monthlyPrice.toFixed(2)}`;
+                    monthlyPriceElement.style.color = '#4caf50';
+                } else {
+                    monthlyPriceElement.textContent = `Monthly: --`;
+                    monthlyPriceElement.style.color = 'rgba(255,255,255,0.6)';
+                }
             }
             
             if (totalCalculatedPriceElement) {
-                totalCalculatedPriceElement.textContent = `Total: ${calculation.totalPrice} (${calculation.duration})`;
+                if (calculation.monthlyPrice > 0) {
+                    totalCalculatedPriceElement.textContent = `Total: ${calculation.totalPrice} (${calculation.duration})`;
+                    totalCalculatedPriceElement.style.color = '#fff';
+                } else {
+                    totalCalculatedPriceElement.textContent = `Total: -- (Select options)`;
+                    totalCalculatedPriceElement.style.color = 'rgba(255,255,255,0.7)';
+                }
             }
             
-            // Visual feedback
             if (totalPriceContainer) {
-                if (calculation.monthlyPrice <= 0) {
-                    totalPriceContainer.style.borderColor = 'rgba(244,67,54,0.3)';
-                } else {
+                if (calculation.monthlyPrice > 0) {
                     totalPriceContainer.style.borderColor = 'rgba(76,175,80,0.3)';
+                } else {
+                    totalPriceContainer.style.borderColor = 'rgba(255,255,255,0.1)';
                 }
             }
         }
@@ -6054,59 +6160,114 @@ Network: Always Streaming → Optimized for instant access`;
             const thirdTV = document.getElementById('thirdTVCheckbox')?.checked;
             const sportsAddon = document.getElementById('sportsAddon')?.checked;
             const sportsPlusAddon = document.getElementById('sportsPlusAddon')?.checked;
-            const moviesAddon = document.getElementById('moviesAddon')?.checked;
             const arabicAddon = document.getElementById('arabicAddon')?.checked;
+            const moviesAddon = document.getElementById('moviesAddon')?.checked;
             const adultAddon = document.getElementById('adultAddon')?.checked;
             
-            // Get actual package prices from created packages
+            // Get actual package prices from created packages - NO DEFAULT FALLBACK PRICES
             const packages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
-            let basePrice = 25; // Default fallback
-            let secondTVPrice = 15; // Default fallback
-            let thirdTVPrice = 10; // Default fallback
+            let basePrice = 0; // No default - show 0 if not set
+            let secondTVPrice = 0; // No default
+            let thirdTVPrice = 0; // No default
             const addonPrices = {
-                sports: 8,
-                sportsPlus: 8,
-                movies: 8,
-                arabic: 8,
+                sports: 0,
+                sports_plus: 0,
+                arabic: 0,
+                movies: 0,
                 adult: 0
             };
             
-            // Get package prices from adminPackages
-            try {
-                const adminPackages = JSON.parse(localStorage.getItem('adminPackages')) || [];
-                
-                // Find each package by name and get its price
-                const sportsPkg = adminPackages.find(p => p.name && p.name.toLowerCase().includes('sport') && !p.name.toLowerCase().includes('plus'));
-                const sportsPlusPkg = adminPackages.find(p => p.name && p.name.toLowerCase().includes('sports plus'));
-                const moviesPkg = adminPackages.find(p => p.name && p.name.toLowerCase().includes('movie') && !p.isAdult);
-                const arabicPkg = adminPackages.find(p => p.name && p.name.toLowerCase().includes('arabic'));
-                const adultPkg = adminPackages.find(p => p.isAdult || (p.name && p.name.toLowerCase().includes('adult')));
-                
-                if (sportsPkg) addonPrices.sports = sportsPkg.price || 8;
-                if (sportsPlusPkg) addonPrices.sportsPlus = sportsPlusPkg.price || 8;
-                if (moviesPkg) addonPrices.movies = moviesPkg.price || 8;
-                if (arabicPkg) addonPrices.arabic = arabicPkg.price || 8;
-                if (adultPkg) addonPrices.adult = adultPkg.price || 0;
-                
-                // Get base prices from first non-adult package
-                const basePkg = adminPackages.find(p => !p.isAdult && p.name && !p.name.toLowerCase().includes('adult'));
-                if (basePkg) {
-                    basePrice = basePkg.price || basePrice;
-                    secondTVPrice = basePkg.secondTVPrice || secondTVPrice;
-                    thirdTVPrice = basePkg.thirdTVPrice || thirdTVPrice;
+            
+            // Find each package type separately to get correct prices
+            let basicPackage = null;
+            let sportsPackage = null;
+            let sportsPlusPackage = null;
+            let arabicPackage = null;
+            let moviesPackage = null;
+            let adultPackageObj = null;
+            
+            if (packages.length > 0) {
+                // Find Basic package for base prices
+                basicPackage = packages.find(pkg => 
+                    pkg.name && pkg.name.toLowerCase().includes('basic')
+                );
+                // Fall back to first non-adult package
+                if (!basicPackage) {
+                    basicPackage = packages.find(pkg => 
+                        !pkg.isAdult && 
+                        !pkg.name.toLowerCase().includes('adult') && 
+                        !pkg.name.toLowerCase().includes('xxx')
+                    );
                 }
-            } catch (e) {
-                console.error('Error loading package prices:', e);
+                // Fall back to first package
+                if (!basicPackage) {
+                    basicPackage = packages[0];
+                }
+                
+                // Find Sports package
+                sportsPackage = packages.find(pkg => 
+                    pkg.name && pkg.name.toLowerCase().includes('sports') && 
+                    !pkg.name.toLowerCase().includes('plus')
+                );
+                
+                // Find Sports Plus package (must start with "sports plus" to include Sports Plus HD, Sports Plus 4K, etc.)
+                sportsPlusPackage = packages.find(pkg => 
+                    pkg.name && pkg.name.toLowerCase().startsWith('sports plus')
+                );
+                
+                // Find Arabic package
+                arabicPackage = packages.find(pkg => 
+                    pkg.name && pkg.name.toLowerCase().includes('arabic')
+                );
+                
+                // Find Movies package
+                moviesPackage = packages.find(pkg => 
+                    pkg.name && pkg.name.toLowerCase().includes('movie')
+                );
+                
+                // Find Adult package
+                adultPackageObj = packages.find(pkg => 
+                    pkg.isAdult === true || 
+                    pkg.name.toLowerCase().includes('adult') || 
+                    pkg.name.toLowerCase().includes('xxx')
+                );
             }
             
-            // Use the first available package prices, or fall back to defaults
-            if (packages.length > 0) {
-                const firstPackage = packages[0];
-                basePrice = firstPackage.price || basePrice;
-                secondTVPrice = firstPackage.secondTVPrice || secondTVPrice;
-                thirdTVPrice = firstPackage.thirdTVPrice || thirdTVPrice;
+            // Get prices from packages
+            if (basicPackage) {
+                basePrice = basicPackage.price || 0;
+                secondTVPrice = basicPackage.secondTVPrice || 0;
+                thirdTVPrice = basicPackage.thirdTVPrice || 0;
             }
-
+            
+            // Get addon prices from their own packages
+            if (sportsPackage) {
+                addonPrices.sports = sportsPackage.price || sportsPackage.sportsPrice || 0;
+            }
+            if (sportsPlusPackage) {
+                addonPrices.sports_plus = sportsPlusPackage.price || sportsPlusPackage.sportsPlusPrice || 0;
+            }
+            if (arabicPackage) {
+                addonPrices.arabic = arabicPackage.price || arabicPackage.arabicPrice || 0;
+            }
+            if (moviesPackage) {
+                addonPrices.movies = moviesPackage.price || moviesPackage.moviesPrice || 0;
+            }
+            if (adultPackageObj) {
+                addonPrices.adult = adultPackageObj.price || adultPackageObj.adultPackagePrice || 0;
+            }
+            
+            // Also check input fields for custom prices (override package prices)
+            const sportsPriceInput = document.getElementById('sportsPrice');
+            const sportsPlusPriceInput = document.getElementById('sportsPlusPrice');
+            const arabicPriceInput = document.getElementById('arabicPrice');
+            const moviesPriceInput = document.getElementById('moviesPrice');
+            
+            if (sportsPriceInput && sportsPriceInput.value) addonPrices.sports = parseFloat(sportsPriceInput.value);
+            if (sportsPlusPriceInput && sportsPlusPriceInput.value) addonPrices.sports_plus = parseFloat(sportsPlusPriceInput.value);
+            if (arabicPriceInput && arabicPriceInput.value) addonPrices.arabic = parseFloat(arabicPriceInput.value);
+            if (moviesPriceInput && moviesPriceInput.value) addonPrices.movies = parseFloat(moviesPriceInput.value);
+            
             if (basicTV) {
                 monthlyPrice += basePrice;
             }
@@ -6120,13 +6281,13 @@ Network: Always Streaming → Optimized for instant access`;
                 monthlyPrice += addonPrices.sports;
             }
             if (sportsPlusAddon) {
-                monthlyPrice += addonPrices.sportsPlus;
-            }
-            if (moviesAddon) {
-                monthlyPrice += addonPrices.movies;
+                monthlyPrice += addonPrices.sports_plus;
             }
             if (arabicAddon) {
                 monthlyPrice += addonPrices.arabic;
+            }
+            if (moviesAddon) {
+                monthlyPrice += addonPrices.movies;
             }
             if (adultAddon) {
                 monthlyPrice += addonPrices.adult;
@@ -6236,7 +6397,7 @@ Network: Always Streaming → Optimized for instant access`;
                 if (element) element.value = '';
             });
             
-            const checkboxes = ['basicTVCheckbox', 'secondTVCheckbox', 'thirdTVCheckbox', 'sportsAddon', 'sportsPlusAddon', 'moviesAddon', 'arabicAddon', 'adultAddon'];
+            const checkboxes = ['basicTVCheckbox', 'secondTVCheckbox', 'thirdTVCheckbox', 'sportsAddon', 'sportsPlusAddon', 'arabicAddon', 'moviesAddon', 'adultAddon'];
             checkboxes.forEach(id => {
                 const checkbox = document.getElementById(id);
                 if (checkbox) {
@@ -6495,20 +6656,20 @@ Network: Always Streaming → Optimized for instant access`;
                                     
                                     <!-- Sports Plus Addon -->
                                     <label id="sportsPlusAddonContainer" style="color: rgba(255,255,255,0.3); display: flex; align-items: center; cursor: not-allowed; margin-bottom: 8px; opacity: 0.6;">
-                                        <input type="checkbox" name="customerAddons" value="sportsPlus" id="sportsPlusAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="updateTotalPrice()" disabled>
-                                        <span id="sportsPlusAddonLabel">🔒 Sports Plus Package - LOCKED</span>
+                                        <input type="checkbox" name="customerAddons" value="sports_plus" id="sportsPlusAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="updateTotalPrice()" disabled>
+                                        <span id="sportsPlusAddonLabel">🏆 Sports Plus Package - LOCKED</span>
+                                    </label>
+                                    
+                                    <!-- Arabic Addon -->
+                                    <label id="arabicAddonContainer" style="color: rgba(255,255,255,0.3); display: flex; align-items: center; cursor: not-allowed; margin-bottom: 8px; opacity: 0.6;">
+                                        <input type="checkbox" name="customerAddons" value="arabic" id="arabicAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="updateTotalPrice()" disabled>
+                                        <span id="arabicAddonLabel">🕌 Arabic Package - LOCKED</span>
                                     </label>
                                     
                                     <!-- Movies Addon -->
                                     <label id="moviesAddonContainer" style="color: rgba(255,255,255,0.3); display: flex; align-items: center; cursor: not-allowed; margin-bottom: 8px; opacity: 0.6;">
                                         <input type="checkbox" name="customerAddons" value="movies" id="moviesAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="updateTotalPrice()" disabled>
                                         <span id="moviesAddonLabel">🔒 Movies Package - LOCKED</span>
-                                    </label>
-                                    
-                                    <!-- Arabic Addon -->
-                                    <label id="arabicAddonContainer" style="color: rgba(255,255,255,0.3); display: flex; align-items: center; cursor: not-allowed; margin-bottom: 8px; opacity: 0.6;">
-                                        <input type="checkbox" name="customerAddons" value="arabic" id="arabicAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="updateTotalPrice()" disabled>
-                                        <span id="arabicAddonLabel">🔒 Arabic Package - LOCKED</span>
                                     </label>
                                     
 
@@ -6565,9 +6726,9 @@ Network: Always Streaming → Optimized for instant access`;
                             
                             <div>
                                 <label style="color: rgba(255,255,255,0.8); font-size: 14px;">💰 Total Price Calculation</label>
-                                <div id="totalPrice" style="background: rgba(255,255,255,0.05); border: 2px solid rgba(76,175,80,0.3); border-radius: 8px; padding: 15px; color: #4caf50; font-weight: 700; font-size: 16px;">
-                                    <div id="monthlyPrice">Monthly: $0.00</div>
-                                    <div id="totalCalculatedPrice" style="font-size: 18px; margin-top: 5px; color: #fff;">Total: $0.00 (1 Month)</div>
+                                <div id="totalPrice" style="background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 15px; color: rgba(255,255,255,0.6); font-weight: 600; font-size: 14px;">
+                                    <div id="monthlyPrice">Monthly: --</div>
+                                    <div id="totalCalculatedPrice" style="font-size: 16px; margin-top: 5px; color: rgba(255,255,255,0.7);">Total: -- (Select options)</div>
                                 </div>
                                 <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 5px;">Price updates automatically based on your selections and duration</div>
                             </div>
@@ -6655,7 +6816,7 @@ Network: Always Streaming → Optimized for instant access`;
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                                 <div>
                                     <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Price ($):</label>
-                                    <input type="number" id="packagePrice" placeholder="Enter price" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                    <input type="number" id="packagePrice" placeholder="" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
                                 </div>
                                 <div>
                                     <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Duration:</label>
@@ -6674,11 +6835,11 @@ Network: Always Streaming → Optimized for instant access`;
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                                     <div>
                                         <label style="color: rgba(255,255,255,0.7); font-size: 13px;">2nd TV Price ($):</label>
-                                        <input type="number" id="secondTVPrice" placeholder="Enter price" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                        <input type="number" id="secondTVPrice" placeholder="" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
                                     </div>
                                     <div>
                                         <label style="color: rgba(255,255,255,0.7); font-size: 13px;">3rd TV Price ($):</label>
-                                        <input type="number" id="thirdTVPrice" placeholder="Enter price" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                        <input type="number" id="thirdTVPrice" placeholder="" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
                                     </div>
                                 </div>
                             </div>
@@ -6689,24 +6850,24 @@ Network: Always Streaming → Optimized for instant access`;
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                                     <div>
                                         <label style="color: rgba(255,255,255,0.7); font-size: 13px;">Sports Package ($):</label>
-                                        <input type="number" id="sportsPrice" placeholder="Enter price" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                        <input type="number" id="sportsPrice" placeholder="" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
                                     </div>
                                     <div>
                                         <label style="color: rgba(255,255,255,0.7); font-size: 13px;">Sports Plus Package ($):</label>
-                                        <input type="number" id="sportsPlusPrice" placeholder="Enter price" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
-                                    </div>
-                                    <div>
-                                        <label style="color: rgba(255,255,255,0.7); font-size: 13px;">Movies Package ($):</label>
-                                        <input type="number" id="moviesPrice" placeholder="Enter price" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                        <input type="number" id="sportsPlusPrice" placeholder="" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
                                     </div>
                                     <div>
                                         <label style="color: rgba(255,255,255,0.7); font-size: 13px;">Arabic Package ($):</label>
-                                        <input type="number" id="arabicPrice" placeholder="Enter price" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                        <input type="number" id="arabicPrice" placeholder="" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                    </div>
+                                    <div>
+                                        <label style="color: rgba(255,255,255,0.7); font-size: 13px;">Movies Package ($):</label>
+                                        <input type="number" id="moviesPrice" placeholder="" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
                                     </div>
 
                                     <div>
                                         <label style="color: rgba(255,71,87,0.8); font-size: 13px;">🔞 Adult Package ($):</label>
-                                        <input type="number" id="adultPackagePrice" placeholder="Enter price" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,71,87,0.3); border-radius: 6px; color: white;">
+                                        <input type="number" id="adultPackagePrice" placeholder="" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,71,87,0.3); border-radius: 6px; color: white;">
                                     </div>
                                 </div>
                                 <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 8px;">
@@ -6822,12 +6983,12 @@ Network: Always Streaming → Optimized for instant access`;
             const plexServerUrl = localStorage.getItem('plexServerUrl') || '';
             const plexLocalUrl = localStorage.getItem('plexLocalUrl') || 'http://127.0.0.1:32400';
             const plexToken = localStorage.getItem('plexToken') || '';
-            const plexMoviesSection = localStorage.getItem('plexMoviesSection') || '';
-            const plexArabicSection = localStorage.getItem('plexArabicSection') || '';
-            const plexAdultSection = localStorage.getItem('plexAdultSection') || '';
+            const plexMoviesSection = localStorage.getItem('plexMoviesSection') || '26';
+            const plexAdultSection = localStorage.getItem('plexAdultSection') || '21';
+            const plexArabicSection = localStorage.getItem('plexArabicSection') || '7';
             const cachedMovies = JSON.parse(localStorage.getItem('plexCachedMovies') || '[]');
-            const cachedArabic = JSON.parse(localStorage.getItem('plexCachedArabic') || '[]');
             const cachedAdult = JSON.parse(localStorage.getItem('plexCachedAdult') || '[]');
+            const cachedArabic = JSON.parse(localStorage.getItem('plexCachedArabic') || '[]');
             
             mainContent.innerHTML = `
                 <div class="dashboard-header">
@@ -6856,18 +7017,18 @@ Network: Always Streaming → Optimized for instant access`;
                                     <button onclick="generatePlexToken()" class="btn btn-warning" style="padding: 12px 20px;">🔑 Generate</button>
                                 </div>
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                                 <div>
                                     <label style="color: rgba(255,255,255,0.8); font-size: 14px; display: block; margin-bottom: 5px;">Movies Section ID:</label>
-                                    <input type="text" id="plexMoviesSection" value="${plexMoviesSection}" placeholder="Enter ID" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
-                                </div>
-                                <div>
-                                    <label style="color: rgba(255,255,255,0.8); font-size: 14px; display: block; margin-bottom: 5px;">Arabic Section ID:</label>
-                                    <input type="text" id="plexArabicSection" value="${plexArabicSection}" placeholder="Enter ID" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
+                                    <input type="text" id="plexMoviesSection" value="${plexMoviesSection}" placeholder="26" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
                                 </div>
                                 <div>
                                     <label style="color: rgba(255,255,255,0.8); font-size: 14px; display: block; margin-bottom: 5px;">Adult Section ID:</label>
-                                    <input type="text" id="plexAdultSection" value="${plexAdultSection}" placeholder="Enter ID" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
+                                    <input type="text" id="plexAdultSection" value="${plexAdultSection}" placeholder="21" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
+                                </div>
+                                <div>
+                                    <label style="color: rgba(255,255,255,0.8); font-size: 14px; display: block; margin-bottom: 5px;">Arabic Section ID:</label>
+                                    <input type="text" id="plexArabicSection" value="${plexArabicSection}" placeholder="7" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
                                 </div>
                             </div>
                             <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
@@ -6895,10 +7056,6 @@ Network: Always Streaming → Optimized for instant access`;
                                     <span style="color: rgba(255,255,255,0.8);">Cached Movies:</span>
                                     <span style="color: #2196f3; font-weight: 600;">${cachedMovies.length} videos</span>
                                 </div>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                    <span style="color: rgba(255,255,255,0.8);">Cached Arabic:</span>
-                                    <span style="color: #9c27b0; font-weight: 600;">${cachedArabic.length} videos</span>
-                                </div>
                                 <div style="display: flex; justify-content: space-between;">
                                     <span style="color: rgba(255,255,255,0.8);">Cached Adult:</span>
                                     <span style="color: #ff4757; font-weight: 600;">${cachedAdult.length} videos</span>
@@ -6914,7 +7071,7 @@ Network: Always Streaming → Optimized for instant access`;
                     <h3 class="section-title">📥 Import Videos from Plex (Easy Method)</h3>
                     <p style="color: #4caf50; margin-bottom: 15px; font-weight: bold;">💡 Use this if auto-fetch fails due to CORS restrictions</p>
                     
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
                         <!-- Movies Import -->
                         <div style="background: rgba(33, 150, 243, 0.1); padding: 20px; border-radius: 8px; border: 1px solid #2196f3;">
                             <h4 style="color: #2196f3; margin-bottom: 15px;">🎬 Movies Library</h4>
@@ -6931,17 +7088,17 @@ Network: Always Streaming → Optimized for instant access`;
                         </div>
                         
                         <!-- Arabic Import -->
-                        <div style="background: rgba(156, 39, 176, 0.1); padding: 20px; border-radius: 8px; border: 1px solid #9c27b0;">
-                            <h4 style="color: #9c27b0; margin-bottom: 15px;">🕌 Arabic Library</h4>
+                        <div style="background: rgba(255, 193, 7, 0.1); padding: 20px; border-radius: 8px; border: 1px solid #ffc107;">
+                            <h4 style="color: #ffc107; margin-bottom: 15px;">🔶 Arabic Library</h4>
                             <div style="margin-bottom: 15px;">
-                                <button onclick="copyPlexUrl('arabic')" class="btn" style="width: 100%; margin-bottom: 10px; padding: 12px; background: #9c27b0; color: white;">📋 Copy Arabic URL</button>
+                                <button onclick="copyPlexUrl('arabic')" class="btn btn-warning" style="width: 100%; margin-bottom: 10px; padding: 12px;">📋 Copy Arabic URL</button>
                                 <p style="color: #888; font-size: 12px;">1. Click button → 2. Open URL in browser → 3. Select All (Ctrl+A) → 4. Copy (Ctrl+C) → 5. Paste below</p>
                             </div>
                             <div style="margin-bottom: 15px;">
                                 <label style="color: #ccc; font-size: 13px;">Paste Arabic XML:</label>
                                 <textarea id="arabicXmlInput" placeholder="Paste the entire XML content here..." style="width: 100%; height: 120px; padding: 10px; border-radius: 6px; border: 1px solid #444; background: #1a1a2e; color: white; font-size: 12px; margin-top: 5px;"></textarea>
                             </div>
-                            <button onclick="importArabicXML()" class="btn" style="width: 100%; padding: 12px; background: #9c27b0; color: white;">📥 Import Arabic Videos</button>
+                            <button onclick="importArabicXML()" class="btn btn-warning" style="width: 100%; padding: 12px;">📥 Import Arabic Videos</button>
                             <div id="arabicCount" style="margin-top: 10px; color: #4caf50; font-size: 13px; font-weight: bold;">Arabic videos cached: ${cachedArabic.length}</div>
                         </div>
                         
@@ -6984,25 +7141,22 @@ Network: Always Streaming → Optimized for instant access`;
             const serverUrl = document.getElementById('plexServerUrl')?.value || '';
             const localUrl = document.getElementById('plexLocalUrl')?.value || 'http://127.0.0.1:32400';
             const token = document.getElementById('plexToken')?.value || '';
-            const moviesSection = document.getElementById('plexMoviesSection')?.value || '';
-            const arabicSection = document.getElementById('plexArabicSection')?.value || '';
-            const adultSection = document.getElementById('plexAdultSection')?.value || '';
+            const moviesSection = document.getElementById('plexMoviesSection')?.value || '26';
+            const adultSection = document.getElementById('plexAdultSection')?.value || '21';
+            const arabicSection = document.getElementById('plexArabicSection')?.value || '7';
             
             localStorage.setItem('plexServerUrl', serverUrl);
             localStorage.setItem('plexLocalUrl', localUrl);
             localStorage.setItem('plexToken', token);
             localStorage.setItem('plexMoviesSection', moviesSection);
-            localStorage.setItem('plexArabicSection', arabicSection);
             localStorage.setItem('plexAdultSection', adultSection);
+            localStorage.setItem('plexArabicSection', arabicSection);
             
             // Update the PLEX_CONFIG object
             if (window.PLEX_CONFIG) {
                 window.PLEX_CONFIG.serverUrl = serverUrl;
                 window.PLEX_CONFIG.localUrl = localUrl;
                 window.PLEX_CONFIG.token = token;
-                window.PLEX_CONFIG.sections.movies = moviesSection;
-                window.PLEX_CONFIG.sections.arabic = arabicSection;
-                window.PLEX_CONFIG.sections.adult = adultSection;
             }
             
             showNotification('✅ Plex settings saved! Local URL: ' + localUrl, 'success');
@@ -7431,7 +7585,10 @@ Network: Always Streaming → Optimized for instant access`;
                             const displayPassword = reseller.credentials.password || reseller.password || '';
                             return `
                             <tr id="reseller-row-${reseller.id}" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                <td style="padding: 10px 8px; color: #4caf50; font-weight: 600;">${displayName}</td>
+                                <td style="padding: 10px 8px; color: #4caf50; font-weight: 600;">
+                                    <span id="name-display-${reseller.id}">${displayName}</span>
+                                    <input type="text" id="name-edit-${reseller.id}" value="${displayName}" style="display: none; width: 100%; padding: 5px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; color: white; font-size: 13px;">
+                                </td>
                                 <td style="padding: 10px 8px; color: rgba(255,255,255,0.9);">
                                     <span id="username-display-${reseller.id}">${reseller.username}</span>
                                     <input type="text" id="username-edit-${reseller.id}" value="${reseller.username}" style="display: none; width: 100%; padding: 5px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; color: white; font-size: 13px;">
@@ -7464,10 +7621,12 @@ Network: Always Streaming → Optimized for instant access`;
 
         function editReseller(resellerId) {
             // Hide display elements
+            document.getElementById(`name-display-${resellerId}`).style.display = 'none';
             document.getElementById(`username-display-${resellerId}`).style.display = 'none';
             document.getElementById(`password-display-${resellerId}`).style.display = 'none';
             
             // Show edit elements
+            document.getElementById(`name-edit-${resellerId}`).style.display = 'block';
             document.getElementById(`username-edit-${resellerId}`).style.display = 'block';
             document.getElementById(`password-edit-${resellerId}`).style.display = 'flex';
             
@@ -7488,10 +7647,12 @@ Network: Always Streaming → Optimized for instant access`;
 
         function cancelEdit(resellerId) {
             // Show display elements
+            document.getElementById(`name-display-${resellerId}`).style.display = 'block';
             document.getElementById(`username-display-${resellerId}`).style.display = 'block';
             document.getElementById(`password-display-${resellerId}`).style.display = 'block';
             
             // Hide edit elements
+            document.getElementById(`name-edit-${resellerId}`).style.display = 'none';
             document.getElementById(`username-edit-${resellerId}`).style.display = 'none';
             document.getElementById(`password-edit-${resellerId}`).style.display = 'none';
             
@@ -7502,8 +7663,14 @@ Network: Always Streaming → Optimized for instant access`;
         }
 
         function saveReseller(resellerId) {
+            const newName = document.getElementById(`name-edit-${resellerId}`).value.trim();
             const newUsername = document.getElementById(`username-edit-${resellerId}`).value.trim();
             const newPassword = document.getElementById(`password-edit-input-${resellerId}`).value.trim();
+
+            if (!newName) {
+                showNotification('Name is required', 'error');
+                return;
+            }
 
             if (!newUsername) {
                 showNotification('Username is required', 'error');
@@ -7522,6 +7689,7 @@ Network: Always Streaming → Optimized for instant access`;
 
             // Update RESELLER_ACCOUNTS
             if (RESELLER_ACCOUNTS[resellerId]) {
+                RESELLER_ACCOUNTS[resellerId].name = newName;
                 RESELLER_ACCOUNTS[resellerId].username = newUsername;
                 RESELLER_ACCOUNTS[resellerId].password = passwordToSave;
                 RESELLER_ACCOUNTS[resellerId].updatedAt = new Date().toISOString();
@@ -7546,6 +7714,7 @@ Network: Always Streaming → Optimized for instant access`;
             }
 
             // Update display
+            document.getElementById(`name-display-${resellerId}`).textContent = newName;
             document.getElementById(`username-display-${resellerId}`).textContent = newUsername;
             document.getElementById(`password-display-${resellerId}`).textContent = passwordToSave;
             
@@ -7555,7 +7724,7 @@ Network: Always Streaming → Optimized for instant access`;
             // Update dashboard statistics
             updateResellerStatistics();
             
-            showNotification(`✅ Reseller "${resellerId}" updated successfully!`, 'success');
+            showNotification(`✅ Reseller "${newName}" updated successfully!`, 'success');
         }
 
         function resetToDefaultResellers() {
@@ -7603,8 +7772,13 @@ Network: Always Streaming → Optimized for instant access`;
         }
 
         function deleteReseller(resellerId) {
+            // Get reseller name for better message
+            const resellerName = RESELLER_ACCOUNTS[resellerId]?.name || 
+                                 passwordManager.resellerCredentials[resellerId]?.username || 
+                                 resellerId;
+            
             // Confirm deletion
-            if (!confirm(`Are you sure you want to delete reseller "${resellerId}"? This action cannot be undone.`)) {
+            if (!confirm(`Are you sure you want to delete reseller "${resellerName}" (${resellerId})? This action cannot be undone.`)) {
                 return;
             }
             
@@ -7629,7 +7803,7 @@ Network: Always Streaming → Optimized for instant access`;
             displayResellersTable();
             updateResellerStatistics();
             
-            showNotification(`✅ Reseller "${resellerId}" deleted successfully!`, 'success');
+            showNotification(`✅ Reseller "${resellerName}" deleted successfully!`, 'success');
         }
 
         function createNewReseller() {
@@ -8350,21 +8524,21 @@ Network: Always Streaming → Optimized for instant access`;
             // Reset addon checkboxes first
             const sportsAddonEl = document.getElementById('sportsAddon');
             const sportsPlusAddonEl = document.getElementById('sportsPlusAddon');
-            const moviesAddonEl = document.getElementById('moviesAddon');
             const arabicAddonEl = document.getElementById('arabicAddon');
+            const moviesAddonEl = document.getElementById('moviesAddon');
             const adultAddonEl = document.getElementById('adultAddon');
             
             if (sportsAddonEl) sportsAddonEl.checked = false;
             if (sportsPlusAddonEl) sportsPlusAddonEl.checked = false;
-            if (moviesAddonEl) moviesAddonEl.checked = false;
             if (arabicAddonEl) arabicAddonEl.checked = false;
+            if (moviesAddonEl) moviesAddonEl.checked = false;
             if (adultAddonEl) adultAddonEl.checked = false;
             
             // Check for various formats: "sports", "Sports Package", "Sports", etc.
             if (sportsAddonEl) sportsAddonEl.checked = addonsString.includes('sport') && !addonsString.includes('plus');
-            if (sportsPlusAddonEl) sportsPlusAddonEl.checked = addonsString.includes('Sports Plus') || addonsString.includes('sports plus');
-            if (moviesAddonEl) moviesAddonEl.checked = addonsString.includes('movie');
+            if (sportsPlusAddonEl) sportsPlusAddonEl.checked = addonsString.includes('sports plus') || addonsString.includes('sports_plus');
             if (arabicAddonEl) arabicAddonEl.checked = addonsString.includes('arabic');
+            if (moviesAddonEl) moviesAddonEl.checked = addonsString.includes('movie');
             if (adultAddonEl) adultAddonEl.checked = addonsString.includes('adult');
             
             // Update device selection and price
@@ -8403,6 +8577,42 @@ Network: Always Streaming → Optimized for instant access`;
             showNotification(`✏️ Loading edit form for ${customer.name}`, 'info');
         }
         
+        // Delete customer
+        window.deleteCustomer = function(customerId) {
+            if (!confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
+                return;
+            }
+            
+            console.log('Delete button clicked for customer:', customerId);
+            const customers = window.customers || [];
+            const customerIndex = customers.findIndex(c => c.id === customerId);
+            
+            if (customerIndex === -1) {
+                showNotification('❌ Customer not found', 'error');
+                return;
+            }
+            
+            const customerName = customers[customerIndex].name;
+            
+            // Remove customer from array
+            customers.splice(customerIndex, 1);
+            window.customers = customers;
+            
+            // Save to localStorage
+            localStorage.setItem('adminCustomers', JSON.stringify(customers));
+            
+            // Also update iptvCustomers
+            const globalCustomers = JSON.parse(localStorage.getItem('iptvCustomers')) || [];
+            const filteredGlobal = globalCustomers.filter(c => c.id !== customerId);
+            localStorage.setItem('iptvCustomers', JSON.stringify(filteredGlobal));
+            
+            showNotification(`✅ Customer "${customerName}" deleted successfully`, 'success');
+            
+            // Refresh the customer list
+            updateCustomerListTable();
+            updateCustomerStats();
+        }
+        
         // Load customer data for editing
         function loadCustomerForEdit(customer) {
             console.log('Loading customer for edit:', customer);
@@ -8432,7 +8642,7 @@ Network: Always Streaming → Optimized for instant access`;
             // Set Adult Password
             const adultPasswordField = document.getElementById('customerAdultPassword');
             if (adultPasswordField) {
-                adultPasswordField.value = customer.adultPassword || '1818';
+                adultPasswordField.value = customer.adultPassword || '112233';
             }
             
             // Handle expiry date conversion from ISO date string to months
@@ -8485,36 +8695,28 @@ Network: Always Streaming → Optimized for instant access`;
             
             // Clear all addon checkboxes first
             const sportsAddonEl2 = document.getElementById('sportsAddon');
-            const sportsPlusAddonEl2 = document.getElementById('sportsPlusAddon');
             const moviesAddonEl2 = document.getElementById('moviesAddon');
-            const arabicAddonEl2 = document.getElementById('arabicAddon');
             const adultAddonEl2 = document.getElementById('adultAddon');
             
             if (sportsAddonEl2) sportsAddonEl2.checked = false;
-            if (sportsPlusAddonEl2) sportsPlusAddonEl2.checked = false;
             if (moviesAddonEl2) moviesAddonEl2.checked = false;
-            if (arabicAddonEl2) arabicAddonEl2.checked = false;
             if (adultAddonEl2) adultAddonEl2.checked = false;
             
             // Set checkboxes based on customer's actual addon selections
             // Check for various formats: "sports", "Sports Package", "Sports", etc.
             // More robust checking - use exact matches for known package names
-            const sportsMatch = (addonsString.includes('sports') || addonsString.includes('sport')) && !addonsString.includes('plus');
-            const sportsPlusMatch = addonsString.includes('Sports Plus') || addonsString.includes('sports plus');
+            const sportsMatch = addonsString.includes('sports') || addonsString.includes('sport');
             const moviesMatch = addonsString.includes('movies') || addonsString.includes('movie');
-            const arabicMatch = addonsString.includes('arabic');
             const adultMatch = addonsString.includes('adult');
             
             if (sportsAddonEl2) sportsAddonEl2.checked = sportsMatch;
-            if (sportsPlusAddonEl2) sportsPlusAddonEl2.checked = sportsPlusMatch;
             if (moviesAddonEl2) moviesAddonEl2.checked = moviesMatch;
-            if (arabicAddonEl2) arabicAddonEl2.checked = arabicMatch;
             if (adultAddonEl2) adultAddonEl2.checked = adultMatch;
             
             // Debug: Log what's being checked
             console.log('🔍 Debug - Customer addons:', customer.addons);
             console.log('🔍 Debug - addonsString:', addonsString);
-            console.log('🔍 Debug - sportsMatch:', sportsMatch, 'sportsPlusMatch:', sportsPlusMatch, 'moviesMatch:', moviesMatch, 'arabicMatch:', arabicMatch, 'adultMatch:', adultMatch);
+            console.log('🔍 Debug - sportsMatch:', sportsMatch, 'moviesMatch:', moviesMatch, 'adultMatch:', adultMatch);
             
             // Enable/disable addon checkboxes based on basic TV selection
             updateAdultAddonAvailability();
@@ -8721,5 +8923,6 @@ Network: Always Streaming → Optimized for instant access`;
             });
         }
     </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"e72945439c264b3b85d2e3b689102d27","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>

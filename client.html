@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 6.5 - iWATCH TV Client 2025-12-07 -->
+<!-- VERSION 7.0 - Fixed Plex Content Addon Filtering 2026-03-18 -->
 <!-- LOCAL VERSION - Green Indicator -->
 <html lang="en">
 <head>
@@ -92,7 +92,7 @@
     <script>
         // App Version Management
         const APP_CONFIG = {
-            VERSION: '2.1.0',
+            VERSION: '2.2.0',
             UPDATE_CHECK_INTERVAL: 60000, // Check for updates every 1 minute
             AUTO_UPDATE_ENABLED: true
         };
@@ -269,10 +269,9 @@
         const passwordManager = {
             passwords: {
                 // AUTO-LOGIN REMOVED - Each client must enter their own credentials
-                'adminLogin': '',  // REMOVED: 'admin123'
-                'resellerLogin': '',  // REMOVED: 'reseller123'
-                'clientAdult': '8899',
-                'panelAccess': '000000',
+                'adminLogin': '',  // REMOVED: Set your admin password here
+                'resellerLogin': '',  // REMOVED: Set your reseller password here
+                'clientAdult': '112233',
                 'masterAdult': '273972' // Master password for admin emergency access to adult content
             },
             verifyPassword: function(key, input) {
@@ -288,8 +287,8 @@
                 // Check if customer exists and password matches
                 if (customer && customer.password === password) {
                     // AUTOMATIC DEVICE LOCK - Silent Protection
-                    // Generates unique device fingerprint and locks account to first device
-                    // No admin setup needed - fully automatic - nobody knows why it fails
+                    // Generates unique device fingerprint and locks account to multiple devices based on subscription
+                    // Basic TV = 1 device, 2nd TV = 2 devices, 3rd TV = 3 devices (same WiFi only)
                     
                     // Generate or get this device's unique fingerprint
                     let deviceFingerprint = localStorage.getItem('iwatch_device_fp');
@@ -324,10 +323,20 @@
                         localStorage.setItem('iwatch_device_fp', deviceFingerprint);
                     }
                     
-                    // Check device lock for this customer
+                    // Calculate max devices based on subscription
+                    const plan = customer.plan || '';
+                    let maxDevices = 1; // Default to 1 device (Basic TV)
+                    if (plan.includes('Basic') && plan.includes('2nd') && plan.includes('3rd')) {
+                        maxDevices = 3;
+                    } else if (plan.includes('Basic') && plan.includes('2nd')) {
+                        maxDevices = 2;
+                    }
+                    
+                    // Get stored devices (stored as comma-separated fingerprints)
                     const lockKey = 'iwatch_lock_' + customer.id;
                     const lockTimeKey = 'iwatch_locktime_' + customer.id;
-                    let storedFingerprint = localStorage.getItem(lockKey);
+                    let storedDevices = localStorage.getItem(lockKey) || '';
+                    let deviceList = storedDevices ? storedDevices.split(',') : [];
                     const lockTime = parseInt(localStorage.getItem(lockTimeKey) || '0');
                     
                     // Check if admin requested device reset (new TV scenario)
@@ -335,20 +344,30 @@
                         // Admin reset the device lock - clear old lock and allow new device
                         localStorage.removeItem(lockKey);
                         localStorage.removeItem(lockTimeKey);
-                        storedFingerprint = null;
+                        storedDevices = '';
+                        deviceList = [];
                         console.log('Device lock reset by admin');
                     }
                     
-                    if (!storedFingerprint) {
-                        // FIRST LOGIN or RESET - Lock this account to this device automatically
-                        localStorage.setItem(lockKey, deviceFingerprint);
-                        localStorage.setItem(lockTimeKey, Date.now().toString());
-                        console.log('Device locked for customer');
-                    } else if (storedFingerprint !== deviceFingerprint) {
-                        // DIFFERENT DEVICE - Block silently with generic error
-                        // Don't reveal it's a device check - just say invalid credentials
-                        console.log('Access denied');
-                        return null; // Will show "Invalid credentials" - nobody knows why
+                    // Check if this device is already registered
+                    if (deviceList.includes(deviceFingerprint)) {
+                        // Device already registered - allow access
+                        console.log('Device already registered, allowing access');
+                    } else {
+                        // New device - check if we can add it
+                        if (deviceList.length >= maxDevices) {
+                            // Maximum devices reached for this subscription
+                            console.log('Maximum devices (' + maxDevices + ') reached for this subscription');
+                            // Show specific error message
+                            showDeviceLimitError(maxDevices);
+                            return null;
+                        } else {
+                            // Add this device to the registered list
+                            deviceList.push(deviceFingerprint);
+                            localStorage.setItem(lockKey, deviceList.join(','));
+                            localStorage.setItem(lockTimeKey, Date.now().toString());
+                            console.log('New device registered. Total devices: ' + deviceList.length + '/' + maxDevices);
+                        }
                     }
                     
                     // Check if customer has active subscription
@@ -406,7 +425,7 @@
                                 permissions: ['basic_access'], // Customer has basic access
                                 plan: customer.plan,
                                 addons: customer.addons,
-                                adultPassword: customer.adultPassword || '8899'
+                                adultPassword: (customer.adultPassword && customer.adultPassword.trim() !== '') ? customer.adultPassword : '112233'
                             };
                         }
                     }
@@ -615,6 +634,14 @@
             display: flex;
         }
 
+        #changePasswordBtn {
+            background: linear-gradient(135deg, #667eea, #764ba2) !important;
+        }
+
+        #changePasswordBtn:hover {
+            background: linear-gradient(135deg, #764ba2, #667eea) !important;
+        }
+
         .logout-btn svg {
             width: 18px;
             height: 18px;
@@ -737,7 +764,7 @@
             display: grid;
             grid-auto-flow: column;
             grid-auto-columns: 1fr;
-            gap: 4px;
+            gap: 10px;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 12px;
             padding: 4px;
@@ -746,7 +773,7 @@
 
         .source-tab {
             flex: 1;
-            padding: 10px;
+            padding: 6px 8px;
             background: transparent;
             border: none;
             border-radius: 8px;
@@ -754,6 +781,18 @@
             font-weight: 500;
             cursor: pointer;
             transition: all 0.3s ease;
+            font-size: 12px;
+            line-height: 1.2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 40px;
+        }
+        
+        .source-tab span {
+            font-size: 9px;
+            margin-top: 2px;
         }
 
         .source-tab.active {
@@ -1209,6 +1248,11 @@
             overflow: hidden;
             margin-bottom: 25px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+        }
+        
+        .video-container:active {
+            cursor: pointer;
         }
 
         .video-player {
@@ -1456,6 +1500,133 @@
         .volume-slider {
             width: 80px;
         }
+        
+        /* Simple Player Controls - Always Visible in Video Container */
+        .simple-player-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.85));
+            padding: 50px 20px 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        .simple-timeline {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .simple-progress {
+            flex: 1;
+            height: 5px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .simple-progress:hover {
+            height: 8px;
+        }
+        
+        .simple-progress-played {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: #e50914;
+            border-radius: 3px;
+            width: 0%;
+        }
+        
+        .simple-time {
+            color: #fff;
+            font-size: 13px;
+            min-width: 90px;
+            text-align: right;
+        }
+        
+        .simple-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-start;
+        }
+        
+        .simple-btn {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+        
+        .simple-btn:hover,
+        .simple-btn:focus {
+            background: rgba(255,255,255,0.3);
+            outline: 3px solid #ffff00;
+            outline-offset: 2px;
+        }
+        
+        /* Fullscreen Controls Overlay - TV Remote Navigation */
+        /* Fullscreen Controls Overlay - TV Remote Controls */
+        .fullscreen-controls {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 30px;
+            border-radius: 50px;
+            z-index: 999998;
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .fullscreen-controls.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        /* Ensure fullscreen controls appear in fullscreen mode */
+        :fullscreen .fullscreen-controls,
+        :-webkit-full-screen .fullscreen-controls {
+            z-index: 2147483646 !important;
+            position: fixed !important;
+            top: 20px !important;
+        }
+        
+        .fs-control-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            padding: 15px 25px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            min-width: 80px;
+        }
+        
+        .fs-control-btn:hover,
+        .fs-control-btn:focus {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+            outline: 3px solid #ffff00;
+            outline-offset: 2px;
+        }
+        
+        /* Netflix-Style Video Controls - REMOVED - Using simple controls instead */
+        /* All Netflix CSS removed - using simple-player-controls instead */
 
         .volume-display {
             min-width: 35px;
@@ -2128,6 +2299,15 @@
 
     <!-- LOCAL VERSION - No Firebase SDK needed -->
     <script>
+        // ============================================
+        // CONFIGURATION - Edit this URL to point to your admin_data.json on GitHub
+        // All devices will sync from this URL automatically
+        // ============================================
+        // Try GitHub Pages URL first, fallback to raw.githubusercontent.com
+        const DEFAULT_SYNC_URL = 'https://samsat1.github.io/app/admin_data.json';
+        const FALLBACK_SYNC_URL = 'https://raw.githubusercontent.com/samsat1/samsat1.github.io/main/app/admin_data.json';
+        // ============================================
+        
         // LOCAL VERSION - Firebase not used
         // Using localStorage for all data storage
         const firebaseConfig = {};
@@ -2223,6 +2403,11 @@
                 <div class="adult-icon">🔒</div>
                 <div class="adult-status">Locked</div>
             </div>
+            
+            <!-- Change Password Button - only visible in header when adult section is active -->
+            <button class="source-tab" onclick="showChangeAdultPassword()" id="adultChangePasswordBtn" style="display: none; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 8px 16px; border-radius: 6px; font-size: 13px;">
+                🔑 Change Password
+            </button>
         </div>
     </header>
 
@@ -2239,7 +2424,7 @@
             <div class="source-selector">
                 <div class="source-tabs">
                     <button class="source-tab active" onclick="switchSource('live')" data-source="live">
-                        📺 Live TV
+                        📺 Live <span>TV</span>
                     </button>
                     <button class="source-tab" onclick="switchSource('movies')" data-source="movies">
                         🎬 Movies
@@ -2251,7 +2436,7 @@
                         ⚽ Sports
                     </button>
                     <button class="source-tab" onclick="switchSource('sportsPlus')" data-source="sportsPlus" id="sportsPlusTab">
-                        🏆 Sports Plus
+                        🏆 Sports <span>Plus</span>
                     </button>
                     <!-- Adult tab - hidden by default, appears only when password is entered -->
                     <button class="source-tab adult-tab" onclick="switchSource('adult')" data-source="adult" id="adultTab" style="display: none;">
@@ -2293,8 +2478,8 @@
         
         <!-- Player Area -->
         <section class="player-area">
-            <!-- Video Player -->
-            <div class="video-container" ondblclick="toggleVideoFullscreen()">
+            <!-- Video Player - Click handling done via JavaScript event listeners below -->
+            <div class="video-container" id="videoContainer">
                 <video 
                     id="videoPlayer" 
                     class="video-player video-js vjs-default-skin" 
@@ -2310,6 +2495,32 @@
                     <div class="overlay-info">
                         <h2 class="overlay-title" style="color: #667eea;">iWATCH TV</h2>
                         <p class="overlay-description" style="color: #888;">Select a channel from the list to start watching</p>
+                    </div>
+                </div>
+                
+                <!-- Fullscreen Controls Overlay - TV Remote Controls -->
+                <div class="fullscreen-controls hidden" id="fullscreenControls">
+                    <button class="fs-control-btn" onclick="exitFullscreenMode()" title="Back">⬅️ Back</button>
+                    <button class="fs-control-btn" onclick="togglePlay()" title="Play/Pause" id="fsPlayPauseBtn">▶️ Play</button>
+                    <button class="fs-control-btn" onclick="toggleMute()" title="Mute/Unmute">🔊 Mute</button>
+                </div>
+                
+                <!-- Simple Video Player Controls - Always Visible -->
+                <div class="simple-player-controls" id="simplePlayerControls">
+                    <!-- Timeline -->
+                    <div class="simple-timeline" id="simpleTimeline">
+                        <div class="simple-progress" id="simpleProgress" onclick="simpleSeek(event)">
+                            <div class="simple-progress-played" id="simpleProgressPlayed"></div>
+                        </div>
+                        <div class="simple-time">
+                            <span id="simpleCurrentTime">00:00</span> / <span id="simpleDuration">00:00</span>
+                        </div>
+                    </div>
+                    <!-- Control Buttons -->
+                    <div class="simple-buttons">
+                        <button class="simple-btn" onclick="simpleTogglePlay()" title="Play/Pause" id="simplePlayBtn">▶️</button>
+                        <button class="simple-btn" onclick="simpleToggleMute()" title="Mute">🔊</button>
+                        <button class="simple-btn" onclick="simpleToggleFullscreen()" title="Fullscreen">⛶</button>
                     </div>
                 </div>
             </div>
@@ -2403,7 +2614,28 @@
                 <button class="adult-btn cancel" onclick="hideAdultModal()">❌ Cancel</button>
             </div>
             <div style="margin-top: 15px; text-align: center;">
-                <button onclick="showChangeAdultPassword()" style="background: transparent; border: none; color: #888; font-size: 12px; cursor: pointer; text-decoration: underline;">Change Password</button>
+                <button onclick="showChangeAdultPassword()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: #fff; font-size: 12px; cursor: pointer; text-decoration: underline; padding: 8px 16px; border-radius: 5px;">Change Password</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Arabic Content Modal -->
+    <div class="adult-modal" id="arabicModal">
+        <div class="adult-content">
+            <div class="adult-header">
+                <h2 class="adult-title">🕌</h2>
+                <p class="adult-warning">Arabic Content Verification Required</p>
+                <p class="adult-warning">Enter password to access Arabic content</p>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 10px; color: var(--text-primary);">Enter Password:</label>
+                <input type="password" class="adult-input" id="arabicPassword" maxlength="6" placeholder="••••••">
+            </div>
+            
+            <div class="adult-buttons">
+                <button class="adult-btn confirm" onclick="verifyArabicPassword()">✅ Verify</button>
+                <button class="adult-btn cancel" onclick="hideArabicModal()">❌ Cancel</button>
             </div>
         </div>
     </div>
@@ -2413,7 +2645,7 @@
         <div class="adult-content">
             <div class="adult-header">
                 <h2 class="adult-title">🔐</h2>
-                <p class="adult-warning">Change Adult Password</p>
+                <p class="adult-warning">Change Password</p>
             </div>
             <div style="margin-bottom: 15px;">
                 <label style="display: block; margin-bottom: 5px; color: var(--text-primary); font-size: 13px;">Current Password:</label>
@@ -2489,7 +2721,24 @@
         let currentSource = 'live';
         let currentCategory = 'all';
         let adultUnlocked = false;
+        let arabicUnlocked = false;
         let currentContent = null;
+        
+        // Content Data - defined early to prevent ReferenceError
+        const contentData = {
+            live: { name: 'Live TV', content: [], streamingMode: 'always-streaming' },
+            'sports-live': { name: 'Sports TV', content: [], streamingMode: 'always-streaming' },
+            'livetv-addon': { name: 'TV Addon', content: [], streamingMode: 'always-streaming' },
+            vod: { name: 'Video on Demand', content: [], streamingMode: 'on-demand' },
+            series: { name: 'TV Series', content: [], streamingMode: 'on-demand' },
+            movies: { name: 'Movies', content: [], streamingMode: 'on-demand' },
+            basic: { name: 'Basic Package', content: [], streamingMode: 'on-demand' },
+            addon: { name: 'Add-on Packages', content: [], streamingMode: 'mixed' },
+            adult: { name: 'Adult Content', content: [], streamingMode: 'on-demand' },
+            arabic: { name: 'Arabic Content', content: [], streamingMode: 'on-demand' },
+            internet: { name: 'Internet Videos', content: [], streamingMode: 'on-demand' }
+        };
+        
         let isFullscreenMode = false; // Track if VLC fullscreen is active
         let clickTimer = null; // For single/double click detection
         let clickDelay = 400; // ms to wait before treating as single click
@@ -2648,6 +2897,7 @@
 
                 const pkgName = (packageData.name || '').toLowerCase();
                 const customerAddons = (customer.addons || '').toLowerCase();
+                const customerPlan = (customer.plan || '').toLowerCase();
                 
                 // Check subscription expiry first
                 if (customer.expiryDate) {
@@ -2658,10 +2908,40 @@
                     }
                 }
 
+                // Check if customer is on 2nd TV or 3rd TV plan - Sports packages should be blocked
+                const isSecondTV = customerPlan.includes('second') || customerPlan.includes('2nd');
+                const isThirdTV = customerPlan.includes('third') || customerPlan.includes('3rd');
+                const isSportsPackage = pkgName.includes('sport') && !pkgName.includes('movie');
+                const hasSportsAddon = customerAddons.includes('sports') || customerAddons.includes('sports plus');
+                
+                // Block Sports and Sports Plus packages on 2nd TV and 3rd TV plans
+                if ((isSecondTV || isThirdTV) && isSportsPackage && hasSportsAddon) {
+                    console.log('🚫 Blocking Sports package on 2nd/3rd TV plan:', packageData.name);
+                    return { hasAccess: false, reason: 'Sports not available on 2nd/3rd TV plans' };
+                }
+
                 // ADULT content - requires explicit Adult addon
-                if (packageData.isAdult || pkgName.includes('adult')) {
+                if (packageData.isAdult || pkgName.includes('adult') || pkgName.includes('xxx')) {
                     if (!customerAddons.includes('adult')) {
                         return { hasAccess: false, reason: 'Adult addon required' };
+                    }
+                    return { hasAccess: true };
+                }
+
+                // ARABIC content - requires explicit Arabic addon
+                // Check package name, category, isArabic flag, or sectionId 7 (common Arabic section)
+                if (packageData.isArabic || pkgName.includes('arabic') || packageData.category === 'arabic' || packageData.sectionId === 7) {
+                    if (!customerAddons.includes('arabic')) {
+                        return { hasAccess: false, reason: 'Arabic addon required' };
+                    }
+                    return { hasAccess: true };
+                }
+
+                // MOVIES content - requires explicit Movies addon
+                // Check package name, category, isMovie flag, or sectionId 26 (common Movies section)
+                if (pkgName.includes('movies') || packageData.category === 'movie' || packageData.category === 'vod' || packageData.sectionId === 26 || packageData.isMovie) {
+                    if (!customerAddons.includes('movies')) {
+                        return { hasAccess: false, reason: 'Movies addon required' };
                     }
                     return { hasAccess: true };
                 }
@@ -2699,13 +2979,7 @@
                 const packagesRaw = localStorage.getItem('adminPackages');
                 const customersRaw = localStorage.getItem('adminCustomers');
                 
-                console.log('📦 RAW localStorage adminPackages:', packagesRaw ? packagesRaw.substring(0, 200) : 'NULL');
-                
-                adminPackages = JSON.parse(packagesRaw || '[]');
-                adminCustomers = JSON.parse(customersRaw || '[]');
-                
-                console.log('📦 Loaded packages count:', adminPackages.length);
-                console.log('📦 Package names:', adminPackages.map(p => p.name));
+                console.log('📦 Packages loaded:', adminPackages.length);
                 
                 if (!currentUser || !currentUser.username) {
                     console.log('📦 No user logged in');
@@ -2724,13 +2998,13 @@
                     return [];
                 }
 
-                console.log('📦 Checking access for customer:', customer.name, '| Plan:', customer.plan, '| Addons:', customer.addons);
+                console.log('📦 Checking access for customer:', customer.name);
 
                 const accessiblePackages = [];
                 
                 adminPackages.forEach(pkg => {
                     const validation = this.validatePackageAccess(customer, pkg.id);
-                    console.log(`  - Package "${pkg.name}": ${validation.hasAccess ? '✅' : '❌'} ${validation.reason || ''}`);
+                    console.log(`  - Package "${pkg.name}": ${validation.hasAccess ? '✅' : '❌'}`);
                     if (validation.hasAccess) {
                         accessiblePackages.push({
                             package: pkg,
@@ -2802,15 +3076,41 @@
                 // Admin always has access
                 if (currentUser.role === 'admin') return true;
 
-                // Reload customer data
-                adminCustomers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
-                const customer = adminCustomers.find(c => c.username === currentUser.username);
+                // Reload customer data from both clientAuthCustomers and adminCustomers
+                const clientAuthCustomers = JSON.parse(localStorage.getItem('clientAuthCustomers') || '[]');
+                const adminCustomersList = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
+                const allCustomers = [...clientAuthCustomers, ...adminCustomersList];
+                
+                // Remove duplicates by id
+                const uniqueCustomers = allCustomers.reduce((acc, customer) => {
+                    if (!acc.find(c => c.id === customer.id)) {
+                        acc.push(customer);
+                    }
+                    return acc;
+                }, []);
+                
+                const customer = uniqueCustomers.find(c => c.username === currentUser.username);
                 if (!customer) return false;
 
                 // Check subscription expiry
                 if (customer.expiryDate) {
                     const expiryDate = new Date(customer.expiryDate);
                     if (expiryDate <= new Date()) return false;
+                }
+
+                // Check if customer is on 2nd TV or 3rd TV plan - Sports packages should be blocked
+                const customerPlan = (customer.plan || '').toLowerCase();
+                const customerAddons = (customer.addons || '').toLowerCase();
+                const contentName = (contentItem.name || '').toLowerCase();
+                const isSecondTV = customerPlan.includes('second') || customerPlan.includes('2nd');
+                const isThirdTV = customerPlan.includes('third') || customerPlan.includes('3rd');
+                const isSportsContent = contentName.includes('sport') && !contentName.includes('movie');
+                const hasSportsAddon = customerAddons.includes('sports');
+                
+                // Block Sports and Sports Plus content on 2nd TV and 3rd TV plans
+                if ((isSecondTV || isThirdTV) && isSportsContent && hasSportsAddon) {
+                    console.log('🚫 Blocking Sports content on 2nd/3rd TV plan:', contentItem.name);
+                    return false;
                 }
 
                 // Adult content check
@@ -2851,8 +3151,9 @@
                         this.refreshContentAccess();
                     }
 
-                    if (e.key === 'adminCustomers') {
+                    if (e.key === 'clientAuthCustomers' || e.key === 'adminCustomers') {
                         console.log('👥 Customer data updated, refreshing auth validation...');
+                        adminCustomers = loadCustomersFromAdmin();
                         this.refreshContentAccess();
                     }
                 });
@@ -3110,15 +3411,22 @@
             return [];
         }
 
-        // Load customers from admin panel (now uses correct key)
+        // Load customers from admin panel AND reseller-created customers for login
         function loadCustomersFromAdmin() {
             try {
+                // Try clientAuthCustomers first (includes admin AND reseller-created customers)
+                const clientAuthCustomers = localStorage.getItem('clientAuthCustomers');
+                if (clientAuthCustomers) {
+                    return JSON.parse(clientAuthCustomers);
+                }
+                
+                // Fallback to adminCustomers for backward compatibility
                 const adminCustomers = localStorage.getItem('adminCustomers');
                 if (adminCustomers) {
                     return JSON.parse(adminCustomers);
                 }
             } catch (e) {
-                console.error('Error loading customers from admin:', e);
+                console.error('Error loading customers for login:', e);
             }
             return [];
         }
@@ -3138,7 +3446,7 @@
                 console.log('🔑 Auto-login: Found stored credentials for:', credentials.username);
                 
                 // IMPORTANT: Wait for customer data to be available
-                const customers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
+                const customers = JSON.parse(localStorage.getItem('clientAuthCustomers') || localStorage.getItem('adminCustomers') || '[]');
                 if (customers.length === 0) {
                     console.log('🔑 Auto-login: Customer data not ready, will retry...');
                     return false; // Signal retry needed
@@ -3221,28 +3529,47 @@
                 return adminPackages; // Admin sees all packages
             }
 
-            // Use the new package authentication system
-            const accessiblePackages = clientPackageAuth.getAccessiblePackages();
-            const availablePackages = accessiblePackages.map(item => item.package);
+            // If no user logged in, return empty
+            if (!currentUser || !currentUser.username) {
+                return [];
+            }
 
-            // Additional filtering for adult content based on password
-            const filteredPackages = availablePackages.filter(pkg => {
-                // Adult packages require password unlock
-                if (pkg.isAdult || pkg.name.toLowerCase().includes('adult')) {
-                    return adultUnlocked;
+            // Find current customer
+            const customer = adminCustomers.find(c => c.username === currentUser.username);
+            if (!customer) {
+                return [];
+            }
+
+            const customerAddons = (customer.addons || '').toLowerCase();
+
+            // Filter packages based on addons
+            const filteredPackages = adminPackages.filter(pkg => {
+                const pkgName = (pkg.name || '').toLowerCase();
+                
+                // Adult - requires addon (check for 'adult', 'adult content', etc.)
+                if (pkg.isAdult || pkgName.includes('adult') || pkgName.includes('xxx') || pkg.sectionId === 4) {
+                    return (customerAddons.includes('adult') || customerAddons.includes('adult content'));
                 }
-                return true;
+                
+                // Arabic - requires addon (check for 'arabic', 'arabic package', etc.)
+                if (pkg.isArabic || pkgName.includes('arabic') || pkg.category === 'arabic' || pkg.sectionId === 7) {
+                    return customerAddons.includes('arabic') || customerAddons.includes('arabic package');
+                }
+                
+                // Movies - requires addon (check for 'movies', 'movies package', etc.) - Section ID 5
+                if (pkgName.includes('movies') || pkg.category === 'movie' || pkg.category === 'vod' || pkg.sectionId === 5 || pkg.isMovie) {
+                    return customerAddons.includes('movies') || customerAddons.includes('movies package');
+                }
+                
+                // Regular packages - require active subscription
+                if (customer.status === 'active' || customer.plan) {
+                    return true;
+                }
+                
+                return false;
             });
 
-            console.log('🔐 Enhanced Package Authentication Filtering:', {
-                customer: currentUser?.username,
-                totalPackages: adminPackages.length,
-                accessiblePackages: accessiblePackages.length,
-                availableAfterAdultFilter: filteredPackages.length,
-                accessiblePackageNames: accessiblePackages.map(item => item.package.name),
-                adultUnlocked: adultUnlocked,
-                message: accessiblePackages.length > 0 ? '✅ Authentication successful' : '❌ No accessible packages'
-            });
+            console.log('🔐 Package Authentication:', { packages: filteredPackages.length, customer: currentUser.username });
 
             return filteredPackages;
         }
@@ -3941,10 +4268,12 @@
                     category: isAdult ? 'adult' : 'movie',
                     isAdult: isAdult,
                     adult: isAdult,
+                    sectionId: libraryKey, // Mark as Plex content for proper routing
                     type: 'mp4',
                     thumb: item.thumb ? `${serverUrl}${item.thumb}?X-Plex-Token=${token}` : '',
                     art: item.art ? `${serverUrl}${item.art}?X-Plex-Token=${token}` : '',
                     url: item.Media?.[0]?.Part?.[0]?.key ? `${serverUrl}${item.Media[0].Part[0].key}?X-Plex-Token=${token}` : '',
+                    plexToken: token, // Store token for playback
                     streamingMode: 'on-demand',
                     year: item.year,
                     duration: item.duration,
@@ -4053,54 +4382,14 @@
             }
         }
 
-        // Content Data
-        const contentData = {
-            live: {
-                name: 'Live TV',
-                content: [], // Channels loaded from Firebase/admin (basic package)
-                streamingMode: 'always-streaming' // Live TV always streams
-            },
-            'sports-live': {
-                name: 'Sports TV',
-                content: [], // Sports channels (sports addon)
-                streamingMode: 'always-streaming'
-            },
-            'livetv-addon': {
-                name: 'TV Addon',
-                content: [], // TV Addon channels
-                streamingMode: 'always-streaming'
-            },
-            movies: {
-                name: 'Movies',
-                content: [],
-                streamingMode: 'always-streaming' // Movies always stream for better UX
-            },
-            vod: {
-                name: 'VOD Library',
-                content: [],
-                streamingMode: 'on-demand' // VOD streams on-demand
-            },
-            basic: {
-                name: 'Basic Package',
-                content: [],
-                streamingMode: 'on-demand' // Basic packages on-demand
-            },
-            addon: {
-                name: 'Add-on Packages',
-                content: loadPackagesFromAdmin(), // Load from admin panel
-                streamingMode: 'mixed' // Mixed - depends on package
-            },
-            adult: {
-                name: 'Adult Content',
-                content: loadAdultPackagesFromAdmin(), // Load adult packages
-                streamingMode: 'on-demand' // Adult content on-demand
-            },
-            internet: {
-                name: 'Internet Videos',
-                content: [],
-                streamingMode: 'on-demand' // Internet videos on-demand
-            }
-        };
+        // Content Data - update with functions (already declared earlier)
+        contentData.movies = { name: 'Movies', content: [], streamingMode: 'always-streaming' };
+        contentData.vod = { name: 'VOD Library', content: [], streamingMode: 'on-demand' };
+        contentData.basic = { name: 'Basic Package', content: [], streamingMode: 'on-demand' };
+        contentData.addon = { name: 'Add-on Packages', content: loadPackagesFromAdmin(), streamingMode: 'mixed' };
+        contentData.adult = { name: 'Adult Content', content: loadAdultPackagesFromAdmin(), streamingMode: 'on-demand' };
+        contentData.series = { name: 'TV Series', content: [], streamingMode: 'on-demand' };
+        // Note: arabic and internet already defined above
 
         // Helper Functions for Content Display
         function getSourceIcon(source) {
@@ -4158,10 +4447,10 @@
         async function loginUser(username, password) {
             // LOCAL VERSION - Use localStorage instead of Firebase
             try {
-                // Try to load customers from localStorage first
-                const customersRaw = localStorage.getItem('adminCustomers');
-                if (customersRaw) {
-                    const customers = JSON.parse(customersRaw);
+                // Try to load customers from clientAuthCustomers first (includes admin AND reseller-created customers)
+                const clientAuthCustomersRaw = localStorage.getItem('clientAuthCustomers');
+                if (clientAuthCustomersRaw) {
+                    const customers = JSON.parse(clientAuthCustomersRaw);
                     const user = customers.find(c => c.username === username && c.password === password);
                     
                     if (user) {
@@ -4169,37 +4458,47 @@
                         currentUser = user;
                         adminCustomers = customers;
                         
-                        console.log('✅ Login successful (local):', user.username);
+                        console.log('✅ Login successful (clientAuth):', user.username);
+                        console.log('📅 Expiry date:', user.expiryDate);
                         updateUserInterface();
                         hideLoginModal();
                         // Store credentials for auto-login
                         const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
-                        storeCredentials(username, password, user.subscriptionExpiry, rememberMe);
+                        storeCredentials(username, password, user.expiryDate, rememberMe);
+                        // Load content from localStorage
+                        loadPlexLibraryContent();
+                        return true;
+                    }
+                }
+                
+                // Fallback to adminCustomers for backward compatibility
+                const adminCustomersRaw = localStorage.getItem('adminCustomers');
+                if (adminCustomersRaw) {
+                    const customers = JSON.parse(adminCustomersRaw);
+                    const user = customers.find(c => c.username === username && c.password === password);
+                    
+                    if (user) {
+                        isLoggedIn = true;
+                        currentUser = user;
+                        adminCustomers = customers;
+                        
+                        console.log('✅ Login successful (admin fallback):', user.username);
+                        console.log('📅 Expiry date:', user.expiryDate);
+                        updateUserInterface();
+                        hideLoginModal();
+                        // Store credentials for auto-login
+                        const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
+                        storeCredentials(username, password, user.expiryDate, rememberMe);
                         // Load content from localStorage
                         loadPlexLibraryContent();
                         return true;
                     }
                 }
             } catch(e) {
-                console.log('Local login failed, trying fallback:', e.message);
+                console.log('Local login failed:', e.message);
             }
             
-            // Fallback to passwordManager
-            const user = passwordManager.authenticateUser(username, password);
-            if (user) {
-                isLoggedIn = true;
-                currentUser = user;
-                adminCustomers = loadCustomersFromAdmin();
-                updateUserInterface();
-                hideLoginModal();
-                // Store credentials for auto-login
-                const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
-                storeCredentials(username, password, user.subscriptionExpiry, rememberMe);
-                // Load content from localStorage
-                loadPlexLibraryContent();
-                return true;
-            }
-            
+            showNotification('Invalid username or password', 'error');
             return false;
         }
 
@@ -4262,6 +4561,8 @@
                     logoutBtn.classList.remove('show');
                 }
             }
+            
+            // Change Password button removed from header - now only appears in adult modal
             
             if (isLoggedIn && currentUser) {
                 // Clear any previous state first
@@ -4622,17 +4923,19 @@
         window.verifyAdultPassword = function() {
             const password = document.getElementById('adultPassword').value;
             
-            // Get customer's adult password (if logged in) or use default
-            let correctPassword = '8899'; // Default password
-            const customPassword = localStorage.getItem('customAdultPassword');
-            if (customPassword) {
-                correctPassword = customPassword;
-            } else if (currentUser && currentUser.adultPassword) {
-                correctPassword = currentUser.adultPassword;
+            // Default password is 112233 for all customers
+            // Check localStorage first (customer changed password)
+            let correctPassword = localStorage.getItem('customAdultPassword') || '112233';
+            
+            // If localStorage has empty string, use default
+            if (!correctPassword || correctPassword.trim() === '') {
+                correctPassword = '112233';
             }
             
-            // Also check master password for admin access
+            // Master password for admin access
             const masterPassword = passwordManager.passwords.masterAdult;
+            
+            console.log('🔐 Password check: [SECURE]');
             
             if (password === correctPassword || password === masterPassword) {
                 adultUnlocked = true;
@@ -4664,11 +4967,14 @@
             const newPass = document.getElementById('newAdultPass').value;
             const confirm = document.getElementById('confirmAdultPass').value;
             
-            // Get current password
-            let correctPassword = '8899';
-            if (currentUser && currentUser.adultPassword) {
-                correctPassword = currentUser.adultPassword;
+            // Get current password - default to 112233
+            let correctPassword = localStorage.getItem('customAdultPassword') || '112233';
+            
+            // If localStorage has empty string, use default
+            if (!correctPassword || correctPassword.trim() === '') {
+                correctPassword = '112233';
             }
+            
             const masterPassword = passwordManager.passwords.masterAdult;
             
             // Verify current password
@@ -4735,6 +5041,11 @@
             if (adultTab) {
                 adultTab.style.display = 'block';
             }
+            // Also show Change Password button when adult is unlocked
+            const changePassBtn = document.getElementById('adultChangePasswordBtn');
+            if (changePassBtn) {
+                changePassBtn.style.display = 'block';
+            }
         }
 
         function hideAdultTab() {
@@ -4745,6 +5056,11 @@
                 if (currentSource === 'adult') {
                     switchSource('basic');
                 }
+            }
+            // Also hide Change Password button
+            const changePassBtn = document.getElementById('adultChangePasswordBtn');
+            if (changePassBtn) {
+                changePassBtn.style.display = 'none';
             }
         }
 
@@ -4761,6 +5077,12 @@
                 tab.classList.remove('active');
             });
             document.querySelector(`[data-source="${source}"]`).classList.add('active');
+            
+            // Show/hide Change Password button based on current source
+            const changePassBtn = document.getElementById('adultChangePasswordBtn');
+            if (changePassBtn) {
+                changePassBtn.style.display = (source === 'adult' && adultUnlocked) ? 'block' : 'none';
+            }
             
             renderContent();
         }
@@ -4839,59 +5161,77 @@
             
             // Apply customer subscription filtering
             const availablePackages = filterContentBySubscription();
+            const accessiblePackageIds = availablePackages.map(pkg => pkg.id);
+            
+            // Get customer addons for content filtering - check BOTH clientAuthCustomers and adminCustomers
+            let customerAddons = '';
+            if (currentUser && currentUser.username) {
+                // First check clientAuthCustomers (includes reseller-created customers)
+                const clientAuthCustomers = JSON.parse(localStorage.getItem('clientAuthCustomers') || '[]');
+                let customer = clientAuthCustomers.find(c => c.username === currentUser.username);
+                
+                // Fallback to adminCustomers if not found
+                if (!customer) {
+                    const adminCustomers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
+                    customer = adminCustomers.find(c => c.username === currentUser.username);
+                }
+                
+                if (customer) {
+                    customerAddons = (customer.addons || '').toLowerCase();
+                }
+            }
             
             let filteredContent = contentData[currentSource].content;
             
-            // Apply subscription-based filtering - but keep Plex cached content
-            if (['movies', 'vod'].includes(currentSource)) {
-                console.log(`🔍 Filtering ${currentSource} content - current content count: ${filteredContent.length}`);
+            // Filter content based on subscription access
+            filteredContent = filteredContent.filter(item => {
+                // Check if this is Plex content (has category field set)
+                const category = (item.category || '').toLowerCase();
+                const isAdult = item.adult || item.isAdult || category === 'adult';
+                const isArabic = item.arabic || item.isArabic || category === 'arabic';
+                const isMovie = category === 'movie' || category === 'vod';
                 
-                // If content is already loaded (e.g., from Plex cache), keep it
-                // Only clear if explicitly no access (future enhancement)
-                if (filteredContent.length > 0) {
-                    console.log(`📺 Showing ${filteredContent.length} items in ${currentSource} section`);
-                } else {
-                    console.log(`📺 ${currentSource}: No content available`);
-                }
-            }
-            
-            // Additional subscription filtering for other sections
-            if (currentSource === 'addon') {
-                // For addon section, show ALL packages so customers can see what's available
-                // Don't filter by access - customers should see all packages to subscribe to
-                console.log('📦 Addon section: showing all packages for subscription options');
-            }
-            
-            // Filter Live TV channels by customer's packages
-            if (currentSource === 'live' && currentUser) {
-                // For Live TV - show ALL channels without filtering (admin will control via packages)
-                if (currentSource === 'live') {
-                    // Don't filter - show all live channels
-                    console.log(`📺 Live TV: showing all ${filteredContent.length} channels`);
-                } else if (currentSource === 'sports') {
-                    // Show sports channels only
-                    filteredContent = filteredContent.filter(ch => ch.package && ch.package.toLowerCase().includes('sport'));
-                    console.log(`📺 Sports filtered: ${filteredContent.length} channels`);
-                } else {
-                    // Other sources - check subscription
-                    const customerPackages = currentUser.packages || [];
-                    const customerPlan = (currentUser.plan || '').toLowerCase();
-                    const addonsRaw = currentUser.addons || '';
-                    const customerAddons = typeof addonsRaw === 'string' ? addonsRaw.toLowerCase().split(',').map(a => a.trim()) : [];
-                    const allPackages = [...customerPackages.map(p => p.toLowerCase()), customerPlan, ...customerAddons];
+                // If it's Plex content, check addon access
+                if (isAdult || isArabic || isMovie) {
+                    // Adult content - requires addon + password
+                    if (isAdult) {
+                        const hasAdultAddon = customerAddons.includes('adult') || 
+                                            customerAddons.includes('adult content') ||
+                                            customerAddons.includes('adult content package');
+                        return hasAdultAddon && adultUnlocked;
+                    }
                     
-                    const hasBasic = allPackages.some(p => p.includes('basic') || p.includes('tv'));
-                    const hasSports = allPackages.some(p => p.includes('sport'));
-                    const isAdmin = currentUser.role === 'admin';
+                    // Arabic content - requires addon
+                    if (isArabic) {
+                        return customerAddons.includes('arabic') || 
+                               customerAddons.includes('arabic package');
+                    }
                     
-                    filteredContent = filteredContent.filter(channel => {
-                        if (isAdmin) return true; // Admin sees all
-                        if (channel.package === 'basic') return hasBasic || hasSports;
-                        if (channel.package === 'sports') return hasSports;
-                        return true;
-                    });
-                    console.log(`📺 ${currentSource} filtered: ${filteredContent.length} channels (Basic: ${hasBasic}, Sports: ${hasSports}, Plan: ${customerPlan})`);
+                    // Movies content - requires addon
+                    if (isMovie) {
+                        return customerAddons.includes('movies') || 
+                               customerAddons.includes('movies package');
+                    }
                 }
+                
+                // If no special category, check requiresPackage/packageId
+                if (!item.requiresPackage && !item.packageId) return true;
+                
+                // Check if user's accessible packages include this item's package
+                const pkgId = item.packageId || item.requiresPackage;
+                if (pkgId) {
+                    return accessiblePackageIds.includes(pkgId);
+                }
+                
+                return true;
+            });
+            
+            // Apply search filter
+            if (searchTerm) {
+                filteredContent = filteredContent.filter(item => 
+                    (item.name || '').toLowerCase().includes(searchTerm) ||
+                    (item.description || '').toLowerCase().includes(searchTerm)
+                );
             }
             
             const availableContent = filteredContent.filter(item => {
@@ -5200,6 +5540,10 @@
                 return;
             }
             
+            console.log('📺 playContent called with ID:', contentId);
+            console.log('📺 Current source:', currentSource);
+            console.log('📺 Adult unlocked:', adultUnlocked);
+            
             // Search in current source first, then fallback to movies/adult for Plex content
             let content = contentData[currentSource]?.content?.find(item => String(item.id) === String(contentId));
             
@@ -5213,6 +5557,20 @@
             if (!content && contentData.adult?.content) {
                 content = contentData.adult.content.find(item => String(item.id) === String(contentId));
                 if (content) console.log('📺 Found content in adult section:', content.name);
+            }
+            
+            // Debug: show content details
+            if (content) {
+                console.log('📺 Content details:', {
+                    name: content.name,
+                    type: content.type,
+                    url: content.url ? content.url.substring(0, 100) + '...' : 'none',
+                    category: content.category,
+                    adult: content.adult,
+                    sectionId: content.sectionId
+                });
+            } else {
+                console.error('❌ Content not found with ID:', contentId);
             }
             
             // Also search in live section
@@ -5288,6 +5646,18 @@
             // Handle different content types with streaming mode optimization
             const streamingMode = getContentStreamingMode(content);
             
+            // Check for Plex content first (adult content from Plex server)
+            const isPlexContent = content.plexToken || content.sectionId || content.isPlex || 
+                                  (content.category === 'adult' && content.url?.includes('plex')) ||
+                                  content.url?.startsWith('http') && content.type !== 'hls' && content.type !== 'mp4';
+            
+            if (isPlexContent) {
+                // Plex content - use Plex handler
+                console.log('📺 Routing to Plex handler:', content.name);
+                handlePlexContent(content);
+                return;
+            }
+            
             if (streamingMode === 'always-streaming') {
                 // Always-streaming content: start immediately without delay
                 console.log('🔴 Playing always-streaming content:', content.name);
@@ -5316,34 +5686,138 @@
 
         // Handle Plex content - fetch direct MP4 URL
         async function handlePlexContent(content) {
-            // ALWAYS use correct server URL - never use 127.0.0.1
-            const CORRECT_SERVER = 'http://192.168.1.100:32400';
-            const token = content.plexToken || localStorage.getItem('plexToken') || 'xcak2s6WSj7hzAinAigm';
-            const serverUrl = CORRECT_SERVER; // Force correct server
+            // Use Plex server URL from localStorage (set by admin panel)
+            let serverUrl = localStorage.getItem('plexLocalUrl') || localStorage.getItem('plexServerUrl');
+            // Fallback to a common local IP if not set
+            if (!serverUrl) {
+                serverUrl = 'http://192.168.1.100:32400';
+            }
+            const token = content.plexToken || localStorage.getItem('plexToken') || '';
             
             console.log('📺 Playing Plex content:', content.name);
-            console.log('📺 Server:', serverUrl, 'Token:', token.substring(0, 8) + '...');
+            console.log('📺 Server:', serverUrl, 'Token:', token ? token.substring(0, 8) + '...' : 'none');
+            console.log('📺 Content ID:', content.id, 'RatingKey:', content.ratingKey);
             
-            try {
-                // Method 1: Try the stored HLS transcode URL directly (no fetch needed)
-                if (content.url && content.url.includes('transcode')) {
-                    // Fix any wrong 127.0.0.1 URLs in cached content
-                    let fixedUrl = content.url.replace('http://127.0.0.1:32400', serverUrl);
-                    console.log('✅ Using stored transcode URL (fixed)');
-                    handleHLSStream(fixedUrl);
+            // Check if URL already exists and is valid
+            if (content.url && content.url.startsWith('http')) {
+                console.log('📺 Using existing content URL:', content.url.substring(0, 80) + '...');
+                
+                // Get video element
+                const video = player ? player.el().querySelector('video') : document.getElementById('videoPlayer');
+                if (!video) {
+                    console.error('❌ Video element not found');
+                    showError('Video player not available');
                     return;
                 }
                 
-                // Method 2: Construct direct playback URL (no fetch needed)
-                // Plex supports direct file access via this endpoint
-                const directStreamUrl = `${serverUrl}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${content.id}&mediaIndex=0&partIndex=0&protocol=hls&fastSeek=1&directPlay=0&directStream=1&X-Plex-Token=${token}`;
+                // Detect TV browsers
+                const isTV = /Web0S|webOS|LG|NetCast|Tizen|Samsung|SmartTV|Android TV|Hisense|VIZIO|Philips|Panasonic|Sharp|Toshiba|Roku|LGWEBOS|SALTO|Amazon Fire TV|firetv|Google TV/i.test(navigator.userAgent);
                 
-                console.log('✅ Playing via transcode URL:', directStreamUrl);
-                handleHLSStream(directStreamUrl);
+                if (isTV) {
+                    // TV browsers - use native playback
+                    console.log('📺 TV detected - using native playback for Plex');
+                    video.src = content.url;
+                    video.load();
+                    
+                    // Set timeout to detect if video doesn't start playing
+                    let videoTimeout = setTimeout(() => {
+                        console.log('⚠️ Video timeout - checking state');
+                        if (video.readyState < 2) {
+                            console.error('❌ Video not ready, trying HLS fallback');
+                            // Try HLS fallback
+                            if (content.url.includes('.mp4')) {
+                                const hlsUrl = content.url.replace('.mp4', '/master.m3u8');
+                                handleHLSStream(hlsUrl + '?X-Plex-Token=' + token);
+                            }
+                        }
+                    }, 5000);
+                    
+                    video.oncanplay = function() {
+                        console.log('✅ Video ready to play');
+                        clearTimeout(videoTimeout);
+                        video.play().catch(e => console.log('⚠️ Play failed:', e));
+                    };
+                    
+                    video.onloadedmetadata = function() {
+                        console.log('📺 Video metadata loaded, duration:', video.duration);
+                        video.play().catch(e => console.log('⚠️ Play failed on metadata:', e));
+                    };
+                    
+                    video.onerror = function() {
+                        console.error('❌ Video load error:', video.error);
+                        clearTimeout(videoTimeout);
+                        showError('Failed to load video. Please check Plex server connection.');
+                    };
+                    
+                    video.onplay = function() {
+                        console.log('✅ Video started playing');
+                        clearTimeout(videoTimeout);
+                    };
+                } else {
+                    // Desktop - use Video.js
+                    console.log('🖥️ Desktop detected - using Video.js for Plex');
+                    if (player && typeof player.src === 'function') {
+                        player.src({ type: 'video/mp4', src: content.url });
+                        player.play().catch(e => {
+                            console.log('⚠️ Video.js play failed, trying native:', e);
+                            video.src = content.url;
+                            video.load();
+                            video.play().catch(err => showError('Failed to play video'));
+                        });
+                    } else {
+                        video.src = content.url;
+                        video.load();
+                        video.play().catch(e => showError('Failed to play video'));
+                    }
+                }
+                return;
+            }
+            
+            // If no URL, try to fetch from Plex API or construct transcode URL
+            try {
+                // Extract ratingKey from content.id or use stored ratingKey
+                let ratingKey = content.ratingKey;
+                if (!ratingKey && content.id) {
+                    const parts = content.id.split('_');
+                    ratingKey = parts[parts.length - 1];
+                }
+                
+                if (!token) {
+                    console.error('❌ No Plex token found!');
+                    showError('Plex token not configured. Please check admin settings.');
+                    return;
+                }
+                
+                if (!ratingKey) {
+                    console.error('❌ No rating key found for content:', content.name);
+                    // Try to fetch the content metadata from Plex API
+                    if (content.sectionId) {
+                        console.log('📺 Trying to fetch content metadata from Plex...');
+                        const metadataUrl = `${serverUrl}/library/sections/${content.sectionId}/all?X-Plex-Token=${token}`;
+                        fetch(metadataUrl)
+                            .then(r => r.text())
+                            .then(xml => {
+                                console.log('📺 Fetched Plex metadata');
+                                showError('Content metadata error. Please refresh the content library.');
+                            })
+                            .catch(e => {
+                                showError('Content metadata error. Please refresh the content library.');
+                            });
+                    } else {
+                        showError('Content metadata error. Please refresh the content library.');
+                    }
+                    return;
+                }
+                
+                // Construct HLS transcode URL
+                const transcodeUrl = `${serverUrl}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${ratingKey}&mediaIndex=0&partIndex=0&protocol=hls&fastSeek=1&directPlay=0&directStream=1&X-Plex-Token=${token}`;
+                
+                console.log('✅ Playing via transcode URL:', transcodeUrl);
+                handleHLSStream(transcodeUrl);
                 
             } catch (error) {
                 console.error('Plex playback error:', error);
-                showError('Failed to load content: ' + error.message);
+                showError('Failed to load Plex content: ' + error.message);
             }
         }
         
@@ -5498,9 +5972,14 @@
             // Get video element
             const video = player ? player.el().querySelector('video') : document.getElementById('videoPlayer');
             if (!video) {
-                console.error('Video element not found');
+                console.error('❌ Video element not found');
+                showError('Video player not available. Please refresh the page.');
                 return;
             }
+            
+            console.log('📺 Video element found:', video.tagName);
+            console.log('📺 Video src before:', video.src || 'none');
+            console.log('📺 Content URL:', content.url);
             
             // Check if it's Plex content - use direct MP4 instead of HLS transcode
             if (content.sectionId) {
@@ -5517,7 +5996,9 @@
             
             // TV BROWSERS & NATIVE HLS: Use direct playback (MUCH FASTER)
             if (isLGTV || isSamsungTV || hasNativeHLS || isSafari) {
-                console.log('📺 TV/Native HLS detected - using fast native playback');
+                console.log('📺 TV/Native HLS detected - using native playback');
+                console.log('📺 User Agent:', navigator.userAgent);
+                console.log('📺 Video URL:', content.url ? content.url.substring(0, 100) + '...' : 'none');
                 
                 // Destroy HLS.js instance if running (prevents conflicts)
                 if (hls) {
@@ -5533,12 +6014,26 @@
                 video.src = content.url;
                 video.load();
                 
+                // Add error listener
+                video.onerror = function() {
+                    console.error('❌ Video load error:', video.error);
+                    showError('Failed to load video. URL may be invalid or server unreachable.');
+                };
+                
                 // Play immediately
                 const playPromise = video.play();
                 if (playPromise !== undefined) {
-                    playPromise.catch(e => {
-                        console.log('Autoplay blocked - tap to play');
+                    playPromise.then(() => {
+                        console.log('✅ Video started playing!');
+                    }).catch(e => {
+                        console.log('⚠️ Native play failed:', e.message);
+                        console.log('⚠️ Will try HLS.js as fallback...');
+                        // Fallback to HLS.js
+                        tryHLSJsFallback(content.url);
                     });
+                } else {
+                    // No play promise - older browser
+                    showTVPlayPrompt(content);
                 }
                 
                 // Update now playing info
@@ -5568,7 +6063,16 @@
                 hls.attachMedia(video);
                 
                 hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                    video.play().catch(e => console.log('Autoplay blocked'));
+                    console.log('✅ HLS.js loaded, starting playback...');
+                    const playPromise = video.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                            console.log('✅ HLS playback started!');
+                        }).catch(e => {
+                            console.log('⚠️ HLS Autoplay blocked:', e.message);
+                            showTVPlayPrompt(content);
+                        });
+                    }
                 });
                 
                 hls.on(Hls.Events.ERROR, (event, data) => {
@@ -5584,7 +6088,7 @@
                             hls.destroy();
                             video.src = content.url;
                             video.load();
-                            video.play().catch(e => {});
+                            video.play().catch(e => showTVPlayPrompt(content));
                         }
                     }
                 });
@@ -5593,11 +6097,51 @@
                 console.log('📺 Using native video fallback');
                 video.src = content.url;
                 video.load();
+                const playPromise = video.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(e => showTVPlayPrompt(content));
+                }
                 video.play().catch(e => console.log('Autoplay blocked'));
             }
             
             // Update now playing info
             updateNowPlaying(content);
+        }
+        
+        // Fallback function to try HLS.js when native playback fails
+        function tryHLSJsFallback(url) {
+            console.log('🔄 Trying HLS.js fallback...');
+            
+            if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+                const video = player.el().querySelector('video');
+                
+                if (hls) {
+                    hls.destroy();
+                }
+                
+                hls = new Hls({
+                    enableWorker: false,
+                    lowLatencyMode: false,
+                    maxBufferLength: 10,
+                    maxMaxBufferLength: 30
+                });
+                
+                hls.loadSource(url);
+                hls.attachMedia(video);
+                
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    console.log('✅ HLS.js fallback loaded successfully');
+                    video.play().catch(e => console.log('Autoplay blocked'));
+                });
+                
+                hls.on(Hls.Events.ERROR, (event, data) => {
+                    if (data.fatal) {
+                        console.error('❌ HLS.js fallback error:', data);
+                    }
+                });
+            } else {
+                console.log('⚠️ HLS.js not supported on this browser');
+            }
         }
 
         // Show loading indicator for on-demand content
@@ -5665,7 +6209,8 @@
 
         // Handle MP4 content playback
         function handleMP4Content(content) {
-            console.log('🎬 handleMP4Content called for:', content.name, content.url);
+            console.log('🎬 handleMP4Content called:', content.name);
+            console.log('🎬 Content URL:', content.url);
             
             // HIDE OVERLAY IMMEDIATELY
             const overlay = document.getElementById('videoOverlay');
@@ -5673,6 +6218,7 @@
                 overlay.classList.remove('show');
                 overlay.classList.add('playing');
                 overlay.style.display = 'none';
+                overlay.style.visibility = 'hidden';
             }
             
             // DESTROY HLS.js if running (prevents conflicts)
@@ -5685,43 +6231,153 @@
                 window.hlsInstance = null;
             }
             
-            // Get video element - prefer direct access for LG webOS
-            const video = document.getElementById('videoPlayer') || 
-                          (player ? player.el().querySelector('video') : null) ||
-                          document.querySelector('.video-player video');
-            
-            if (!video) {
-                console.error('No video element found for MP4 playback');
+            // Check if it's Plex content - use Plex playback handler
+            if (content.sectionId) {
+                console.log('🎬 Detected Plex MP4 content, redirecting to Plex handler...');
+                handlePlexContent(content);
                 return;
             }
             
-            // Detect TV browsers
-            const isTV = /Web0S|webOS|LG|Tizen|Samsung|SmartTV/i.test(navigator.userAgent);
+            // Detect ALL TV browsers - expanded detection
+            const userAgent = navigator.userAgent;
+            const isTV = /Web0S|webOS|LG|NetCast|Tizen|Samsung|SmartTV|Android TV|Hisense|VIZIO|Philips|Panasonic|Sharp|Toshiba|Roku|LGWEBOS|SALTO|Amazon Fire TV|firetv|Google TV/i.test(userAgent);
             
-            // FOR TV BROWSERS: Use direct video element (FASTER than Video.js)
+            console.log('📺 User Agent:', userAgent);
+            console.log('📺 Is TV detected:', isTV);
+            
+            // Get the actual native video element (not Video.js wrapper)
+            let nativeVideo = null;
+            
+            // Try to get the video element from Video.js player first
+            if (player && player.el) {
+                nativeVideo = player.el().querySelector('video');
+            }
+            
+            // Fallback to direct element lookup
+            if (!nativeVideo) {
+                nativeVideo = document.getElementById('videoPlayer');
+            }
+            if (!nativeVideo) {
+                nativeVideo = document.querySelector('.video-player video');
+            }
+            
+            if (!nativeVideo) {
+                console.error('❌ No video element found');
+                showError('Video player not available');
+                return;
+            }
+            
+            console.log('🎬 Using video element for playback');
+            
+            // Ensure video container is visible
+            const videoContainer = document.querySelector('.video-js');
+            if (videoContainer) {
+                videoContainer.style.display = 'block';
+                videoContainer.style.visibility = 'visible';
+                videoContainer.style.opacity = '1';
+            }
+            
+            // Also show .video-container
+            const vc = document.querySelector('.video-container');
+            if (vc) {
+                vc.style.display = 'block';
+                vc.style.visibility = 'visible';
+            }
+            
+            // For TV browsers, use native playback directly on video element
             if (isTV) {
-                console.log('📺 TV detected - using direct MP4 playback');
-                video.preload = 'auto';
-                video.src = content.url;
-                video.load();
-                video.play().catch(e => console.log('Autoplay blocked'));
-                updateNowPlaying(content);
-                return;
-            }
-            
-            // DESKTOP: Use Video.js
-            if (player) {
-                console.log('🎬 Using Video.js for MP4 playback');
-                player.src({ src: content.url, type: 'video/mp4' });
-                player.play().catch(e => console.log('Autoplay blocked'));
+                console.log('📺 TV detected - using native playback');
+                
+                // Show the video element
+                nativeVideo.style.display = 'block';
+                nativeVideo.style.visibility = 'visible';
+                
+                // Set source directly on native video element
+                nativeVideo.src = content.url;
+                nativeVideo.load();
+                
+                // Add error listener
+                nativeVideo.onerror = function() {
+                    console.error('❌ MP4 Video load error:', nativeVideo.error);
+                    showError('Failed to load MP4 video. URL may be invalid or server unreachable.');
+                };
+                
+                // Play immediately
+                const playPromise = nativeVideo.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        console.log('✅ TV Video playing in preview!');
+                    }).catch(e => {
+                        console.log('⚠️ TV play failed:', e.message);
+                        showTVPlayPrompt(content);
+                    });
+                }
             } else {
-                console.log('🎬 Using raw video element for MP4');
-                video.src = content.url;
-                video.load();
-                video.play().catch(e => console.log('Autoplay blocked'));
+                // Desktop browsers: use Video.js API
+                if (player && typeof player.src === 'function') {
+                    player.src({ type: 'video/mp4', src: content.url });
+                    player.play().catch(e => {
+                        console.log('⚠️ Video.js play failed:', e.message);
+                    });
+                } else {
+                    // Fallback to native video
+                    nativeVideo.src = content.url;
+                    nativeVideo.load();
+                    nativeVideo.play().catch(e => {
+                        console.log('⚠️ Native play failed:', e.message);
+                    });
+                }
             }
             
             updateNowPlaying(content);
+        }
+        
+        // Show "Press OK to play" prompt for TV browsers when autoplay is blocked
+        function showTVPlayPrompt(content) {
+            const overlay = document.getElementById('videoOverlay');
+            if (!overlay) return;
+            
+            overlay.style.display = 'flex';
+            overlay.style.background = 'rgba(0, 0, 0, 0.9)';
+            overlay.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <div style="font-size: 60px; margin-bottom: 20px;">▶️</div>
+                    <div style="font-size: 24px; color: white; margin-bottom: 20px;">Press OK or Enter to play</div>
+                    <div style="font-size: 18px; color: #00F5A0;">${content.name || 'Video'}</div>
+                    <div style="font-size: 14px; color: rgba(255,255,255,0.6); margin-top: 10px;">Tap anywhere or press any key</div>
+                </div>
+            `;
+            overlay.classList.add('show');
+            
+            // Store current content for playback
+            window.tvPendingContent = content;
+            
+            // One-time click/touch handler to play
+            const playHandler = function() {
+                overlay.classList.remove('show');
+                overlay.style.display = 'none';
+                overlay.removeEventListener('click', playHandler);
+                overlay.removeEventListener('touchstart', playHandler);
+                document.removeEventListener('keydown', keyHandler);
+                
+                // Resume playback
+                const video = document.getElementById('videoPlayer') || 
+                              (player ? player.el().querySelector('video') : null);
+                if (video) {
+                    video.play().catch(e => console.log('Play failed:', e));
+                }
+            };
+            
+            // Keyboard handler for TV remotes
+            const keyHandler = function(e) {
+                if (e.key === 'Enter' || e.key === 'OK' || e.key === 'MediaPlay' || e.key === 'Play') {
+                    playHandler();
+                }
+            };
+            
+            overlay.addEventListener('click', playHandler);
+            overlay.addEventListener('touchstart', playHandler);
+            document.addEventListener('keydown', keyHandler);
         }
 
         function updateNowPlaying(content) {
@@ -5792,6 +6448,200 @@
             }
         };
 
+        // SIMPLE PLAYER CONTROLS - Always Visible
+        // Helper function to get actual video element (works with Video.js)
+        function getVideoElement() {
+            let video = null;
+            if (player && player.el) {
+                video = player.el().querySelector('video');
+            }
+            if (!video) {
+                video = document.getElementById('videoPlayer');
+            }
+            return video;
+        }
+
+        // Simple Controls - Always Visible
+        window.simpleTogglePlay = function() {
+            const video = getVideoElement();
+            const playBtn = document.getElementById('simplePlayBtn');
+            if (!video) return;
+            
+            if (video.paused) {
+                video.play().then(() => {
+                    if (playBtn) playBtn.textContent = '⏸️';
+                }).catch(e => console.log('Play failed:', e));
+            } else {
+                video.pause();
+                if (playBtn) playBtn.textContent = '▶️';
+            }
+        };
+
+        window.simpleToggleMute = function() {
+            const video = getVideoElement();
+            if (!video) return;
+            video.muted = !video.muted;
+        };
+
+        window.simpleToggleFullscreen = function() {
+            const video = getVideoElement();
+            if (!video) return;
+            
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                if (document.exitFullscreen) document.exitFullscreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            } else {
+                if (video.requestFullscreen) video.requestFullscreen();
+                else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen();
+            }
+        };
+
+        window.simpleSeek = function(event) {
+            const video = getVideoElement();
+            const progress = document.getElementById('simpleProgress');
+            if (!video || !progress) return;
+            
+            const rect = progress.getBoundingClientRect();
+            const percent = (event.clientX - rect.left) / rect.width;
+            video.currentTime = percent * video.duration;
+        };
+
+        function formatTime(seconds) {
+            if (isNaN(seconds) || !isFinite(seconds)) return '00:00';
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            if (h > 0) {
+                return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        window.updateSimpleProgress = function() {
+            const video = getVideoElement();
+            if (!video || !video.tagName) return;
+            
+            const current = document.getElementById('simpleCurrentTime');
+            const duration = document.getElementById('simpleDuration');
+            const played = document.getElementById('simpleProgressPlayed');
+            const playBtn = document.getElementById('simplePlayBtn');
+            
+            if (current) current.textContent = formatTime(video.currentTime);
+            if (duration) duration.textContent = formatTime(video.duration || 0);
+            if (played) {
+                const percent = video.duration ? (video.currentTime / video.duration) * 100 : 0;
+                played.style.width = percent + '%';
+            }
+            if (playBtn) {
+                playBtn.textContent = video.paused ? '▶️' : '⏸️';
+            }
+        };
+
+        // Update progress every second
+        let simpleProgressInterval = null;
+        function startSimpleProgressUpdates() {
+            if (simpleProgressInterval) clearInterval(simpleProgressInterval);
+            simpleProgressInterval = setInterval(updateSimpleProgress, 1000);
+            updateSimpleProgress();
+        }
+        function stopSimpleProgressUpdates() {
+            if (simpleProgressInterval) {
+                clearInterval(simpleProgressInterval);
+                simpleProgressInterval = null;
+            }
+        }
+
+        // Setup video event listeners for simple controls
+        function setupSimpleVideoListeners() {
+            const video = getVideoElement();
+            if (video) {
+                video.addEventListener('play', function() {
+                    startSimpleProgressUpdates();
+                    const playBtn = document.getElementById('simplePlayBtn');
+                    if (playBtn) playBtn.textContent = '⏸️';
+                });
+                video.addEventListener('pause', function() {
+                    const playBtn = document.getElementById('simplePlayBtn');
+                    if (playBtn) playBtn.textContent = '▶️';
+                });
+                video.addEventListener('ended', function() {
+                    stopSimpleProgressUpdates();
+                });
+            }
+        }
+        setupSimpleVideoListeners();
+
+        // Exit fullscreen function
+        window.exitFullscreenMode = function() {
+            console.log('📺 Exiting fullscreen via controls');
+            try {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen().catch(e => console.log('Exit fullscreen:', e));
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen().catch(e => console.log('Exit fullscreen (webkit):', e));
+                } else if (player && player.exitFullscreen) {
+                    player.exitFullscreen().catch(e => console.log('Exit fullscreen (player):', e));
+                }
+            } catch (e) {
+                console.log('📺 Exit fullscreen error (ignored):', e.message);
+            }
+        };
+
+        // Fullscreen Controls Management for TV
+        window.showFullscreenControls = function() {
+            const controls = document.getElementById('fullscreenControls');
+            if (controls) controls.classList.remove('hidden');
+        };
+
+        window.hideFullscreenControls = function() {
+            const controls = document.getElementById('fullscreenControls');
+            if (controls) controls.classList.add('hidden');
+        };
+
+        // Listen for fullscreen changes
+        document.addEventListener('fullscreenchange', function() {
+            if (document.fullscreenElement) {
+                console.log('📺 Entered fullscreen');
+                showFullscreenControls();
+            } else {
+                console.log('📺 Exited fullscreen');
+                hideFullscreenControls();
+            }
+        });
+
+        document.addEventListener('webkitfullscreenchange', function() {
+            if (document.webkitFullscreenElement) {
+                console.log('📺 Entered fullscreen (webkit)');
+                showFullscreenControls();
+            } else {
+                console.log('📺 Exited fullscreen (webkit)');
+                hideFullscreenControls();
+            }
+        });
+
+        // Toggle Play/Pause for TV remote
+        window.togglePlay = function() {
+            const video = getVideoElement();
+            const playPauseBtn = document.getElementById('fsPlayPauseBtn');
+            if (!video) return;
+            
+            if (video.paused) {
+                video.play().then(() => {
+                    if (playPauseBtn) playPauseBtn.textContent = '⏸️ Pause';
+                }).catch(e => console.log('Play failed:', e));
+            } else {
+                video.pause();
+                if (playPauseBtn) playPauseBtn.textContent = '▶️ Play';
+            }
+        };
+
+        // Toggle Mute for TV remote
+        window.toggleMute = function() {
+            const video = getVideoElement();
+            if (!video) return;
+            video.muted = !video.muted;
+        };
+
         // Fullscreen channel switching
         window.fullscreenChannelUp = function() {
             const content = contentData[currentSource]?.content || [];
@@ -5799,9 +6649,7 @@
             const currentIndex = content.findIndex(c => c.id === currentContent?.id);
             const prevIndex = currentIndex > 0 ? currentIndex - 1 : content.length - 1;
             const prevContent = content[prevIndex];
-            if (prevContent) {
-                playFullscreen(prevContent.id);
-            }
+            if (prevContent) playFullscreen(prevContent.id);
         };
         
         window.fullscreenChannelDown = function() {
@@ -5810,31 +6658,9 @@
             const currentIndex = content.findIndex(c => c.id === currentContent?.id);
             const nextIndex = currentIndex < content.length - 1 ? currentIndex + 1 : 0;
             const nextContent = content[nextIndex];
-            if (nextContent) {
-                playFullscreen(nextContent.id);
-            }
+            if (nextContent) playFullscreen(nextContent.id);
         };
         
-        // Global keydown for fullscreen channel switching
-        document.addEventListener('keydown', function(e) {
-            // Only handle when in fullscreen
-            if (!document.fullscreenElement && !document.webkitFullscreenElement) return;
-            
-            const keyCode = e.keyCode || e.which;
-            
-            if (e.key === 'ArrowUp' || keyCode === 19) {
-                e.preventDefault();
-                fullscreenChannelUp();
-            } else if (e.key === 'ArrowDown' || keyCode === 20) {
-                e.preventDefault();
-                fullscreenChannelDown();
-            } else if (e.key === 'Escape' || e.key === 'Backspace' || keyCode === 4) {
-                e.preventDefault();
-                if (document.exitFullscreen) document.exitFullscreen();
-                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-            }
-        });
-
         // Global function for starting playback - defined early for onclick access
         window.startPlaying = function() {
             if (!isLoggedIn) {
@@ -6040,10 +6866,15 @@
             console.log('Error:', message);
             alert(message);
         }
-
-        function showError(message) {
-            console.log('Error:', message);
-            alert(message);
+	
+        // Show error when device limit is reached
+        function showDeviceLimitError(maxDevices) {
+            const errorMsg = `Maximum devices reached!\n\n` +
+                `Your subscription allows ${maxDevices} TV${maxDevices > 1 ? '(s)' : ''}.\n\n` +
+                `To add this TV, please contact your administrator to:\n` +
+                `• Upgrade your subscription, or\n` +
+                `• Remove a registered TV from your account`;
+            alert(errorMsg);
         }
 
         function showSuccess(message) {
@@ -6052,53 +6883,120 @@
         }
 
         // Auto-sync function - runs on startup
-        // HARDCODED SYNC URL - No customer setup required
-        const SYNC_URL = 'https://raw.githubusercontent.com/samsat1/app/main/admin_data_internet.json';
-        
-        // STREAMING SERVER CONFIGURATION - Auto-configured for Cloudflare Tunnel
-        // This is used for streaming when accessing from internet via Cloudflare Tunnel
-        // Cloudflare tunnel already points to Plex on port 32400, so no need to add port
-        const STREAM_SERVER = 'https://gaps-disclose-constitute-stated.trycloudflare.com';
-        
-        // Function to get stream URL - handles both local and internet access
-        window.getStreamUrl = function(streamUrl) {
-            // If already a full URL, return as-is
-            if (streamUrl.startsWith('http://') || streamUrl.startsWith('https://')) {
-                return streamUrl;
-            }
-            // If relative URL, prepend the stream server (Cloudflare tunnel already handles Plex on port 32400)
-            return `${STREAM_SERVER}/${streamUrl}`;
-        };
-        
+        // Syncs from GitHub to load Plex settings and customer data
         window.autoSyncData = async function() {
-            const syncUrl = SYNC_URL; // Use hardcoded URL
+            // Check for sync URL in URL params first (for first-time setup)
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlSyncUrl = urlParams.get('syncUrl');
+            if (urlSyncUrl) {
+                localStorage.setItem('syncUrl', urlSyncUrl);
+                // Also save tvSyncUrl for compatibility
+                localStorage.setItem('tvSyncUrl', urlSyncUrl);
+                console.log('📡 Sync URL saved from URL parameter:', urlSyncUrl);
+                // Clean up URL without reloading
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            
+            // Check for sync URL - support both 'syncUrl' and 'tvSyncUrl' for compatibility with admin panel
+            let customSyncUrl = localStorage.getItem('syncUrl') || localStorage.getItem('tvSyncUrl');
+            
+            // Use default URL if no sync URL configured (for GitHub Pages auto-sync)
+            if (!customSyncUrl) {
+                customSyncUrl = DEFAULT_SYNC_URL;
+                console.log('📡 Using default sync URL:', customSyncUrl);
+            }
+            
+            // Also check if admin panel pushed URL via postMessage
+            const pushedUrl = sessionStorage.getItem('pushedSyncUrl');
+            if (pushedUrl && !localStorage.getItem('syncUrl')) {
+                localStorage.setItem('syncUrl', pushedUrl);
+                localStorage.setItem('tvSyncUrl', pushedUrl);
+                customSyncUrl = pushedUrl;
+                sessionStorage.removeItem('pushedSyncUrl');
+                console.log('📡 Sync URL received from admin:', pushedUrl);
+            }
             
             try {
-                console.log('📡 Auto-syncing data from:', syncUrl);
-                const response = await fetch(syncUrl + '?t=' + Date.now()); // Cache bust
-                if (!response.ok) throw new Error('Fetch failed');
+                console.log('📡 Auto-syncing data from:', customSyncUrl);
+                let response = await fetch(customSyncUrl + '?t=' + Date.now()); // Cache bust
+                
+                // If first URL fails, try fallback
+                if (!response.ok && customSyncUrl === DEFAULT_SYNC_URL) {
+                    console.log('📡 First URL failed, trying fallback:', FALLBACK_SYNC_URL);
+                    response = await fetch(FALLBACK_SYNC_URL + '?t=' + Date.now());
+                    if (response.ok) {
+                        customSyncUrl = FALLBACK_SYNC_URL;
+                    }
+                }
+                
+                if (!response.ok) throw new Error('Fetch failed. Status: ' + response.status);
                 
                 const data = await response.json();
                 
-                // Import customers
-                if (data.customers && Array.isArray(data.customers)) {
-                    localStorage.setItem('adminCustomers', JSON.stringify(data.customers));
+                // CRITICAL: Save sync URL from data (in case it was updated)
+                if (data.tvSyncUrl) {
+                    localStorage.setItem('tvSyncUrl', data.tvSyncUrl);
+                    localStorage.setItem('syncUrl', data.tvSyncUrl);
+                    console.log('📡 Saved sync URL from synced data:', data.tvSyncUrl);
                 }
-                // Import packages
+                
+                // Sync packages from admin
                 if (data.packages && Array.isArray(data.packages)) {
                     localStorage.setItem('adminPackages', JSON.stringify(data.packages));
                 }
-                // Import Plex settings
+                
+                // Import Plex settings from admin
                 if (data.plexServerUrl) localStorage.setItem('plexServerUrl', data.plexServerUrl);
+                if (data.plexLocalUrl) localStorage.setItem('plexLocalUrl', data.plexLocalUrl);
                 if (data.plexToken) localStorage.setItem('plexToken', data.plexToken);
                 if (data.plexMoviesSection) localStorage.setItem('plexMoviesSection', data.plexMoviesSection);
                 if (data.plexAdultSection) localStorage.setItem('plexAdultSection', data.plexAdultSection);
+                if (data.plexArabicSection) localStorage.setItem('plexArabicSection', data.plexArabicSection);
+                if (data.plexConfig) {
+                    localStorage.setItem('plexConfig', JSON.stringify(data.plexConfig));
+                    localStorage.setItem('plexServerUrl', data.plexConfig.serverUrl);
+                    localStorage.setItem('plexLocalUrl', data.plexConfig.localUrl);
+                    localStorage.setItem('plexToken', data.plexConfig.token);
+                    localStorage.setItem('plexMoviesSection', data.plexConfig.moviesSection);
+                    localStorage.setItem('plexAdultSection', data.plexConfig.adultSection);
+                }
+                
+                // CRITICAL: Import Plex cache so movies appear before login
+                if (data.plexMoviesCache && Array.isArray(data.plexMoviesCache)) {
+                    localStorage.setItem('plexMoviesCache', JSON.stringify(data.plexMoviesCache));
+                    localStorage.setItem('plexCachedMovies', JSON.stringify(data.plexMoviesCache));
+                    console.log(`✅ Synced ${data.plexMoviesCache.length} movies to cache`);
+                }
+                if (data.plexAdultCache && Array.isArray(data.plexAdultCache)) {
+                    localStorage.setItem('plexAdultCache', JSON.stringify(data.plexAdultCache));
+                    localStorage.setItem('plexCachedAdult', JSON.stringify(data.plexAdultCache));
+                    console.log(`✅ Synced ${data.plexAdultCache.length} adult videos to cache`);
+                }
+                if (data.plexArabicCache && Array.isArray(data.plexArabicCache)) {
+                    localStorage.setItem('plexArabicCache', JSON.stringify(data.plexArabicCache));
+                    localStorage.setItem('plexCachedArabic', JSON.stringify(data.plexArabicCache));
+                    console.log(`✅ Synced ${data.plexArabicCache.length} Arabic channels to cache`);
+                }
+                
+                // CRITICAL: Import reseller-created customers so they can login on this device
+                if (data.clientAuthCustomers && Array.isArray(data.clientAuthCustomers)) {
+                    // Merge with existing clientAuthCustomers (don't overwrite, just add new ones)
+                    const existingClients = JSON.parse(localStorage.getItem('clientAuthCustomers') || '[]');
+                    const existingUsernames = new Set(existingClients.map(c => c.username));
+                    const newClients = data.clientAuthCustomers.filter(c => !existingUsernames.has(c.username));
+                    const mergedClients = [...existingClients, ...newClients];
+                    localStorage.setItem('clientAuthCustomers', JSON.stringify(mergedClients));
+                    console.log(`✅ Synced ${newClients.length} reseller-created customers`);
+                }
                 
                 localStorage.setItem('lastAutoSync', new Date().toISOString());
                 console.log('✅ Auto-sync completed successfully');
                 return true;
             } catch (error) {
-                console.log('⚠️ Auto-sync failed:', error.message);
+                console.log('⚠️ Auto-sync FAILED:', error.message);
+                console.log('⚠️ URL tried:', customSyncUrl);
+                console.log('⚠️ This might mean: 1) File does not exist on GitHub yet, 2) Wrong URL, 3) CORS issue');
+                alert('⚠️ Sync Failed!\n\nURL: ' + customSyncUrl + '\nError: ' + error.message + '\n\nMake sure admin has uploaded admin_data.json to GitHub!');
                 return false;
             }
         };
@@ -6163,8 +7061,16 @@
         // Global function for app initialization - defined early for onload access
         window.initApp = async function() {
             
-            // Auto-sync on startup (silent, non-blocking)
-            autoSyncData();
+            // Auto-sync on startup - WAIT for it to complete before loading content
+            console.log('🔄 Starting auto-sync...');
+            const syncResult = await autoSyncData();
+            if (syncResult) {
+                console.log('✅ Auto-sync completed, reloading Plex content...');
+                // Reload Plex content after sync
+                if (typeof loadPlexLibraryContent === 'function') {
+                    loadPlexLibraryContent();
+                }
+            }
             
             // DEBUG: Show all localStorage keys
             console.log('🔑 ALL localStorage keys:', Object.keys(localStorage));
@@ -7087,6 +7993,35 @@
                     return;
                 }
                 
+                // Stop video playback and hide video player
+                const videoEl = document.getElementById('videoPlayer');
+                if (videoEl && videoEl.src) {
+                    console.log('📺 Stopping video playback');
+                    videoEl.pause();
+                    videoEl.src = '';
+                    videoEl.load();
+                    // Hide video player
+                    videoEl.style.display = 'none';
+                }
+                
+                // Also stop HLS.js if running
+                if (hls) {
+                    hls.destroy();
+                    hls = null;
+                }
+                
+                // Hide video containers
+                document.querySelectorAll('.video-js, .video-player, .video-container').forEach(el => {
+                    el.style.display = 'none';
+                });
+                
+                // Show the overlay again
+                const overlay = document.getElementById('videoOverlay');
+                if (overlay) {
+                    overlay.style.display = 'flex';
+                    overlay.classList.remove('playing');
+                }
+                
                 // Check for open modals
                 const loginModal = document.getElementById('loginModal');
                 const adultModal = document.getElementById('adultModal');
@@ -7100,6 +8035,10 @@
                     hideLoginModal();
                 } else if (player && player.isFullscreen()) {
                     player.exitFullscreen();
+                } else if (document.fullscreenElement || document.webkitFullscreenElement) {
+                    // Exit browser fullscreen
+                    if (document.exitFullscreen) document.exitFullscreen();
+                    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
                 } else if (adultUnlocked) {
                     exitAdultContent();
                 }
