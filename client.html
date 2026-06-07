@@ -4505,10 +4505,55 @@
         async function loginUser(username, password) {
             // LOCAL VERSION - Use localStorage instead of Firebase
             try {
-                // Try to load customers from clientAuthCustomers first (includes admin AND reseller-created customers)
+                // Check if customer data is loaded - if not, trigger sync first
                 const clientAuthCustomersRaw = localStorage.getItem('clientAuthCustomers');
-                if (clientAuthCustomersRaw) {
-                    const customers = JSON.parse(clientAuthCustomersRaw);
+                const adminCustomersRaw = localStorage.getItem('adminCustomers');
+                
+                // If neither data source has customers, try to trigger a sync
+                if ((!clientAuthCustomersRaw || clientAuthCustomersRaw === '[]') && 
+                    (!adminCustomersRaw || adminCustomersRaw === '[]')) {
+                    console.log('⚠️ No customer data found, triggering sync...');
+                    
+                    // Try to trigger data sync from GitHub or local admin panel
+                    if (typeof autoSyncData === 'function') {
+                        autoSyncData();
+                    }
+                    
+                    // Also try to load from admin panel URL if configured
+                    const syncUrl = localStorage.getItem('syncUrl');
+                    if (syncUrl) {
+                        fetch(syncUrl)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.customers) {
+                                    localStorage.setItem('adminCustomers', JSON.stringify(data.customers));
+                                    console.log('✅ Loaded', data.customers.length, 'customers from sync URL');
+                                }
+                                if (data.packages) {
+                                    localStorage.setItem('adminPackages', JSON.stringify(data.packages));
+                                }
+                            })
+                            .catch(e => console.log('Sync fetch failed:', e));
+                    }
+                    
+                    // Wait a bit and retry login
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    // Reload data sources
+                    const newClientAuth = localStorage.getItem('clientAuthCustomers');
+                    const newAdminCustomers = localStorage.getItem('adminCustomers');
+                    
+                    if ((!newClientAuth || newClientAuth === '[]') && (!newAdminCustomers || newAdminCustomers === '[]')) {
+                        console.log('❌ No customer data available after sync attempt');
+                        showNotification('⚠️ Customer data not loaded. Please refresh the page and try again.', 'error');
+                        return false;
+                    }
+                }
+                
+                // Try to load customers from clientAuthCustomers first (includes admin AND reseller-created customers)
+                const clientAuthData = localStorage.getItem('clientAuthCustomers');
+                if (clientAuthData && clientAuthData !== '[]') {
+                    const customers = JSON.parse(clientAuthData);
                     const user = customers.find(c => c.username === username && c.password === password);
                     
                     if (user) {
@@ -4540,9 +4585,9 @@
                 }
                 
                 // Fallback to adminCustomers for backward compatibility
-                const adminCustomersRaw = localStorage.getItem('adminCustomers');
-                if (adminCustomersRaw) {
-                    const customers = JSON.parse(adminCustomersRaw);
+                const adminData = localStorage.getItem('adminCustomers');
+                if (adminData && adminData !== '[]') {
+                    const customers = JSON.parse(adminData);
                     const user = customers.find(c => c.username === username && c.password === password);
                     
                     if (user) {
@@ -4577,7 +4622,15 @@
                 console.log('Local login failed:', e.message);
             }
             
-            showNotification('Invalid username or password', 'error');
+            // Show specific error based on whether data exists
+            const hasClientAuth = localStorage.getItem('clientAuthCustomers');
+            const hasAdminData = localStorage.getItem('adminCustomers');
+            
+            if ((!hasClientAuth || hasClientAuth === '[]') && (!hasAdminData || hasAdminData === '[]')) {
+                showNotification('⚠️ Customer data not loaded. Please refresh the page.', 'error');
+            } else {
+                showNotification('Invalid username or password', 'error');
+            }
             return false;
         }
 
@@ -6836,6 +6889,29 @@
                 document.getElementById('username').value = '';
                 document.getElementById('password').value = '';
                 document.getElementById('username').focus();
+                
+                // Trigger data sync when login modal opens to ensure customer data is loaded
+                console.log('🔄 Login modal opened - triggering data sync...');
+                if (typeof autoSyncData === 'function') {
+                    autoSyncData();
+                }
+                
+                // Also try to load from sync URL if configured
+                const syncUrl = localStorage.getItem('syncUrl');
+                if (syncUrl) {
+                    fetch(syncUrl)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.customers && data.customers.length > 0) {
+                                localStorage.setItem('adminCustomers', JSON.stringify(data.customers));
+                                console.log('✅ Loaded', data.customers.length, 'customers from sync URL');
+                            }
+                            if (data.packages && data.packages.length > 0) {
+                                localStorage.setItem('adminPackages', JSON.stringify(data.packages));
+                            }
+                        })
+                        .catch(e => console.log('Sync fetch failed:', e));
+                }
             }
         }
 
