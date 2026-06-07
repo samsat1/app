@@ -3520,21 +3520,50 @@
             console.log('   Next login will be automatic!');
         }
         
-        // Clear ALL old cached data on login - COMPREHENSIVE CLEAN
+        // Clear old cached data on login - but PRESERVE admin data
         function clearOldCacheOnLogin() {
-            console.log('🧹🧹🧹 COMPREHENSIVE CACHE CLEAR ON LOGIN 🧹🧹🧹');
+            console.log('🧹 Clearing old cached data on login...');
             
             // Get ALL localStorage keys
             const allKeys = Object.keys(localStorage);
             console.log('📦 Found', allKeys.length, 'localStorage items to check');
             
-            // Keys to PRESERVE (don't delete these)
+            // Keys to PRESERVE - Admin and Plex data must NOT be deleted
             const preserveKeys = [
                 'iwatch_tv_credentials', // Login credentials
-                'iwatch_tv_expiry'       // Expiry date
+                'iwatch_tv_expiry',     // Expiry date
+                // CRITICAL: Admin data must be preserved to prevent data loss
+                'adminCustomers',      // Customer accounts from admin panel
+                'adminPackages',       // Packages from admin panel
+                'clientAuthCustomers', // Reseller-created customers
+                'packages',            // Alias for admin packages
+                'customers',           // Alias for admin customers
+                // Plex settings must be preserved
+                'plexToken',           // Plex API token
+                'plexServerUrl',       // Plex server URL
+                'plexLocalUrl',        // Plex local server URL
+                'plexMoviesSection',   // Movies section ID
+                'plexAdultSection',    // Adult section ID
+                'plexArabicSection',   // Arabic section ID
+                'plexConfig',          // Plex configuration
+                // Plex cache data must be preserved
+                'plexMoviesCache',     // Cached movies list
+                'plexAdultCache',      // Cached adult content
+                'plexArabicCache',    // Cached Arabic channels
+                'plexCachedMovies',    // Cached movies (alias)
+                'plexCachedAdult',     // Cached adult (alias)
+                'plexCachedArabic',    // Cached Arabic (alias)
+                // Sync settings must be preserved
+                'syncUrl',             // GitHub sync URL
+                'tvSyncUrl',           // TV sync URL
+                'lastAutoSync',        // Last sync timestamp
+                // Package content mappings must be preserved
+                'packageContentMappings', // Package to library mappings
+                'packageLibraries',    // Package library assignments
+                'vodLibraries'         // VOD library settings
             ];
             
-            // Clear everything except credentials
+            // Clear only user session data, preserve admin and Plex data
             let clearedCount = 0;
             allKeys.forEach(key => {
                 if (!preserveKeys.includes(key)) {
@@ -3544,9 +3573,9 @@
                 }
             });
             
-            console.log('✅ COMPREHENSIVE CLEAR COMPLETE - Cleared', clearedCount, 'items');
-            console.log('   Preserved:', preserveKeys.join(', '));
-            console.log('   Fresh data will be loaded from admin panel');
+            console.log('✅ CLEAR COMPLETE - Cleared', clearedCount, 'items');
+            console.log('   Preserved:', preserveKeys.length, 'admin/Plex items');
+            console.log('   Admin data and Plex settings are SAFE');
         }
         
         // Clear stored credentials
