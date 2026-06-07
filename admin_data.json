@@ -1,8 +1,118 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-07T16:28:16.743Z",
-  "customers": [],
-  "clientAuthCustomers": [],
+  "exportDate": "2026-06-07T16:32:11.597Z",
+  "customers": [
+    {
+      "id": "CUST_1780849797736",
+      "username": "sam1",
+      "name": "sam1",
+      "phone": "111111",
+      "plan": "Basic TV Package",
+      "addons": "Sports Package, Sports Plus Package, Arabic Package, Movies Package, Adult Content Package",
+      "monthlyPrice": 58,
+      "totalPrice": 522,
+      "expiryDate": "2027-03-07",
+      "password": "123456",
+      "macAddress": "",
+      "adultPassword": "112233",
+      "status": "active",
+      "duration": "9 Months",
+      "durationMonths": 9,
+      "createdAt": "2026-06-07T16:29:57.736Z"
+    },
+    {
+      "id": "CUST_1780849852574",
+      "username": "sam2",
+      "name": "sam2",
+      "phone": "222222",
+      "plan": "Basic TV Package, 2nd TV",
+      "addons": "Sports Package, Sports Plus Package, Arabic Package, Movies Package, Adult Content Package",
+      "monthlyPrice": 63,
+      "totalPrice": 567,
+      "expiryDate": "2027-03-07",
+      "password": "123456",
+      "macAddress": "",
+      "adultPassword": "112233",
+      "status": "active",
+      "duration": "9 Months",
+      "durationMonths": 9,
+      "createdAt": "2026-06-07T16:30:52.574Z"
+    },
+    {
+      "id": "CUST_1780849901823",
+      "username": "sam3",
+      "name": "sam3",
+      "phone": "333333",
+      "plan": "Basic TV Package, 2nd TV, 3rd TV",
+      "addons": "Sports Package, Sports Plus Package, Arabic Package, Movies Package, Adult Content Package",
+      "monthlyPrice": 68,
+      "totalPrice": 612,
+      "expiryDate": "2027-03-07",
+      "password": "123456",
+      "macAddress": "",
+      "adultPassword": "112233",
+      "status": "active",
+      "duration": "9 Months",
+      "durationMonths": 9,
+      "createdAt": "2026-06-07T16:31:41.823Z"
+    }
+  ],
+  "clientAuthCustomers": [
+    {
+      "id": "CUST_1780849797736",
+      "username": "sam1",
+      "name": "sam1",
+      "phone": "111111",
+      "plan": "Basic TV Package",
+      "addons": "Sports Package, Sports Plus Package, Arabic Package, Movies Package, Adult Content Package",
+      "monthlyPrice": 58,
+      "totalPrice": 522,
+      "expiryDate": "2027-03-07",
+      "password": "123456",
+      "macAddress": "",
+      "adultPassword": "112233",
+      "status": "active",
+      "duration": "9 Months",
+      "durationMonths": 9,
+      "createdAt": "2026-06-07T16:29:57.736Z"
+    },
+    {
+      "id": "CUST_1780849852574",
+      "username": "sam2",
+      "name": "sam2",
+      "phone": "222222",
+      "plan": "Basic TV Package, 2nd TV",
+      "addons": "Sports Package, Sports Plus Package, Arabic Package, Movies Package, Adult Content Package",
+      "monthlyPrice": 63,
+      "totalPrice": 567,
+      "expiryDate": "2027-03-07",
+      "password": "123456",
+      "macAddress": "",
+      "adultPassword": "112233",
+      "status": "active",
+      "duration": "9 Months",
+      "durationMonths": 9,
+      "createdAt": "2026-06-07T16:30:52.574Z"
+    },
+    {
+      "id": "CUST_1780849901823",
+      "username": "sam3",
+      "name": "sam3",
+      "phone": "333333",
+      "plan": "Basic TV Package, 2nd TV, 3rd TV",
+      "addons": "Sports Package, Sports Plus Package, Arabic Package, Movies Package, Adult Content Package",
+      "monthlyPrice": 68,
+      "totalPrice": 612,
+      "expiryDate": "2027-03-07",
+      "password": "123456",
+      "macAddress": "",
+      "adultPassword": "112233",
+      "status": "active",
+      "duration": "9 Months",
+      "durationMonths": 9,
+      "createdAt": "2026-06-07T16:31:41.823Z"
+    }
+  ],
   "packages": [
     {
       "name": "Basic",
@@ -125,7 +235,116 @@
       "id": "PKG_1780849293107"
     }
   ],
-  "resellers": {},
+  "resellers": {
+    "reseller001": {
+      "name": "Reseller 001",
+      "id": "reseller001",
+      "username": "reseller001",
+      "password": "res001_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller002": {
+      "name": "Reseller 002",
+      "id": "reseller002",
+      "username": "reseller002",
+      "password": "res002_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller003": {
+      "name": "Reseller 003",
+      "id": "reseller003",
+      "username": "reseller003",
+      "password": "res003_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller004": {
+      "name": "Reseller 004",
+      "id": "reseller004",
+      "username": "reseller004",
+      "password": "res004_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller005": {
+      "name": "Reseller 005",
+      "id": "reseller005",
+      "username": "reseller005",
+      "password": "res005_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller006": {
+      "name": "Reseller 006",
+      "id": "reseller006",
+      "username": "reseller006",
+      "password": "res006_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller007": {
+      "name": "Reseller 007",
+      "id": "reseller007",
+      "username": "reseller007",
+      "password": "res007_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller008": {
+      "name": "Reseller 008",
+      "id": "reseller008",
+      "username": "reseller008",
+      "password": "res008_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller009": {
+      "name": "Reseller 009",
+      "id": "reseller009",
+      "username": "reseller009",
+      "password": "res009_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller010": {
+      "name": "Reseller 010",
+      "id": "reseller010",
+      "username": "reseller010",
+      "password": "res010_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller011": {
+      "name": "Reseller 011",
+      "id": "reseller011",
+      "username": "reseller011",
+      "password": "res011_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    },
+    "reseller012": {
+      "name": "Reseller 012",
+      "id": "reseller012",
+      "username": "reseller012",
+      "password": "res012_pass",
+      "status": "active",
+      "commissionRate": 20,
+      "walletBalance": 0
+    }
+  },
   "creditTransfers": [],
   "resellerTransactions": [],
   "plexServerUrl": "http://192.168.1.100:32400",
