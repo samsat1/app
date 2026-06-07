@@ -3554,7 +3554,15 @@
         }
         
         // Upload to GitHub with one click
+        let isUploading = false; // Prevent concurrent uploads
         window.uploadToGithub = async function() {
+            // Prevent concurrent uploads
+            if (isUploading) {
+                showNotification('⚠️ Upload already in progress. Please wait...', 'warning');
+                return;
+            }
+            isUploading = true;
+            
             // First save the current input values to localStorage
             const usernameInput = document.getElementById('githubUsername');
             const repoInput = document.getElementById('githubRepo');
@@ -3576,6 +3584,7 @@
             }
             
             if (!username || !repo || !token) {
+                isUploading = false;
                 showNotification('⚠️ Please configure GitHub settings first!', 'error');
                 return;
             }
@@ -3671,7 +3680,9 @@
                             // Clear the invalid token
                             localStorage.removeItem('githubToken');
                             localStorage.removeItem('githubTokenSaved');
-                            throw new Error('❌ Error 401: GitHub has REVOKED your token! This usually happens because: 1) Token was exposed in public code, 2) GitHub detected suspicious activity, or 3) Token was deleted from GitHub settings. Please generate a NEW token and save it again. Go to: https://github.com/settings/tokens');
+                            const errorText = await checkRes.text().catch(() => 'No response body');
+                            console.error('401 Error in SHA check:', errorText);
+                            throw new Error('❌ Error 401: Bad credentials! Your GitHub token is invalid, expired, or was revoked.\n\nPossible reasons:\n1. Token was exposed in public code (GitHub auto-revokes)\n2. Token expired\n3. Token was deleted from GitHub settings\n\nSOLUTION: Generate a NEW token at https://github.com/settings/tokens\n- Select scope: "repo" (full control)\n- Copy it immediately (you cannot see it again!)\n- Paste it in the GitHub Token field and click Save.');
                         } else {
                             console.log('Unexpected status:', checkRes.status);
                             const text = await checkRes.text();
@@ -3685,6 +3696,40 @@
                     }
                     return null;
                 };
+                
+                // CRITICAL: First verify token is valid before uploading
+                const verifyToken = async () => {
+                    try {
+                        const verifyRes = await fetch('https://api.github.com/user', {
+                            method: 'GET',
+                            headers: { 
+                                'Authorization': `token ${token}`,
+                                'Accept': 'application/vnd.github.v3+json'
+                            }
+                        });
+                        
+                        console.log('Token verification status:', verifyRes.status);
+                        
+                        if (verifyRes.status === 200) {
+                            const userData = await verifyRes.json();
+                            console.log('✅ Token valid for user:', userData.login);
+                            return true;
+                        } else if (verifyRes.status === 401) {
+                            const errorText = await verifyRes.text().catch(() => 'No response body');
+                            console.error('❌ Token verification FAILED:', errorText);
+                            throw new Error('❌ Error 401: Token is INVALID or REVOKED! Please generate a NEW token at https://github.com/settings/tokens\n\nError: ' + errorText);
+                        } else {
+                            console.log('Unexpected verification status:', verifyRes.status);
+                            return false;
+                        }
+                    } catch (e) {
+                        console.error('Token verification exception:', e);
+                        throw e;
+                    }
+                };
+                
+                // First verify the token works
+                await verifyToken();
                 
                 // Upload with retry logic for 409/422 errors
                 const uploadWithRetry = async (retries = 5) => {
@@ -3736,7 +3781,9 @@
                                 // Clear the invalid token
                                 localStorage.removeItem('githubToken');
                                 localStorage.removeItem('githubTokenSaved');
-                                throw new Error('❌ Error 401: GitHub has REVOKED your token! This usually happens because: 1) Token was exposed in public code, 2) GitHub detected suspicious activity, or 3) Token was deleted from GitHub settings. Please generate a NEW token and save it again. Go to: https://github.com/settings/tokens');
+                                const errorText = await response.text().catch(() => 'No response body');
+                                console.error('401 Error Details:', errorText);
+                                throw new Error('❌ Error 401: Bad credentials! Your GitHub token is invalid, expired, or was revoked.\n\nPossible reasons:\n1. Token was exposed in public code (GitHub auto-revokes)\n2. Token expired\n3. Token was deleted from GitHub settings\n\nSOLUTION: Generate a NEW token at https://github.com/settings/tokens\n- Select scope: "repo" (full control)\n- Copy it immediately (you cannot see it again!)\n- Paste it in the GitHub Token field and click Save.');
                             }
                             
                             // Retry on 409 (conflict) or 422 (validation error)
@@ -3783,6 +3830,9 @@
                 showNotification('❌ Upload failed: ' + error.message, 'error');
                 btn.innerHTML = '🚀 Upload to GitHub (One-Click)';
                 btn.disabled = false;
+            } finally {
+                // Always reset the uploading flag
+                isUploading = false;
             }
         };
         
@@ -4089,6 +4139,7 @@
             const sportsPrice = document.getElementById('sportsPrice')?.value;
             const moviesPrice = document.getElementById('moviesPrice')?.value;
             const adultPackagePrice = document.getElementById('adultPackagePrice')?.value;
+            const streamUrl = document.getElementById('packageStreamUrl')?.value;
             
             // Detect adult package: by name contains "adult"/"xxx" OR by having adult addon price
             const isAdultPackage = name.toLowerCase().includes('adult') || 
@@ -4112,6 +4163,7 @@
                 basePrice: parseFloat(price),
                 duration: duration,
                 features: features,
+                streamUrl: streamUrl || null, // Custom stream URL for MP4/HLS
                 secondTVPrice: parseFloat(secondTVPrice || '0'),
                 thirdTVPrice: parseFloat(thirdTVPrice || '0'),
                 addonPrices: {
@@ -6812,6 +6864,11 @@ Network: Always Streaming → Optimized for instant access`;
                             <div>
                                 <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Package Name:</label>
                                 <input type="text" id="packageName" placeholder="Premium HD Package" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                            </div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">🎬 Stream URL (MP4/HLS):</label>
+                                <input type="url" id="packageStreamUrl" placeholder="https://192.168.1.100:3000/stream.m3u8 or https://192.168.1.100/movies/video.mp4" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 4px;">Enter the direct URL for MP4 videos from your library or HLS stream from Nimble transcoder</div>
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                                 <div>
