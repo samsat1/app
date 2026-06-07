@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <!-- VERSION 7.0 - Fixed Plex Content Addon Filtering 2026-03-18 -->
-<!-- LOCAL VERSION - Green Indicator -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -16,35 +15,7 @@
     <meta name="theme-color" content="#7c3aed">
     <meta name="background-color" content="#0f0f23">
     
-    <!-- LOCAL VERSION INDICATOR - Green Dot -->
-    <style>
-    .local-indicator {
-        position: fixed;
-        top: 15px;
-        left: 15px;
-        z-index: 10000;
-        width: 14px;
-        height: 14px;
-        background: linear-gradient(135deg, #10b981, #059669);
-        border-radius: 50%;
-        box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
-        pointer-events: none;
-    }
-    .local-indicator::after {
-        content: 'LOCAL';
-        position: absolute;
-        left: 20px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: rgba(16, 185, 129, 0.9);
-        color: #fff;
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 10px;
-        font-weight: bold;
-        white-space: nowrap;
-    }
-    </style>
+    
     
     <!-- App Icons - All TV Platforms -->
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -2361,7 +2332,7 @@
         console.log('✅ Placeholder functions defined');
     </script>
     
-    <div class="local-indicator"></div>
+    
     
     <!-- Header -->
     <header class="header">
@@ -7211,7 +7182,22 @@
                     console.log(`✅ Synced ${data.plexArabicCache.length} Arabic channels to cache`);
                 }
                 
-                // CRITICAL: Import reseller-created customers so they can login on this device
+                // CRITICAL: Import ALL customers from admin panel (not just reseller customers)
+                // Import admin panel customers (main customer list)
+                if (data.customers && Array.isArray(data.customers)) {
+                    localStorage.setItem('adminCustomers', JSON.stringify(data.customers));
+                    localStorage.setItem('customers', JSON.stringify(data.customers));
+                    console.log(`✅ Synced ${data.customers.length} customers from admin panel`);
+                }
+                
+                // Also check for adminCustomers (alternative name)
+                if (data.adminCustomers && Array.isArray(data.adminCustomers)) {
+                    localStorage.setItem('adminCustomers', JSON.stringify(data.adminCustomers));
+                    localStorage.setItem('customers', JSON.stringify(data.adminCustomers));
+                    console.log(`✅ Synced ${data.adminCustomers.length} customers from admin panel (adminCustomers)`);
+                }
+                
+                // Import reseller-created customers (these are separate)
                 if (data.clientAuthCustomers && Array.isArray(data.clientAuthCustomers)) {
                     // Merge with existing clientAuthCustomers (don't overwrite, just add new ones)
                     const existingClients = JSON.parse(localStorage.getItem('clientAuthCustomers') || '[]');
