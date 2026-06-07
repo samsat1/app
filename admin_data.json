@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-07T19:05:03.481Z",
+  "exportDate": "2026-06-07T19:15:04.045Z",
   "customers": [
     {
       "id": "CUST_1780858228502",
@@ -57,62 +57,7 @@
       "createdAt": "2026-06-07T19:04:23.298Z"
     }
   ],
-  "clientAuthCustomers": [
-    {
-      "id": "CUST_1780858228502",
-      "username": "sam2",
-      "name": "sam2",
-      "phone": "123456",
-      "plan": "Basic TV Package, 2nd TV, 3rd TV",
-      "addons": "Sports Package, Arabic Package, Movies Package, Adult Content Package",
-      "monthlyPrice": 0,
-      "totalPrice": 0,
-      "expiryDate": "2027-03-07",
-      "password": "123456",
-      "macAddress": "",
-      "adultPassword": "112233",
-      "status": "active",
-      "duration": "9 Months",
-      "durationMonths": 9,
-      "createdAt": "2026-06-07T18:50:28.502Z"
-    },
-    {
-      "id": "CUST_1780859025429",
-      "username": "sam3",
-      "name": "sam3",
-      "phone": "33333",
-      "plan": "Basic TV Package, 2nd TV, 3rd TV",
-      "addons": "Arabic Package, Movies Package, Adult Content Package",
-      "monthlyPrice": 27,
-      "totalPrice": 27,
-      "expiryDate": "2026-07-07",
-      "password": "123456",
-      "macAddress": "",
-      "adultPassword": "112233",
-      "status": "active",
-      "duration": "1 Month",
-      "durationMonths": 1,
-      "createdAt": "2026-06-07T19:03:45.429Z"
-    },
-    {
-      "id": "CUST_1780859063298",
-      "username": "sam1",
-      "name": "sam1",
-      "phone": "1111111",
-      "plan": "Basic TV Package",
-      "addons": "Arabic Package, Movies Package",
-      "monthlyPrice": 17,
-      "totalPrice": 153,
-      "expiryDate": "2027-03-07",
-      "password": "123456",
-      "macAddress": "",
-      "adultPassword": "",
-      "status": "active",
-      "duration": "9 Months",
-      "durationMonths": 9,
-      "createdAt": "2026-06-07T19:04:23.298Z"
-    }
-  ],
+  "clientAuthCustomers": [],
   "packages": [
     {
       "name": "Basic",
