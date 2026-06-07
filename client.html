@@ -7094,6 +7094,39 @@
                 
                 const data = await response.json();
                 
+                // CRITICAL FIX: Check if downloaded data has actual content before overwriting
+                // Count total items in downloaded data
+                const downloadedItems = {
+                    packages: (data.packages && Array.isArray(data.packages)) ? data.packages.length : 0,
+                    customers: (data.customers && Array.isArray(data.customers)) ? data.customers.length : 0,
+                    clientAuthCustomers: (data.clientAuthCustomers && Array.isArray(data.clientAuthCustomers)) ? data.clientAuthCustomers.length : 0,
+                    plexMoviesCache: (data.plexMoviesCache && Array.isArray(data.plexMoviesCache)) ? data.plexMoviesCache.length : 0,
+                    plexAdultCache: (data.plexAdultCache && Array.isArray(data.plexAdultCache)) ? data.plexAdultCache.length : 0,
+                    plexArabicCache: (data.plexArabicCache && Array.isArray(data.plexArabicCache)) ? data.plexArabicCache.length : 0
+                };
+                
+                const totalDownloadedItems = downloadedItems.packages + downloadedItems.customers + 
+                    downloadedItems.clientAuthCustomers + downloadedItems.plexMoviesCache + 
+                    downloadedItems.plexAdultCache + downloadedItems.plexArabicCache;
+                
+                console.log('📥 Downloaded data check:', downloadedItems);
+                console.log('📥 Total items in download:', totalDownloadedItems);
+                
+                // If downloaded data is empty (0 items total), DO NOT overwrite local data
+                if (totalDownloadedItems === 0) {
+                    console.log('⚠️ Downloaded data is EMPTY - preserving local data to prevent data loss');
+                    console.log('⚠️ Local data preserved - admin should upload data to GitHub');
+                    // Still save sync URL but don't overwrite other data
+                    if (data.tvSyncUrl) {
+                        localStorage.setItem('tvSyncUrl', data.tvSyncUrl);
+                        localStorage.setItem('syncUrl', data.tvSyncUrl);
+                    }
+                    localStorage.setItem('lastAutoSync', new Date().toISOString());
+                    return true; // Return success but don't overwrite data
+                }
+                
+                console.log('✅ Downloaded data has content - proceeding with sync');
+                
                 // CRITICAL: Save sync URL from data (in case it was updated)
                 if (data.tvSyncUrl) {
                     localStorage.setItem('tvSyncUrl', data.tvSyncUrl);
