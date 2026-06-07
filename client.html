@@ -2580,7 +2580,7 @@
                 
                 <div class="form-group">
                     <label class="checkbox-label">
-                        <input type="checkbox" id="rememberMe" checked>
+                        <input type="checkbox" id="rememberMe">
                         <span class="checkmark"></span>
                         Remember me on this TV
                     </label>
@@ -3431,7 +3431,7 @@
             return [];
         }
 
-        // Auto-login functionality for TV platform
+        // Auto-login functionality for TV platform - SIMPLIFIED AND MORE RELIABLE
         function checkAutoLogin() {
             try {
                 // Check for stored credentials
@@ -3445,27 +3445,51 @@
                 const credentials = JSON.parse(storedCredentials);
                 console.log('🔑 Auto-login: Found stored credentials for:', credentials.username);
                 
-                // IMPORTANT: Wait for customer data to be available
+                // Check if credentials have username and password
+                if (!credentials.username || !credentials.password) {
+                    console.log('❌ Auto-login: Stored credentials incomplete');
+                    return false;
+                }
+                
+                // Get customer data from localStorage
                 const customers = JSON.parse(localStorage.getItem('clientAuthCustomers') || localStorage.getItem('adminCustomers') || '[]');
+                
                 if (customers.length === 0) {
                     console.log('🔑 Auto-login: Customer data not ready, will retry...');
                     return false; // Signal retry needed
                 }
                 
-                // Use the full authenticateUser to get complete user object
-                const user = passwordManager.authenticateUser(credentials.username, credentials.password);
+                // Find matching customer by username AND password
+                const user = customers.find(c => 
+                    c.username === credentials.username && 
+                    c.password === credentials.password
+                );
                 
                 if (user) {
                     isLoggedIn = true;
                     currentUser = user;
-                    adminCustomers = loadCustomersFromAdmin();
-                    updateUserInterface();
+                    adminCustomers = customers;
+                    
                     console.log(`✅ Auto-login successful for ${user.username}`);
+                    
+                    // Update UI
+                    updateUserInterface();
+                    
+                    // Hide login modal if visible
+                    const loginModal = document.getElementById('loginModal');
+                    if (loginModal) {
+                        loginModal.classList.remove('show');
+                    }
+                    
+                    // Load content
                     loadPlexLibraryContent();
+                    
                     return true;
                 } else {
-                    console.log('❌ Auto-login: Credentials invalid or device mismatch');
-                    // Don't clear on first failure - may be timing issue
+                    console.log('❌ Auto-login: Credentials invalid - customer not found');
+                    // Clear invalid credentials
+                    localStorage.removeItem('iwatch_tv_credentials');
+                    localStorage.removeItem('iwatch_tv_expiry');
                     return false;
                 }
             } catch (error) {
@@ -3476,7 +3500,10 @@
         
         // Store credentials securely
         function storeCredentials(username, password, expiryDate, rememberMe) {
-            if (!rememberMe) return; // Only store if "Remember Me" is checked
+            if (!rememberMe) {
+                console.log('❌ Remember Me not checked - credentials NOT stored');
+                return;
+            }
             
             const credentials = {
                 username: username,
@@ -3488,7 +3515,38 @@
             localStorage.setItem('iwatch_tv_credentials', JSON.stringify(credentials));
             localStorage.setItem('iwatch_tv_expiry', expiryDate);
             
-            console.log('💾 Credentials stored for auto-login');
+            console.log('✅💾 Credentials stored for auto-login - Remember Me ENABLED');
+            console.log('   Username:', username);
+            console.log('   Next login will be automatic!');
+        }
+        
+        // Clear ALL old cached data on login - COMPREHENSIVE CLEAN
+        function clearOldCacheOnLogin() {
+            console.log('🧹🧹🧹 COMPREHENSIVE CACHE CLEAR ON LOGIN 🧹🧹🧹');
+            
+            // Get ALL localStorage keys
+            const allKeys = Object.keys(localStorage);
+            console.log('📦 Found', allKeys.length, 'localStorage items to check');
+            
+            // Keys to PRESERVE (don't delete these)
+            const preserveKeys = [
+                'iwatch_tv_credentials', // Login credentials
+                'iwatch_tv_expiry'       // Expiry date
+            ];
+            
+            // Clear everything except credentials
+            let clearedCount = 0;
+            allKeys.forEach(key => {
+                if (!preserveKeys.includes(key)) {
+                    localStorage.removeItem(key);
+                    clearedCount++;
+                    console.log('   🗑️ Cleared:', key);
+                }
+            });
+            
+            console.log('✅ COMPREHENSIVE CLEAR COMPLETE - Cleared', clearedCount, 'items');
+            console.log('   Preserved:', preserveKeys.join(', '));
+            console.log('   Fresh data will be loaded from admin panel');
         }
         
         // Clear stored credentials
@@ -4460,11 +4518,21 @@
                         
                         console.log('✅ Login successful (clientAuth):', user.username);
                         console.log('📅 Expiry date:', user.expiryDate);
+                        
+                        // Clear old cache to prevent "admin" text from appearing
+                        clearOldCacheOnLogin();
+                        
                         updateUserInterface();
                         hideLoginModal();
+                        
                         // Store credentials for auto-login
-                        const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
+                        const rememberMe = document.getElementById('rememberMe')?.checked ?? false;
                         storeCredentials(username, password, user.expiryDate, rememberMe);
+                        
+                        // Show confirmation message
+                        if (rememberMe) {
+                            showNotification('✅ Logged in! Remember Me ENABLED - auto-login active', 'success');
+                        }
                         // Load content from localStorage
                         loadPlexLibraryContent();
                         return true;
@@ -4484,11 +4552,22 @@
                         
                         console.log('✅ Login successful (admin fallback):', user.username);
                         console.log('📅 Expiry date:', user.expiryDate);
+                        
+                        // Clear old cache to prevent "admin" text from appearing
+                        clearOldCacheOnLogin();
+                        
                         updateUserInterface();
                         hideLoginModal();
+                        
                         // Store credentials for auto-login
-                        const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
+                        const rememberMe = document.getElementById('rememberMe')?.checked ?? false;
                         storeCredentials(username, password, user.expiryDate, rememberMe);
+                        
+                        // Show confirmation message
+                        if (rememberMe) {
+                            showNotification('✅ Logged in! Remember Me ENABLED - auto-login active', 'success');
+                        }
+                        
                         // Load content from localStorage
                         loadPlexLibraryContent();
                         return true;
@@ -6753,6 +6832,9 @@
         window.showLoginModal = function() {
             if (!isLoggedIn) {
                 document.getElementById('loginModal').classList.add('show');
+                // Always clear username and password fields to prevent showing old credentials
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
                 document.getElementById('username').focus();
             }
         }
@@ -6871,6 +6953,9 @@
         function showDeviceLimitError(maxDevices) {
             const errorMsg = `Maximum devices reached!\n\n` +
                 `Your subscription allows ${maxDevices} TV${maxDevices > 1 ? '(s)' : ''}.\n\n` +
+                `• 1 TV subscription = 1 device only\n` +
+                `• 2 TV subscription = 2 devices only\n` +
+                `• 3 TV subscription = 3 devices only\n\n` +
                 `To add this TV, please contact your administrator to:\n` +
                 `• Upgrade your subscription, or\n` +
                 `• Remove a registered TV from your account`;
@@ -7063,6 +7148,24 @@
             
             // Auto-sync on startup - WAIT for it to complete before loading content
             console.log('🔄 Starting auto-sync...');
+            
+            // FORCE REFRESH: Clear old caches on every startup to get fresh channel list
+            console.log('🔄 Force refreshing channel data...');
+            localStorage.removeItem('plexMoviesCache');
+            localStorage.removeItem('plexAdultCache');
+            localStorage.removeItem('plexArabicCache');
+            localStorage.removeItem('plexCachedMovies');
+            localStorage.removeItem('plexCachedAdult');
+            localStorage.removeItem('plexCachedArabic');
+            
+            // Clear search input and login fields to prevent showing old data
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = '';
+            const usernameField = document.getElementById('username');
+            if (usernameField) usernameField.value = '';
+            const passwordField = document.getElementById('password');
+            if (passwordField) passwordField.value = '';
+            
             const syncResult = await autoSyncData();
             if (syncResult) {
                 console.log('✅ Auto-sync completed, reloading Plex content...');
