@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-07T00:37:25.498Z",
+  "exportDate": "2026-06-07T01:03:06.304Z",
   "customers": [],
   "clientAuthCustomers": [
     {
@@ -178,11 +178,11 @@
   },
   "creditTransfers": [],
   "resellerTransactions": [],
-  "plexServerUrl": "http://192.168.1.100:32400",
-  "plexLocalUrl": "185.187.94.169 : 32400",
+  "plexServerUrl": "http://4.tcp.eu.ngrok.io:29672",
+  "plexLocalUrl": "To: http://4.tcp.eu.ngrok.io:29672",
   "plexToken": "ixdVSv_KT-sfs_btZozb",
-  "plexMoviesSection": "26",
-  "plexAdultSection": "21",
+  "plexMoviesSection": "5",
+  "plexAdultSection": "4",
   "plexArabicSection": "7",
   "plexMoviesCache": [
     {
