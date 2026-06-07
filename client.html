@@ -2580,7 +2580,7 @@
                 
                 <div class="form-group">
                     <label class="checkbox-label">
-                        <input type="checkbox" id="rememberMe">
+                        <input type="checkbox" id="rememberMe" checked>
                         <span class="checkmark"></span>
                         Remember me on this TV
                     </label>
@@ -3431,7 +3431,7 @@
             return [];
         }
 
-        // Auto-login functionality for TV platform - SIMPLIFIED AND MORE RELIABLE
+        // Auto-login functionality for TV platform
         function checkAutoLogin() {
             try {
                 // Check for stored credentials
@@ -3445,51 +3445,27 @@
                 const credentials = JSON.parse(storedCredentials);
                 console.log('🔑 Auto-login: Found stored credentials for:', credentials.username);
                 
-                // Check if credentials have username and password
-                if (!credentials.username || !credentials.password) {
-                    console.log('❌ Auto-login: Stored credentials incomplete');
-                    return false;
-                }
-                
-                // Get customer data from localStorage
+                // IMPORTANT: Wait for customer data to be available
                 const customers = JSON.parse(localStorage.getItem('clientAuthCustomers') || localStorage.getItem('adminCustomers') || '[]');
-                
                 if (customers.length === 0) {
                     console.log('🔑 Auto-login: Customer data not ready, will retry...');
                     return false; // Signal retry needed
                 }
                 
-                // Find matching customer by username AND password
-                const user = customers.find(c => 
-                    c.username === credentials.username && 
-                    c.password === credentials.password
-                );
+                // Use the full authenticateUser to get complete user object
+                const user = passwordManager.authenticateUser(credentials.username, credentials.password);
                 
                 if (user) {
                     isLoggedIn = true;
                     currentUser = user;
-                    adminCustomers = customers;
-                    
-                    console.log(`✅ Auto-login successful for ${user.username}`);
-                    
-                    // Update UI
+                    adminCustomers = loadCustomersFromAdmin();
                     updateUserInterface();
-                    
-                    // Hide login modal if visible
-                    const loginModal = document.getElementById('loginModal');
-                    if (loginModal) {
-                        loginModal.classList.remove('show');
-                    }
-                    
-                    // Load content
+                    console.log(`✅ Auto-login successful for ${user.username}`);
                     loadPlexLibraryContent();
-                    
                     return true;
                 } else {
-                    console.log('❌ Auto-login: Credentials invalid - customer not found');
-                    // Clear invalid credentials
-                    localStorage.removeItem('iwatch_tv_credentials');
-                    localStorage.removeItem('iwatch_tv_expiry');
+                    console.log('❌ Auto-login: Credentials invalid or device mismatch');
+                    // Don't clear on first failure - may be timing issue
                     return false;
                 }
             } catch (error) {
@@ -3500,10 +3476,7 @@
         
         // Store credentials securely
         function storeCredentials(username, password, expiryDate, rememberMe) {
-            if (!rememberMe) {
-                console.log('❌ Remember Me not checked - credentials NOT stored');
-                return;
-            }
+            if (!rememberMe) return; // Only store if "Remember Me" is checked
             
             const credentials = {
                 username: username,
@@ -3515,38 +3488,7 @@
             localStorage.setItem('iwatch_tv_credentials', JSON.stringify(credentials));
             localStorage.setItem('iwatch_tv_expiry', expiryDate);
             
-            console.log('✅💾 Credentials stored for auto-login - Remember Me ENABLED');
-            console.log('   Username:', username);
-            console.log('   Next login will be automatic!');
-        }
-        
-        // Clear ALL old cached data on login - COMPREHENSIVE CLEAN
-        function clearOldCacheOnLogin() {
-            console.log('🧹🧹🧹 COMPREHENSIVE CACHE CLEAR ON LOGIN 🧹🧹🧹');
-            
-            // Get ALL localStorage keys
-            const allKeys = Object.keys(localStorage);
-            console.log('📦 Found', allKeys.length, 'localStorage items to check');
-            
-            // Keys to PRESERVE (don't delete these)
-            const preserveKeys = [
-                'iwatch_tv_credentials', // Login credentials
-                'iwatch_tv_expiry'       // Expiry date
-            ];
-            
-            // Clear everything except credentials
-            let clearedCount = 0;
-            allKeys.forEach(key => {
-                if (!preserveKeys.includes(key)) {
-                    localStorage.removeItem(key);
-                    clearedCount++;
-                    console.log('   🗑️ Cleared:', key);
-                }
-            });
-            
-            console.log('✅ COMPREHENSIVE CLEAR COMPLETE - Cleared', clearedCount, 'items');
-            console.log('   Preserved:', preserveKeys.join(', '));
-            console.log('   Fresh data will be loaded from admin panel');
+            console.log('💾 Credentials stored for auto-login');
         }
         
         // Clear stored credentials
@@ -4505,55 +4447,10 @@
         async function loginUser(username, password) {
             // LOCAL VERSION - Use localStorage instead of Firebase
             try {
-                // Check if customer data is loaded - if not, trigger sync first
-                const clientAuthCustomersRaw = localStorage.getItem('clientAuthCustomers');
-                const adminCustomersRaw = localStorage.getItem('adminCustomers');
-                
-                // If neither data source has customers, try to trigger a sync
-                if ((!clientAuthCustomersRaw || clientAuthCustomersRaw === '[]') && 
-                    (!adminCustomersRaw || adminCustomersRaw === '[]')) {
-                    console.log('⚠️ No customer data found, triggering sync...');
-                    
-                    // Try to trigger data sync from GitHub or local admin panel
-                    if (typeof autoSyncData === 'function') {
-                        autoSyncData();
-                    }
-                    
-                    // Also try to load from admin panel URL if configured
-                    const syncUrl = localStorage.getItem('syncUrl');
-                    if (syncUrl) {
-                        fetch(syncUrl)
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.customers) {
-                                    localStorage.setItem('adminCustomers', JSON.stringify(data.customers));
-                                    console.log('✅ Loaded', data.customers.length, 'customers from sync URL');
-                                }
-                                if (data.packages) {
-                                    localStorage.setItem('adminPackages', JSON.stringify(data.packages));
-                                }
-                            })
-                            .catch(e => console.log('Sync fetch failed:', e));
-                    }
-                    
-                    // Wait a bit and retry login
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    
-                    // Reload data sources
-                    const newClientAuth = localStorage.getItem('clientAuthCustomers');
-                    const newAdminCustomers = localStorage.getItem('adminCustomers');
-                    
-                    if ((!newClientAuth || newClientAuth === '[]') && (!newAdminCustomers || newAdminCustomers === '[]')) {
-                        console.log('❌ No customer data available after sync attempt');
-                        showNotification('⚠️ Customer data not loaded. Please refresh the page and try again.', 'error');
-                        return false;
-                    }
-                }
-                
                 // Try to load customers from clientAuthCustomers first (includes admin AND reseller-created customers)
-                const clientAuthData = localStorage.getItem('clientAuthCustomers');
-                if (clientAuthData && clientAuthData !== '[]') {
-                    const customers = JSON.parse(clientAuthData);
+                const clientAuthCustomersRaw = localStorage.getItem('clientAuthCustomers');
+                if (clientAuthCustomersRaw) {
+                    const customers = JSON.parse(clientAuthCustomersRaw);
                     const user = customers.find(c => c.username === username && c.password === password);
                     
                     if (user) {
@@ -4563,21 +4460,11 @@
                         
                         console.log('✅ Login successful (clientAuth):', user.username);
                         console.log('📅 Expiry date:', user.expiryDate);
-                        
-                        // Clear old cache to prevent "admin" text from appearing
-                        clearOldCacheOnLogin();
-                        
                         updateUserInterface();
                         hideLoginModal();
-                        
                         // Store credentials for auto-login
-                        const rememberMe = document.getElementById('rememberMe')?.checked ?? false;
+                        const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
                         storeCredentials(username, password, user.expiryDate, rememberMe);
-                        
-                        // Show confirmation message
-                        if (rememberMe) {
-                            showNotification('✅ Logged in! Remember Me ENABLED - auto-login active', 'success');
-                        }
                         // Load content from localStorage
                         loadPlexLibraryContent();
                         return true;
@@ -4585,9 +4472,9 @@
                 }
                 
                 // Fallback to adminCustomers for backward compatibility
-                const adminData = localStorage.getItem('adminCustomers');
-                if (adminData && adminData !== '[]') {
-                    const customers = JSON.parse(adminData);
+                const adminCustomersRaw = localStorage.getItem('adminCustomers');
+                if (adminCustomersRaw) {
+                    const customers = JSON.parse(adminCustomersRaw);
                     const user = customers.find(c => c.username === username && c.password === password);
                     
                     if (user) {
@@ -4597,22 +4484,11 @@
                         
                         console.log('✅ Login successful (admin fallback):', user.username);
                         console.log('📅 Expiry date:', user.expiryDate);
-                        
-                        // Clear old cache to prevent "admin" text from appearing
-                        clearOldCacheOnLogin();
-                        
                         updateUserInterface();
                         hideLoginModal();
-                        
                         // Store credentials for auto-login
-                        const rememberMe = document.getElementById('rememberMe')?.checked ?? false;
+                        const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
                         storeCredentials(username, password, user.expiryDate, rememberMe);
-                        
-                        // Show confirmation message
-                        if (rememberMe) {
-                            showNotification('✅ Logged in! Remember Me ENABLED - auto-login active', 'success');
-                        }
-                        
                         // Load content from localStorage
                         loadPlexLibraryContent();
                         return true;
@@ -4622,15 +4498,7 @@
                 console.log('Local login failed:', e.message);
             }
             
-            // Show specific error based on whether data exists
-            const hasClientAuth = localStorage.getItem('clientAuthCustomers');
-            const hasAdminData = localStorage.getItem('adminCustomers');
-            
-            if ((!hasClientAuth || hasClientAuth === '[]') && (!hasAdminData || hasAdminData === '[]')) {
-                showNotification('⚠️ Customer data not loaded. Please refresh the page.', 'error');
-            } else {
-                showNotification('Invalid username or password', 'error');
-            }
+            showNotification('Invalid username or password', 'error');
             return false;
         }
 
@@ -6885,33 +6753,7 @@
         window.showLoginModal = function() {
             if (!isLoggedIn) {
                 document.getElementById('loginModal').classList.add('show');
-                // Always clear username and password fields to prevent showing old credentials
-                document.getElementById('username').value = '';
-                document.getElementById('password').value = '';
                 document.getElementById('username').focus();
-                
-                // Trigger data sync when login modal opens to ensure customer data is loaded
-                console.log('🔄 Login modal opened - triggering data sync...');
-                if (typeof autoSyncData === 'function') {
-                    autoSyncData();
-                }
-                
-                // Also try to load from sync URL if configured
-                const syncUrl = localStorage.getItem('syncUrl');
-                if (syncUrl) {
-                    fetch(syncUrl)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.customers && data.customers.length > 0) {
-                                localStorage.setItem('adminCustomers', JSON.stringify(data.customers));
-                                console.log('✅ Loaded', data.customers.length, 'customers from sync URL');
-                            }
-                            if (data.packages && data.packages.length > 0) {
-                                localStorage.setItem('adminPackages', JSON.stringify(data.packages));
-                            }
-                        })
-                        .catch(e => console.log('Sync fetch failed:', e));
-                }
             }
         }
 
@@ -7029,9 +6871,6 @@
         function showDeviceLimitError(maxDevices) {
             const errorMsg = `Maximum devices reached!\n\n` +
                 `Your subscription allows ${maxDevices} TV${maxDevices > 1 ? '(s)' : ''}.\n\n` +
-                `• 1 TV subscription = 1 device only\n` +
-                `• 2 TV subscription = 2 devices only\n` +
-                `• 3 TV subscription = 3 devices only\n\n` +
                 `To add this TV, please contact your administrator to:\n` +
                 `• Upgrade your subscription, or\n` +
                 `• Remove a registered TV from your account`;
@@ -7093,39 +6932,6 @@
                 if (!response.ok) throw new Error('Fetch failed. Status: ' + response.status);
                 
                 const data = await response.json();
-                
-                // CRITICAL FIX: Check if downloaded data has actual content before overwriting
-                // Count total items in downloaded data
-                const downloadedItems = {
-                    packages: (data.packages && Array.isArray(data.packages)) ? data.packages.length : 0,
-                    customers: (data.customers && Array.isArray(data.customers)) ? data.customers.length : 0,
-                    clientAuthCustomers: (data.clientAuthCustomers && Array.isArray(data.clientAuthCustomers)) ? data.clientAuthCustomers.length : 0,
-                    plexMoviesCache: (data.plexMoviesCache && Array.isArray(data.plexMoviesCache)) ? data.plexMoviesCache.length : 0,
-                    plexAdultCache: (data.plexAdultCache && Array.isArray(data.plexAdultCache)) ? data.plexAdultCache.length : 0,
-                    plexArabicCache: (data.plexArabicCache && Array.isArray(data.plexArabicCache)) ? data.plexArabicCache.length : 0
-                };
-                
-                const totalDownloadedItems = downloadedItems.packages + downloadedItems.customers + 
-                    downloadedItems.clientAuthCustomers + downloadedItems.plexMoviesCache + 
-                    downloadedItems.plexAdultCache + downloadedItems.plexArabicCache;
-                
-                console.log('📥 Downloaded data check:', downloadedItems);
-                console.log('📥 Total items in download:', totalDownloadedItems);
-                
-                // If downloaded data is empty (0 items total), DO NOT overwrite local data
-                if (totalDownloadedItems === 0) {
-                    console.log('⚠️ Downloaded data is EMPTY - preserving local data to prevent data loss');
-                    console.log('⚠️ Local data preserved - admin should upload data to GitHub');
-                    // Still save sync URL but don't overwrite other data
-                    if (data.tvSyncUrl) {
-                        localStorage.setItem('tvSyncUrl', data.tvSyncUrl);
-                        localStorage.setItem('syncUrl', data.tvSyncUrl);
-                    }
-                    localStorage.setItem('lastAutoSync', new Date().toISOString());
-                    return true; // Return success but don't overwrite data
-                }
-                
-                console.log('✅ Downloaded data has content - proceeding with sync');
                 
                 // CRITICAL: Save sync URL from data (in case it was updated)
                 if (data.tvSyncUrl) {
@@ -7257,24 +7063,6 @@
             
             // Auto-sync on startup - WAIT for it to complete before loading content
             console.log('🔄 Starting auto-sync...');
-            
-            // FORCE REFRESH: Clear old caches on every startup to get fresh channel list
-            console.log('🔄 Force refreshing channel data...');
-            localStorage.removeItem('plexMoviesCache');
-            localStorage.removeItem('plexAdultCache');
-            localStorage.removeItem('plexArabicCache');
-            localStorage.removeItem('plexCachedMovies');
-            localStorage.removeItem('plexCachedAdult');
-            localStorage.removeItem('plexCachedArabic');
-            
-            // Clear search input and login fields to prevent showing old data
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) searchInput.value = '';
-            const usernameField = document.getElementById('username');
-            if (usernameField) usernameField.value = '';
-            const passwordField = document.getElementById('password');
-            if (passwordField) passwordField.value = '';
-            
             const syncResult = await autoSyncData();
             if (syncResult) {
                 console.log('✅ Auto-sync completed, reloading Plex content...');
