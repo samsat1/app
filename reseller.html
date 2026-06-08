@@ -1593,6 +1593,9 @@
                 } else if (pkg.name.toLowerCase().includes('movie')) {
                     packageTypeIcon = '🎬';
                     packageTypeLabel = 'Movies';
+                } else if (pkg.seriesPrice || pkg.isSeries || pkg.name.toLowerCase().includes('series') || pkg.name.toLowerCase().includes('tv shows')) {
+                    packageTypeIcon = '📺';
+                    packageTypeLabel = 'Series';
                 } else if (pkg.adultPackagePrice || pkg.name.toLowerCase().includes('adult')) {
                     packageTypeIcon = '🔞';
                     packageTypeLabel = 'Adult';
@@ -1999,6 +2002,7 @@
             let thirdTVPrice = 10; // Default
             let sportsPrice = 8; // Default
             let moviesPrice = 8; // Default
+            let seriesPrice = 8; // Default
             let adultPrice = 0; // Default
             
             // Try to get actual prices from packages
@@ -2009,6 +2013,7 @@
                 thirdTVPrice = firstPkg.thirdTVPrice || thirdTVPrice;
                 sportsPrice = firstPkg.sportsPrice || sportsPrice;
                 moviesPrice = firstPkg.moviesPrice || moviesPrice;
+                seriesPrice = firstPkg.seriesPrice || seriesPrice;
                 adultPrice = firstPkg.adultPackagePrice || adultPrice;
             }
             
