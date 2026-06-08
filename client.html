@@ -3342,11 +3342,13 @@
                             description: pkg.features || `Package - $${pkg.price}/${pkg.duration}`,
                             category: pkg.type || 'addon',
                             adult: pkg.isAdult || false,
+                            isSeries: pkg.isSeries || false,
                             type: 'package',
                             packageId: pkg.id,
                             price: pkg.price,
                             duration: pkg.duration,
                             adultPrice: pkg.adultPackagePrice || 0,
+                            seriesPrice: pkg.seriesPrice || 0,
                             streamingMode: pkg.isAdult ? 'on-demand' : 'on-demand',
                             hasContentMapping: hasMapping, // Flag for UI
                             accessLevel: mapping?.contentMapping?.accessLevel || 1
@@ -4535,7 +4537,20 @@
                                     console.log('✅ Loaded', data.customers.length, 'customers from sync URL');
                                 }
                                 if (hasPackages) {
-                                    localStorage.setItem('adminPackages', JSON.stringify(data.packages));
+                                    // MERGE packages - preserve local package flags like isAdult, isSeries
+                                    const localPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                                    const localPackageIds = localPackages.map(p => p.id);
+                                    
+                                    // Start with server packages, add missing local packages
+                                    const mergedPackages = [...data.packages];
+                                    localPackages.forEach(localPkg => {
+                                        if (!localPackageIds.includes(localPkg.id)) {
+                                            mergedPackages.push(localPkg);
+                                        }
+                                    });
+                                    
+                                    localStorage.setItem('adminPackages', JSON.stringify(mergedPackages));
+                                    console.log('📦 Merged packages (server:', data.packages.length, ', local:', localPackages.length, ', merged:', mergedPackages.length, ')');
                                 }
                             })
                             .catch(e => console.log('Sync fetch failed:', e));
@@ -6917,7 +6932,17 @@
                                 console.log('✅ Loaded', data.customers.length, 'customers from sync URL');
                             }
                             if (hasPackages) {
-                                localStorage.setItem('adminPackages', JSON.stringify(data.packages));
+                                // MERGE packages - preserve local flags like isAdult, isSeries
+                                const localPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                                const localPackageIds = localPackages.map(p => p.id);
+                                const mergedPackages = [...data.packages];
+                                localPackages.forEach(localPkg => {
+                                    if (!localPackageIds.includes(localPkg.id)) {
+                                        mergedPackages.push(localPkg);
+                                    }
+                                });
+                                localStorage.setItem('adminPackages', JSON.stringify(mergedPackages));
+                                console.log('📦 Merged packages (server:', data.packages.length, ', local:', localPackages.length, ', merged:', mergedPackages.length, ')');
                             }
                         })
                         .catch(e => console.log('Sync fetch failed:', e));
@@ -7144,9 +7169,18 @@
                     console.log('📡 Saved sync URL from synced data:', data.tvSyncUrl);
                 }
                 
-                // Sync packages from admin
+                // Sync packages from admin - MERGE to preserve local flags
                 if (data.packages && Array.isArray(data.packages)) {
-                    localStorage.setItem('adminPackages', JSON.stringify(data.packages));
+                    const localPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                    const localPackageIds = localPackages.map(p => p.id);
+                    const mergedPackages = [...data.packages];
+                    localPackages.forEach(localPkg => {
+                        if (!localPackageIds.includes(localPkg.id)) {
+                            mergedPackages.push(localPkg);
+                        }
+                    });
+                    localStorage.setItem('adminPackages', JSON.stringify(mergedPackages));
+                    console.log('📦 Merged packages (server:', data.packages.length, ', local:', localPackages.length, ', merged:', mergedPackages.length, ')');
                 }
                 
                 // Import Plex settings from admin
@@ -7524,10 +7558,18 @@
                         throw new Error('Invalid JSON format');
                     }
                     
-                    // Import packages data
+                    // Import packages data - MERGE to preserve local flags
                     if (adminData.packages) {
-                        localStorage.setItem('adminPackages', JSON.stringify(adminData.packages));
-                        console.log(`📦 Imported ${adminData.packages.length} packages`);
+                        const localPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                        const localPackageIds = localPackages.map(p => p.id);
+                        const mergedPackages = [...adminData.packages];
+                        localPackages.forEach(localPkg => {
+                            if (!localPackageIds.includes(localPkg.id)) {
+                                mergedPackages.push(localPkg);
+                            }
+                        });
+                        localStorage.setItem('adminPackages', JSON.stringify(mergedPackages));
+                        console.log(`📦 Merged packages (imported: ${adminData.packages.length}, local: ${localPackages.length}, merged: ${mergedPackages.length})`);
                     }
                     
                     // Import customers data
