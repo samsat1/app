@@ -1470,6 +1470,9 @@
                            (normalizedName.includes('basic') && existingName.includes('basic')) ||
                            (normalizedName.includes('adult') && existingName.includes('adult')) ||
                            (normalizedName.includes('movies') && existingName.includes('movies')) ||
+                           // Series and TV Shows are DIFFERENT from Adult
+                           (normalizedName.includes('series') && existingName.includes('series')) ||
+                           (normalizedName.includes('tv shows') && existingName.includes('tv shows')) ||
                            // Sports and Sports Plus are DIFFERENT packages
                            // Match exact "sports" (but not "sports plus")
                            (normalizedName === 'sports' && existingName === 'sports') ||
@@ -1524,6 +1527,12 @@
             // Save to localStorage for consistency (both adminPackages and packages keys)
             localStorage.setItem('adminPackages', JSON.stringify(packages));
             localStorage.setItem('packages', JSON.stringify(packages));
+            
+            // CRITICAL: Also update the global packages variable to keep it in sync
+            window.packages = packages;
+            
+            console.log('💾 Saved packages to localStorage:', packages.length, 'packages');
+            console.log('💾 adminPackages content:', localStorage.getItem('adminPackages'));
             
             // Trigger real-time notification to clients for package updates
             const notificationData = {
@@ -3517,11 +3526,23 @@
                     console.log('📊 Loaded', data.customers.length, 'customers');
                 }
                 
-                // Load packages
+                // Load packages - BUT DON'T OVERWRITE existing local packages!
+                // This prevents newly created packages from being erased on page reload
                 if (data.packages && Array.isArray(data.packages)) {
-                    localStorage.setItem('adminPackages', JSON.stringify(data.packages));
-                    localStorage.setItem('packages', JSON.stringify(data.packages));
-                    console.log('📊 Loaded', data.packages.length, 'packages');
+                    const localPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                    const localPackageNames = localPackages.map(p => p.name?.toLowerCase());
+                    
+                    // Only add packages from GitHub that don't exist locally
+                    const mergedPackages = [...localPackages];
+                    data.packages.forEach(ghPkg => {
+                        if (!localPackageNames.includes(ghPkg.name?.toLowerCase())) {
+                            mergedPackages.push(ghPkg);
+                        }
+                    });
+                    
+                    localStorage.setItem('adminPackages', JSON.stringify(mergedPackages));
+                    localStorage.setItem('packages', JSON.stringify(mergedPackages));
+                    console.log('📊 Synced packages (local:', localPackages.length, ', github:', data.packages.length, ', merged:', mergedPackages.length, ')');
                 }
                 
                 // Load resellers
@@ -6843,8 +6864,10 @@ Network: Always Streaming → Optimized for instant access`;
             if (!mainContent) return;
             
             // Load packages from storage
-            packages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
-            console.log('📦 Loaded packages:', packages.length);
+            const storedPackages = localStorage.getItem('adminPackages') || localStorage.getItem('packages');
+            packages = JSON.parse(storedPackages) || [];
+            console.log('📦 showPackagesSection loaded packages:', packages.length);
+            console.log('📦 Raw localStorage content:', storedPackages);
             
             mainContent.innerHTML = `
                 <div class="dashboard-header">
@@ -6998,10 +7021,19 @@ Network: Always Streaming → Optimized for instant access`;
                             <h4 style="color: white; margin-bottom: 10px;">📦 Available Packages</h4>
                             <div id="packagesList" style="color: rgba(255,255,255,0.7); font-size: 13px;">
                                 ${packages.length === 0 ? 'No packages created yet. Use the form to create your first package.' : packages.map((pkg, idx) => {
-                                    const isAdultPackage = pkg.isAdult || pkg.name.toLowerCase().includes('adult') || pkg.name.toLowerCase().includes('xxx') || (pkg.adultPackagePrice && pkg.adultPackagePrice > 0);
-                                    return `<div style="margin-bottom: 10px; padding: 10px; background: ${isAdultPackage ? 'rgba(255,71,87,0.15)' : 'rgba(255,255,255,0.05)'}; border-radius: 6px; border-left: 3px solid ${isAdultPackage ? '#ff4757' : '#4caf50'};">
-                                        <div style="font-weight: 600; color: ${isAdultPackage ? '#ff4757' : 'white'};">${isAdultPackage ? '🔞 ' : ''}${pkg.name}</div>
-                                        <div style="font-size: 12px; color: rgba(255,255,255,0.7);">$${pkg.price}/${pkg.duration} ${pkg.adultPackagePrice > 0 ? `| Adult: $${pkg.adultPackagePrice}` : ''}</div>
+                                    // Determine package type for styling - Series gets purple, Adult gets red
+                                    const isSeriesPackage = pkg.name.toLowerCase().includes('series') || pkg.name.toLowerCase().includes('tv shows') || (pkg.seriesPrice && pkg.seriesPrice > 0);
+                                    const isAdultPackage = !isSeriesPackage && (pkg.isAdult || pkg.name.toLowerCase().includes('adult') || pkg.name.toLowerCase().includes('xxx') || (pkg.adultPackagePrice && pkg.adultPackagePrice > 0));
+                                    
+                                    // Set colors based on package type
+                                    const bgColor = isAdultPackage ? 'rgba(255,71,87,0.15)' : (isSeriesPackage ? 'rgba(156,39,176,0.15)' : 'rgba(255,255,255,0.05)');
+                                    const borderColor = isAdultPackage ? '#ff4757' : (isSeriesPackage ? '#9c27b0' : '#4caf50');
+                                    const textColor = isAdultPackage ? '#ff4757' : (isSeriesPackage ? '#9c27b0' : 'white');
+                                    const icon = isAdultPackage ? '🔞 ' : (isSeriesPackage ? '📺 ' : '');
+                                    
+                                    return `<div style="margin-bottom: 10px; padding: 10px; background: ${bgColor}; border-radius: 6px; border-left: 3px solid ${borderColor};">
+                                        <div style="font-weight: 600; color: ${textColor};">${icon}${pkg.name}</div>
+                                        <div style="font-size: 12px; color: rgba(255,255,255,0.7);">$${pkg.price}/${pkg.duration} ${pkg.adultPackagePrice > 0 ? `| Adult: $${pkg.adultPackagePrice}` : ''} ${pkg.seriesPrice > 0 ? `| Series: $${pkg.seriesPrice}` : ''}</div>
                                         <div style="margin-top: 8px; display: flex; gap: 5px;">
                                             <button onclick="editPackage('${idx}')" style="background: #2196f3; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 10px; cursor: pointer;">✏️ EDIT</button>
                                             <button onclick="deletePackage('${idx}')" style="background: #f44336; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 10px; cursor: pointer;">🗑️ Delete</button>
