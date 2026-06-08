@@ -4581,16 +4581,19 @@
                 
                 const isAdult = libraryType === 'adult';
                 const isArabic = libraryType === 'arabic';
+                const isSeries = libraryType === 'series';
                 
                 const content = items.map((item, index) => ({
                     id: `plex_${libraryId}_${item.ratingKey || index}`,
                     name: item.title,
                     description: item.summary || 'No description available',
-                    category: isAdult ? 'adult' : (isArabic ? 'arabic' : 'movie'),
+                    category: isAdult ? 'adult' : (isArabic ? 'arabic' : (isSeries ? 'series' : 'movie')),
                     isAdult: isAdult,
                     isArabic: isArabic,
+                    isSeries: isSeries,
                     adult: isAdult,
                     arabic: isArabic,
+                    series: isSeries,
                     type: 'mp4',
                     thumb: item.thumb ? `${serverUrl}${item.thumb}?X-Plex-Token=${accessToken}` : '',
                     art: item.art ? `${serverUrl}${item.art}?X-Plex-Token=${accessToken}` : '',
@@ -4604,11 +4607,13 @@
                 // Store in localStorage for client to use - use correct cache key based on libraryType
                 let cacheKey;
                 if (libraryType === 'adult') {
-                    cacheKey = 'plexAdultCache';
+                    cacheKey = 'plexCachedAdult';
                 } else if (libraryType === 'arabic') {
-                    cacheKey = 'plexArabicCache';
+                    cacheKey = 'plexCachedArabic';
+                } else if (libraryType === 'series') {
+                    cacheKey = 'plexCachedSeries';
                 } else {
-                    cacheKey = 'plexMoviesCache';
+                    cacheKey = 'plexCachedMovies';
                 }
                 
                 try {
@@ -4667,7 +4672,15 @@
                     s.title.toLowerCase().includes('arabic')
                 );
                 
-                let moviesCount = 0, adultCount = 0, arabicCount = 0;
+                // Find and cache Series/TV Shows library
+                const seriesLib = sections.find(s => 
+                    s.title.toLowerCase().includes('series') || 
+                    s.title.toLowerCase().includes('tv shows') ||
+                    s.title.toLowerCase().includes('tv') ||
+                    s.type === 'show'
+                );
+                
+                let moviesCount = 0, adultCount = 0, arabicCount = 0, seriesCount = 0;
                 
                 if (moviesLib) {
                     const content = await cacheLibraryContent(serverUrl, accessToken, moviesLib.key, 'movies');
@@ -4684,7 +4697,12 @@
                     arabicCount = content.length;
                 }
                 
-                showNotification(`✅ Cached ${moviesCount} movies, ${adultCount} adult, and ${arabicCount} Arabic videos for client`, 'success');
+                if (seriesLib) {
+                    const content = await cacheLibraryContent(serverUrl, accessToken, seriesLib.key, 'series');
+                    seriesCount = content.length;
+                }
+                
+                showNotification(`✅ Cached ${moviesCount} movies, ${adultCount} adult, ${arabicCount} Arabic, and ${seriesCount} Series for client`, 'success');
                 
             } catch(error) {
                 console.error('Cache error:', error);
