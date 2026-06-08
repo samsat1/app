@@ -3643,7 +3643,12 @@
                     customers: JSON.parse(localStorage.getItem('adminCustomers') || '[]'),
                     // Include reseller-created customers so they can sync to client panel
                     clientAuthCustomers: JSON.parse(localStorage.getItem('clientAuthCustomers') || '[]'),
-                    packages: JSON.parse(localStorage.getItem('adminPackages') || '[]'),
+                    // Filter out adult packages for client sync - adult packages should only be accessible after purchase
+                    packages: JSON.parse(localStorage.getItem('adminPackages') || '[]').filter(pkg => 
+                        !(pkg.isAdult || pkg.name.toLowerCase().includes('adult') || 
+                          pkg.name.toLowerCase().includes('xxx') ||
+                          (pkg.adultPackagePrice && pkg.adultPackagePrice > 0))
+                    ),
                     resellers: resellersData,
                     creditTransfers: creditTransfers,
                     resellerTransactions: resellerTransactions,
@@ -4191,6 +4196,9 @@
                 updatePackageStats();
                 updatePackagesList();
                 
+                // Re-render the entire packages section to ensure UI is fully updated
+                showPackagesSection();
+                
                 // AUTO-SYNC to GitHub after package created/updated
                 console.log('🔄 Auto-syncing to GitHub after package change...');
                 if (typeof uploadToGithub === 'function') {
@@ -4207,8 +4215,11 @@
             const packagesList = document.getElementById('packagesList');
             const totalPackagesCount = document.getElementById('totalPackagesCount');
             
-            if (packagesList && packages.length > 0) {
-                packagesList.innerHTML = packages.map((pkg, index) => {
+            // Reload packages from localStorage to ensure we have the latest data
+            const currentPackages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
+            
+            if (packagesList && currentPackages.length > 0) {
+                packagesList.innerHTML = currentPackages.map((pkg, index) => {
                     const isAdultPackage = pkg.isAdult || pkg.name.toLowerCase().includes('adult') || pkg.name.toLowerCase().includes('xxx');
                     
                     return `
@@ -4237,10 +4248,13 @@
                         </div>
                     </div>`
                 }).join('');
+            } else if (packagesList) {
+                // Show empty state when no packages exist
+                packagesList.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">No packages created yet. Use the form to create your first package.</div>';
             }
             
             if (totalPackagesCount) {
-                totalPackagesCount.textContent = packages.length;
+                totalPackagesCount.textContent = currentPackages.length;
             }
         }
         
