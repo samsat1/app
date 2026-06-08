@@ -7116,6 +7116,7 @@ Network: Always Streaming → Optimized for instant access`;
             const plexMoviesSection = localStorage.getItem('plexMoviesSection') || '26';
             const plexAdultSection = localStorage.getItem('plexAdultSection') || '21';
             const plexArabicSection = localStorage.getItem('plexArabicSection') || '7';
+            const plexSeriesSection = localStorage.getItem('plexSeriesSection') || '8';
             const cachedMovies = JSON.parse(localStorage.getItem('plexCachedMovies') || '[]');
             const cachedAdult = JSON.parse(localStorage.getItem('plexCachedAdult') || '[]');
             const cachedArabic = JSON.parse(localStorage.getItem('plexCachedArabic') || '[]');
@@ -7160,6 +7161,10 @@ Network: Always Streaming → Optimized for instant access`;
                                 <div>
                                     <label style="color: rgba(255,255,255,0.8); font-size: 14px; display: block; margin-bottom: 5px;">Arabic Section ID:</label>
                                     <input type="text" id="plexArabicSection" value="${plexArabicSection}" placeholder="7" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
+                                </div>
+                                <div>
+                                    <label style="color: rgba(156,39,176,0.8); font-size: 14px; display: block; margin-bottom: 5px;">Series Section ID:</label>
+                                    <input type="text" id="plexSeriesSection" value="${plexSeriesSection}" placeholder="8" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(156,39,176,0.3); border-radius: 6px; color: white; font-size: 14px;">
                                 </div>
                             </div>
                             <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
@@ -7298,6 +7303,7 @@ Network: Always Streaming → Optimized for instant access`;
             const moviesSection = document.getElementById('plexMoviesSection')?.value || '26';
             const adultSection = document.getElementById('plexAdultSection')?.value || '21';
             const arabicSection = document.getElementById('plexArabicSection')?.value || '7';
+            const seriesSection = document.getElementById('plexSeriesSection')?.value || '8';
             
             localStorage.setItem('plexServerUrl', serverUrl);
             localStorage.setItem('plexLocalUrl', localUrl);
@@ -7305,12 +7311,14 @@ Network: Always Streaming → Optimized for instant access`;
             localStorage.setItem('plexMoviesSection', moviesSection);
             localStorage.setItem('plexAdultSection', adultSection);
             localStorage.setItem('plexArabicSection', arabicSection);
+            localStorage.setItem('plexSeriesSection', seriesSection);
             
             // Update the PLEX_CONFIG object
             if (window.PLEX_CONFIG) {
                 window.PLEX_CONFIG.serverUrl = serverUrl;
                 window.PLEX_CONFIG.localUrl = localUrl;
                 window.PLEX_CONFIG.token = token;
+                window.PLEX_CONFIG.sections.series = parseInt(seriesSection);
             }
             
             showNotification('✅ Plex settings saved! Local URL: ' + localUrl, 'success');
