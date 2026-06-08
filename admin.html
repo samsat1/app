@@ -4851,11 +4851,15 @@
                 const movies = JSON.parse(localStorage.getItem('plexMoviesCache')) || [];
                 const adult = JSON.parse(localStorage.getItem('plexAdultCache')) || [];
                 const arabic = JSON.parse(localStorage.getItem('plexArabicCache')) || [];
+                const series = JSON.parse(localStorage.getItem('plexSeriesCache')) || [];
                 
                 document.getElementById('moviesCount').textContent = `Movies cached: ${movies.length}`;
                 document.getElementById('adultCount').textContent = `Adult videos cached: ${adult.length}`;
                 if (document.getElementById('arabicCount')) {
                     document.getElementById('arabicCount').textContent = `Arabic videos cached: ${arabic.length}`;
+                }
+                if (document.getElementById('seriesCount')) {
+                    document.getElementById('seriesCount').textContent = `Series videos cached: ${series.length}`;
                 }
             } catch(e) {}
         }
@@ -4864,15 +4868,11 @@
             const movies = JSON.parse(localStorage.getItem('plexMoviesCache')) || [];
             const adult = JSON.parse(localStorage.getItem('plexAdultCache')) || [];
             const arabic = JSON.parse(localStorage.getItem('plexArabicCache')) || [];
+            const series = JSON.parse(localStorage.getItem('plexSeriesCache')) || [];
             
             let html = '<strong>🎬 Movies (' + movies.length + '):</strong><br>';
             movies.forEach((m, i) => {
                 html += `${i+1}. ${m.name}<br>`;
-            });
-            
-            html += '<br><strong>🔞 Adult (' + adult.length + '):</strong><br>';
-            adult.forEach((a, i) => {
-                html += `${i+1}. ${a.name}<br>`;
             });
             
             html += '<br><strong>🔶 Arabic (' + arabic.length + '):</strong><br>';
@@ -4880,7 +4880,17 @@
                 html += `${i+1}. ${a.name}<br>`;
             });
             
-            if (movies.length === 0 && adult.length === 0 && arabic.length === 0) {
+            html += '<br><strong>📺 Series (' + series.length + '):</strong><br>';
+            series.forEach((s, i) => {
+                html += `${i+1}. ${s.name}<br>`;
+            });
+            
+            html += '<br><strong>🔞 Adult (' + adult.length + '):</strong><br>';
+            adult.forEach((a, i) => {
+                html += `${i+1}. ${a.name}<br>`;
+            });
+            
+            if (movies.length === 0 && adult.length === 0 && arabic.length === 0 && series.length === 0) {
                 html = 'No cached content. Add videos using the forms above.';
             }
             
@@ -4893,6 +4903,7 @@
                 localStorage.removeItem('plexMoviesCache');
                 localStorage.removeItem('plexAdultCache');
                 localStorage.removeItem('plexArabicCache');
+                localStorage.removeItem('plexSeriesCache');
                 updateCacheCounts();
                 document.getElementById('cachedContentPreview').style.display = 'none';
                 showNotification('🗑️ All cached content cleared', 'info');
@@ -4944,7 +4955,8 @@
             sections: {
                 movies: parseInt(localStorage.getItem('plexMoviesSection')) || 26,
                 adult: parseInt(localStorage.getItem('plexAdultSection')) || 21,
-                arabic: parseInt(localStorage.getItem('plexArabicSection')) || 7
+                arabic: parseInt(localStorage.getItem('plexArabicSection')) || 7,
+                series: parseInt(localStorage.getItem('plexSeriesSection')) || 8
             }
         };
         
@@ -5014,6 +5026,26 @@
             }
         };
         
+        window.importSeriesXML = function() {
+            const xml = document.getElementById('seriesXmlInput').value.trim();
+            if (!xml) {
+                showNotification('❌ Please paste the Series XML first', 'error');
+                return;
+            }
+            
+            const videos = parseVideoXML(xml, 'series');
+            if (videos.length > 0) {
+                // Save to both keys for compatibility
+                localStorage.setItem('plexSeriesCache', JSON.stringify(videos));
+                localStorage.setItem('plexCachedSeries', JSON.stringify(videos));
+                updateCacheCounts();
+                showNotification(`✅ Imported ${videos.length} series videos successfully!`, 'success');
+                document.getElementById('seriesXmlInput').value = '';
+            } else {
+                showNotification('❌ No videos found in XML. Make sure you pasted the complete XML.', 'error');
+            }
+        };
+        
         function parseVideoXML(xmlString, libraryType) {
             const videos = [];
             let sectionId;
@@ -5023,6 +5055,8 @@
                 sectionId = PLEX_CONFIG.sections.adult;
             } else if (libraryType === 'arabic') {
                 sectionId = PLEX_CONFIG.sections.arabic;
+            } else if (libraryType === 'series') {
+                sectionId = PLEX_CONFIG.sections.series;
             }
             
             try {
@@ -5115,6 +5149,8 @@
                 section = PLEX_CONFIG.sections.adult;
             } else if (type === 'arabic') {
                 section = PLEX_CONFIG.sections.arabic;
+            } else if (type === 'series') {
+                section = PLEX_CONFIG.sections.series;
             }
             // Use localhost since Plex is running locally
             const url = `${PLEX_CONFIG.localUrl}/library/sections/${section}/all?X-Plex-Token=${PLEX_CONFIG.token}`;
@@ -7083,6 +7119,7 @@ Network: Always Streaming → Optimized for instant access`;
             const cachedMovies = JSON.parse(localStorage.getItem('plexCachedMovies') || '[]');
             const cachedAdult = JSON.parse(localStorage.getItem('plexCachedAdult') || '[]');
             const cachedArabic = JSON.parse(localStorage.getItem('plexCachedArabic') || '[]');
+            const cachedSeries = JSON.parse(localStorage.getItem('plexCachedSeries') || '[]');
             
             mainContent.innerHTML = `
                 <div class="dashboard-header">
@@ -7150,6 +7187,14 @@ Network: Always Streaming → Optimized for instant access`;
                                     <span style="color: rgba(255,255,255,0.8);">Cached Movies:</span>
                                     <span style="color: #2196f3; font-weight: 600;">${cachedMovies.length} videos</span>
                                 </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                    <span style="color: rgba(255,255,255,0.8);">Cached Arabic:</span>
+                                    <span style="color: #4caf50; font-weight: 600;">${cachedArabic.length} videos</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                    <span style="color: rgba(255,255,255,0.8);">Cached Series:</span>
+                                    <span style="color: #9c27b0; font-weight: 600;">${cachedSeries.length} videos</span>
+                                </div>
                                 <div style="display: flex; justify-content: space-between;">
                                     <span style="color: rgba(255,255,255,0.8);">Cached Adult:</span>
                                     <span style="color: #ff4757; font-weight: 600;">${cachedAdult.length} videos</span>
@@ -7194,6 +7239,21 @@ Network: Always Streaming → Optimized for instant access`;
                             </div>
                             <button onclick="importArabicXML()" class="btn btn-warning" style="width: 100%; padding: 12px;">📥 Import Arabic Videos</button>
                             <div id="arabicCount" style="margin-top: 10px; color: #4caf50; font-size: 13px; font-weight: bold;">Arabic videos cached: ${cachedArabic.length}</div>
+                        </div>
+                        
+                        <!-- Series Import -->
+                        <div style="background: rgba(156, 39, 176, 0.1); padding: 20px; border-radius: 8px; border: 1px solid #9c27b0;">
+                            <h4 style="color: #9c27b0; margin-bottom: 15px;">📺 Series Library</h4>
+                            <div style="margin-bottom: 15px;">
+                                <button onclick="copyPlexUrl('series')" class="btn btn-purple" style="width: 100%; margin-bottom: 10px; padding: 12px; background: #9c27b0; color: white; border: none; border-radius: 6px;">📋 Copy Series URL</button>
+                                <p style="color: #888; font-size: 12px;">1. Click button → 2. Open URL in browser → 3. Select All (Ctrl+A) → 4. Copy (Ctrl+C) → 5. Paste below</p>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <label style="color: #ccc; font-size: 13px;">Paste Series XML:</label>
+                                <textarea id="seriesXmlInput" placeholder="Paste the entire XML content here..." style="width: 100%; height: 120px; padding: 10px; border-radius: 6px; border: 1px solid #444; background: #1a1a2e; color: white; font-size: 12px; margin-top: 5px;"></textarea>
+                            </div>
+                            <button onclick="importSeriesXML()" class="btn btn-purple" style="width: 100%; padding: 12px; background: #9c27b0; color: white; border: none; border-radius: 6px;">📥 Import Series Videos</button>
+                            <div id="seriesCount" style="margin-top: 10px; color: #4caf50; font-size: 13px; font-weight: bold;">Series videos cached: ${cachedSeries.length}</div>
                         </div>
                         
                         <!-- Adult Import -->
@@ -7260,12 +7320,18 @@ Network: Always Streaming → Optimized for instant access`;
         function updateCachedCounts() {
             const cachedMovies = JSON.parse(localStorage.getItem('plexCachedMovies') || '[]');
             const cachedAdult = JSON.parse(localStorage.getItem('plexCachedAdult') || '[]');
+            const cachedArabic = JSON.parse(localStorage.getItem('plexCachedArabic') || '[]');
+            const cachedSeries = JSON.parse(localStorage.getItem('plexCachedSeries') || '[]');
             
             const moviesCountEl = document.getElementById('moviesCount');
             const adultCountEl = document.getElementById('adultCount');
+            const arabicCountEl = document.getElementById('arabicCount');
+            const seriesCountEl = document.getElementById('seriesCount');
             
             if (moviesCountEl) moviesCountEl.textContent = `Movies cached: ${cachedMovies.length}`;
             if (adultCountEl) adultCountEl.textContent = `Adult videos cached: ${cachedAdult.length}`;
+            if (arabicCountEl) arabicCountEl.textContent = `Arabic videos cached: ${cachedArabic.length}`;
+            if (seriesCountEl) seriesCountEl.textContent = `Series videos cached: ${cachedSeries.length}`;
         }
 
         // Section Functions
