@@ -1437,7 +1437,6 @@
             const sportsPlusPrice = document.getElementById('sportsPlusPrice')?.value;
             const arabicPrice = document.getElementById('arabicPrice')?.value;
             const moviesPrice = document.getElementById('moviesPrice')?.value;
-            const seriesPrice = document.getElementById('seriesPrice')?.value;
             const adultPackagePrice = document.getElementById('adultPackagePrice')?.value;
             
             // Detect adult package: by name contains "adult"/"xxx" OR by having adult addon price
@@ -1470,9 +1469,6 @@
                            (normalizedName.includes('basic') && existingName.includes('basic')) ||
                            (normalizedName.includes('adult') && existingName.includes('adult')) ||
                            (normalizedName.includes('movies') && existingName.includes('movies')) ||
-                           // Series and TV Shows are DIFFERENT from Adult
-                           (normalizedName.includes('series') && existingName.includes('series')) ||
-                           (normalizedName.includes('tv shows') && existingName.includes('tv shows')) ||
                            // Sports and Sports Plus are DIFFERENT packages
                            // Match exact "sports" (but not "sports plus")
                            (normalizedName === 'sports' && existingName === 'sports') ||
@@ -1497,7 +1493,6 @@
                 thirdTVPrice: parseFloat(thirdTVPrice || '0'),
                 sportsPrice: parseFloat(sportsPrice || '0'),
                 moviesPrice: parseFloat(moviesPrice || '0'),
-                seriesPrice: parseFloat(seriesPrice || '0'),
                 isAdult: isAdultPackage,
                 adultPackagePrice: isAdultPackage ? parseFloat(adultPackagePrice) : 0,
                 // Authentication System Fields
@@ -1528,12 +1523,6 @@
             localStorage.setItem('adminPackages', JSON.stringify(packages));
             localStorage.setItem('packages', JSON.stringify(packages));
             
-            // CRITICAL: Also update the global packages variable to keep it in sync
-            window.packages = packages;
-            
-            console.log('💾 Saved packages to localStorage:', packages.length, 'packages');
-            console.log('💾 adminPackages content:', localStorage.getItem('adminPackages'));
-            
             // Trigger real-time notification to clients for package updates
             const notificationData = {
                 packageId: packageData.id || packages[parseInt(editIndex)]?.id,
@@ -1555,7 +1544,7 @@
                     showNotification(`✅ Package "${name}" created and mapped to content successfully!`, 'success');
                 } else {
                     console.log('⚠️ Auto-mapping not available for package:', packageData.name);
-                    showNotification(`✅ Package "${name}" created successfully! Please configure content mapping in Package Authentication section.`, 'success');
+                    showNotification(`✅ Package "${name}" created successfully! Please configure content mapping in Package Authentication section.`, 'info');
                 }
             } else {
                 // For updated packages, update the existing mapping
@@ -1583,20 +1572,9 @@
             
             // Small delay to ensure localStorage is written, then update UI
             setTimeout(() => {
-                // Force reload packages from localStorage
-                packages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
-                console.log('📦 Package created, reloading. Total packages:', packages.length);
-                
-                updatePackageStats();
                 updatePackagesList();
-                // Re-render the entire packages section to ensure UI is fully updated
-                showPackagesSection();
-                
-                // Debug: Check if packagesList exists
-                const testList = document.getElementById('packagesList');
-                console.log('packagesList element:', testList ? 'Found' : 'NOT FOUND');
-                console.log('Packages in DOM:', testList ? testList.innerHTML.substring(0, 200) : 'N/A');
-            }, 100);
+                updatePackageStats();
+            }, 50);
             
             // Update package statistics
             updatePackageStats();
@@ -3526,23 +3504,11 @@
                     console.log('📊 Loaded', data.customers.length, 'customers');
                 }
                 
-                // Load packages - BUT DON'T OVERWRITE existing local packages!
-                // This prevents newly created packages from being erased on page reload
+                // Load packages
                 if (data.packages && Array.isArray(data.packages)) {
-                    const localPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
-                    const localPackageNames = localPackages.map(p => p.name?.toLowerCase());
-                    
-                    // Only add packages from GitHub that don't exist locally
-                    const mergedPackages = [...localPackages];
-                    data.packages.forEach(ghPkg => {
-                        if (!localPackageNames.includes(ghPkg.name?.toLowerCase())) {
-                            mergedPackages.push(ghPkg);
-                        }
-                    });
-                    
-                    localStorage.setItem('adminPackages', JSON.stringify(mergedPackages));
-                    localStorage.setItem('packages', JSON.stringify(mergedPackages));
-                    console.log('📊 Synced packages (local:', localPackages.length, ', github:', data.packages.length, ', merged:', mergedPackages.length, ')');
+                    localStorage.setItem('adminPackages', JSON.stringify(data.packages));
+                    localStorage.setItem('packages', JSON.stringify(data.packages));
+                    console.log('📊 Loaded', data.packages.length, 'packages');
                 }
                 
                 // Load resellers
@@ -3558,25 +3524,6 @@
                 if (data.plexMoviesSection) localStorage.setItem('plexMoviesSection', data.plexMoviesSection);
                 if (data.plexAdultSection) localStorage.setItem('plexAdultSection', data.plexAdultSection);
                 if (data.plexArabicSection) localStorage.setItem('plexArabicSection', data.plexArabicSection);
-                if (data.plexSeriesSection) localStorage.setItem('plexSeriesSection', data.plexSeriesSection);
-                
-                // Load Plex cache data (Series support)
-                if (data.plexCachedMovies && Array.isArray(data.plexCachedMovies)) {
-                    localStorage.setItem('plexCachedMovies', JSON.stringify(data.plexCachedMovies));
-                    console.log('📺 Loaded', data.plexCachedMovies.length, 'cached movies');
-                }
-                if (data.plexCachedAdult && Array.isArray(data.plexCachedAdult)) {
-                    localStorage.setItem('plexCachedAdult', JSON.stringify(data.plexCachedAdult));
-                    console.log('🔞 Loaded', data.plexCachedAdult.length, 'cached adult');
-                }
-                if (data.plexCachedArabic && Array.isArray(data.plexCachedArabic)) {
-                    localStorage.setItem('plexCachedArabic', JSON.stringify(data.plexCachedArabic));
-                    console.log('🔶 Loaded', data.plexCachedArabic.length, 'cached arabic');
-                }
-                if (data.plexCachedSeries && Array.isArray(data.plexCachedSeries)) {
-                    localStorage.setItem('plexCachedSeries', JSON.stringify(data.plexCachedSeries));
-                    console.log('📺 Loaded', data.plexCachedSeries.length, 'cached series');
-                }
                 
                 console.log('✅ Auto-load complete!');
                 showNotification('📥 Data loaded from GitHub', 'success');
@@ -3607,7 +3554,15 @@
         }
         
         // Upload to GitHub with one click
+        let isUploading = false; // Prevent concurrent uploads
         window.uploadToGithub = async function() {
+            // Prevent concurrent uploads
+            if (isUploading) {
+                showNotification('⚠️ Upload already in progress. Please wait...', 'warning');
+                return;
+            }
+            isUploading = true;
+            
             // First save the current input values to localStorage
             const usernameInput = document.getElementById('githubUsername');
             const repoInput = document.getElementById('githubRepo');
@@ -3629,6 +3584,7 @@
             }
             
             if (!username || !repo || !token) {
+                isUploading = false;
                 showNotification('⚠️ Please configure GitHub settings first!', 'error');
                 return;
             }
@@ -3664,10 +3620,9 @@
                 // NOTE: Don't include githubToken in the export - GitHub will revoke it from public repos!
                 
                 // Get Plex cache data for client viewing
-                const plexCachedMovies = JSON.parse(localStorage.getItem('plexCachedMovies') || '[]');
-                const plexCachedAdult = JSON.parse(localStorage.getItem('plexCachedAdult') || '[]');
-                const plexCachedArabic = JSON.parse(localStorage.getItem('plexCachedArabic') || '[]');
-                const plexCachedSeries = JSON.parse(localStorage.getItem('plexCachedSeries') || '[]');
+                const plexMoviesCache = JSON.parse(localStorage.getItem('plexMoviesCache') || '[]');
+                const plexAdultCache = JSON.parse(localStorage.getItem('plexAdultCache') || '[]');
+                const plexArabicCache = JSON.parse(localStorage.getItem('plexArabicCache') || '[]');
                 
                 const exportData = {
                     version: '1.0',
@@ -3675,12 +3630,7 @@
                     customers: JSON.parse(localStorage.getItem('adminCustomers') || '[]'),
                     // Include reseller-created customers so they can sync to client panel
                     clientAuthCustomers: JSON.parse(localStorage.getItem('clientAuthCustomers') || '[]'),
-                    // Filter out adult packages for client sync - adult packages should only be accessible after purchase
-                    packages: JSON.parse(localStorage.getItem('adminPackages') || '[]').filter(pkg => 
-                        !(pkg.isAdult || pkg.name.toLowerCase().includes('adult') || 
-                          pkg.name.toLowerCase().includes('xxx') ||
-                          (pkg.adultPackagePrice && pkg.adultPackagePrice > 0))
-                    ),
+                    packages: JSON.parse(localStorage.getItem('adminPackages') || '[]'),
                     resellers: resellersData,
                     creditTransfers: creditTransfers,
                     resellerTransactions: resellerTransactions,
@@ -3690,12 +3640,10 @@
                     plexMoviesSection: localStorage.getItem('plexMoviesSection') || '',
                     plexAdultSection: localStorage.getItem('plexAdultSection') || '',
                     plexArabicSection: localStorage.getItem('plexArabicSection') || '',
-                    plexSeriesSection: localStorage.getItem('plexSeriesSection') || '',
                     // Include Plex cache so movies appear on second device before login
-                    plexCachedMovies: plexCachedMovies,
-                    plexCachedAdult: plexCachedAdult,
-                    plexCachedArabic: plexCachedArabic,
-                    plexCachedSeries: plexCachedSeries,
+                    plexMoviesCache: plexMoviesCache,
+                    plexAdultCache: plexAdultCache,
+                    plexArabicCache: plexArabicCache,
                     tvSyncUrl: `https://raw.githubusercontent.com/${username}/${repo}/main/admin_data.json`,
                     githubUsername: username,
                     githubRepo: repo
@@ -3732,7 +3680,9 @@
                             // Clear the invalid token
                             localStorage.removeItem('githubToken');
                             localStorage.removeItem('githubTokenSaved');
-                            throw new Error('❌ Error 401: GitHub has REVOKED your token! This usually happens because: 1) Token was exposed in public code, 2) GitHub detected suspicious activity, or 3) Token was deleted from GitHub settings. Please generate a NEW token and save it again. Go to: https://github.com/settings/tokens');
+                            const errorText = await checkRes.text().catch(() => 'No response body');
+                            console.error('401 Error in SHA check:', errorText);
+                            throw new Error('❌ Error 401: Bad credentials! Your GitHub token is invalid, expired, or was revoked.\n\nPossible reasons:\n1. Token was exposed in public code (GitHub auto-revokes)\n2. Token expired\n3. Token was deleted from GitHub settings\n\nSOLUTION: Generate a NEW token at https://github.com/settings/tokens\n- Select scope: "repo" (full control)\n- Copy it immediately (you cannot see it again!)\n- Paste it in the GitHub Token field and click Save.');
                         } else {
                             console.log('Unexpected status:', checkRes.status);
                             const text = await checkRes.text();
@@ -3746,6 +3696,40 @@
                     }
                     return null;
                 };
+                
+                // CRITICAL: First verify token is valid before uploading
+                const verifyToken = async () => {
+                    try {
+                        const verifyRes = await fetch('https://api.github.com/user', {
+                            method: 'GET',
+                            headers: { 
+                                'Authorization': `token ${token}`,
+                                'Accept': 'application/vnd.github.v3+json'
+                            }
+                        });
+                        
+                        console.log('Token verification status:', verifyRes.status);
+                        
+                        if (verifyRes.status === 200) {
+                            const userData = await verifyRes.json();
+                            console.log('✅ Token valid for user:', userData.login);
+                            return true;
+                        } else if (verifyRes.status === 401) {
+                            const errorText = await verifyRes.text().catch(() => 'No response body');
+                            console.error('❌ Token verification FAILED:', errorText);
+                            throw new Error('❌ Error 401: Token is INVALID or REVOKED! Please generate a NEW token at https://github.com/settings/tokens\n\nError: ' + errorText);
+                        } else {
+                            console.log('Unexpected verification status:', verifyRes.status);
+                            return false;
+                        }
+                    } catch (e) {
+                        console.error('Token verification exception:', e);
+                        throw e;
+                    }
+                };
+                
+                // First verify the token works
+                await verifyToken();
                 
                 // Upload with retry logic for 409/422 errors
                 const uploadWithRetry = async (retries = 5) => {
@@ -3797,7 +3781,9 @@
                                 // Clear the invalid token
                                 localStorage.removeItem('githubToken');
                                 localStorage.removeItem('githubTokenSaved');
-                                throw new Error('❌ Error 401: GitHub has REVOKED your token! This usually happens because: 1) Token was exposed in public code, 2) GitHub detected suspicious activity, or 3) Token was deleted from GitHub settings. Please generate a NEW token and save it again. Go to: https://github.com/settings/tokens');
+                                const errorText = await response.text().catch(() => 'No response body');
+                                console.error('401 Error Details:', errorText);
+                                throw new Error('❌ Error 401: Bad credentials! Your GitHub token is invalid, expired, or was revoked.\n\nPossible reasons:\n1. Token was exposed in public code (GitHub auto-revokes)\n2. Token expired\n3. Token was deleted from GitHub settings\n\nSOLUTION: Generate a NEW token at https://github.com/settings/tokens\n- Select scope: "repo" (full control)\n- Copy it immediately (you cannot see it again!)\n- Paste it in the GitHub Token field and click Save.');
                             }
                             
                             // Retry on 409 (conflict) or 422 (validation error)
@@ -3844,6 +3830,9 @@
                 showNotification('❌ Upload failed: ' + error.message, 'error');
                 btn.innerHTML = '🚀 Upload to GitHub (One-Click)';
                 btn.disabled = false;
+            } finally {
+                // Always reset the uploading flag
+                isUploading = false;
             }
         };
         
@@ -4140,15 +4129,114 @@
             }
         }
         
+        function createNewPackage() {
+            const name = document.getElementById('packageName')?.value;
+            const price = document.getElementById('packagePrice')?.value;
+            const duration = document.getElementById('packageDuration')?.value;
+            const features = document.getElementById('packageFeatures')?.value;
+            const secondTVPrice = document.getElementById('secondTVPrice')?.value;
+            const thirdTVPrice = document.getElementById('thirdTVPrice')?.value;
+            const sportsPrice = document.getElementById('sportsPrice')?.value;
+            const moviesPrice = document.getElementById('moviesPrice')?.value;
+            const adultPackagePrice = document.getElementById('adultPackagePrice')?.value;
+            const streamUrl = document.getElementById('packageStreamUrl')?.value;
+            
+            // Detect adult package: by name contains "adult"/"xxx" OR by having adult addon price
+            const isAdultPackage = name.toLowerCase().includes('adult') || 
+                                   name.toLowerCase().includes('xxx') || 
+                                   (adultPackagePrice && parseFloat(adultPackagePrice) > 0);
+            
+            if (!name || !price || !duration) {
+                showNotification('❌ Please fill all required fields', 'error');
+                return;
+            }
+            
+            // Validate adult package price if it's an adult package
+            if (isAdultPackage && !adultPackagePrice) {
+                showNotification('❌ Adult package price is required when creating an adult package', 'error');
+                return;
+            }
+            
+            const packageData = {
+                id: 'PKG_' + Date.now(),
+                name: name,
+                basePrice: parseFloat(price),
+                duration: duration,
+                features: features,
+                streamUrl: streamUrl || null, // Custom stream URL for MP4/HLS
+                secondTVPrice: parseFloat(secondTVPrice || '0'),
+                thirdTVPrice: parseFloat(thirdTVPrice || '0'),
+                addonPrices: {
+                    sports: parseFloat(sportsPrice || '0'),
+                    movies: parseFloat(moviesPrice || '0'),
+                    adult: isAdultPackage ? parseFloat(adultPackagePrice || '0') : 0
+                },
+                isAdult: isAdultPackage,
+                adultPackagePrice: isAdultPackage ? parseFloat(adultPackagePrice) : 0,
+                // Authentication System Fields - Auto-approve packages
+                approved: true,
+                approvedDate: new Date().toISOString(),
+                approvedBy: 'admin',
+                rejectedDate: null,
+                rejectedBy: null,
+                rejectionReason: null,
+                createdAt: new Date().toISOString()
+            };
+            
+            packages.push(packageData);
+            
+            // Save to localStorage for consistency (both adminPackages and packages keys)
+            localStorage.setItem('adminPackages', JSON.stringify(packages));
+            localStorage.setItem('packages', JSON.stringify(packages));
+            
+            // Auto-assign default Plex libraries to packages
+            assignDefaultPlexLibraries(packageData);
+            
+            // Ensure global packages variable is updated
+            packages = [...packages]; // Create a copy to ensure reference update
+            
+            showNotification('📦 Creating new package...', 'info');
+            setTimeout(() => {
+                let priceInfo = `$${price}/${duration}`;
+                if (secondTVPrice) priceInfo += `, 2nd TV: $${secondTVPrice}`;
+                if (thirdTVPrice) priceInfo += `, 3rd TV: $${thirdTVPrice}`;
+                if (sportsPrice || moviesPrice) priceInfo += `, Addons available`;
+                if (isAdultPackage && adultPackagePrice) priceInfo += `, 🔞 Adult: $${adultPackagePrice}`;
+                
+                showNotification(`✅ Package "${name}" created successfully - ${priceInfo}`, 'success');
+                
+                // Clear form
+                const fields = ['packageName', 'packagePrice', 'packageFeatures', 'secondTVPrice', 'thirdTVPrice', 'sportsPrice', 'moviesPrice'];
+                fields.forEach(field => {
+                    const element = document.getElementById(field);
+                    if (element) element.value = '';
+                });
+                
+                // Force reload packages from localStorage to ensure consistency
+                packages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
+                
+                // Update package statistics and list
+                updatePackageStats();
+                updatePackagesList();
+                
+                // AUTO-SYNC to GitHub after package created/updated
+                console.log('🔄 Auto-syncing to GitHub after package change...');
+                if (typeof uploadToGithub === 'function') {
+                    uploadToGithub().then(() => {
+                        console.log('✅ Auto-sync to GitHub completed');
+                    }).catch(err => {
+                        console.error('❌ Auto-sync failed:', err);
+                    });
+                }
+            }, 2000);
+        }
+        
         function updatePackagesList() {
             const packagesList = document.getElementById('packagesList');
             const totalPackagesCount = document.getElementById('totalPackagesCount');
             
-            // Reload packages from localStorage to ensure we have the latest data
-            const currentPackages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
-            
-            if (packagesList && currentPackages.length > 0) {
-                packagesList.innerHTML = currentPackages.map((pkg, index) => {
+            if (packagesList && packages.length > 0) {
+                packagesList.innerHTML = packages.map((pkg, index) => {
                     const isAdultPackage = pkg.isAdult || pkg.name.toLowerCase().includes('adult') || pkg.name.toLowerCase().includes('xxx');
                     
                     return `
@@ -4177,13 +4265,10 @@
                         </div>
                     </div>`
                 }).join('');
-            } else if (packagesList) {
-                // Show empty state when no packages exist
-                packagesList.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">No packages created yet. Use the form to create your first package.</div>';
             }
             
             if (totalPackagesCount) {
-                totalPackagesCount.textContent = currentPackages.length;
+                totalPackagesCount.textContent = packages.length;
             }
         }
         
@@ -4524,19 +4609,16 @@
                 
                 const isAdult = libraryType === 'adult';
                 const isArabic = libraryType === 'arabic';
-                const isSeries = libraryType === 'series';
                 
                 const content = items.map((item, index) => ({
                     id: `plex_${libraryId}_${item.ratingKey || index}`,
                     name: item.title,
                     description: item.summary || 'No description available',
-                    category: isAdult ? 'adult' : (isArabic ? 'arabic' : (isSeries ? 'series' : 'movie')),
+                    category: isAdult ? 'adult' : (isArabic ? 'arabic' : 'movie'),
                     isAdult: isAdult,
                     isArabic: isArabic,
-                    isSeries: isSeries,
                     adult: isAdult,
                     arabic: isArabic,
-                    series: isSeries,
                     type: 'mp4',
                     thumb: item.thumb ? `${serverUrl}${item.thumb}?X-Plex-Token=${accessToken}` : '',
                     art: item.art ? `${serverUrl}${item.art}?X-Plex-Token=${accessToken}` : '',
@@ -4550,13 +4632,11 @@
                 // Store in localStorage for client to use - use correct cache key based on libraryType
                 let cacheKey;
                 if (libraryType === 'adult') {
-                    cacheKey = 'plexCachedAdult';
+                    cacheKey = 'plexAdultCache';
                 } else if (libraryType === 'arabic') {
-                    cacheKey = 'plexCachedArabic';
-                } else if (libraryType === 'series') {
-                    cacheKey = 'plexCachedSeries';
+                    cacheKey = 'plexArabicCache';
                 } else {
-                    cacheKey = 'plexCachedMovies';
+                    cacheKey = 'plexMoviesCache';
                 }
                 
                 try {
@@ -4615,15 +4695,7 @@
                     s.title.toLowerCase().includes('arabic')
                 );
                 
-                // Find and cache Series/TV Shows library
-                const seriesLib = sections.find(s => 
-                    s.title.toLowerCase().includes('series') || 
-                    s.title.toLowerCase().includes('tv shows') ||
-                    s.title.toLowerCase().includes('tv') ||
-                    s.type === 'show'
-                );
-                
-                let moviesCount = 0, adultCount = 0, arabicCount = 0, seriesCount = 0;
+                let moviesCount = 0, adultCount = 0, arabicCount = 0;
                 
                 if (moviesLib) {
                     const content = await cacheLibraryContent(serverUrl, accessToken, moviesLib.key, 'movies');
@@ -4640,12 +4712,7 @@
                     arabicCount = content.length;
                 }
                 
-                if (seriesLib) {
-                    const content = await cacheLibraryContent(serverUrl, accessToken, seriesLib.key, 'series');
-                    seriesCount = content.length;
-                }
-                
-                showNotification(`✅ Cached ${moviesCount} movies, ${adultCount} adult, ${arabicCount} Arabic, and ${seriesCount} Series for client`, 'success');
+                showNotification(`✅ Cached ${moviesCount} movies, ${adultCount} adult, and ${arabicCount} Arabic videos for client`, 'success');
                 
             } catch(error) {
                 console.error('Cache error:', error);
@@ -4757,10 +4824,9 @@
         }
         
         function viewCachedContent() {
-            const movies = JSON.parse(localStorage.getItem('plexCachedMovies') || '[]');
-            const adult = JSON.parse(localStorage.getItem('plexCachedAdult') || '[]');
-            const arabic = JSON.parse(localStorage.getItem('plexCachedArabic') || '[]');
-            const series = JSON.parse(localStorage.getItem('plexCachedSeries') || '[]');
+            const movies = JSON.parse(localStorage.getItem('plexMoviesCache')) || [];
+            const adult = JSON.parse(localStorage.getItem('plexAdultCache')) || [];
+            const arabic = JSON.parse(localStorage.getItem('plexArabicCache')) || [];
             
             let html = '<strong>🎬 Movies (' + movies.length + '):</strong><br>';
             movies.forEach((m, i) => {
@@ -4777,12 +4843,7 @@
                 html += `${i+1}. ${a.name}<br>`;
             });
             
-            html += '<br><strong>📺 Series (' + series.length + '):</strong><br>';
-            series.forEach((s, i) => {
-                html += `${i+1}. ${s.name}<br>`;
-            });
-            
-            if (movies.length === 0 && adult.length === 0 && arabic.length === 0 && series.length === 0) {
+            if (movies.length === 0 && adult.length === 0 && arabic.length === 0) {
                 html = 'No cached content. Add videos using the forms above.';
             }
             
@@ -4792,12 +4853,10 @@
         
         function clearCachedContent() {
             if (confirm('Are you sure you want to clear all cached videos?')) {
-                localStorage.removeItem('plexCachedMovies');
-                localStorage.removeItem('plexCachedAdult');
-                localStorage.removeItem('plexCachedArabic');
-                localStorage.removeItem('plexCachedSeries');
+                localStorage.removeItem('plexMoviesCache');
+                localStorage.removeItem('plexAdultCache');
+                localStorage.removeItem('plexArabicCache');
                 updateCacheCounts();
-                updateCachedCounts();
                 document.getElementById('cachedContentPreview').style.display = 'none';
                 showNotification('🗑️ All cached content cleared', 'info');
             }
@@ -4805,13 +4864,12 @@
         
         // Export cache data for local client use
         function exportCacheData() {
-            const movies = JSON.parse(localStorage.getItem('plexCachedMovies') || '[]');
-            const adult = JSON.parse(localStorage.getItem('plexCachedAdult') || '[]');
-            const arabic = JSON.parse(localStorage.getItem('plexCachedArabic') || '[]');
-            const series = JSON.parse(localStorage.getItem('plexCachedSeries') || '[]');
+            const movies = JSON.parse(localStorage.getItem('plexMoviesCache') || '[]');
+            const adult = JSON.parse(localStorage.getItem('plexAdultCache') || '[]');
+            const arabic = JSON.parse(localStorage.getItem('plexArabicCache') || '[]');
             const plexConfig = JSON.parse(localStorage.getItem('plexConfig') || '{}');
             
-            if (movies.length === 0 && adult.length === 0 && arabic.length === 0 && series.length === 0) {
+            if (movies.length === 0 && adult.length === 0 && arabic.length === 0) {
                 showNotification('❌ No cached content to export', 'error');
                 return;
             }
@@ -4820,10 +4878,12 @@
                 version: '8.0',
                 exportDate: new Date().toISOString(),
                 plexConfig: plexConfig,
+                plexMoviesCache: movies,
+                plexAdultCache: adult,
+                plexArabicCache: arabic,
                 plexCachedMovies: movies,
                 plexCachedAdult: adult,
-                plexCachedArabic: arabic,
-                plexCachedSeries: series
+                plexCachedArabic: arabic
             };
             
             const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
@@ -4847,8 +4907,7 @@
             sections: {
                 movies: parseInt(localStorage.getItem('plexMoviesSection')) || 26,
                 adult: parseInt(localStorage.getItem('plexAdultSection')) || 21,
-                arabic: parseInt(localStorage.getItem('plexArabicSection')) || 7,
-                series: parseInt(localStorage.getItem('plexSeriesSection')) || 8
+                arabic: parseInt(localStorage.getItem('plexArabicSection')) || 7
             }
         };
         
@@ -4917,53 +4976,6 @@
                 showNotification('❌ No videos found in XML. Make sure you pasted the complete XML.', 'error');
             }
         };
-        
-        window.importSeriesXML = function() {
-            const xml = document.getElementById('seriesXmlInput').value.trim();
-            if (!xml) {
-                showNotification('❌ Please paste the Series XML first', 'error');
-                return;
-            }
-            
-            const series = parseSeriesXML(xml);
-            if (series.length > 0) {
-                // Save series data
-                localStorage.setItem('plexCachedSeries', JSON.stringify(series));
-                updateCacheCounts();
-                showNotification(`✅ Imported ${series.length} series successfully!`, 'success');
-                document.getElementById('seriesXmlInput').value = '';
-            } else {
-                showNotification('❌ No series found in XML. Make sure you pasted the complete XML.', 'error');
-            }
-        };
-        
-        function parseSeriesXML(xmlString) {
-            const series = [];
-            const parser = new DOMParser();
-            const xml = parser.parseFromString(xmlString, 'text/xml');
-            const directories = xml.querySelectorAll('Directory');
-            
-            directories.forEach(dir => {
-                const key = dir.getAttribute('key');
-                const title = dir.getAttribute('title') || dir.getAttribute('name');
-                const thumb = dir.getAttribute('thumb');
-                const year = dir.getAttribute('year');
-                const summary = dir.getAttribute('summary');
-                
-                if (key && title) {
-                    series.push({
-                        key: key,
-                        title: title,
-                        thumb: thumb,
-                        year: year,
-                        summary: summary,
-                        type: 'series'
-                    });
-                }
-            });
-            
-            return series;
-        }
         
         function parseVideoXML(xmlString, libraryType) {
             const videos = [];
@@ -5066,8 +5078,6 @@
                 section = PLEX_CONFIG.sections.adult;
             } else if (type === 'arabic') {
                 section = PLEX_CONFIG.sections.arabic;
-            } else if (type === 'series') {
-                section = PLEX_CONFIG.sections.series;
             }
             // Use localhost since Plex is running locally
             const url = `${PLEX_CONFIG.localUrl}/library/sections/${section}/all?X-Plex-Token=${PLEX_CONFIG.token}`;
@@ -5685,7 +5695,6 @@ Network: Always Streaming → Optimized for instant access`;
                 if (sportsPlusAddon && sportsPlusAddon.checked) selectedAddons.push('Sports Plus');
                 if (arabicAddon && arabicAddon.checked) selectedAddons.push('Arabic');
                 if (moviesAddon && moviesAddon.checked) selectedAddons.push('Movies');
-                if (seriesAddon && seriesAddon.checked) selectedAddons.push('Series');
                 if (adultAddon && adultAddon.checked) selectedAddons.push('Adult Content');
                 
                 if (selectedAddons.length > 0) {
@@ -5695,7 +5704,7 @@ Network: Always Streaming → Optimized for instant access`;
                 // If Basic TV is not selected, check if any addons are somehow selected (shouldn't be possible with UI)
                 const addonChecked = (sportsAddon && sportsAddon.checked) || (sportsPlusAddon && sportsPlusAddon.checked) || 
                                      (arabicAddon && arabicAddon.checked) || (moviesAddon && moviesAddon.checked) || 
-                                     (seriesAddon && seriesAddon.checked) || (adultAddon && adultAddon.checked);
+                                     (adultAddon && adultAddon.checked);
                 if (addonChecked) {
                     showNotification('🚨 CRITICAL ERROR: Addons cannot be selected without Basic TV Package! This should not be possible.', 'error');
                     // Reset all addons as safety measure
@@ -5703,7 +5712,6 @@ Network: Always Streaming → Optimized for instant access`;
                     if (sportsPlusAddon) sportsPlusAddon.checked = false;
                     if (arabicAddon) arabicAddon.checked = false;
                     if (moviesAddon) moviesAddon.checked = false;
-                    if (seriesAddon) seriesAddon.checked = false;
                     if (adultAddon) adultAddon.checked = false;
                     updateDeviceSelection();
                     return;
@@ -5738,7 +5746,6 @@ Network: Always Streaming → Optimized for instant access`;
             if (document.getElementById('sportsPlusAddon')?.checked) selectedAddons.push('Sports Plus Package');
             if (document.getElementById('arabicAddon')?.checked) selectedAddons.push('Arabic Package');
             if (document.getElementById('moviesAddon')?.checked) selectedAddons.push('Movies Package');
-            if (document.getElementById('seriesAddon')?.checked) selectedAddons.push('Series Package');
             if (document.getElementById('adultAddon')?.checked) selectedAddons.push('Adult Content Package');
             
             // Calculate total price and duration
@@ -5991,22 +5998,19 @@ Network: Always Streaming → Optimized for instant access`;
             const sportsPlusAddon = document.getElementById('sportsPlusAddon');
             const arabicAddon = document.getElementById('arabicAddon');
             const moviesAddon = document.getElementById('moviesAddon');
-            const seriesAddon = document.getElementById('seriesAddon');
             const sportsAddonContainer = document.getElementById('sportsAddonContainer');
             const sportsPlusAddonContainer = document.getElementById('sportsPlusAddonContainer');
             const arabicAddonContainer = document.getElementById('arabicAddonContainer');
             const moviesAddonContainer = document.getElementById('moviesAddonContainer');
-            const seriesAddonContainer = document.getElementById('seriesAddonContainer');
             const sportsAddonLabel = document.getElementById('sportsAddonLabel');
             const sportsPlusAddonLabel = document.getElementById('sportsPlusAddonLabel');
             const arabicAddonLabel = document.getElementById('arabicAddonLabel');
             const moviesAddonLabel = document.getElementById('moviesAddonLabel');
-            const seriesAddonLabel = document.getElementById('seriesAddonLabel');
             const addonStatusMessage = document.getElementById('addonStatusMessage');
             
             if (!basicTV.checked) {
                 // Disable regular addons when Basic TV is not selected (adult has separate logic)
-                [sportsAddon, sportsPlusAddon, arabicAddon, moviesAddon, seriesAddon].forEach(checkbox => {
+                [sportsAddon, sportsPlusAddon, arabicAddon, moviesAddon].forEach(checkbox => {
                     if (checkbox) {
                         checkbox.disabled = true;
                         checkbox.checked = false;
@@ -6014,10 +6018,10 @@ Network: Always Streaming → Optimized for instant access`;
                 });
                 
                 // Update labels and containers
-                const labels = [sportsAddonLabel, sportsPlusAddonLabel, arabicAddonLabel, moviesAddonLabel, seriesAddonLabel];
-                const containers = [sportsAddonContainer, sportsPlusAddonContainer, arabicAddonContainer, moviesAddonContainer, seriesAddonContainer];
+                const labels = [sportsAddonLabel, sportsPlusAddonLabel, arabicAddonLabel, moviesAddonLabel];
+                const containers = [sportsAddonContainer, sportsPlusAddonContainer, arabicAddonContainer, moviesAddonContainer];
                 
-                const labelTextsLocked = ['🔒 Sports Package - LOCKED', '🏆 Sports Plus Package - LOCKED', '🕌 Arabic Package - LOCKED', '🔒 Movies Package - LOCKED', '📺 Series Package - LOCKED'];
+                const labelTextsLocked = ['🔒 Sports Package - LOCKED', '🏆 Sports Plus Package - LOCKED', '🕌 Arabic Package - LOCKED', '🔒 Movies Package - LOCKED'];
                 
                 labels.forEach((label, index) => {
                     if (label) {
@@ -6038,17 +6042,17 @@ Network: Always Streaming → Optimized for instant access`;
                 }
             } else {
                 // Enable regular addons when Basic TV is selected (adult has separate logic)
-                [sportsAddon, sportsPlusAddon, arabicAddon, moviesAddon, seriesAddon].forEach(checkbox => {
+                [sportsAddon, sportsPlusAddon, arabicAddon, moviesAddon].forEach(checkbox => {
                     if (checkbox) {
                         checkbox.disabled = false;
                     }
                 });
                 
                 // Update labels and containers
-                const labels = [sportsAddonLabel, sportsPlusAddonLabel, arabicAddonLabel, moviesAddonLabel, seriesAddonLabel];
-                const containers = [sportsAddonContainer, sportsPlusAddonContainer, arabicAddonContainer, moviesAddonContainer, seriesAddonContainer];
+                const labels = [sportsAddonLabel, sportsPlusAddonLabel, arabicAddonLabel, moviesAddonLabel];
+                const containers = [sportsAddonContainer, sportsPlusAddonContainer, arabicAddonContainer, moviesAddonContainer];
                 
-                const labelTextsUnlocked = ['⚽ Sports Package', '🏆 Sports Plus Package', '🕌 Arabic Package', '🎬 Movies Package', '📺 Series Package'];
+                const labelTextsUnlocked = ['⚽ Sports Package', '🏆 Sports Plus Package', '🕌 Arabic Package', '🎬 Movies Package'];
                 
                 labels.forEach((label, index) => {
                     if (label) {
@@ -6211,7 +6215,6 @@ Network: Always Streaming → Optimized for instant access`;
             const arabicAddon = document.getElementById('arabicAddon')?.checked;
             const moviesAddon = document.getElementById('moviesAddon')?.checked;
             const adultAddon = document.getElementById('adultAddon')?.checked;
-            const seriesAddon = document.getElementById('seriesAddon')?.checked;
             
             // Get actual package prices from created packages - NO DEFAULT FALLBACK PRICES
             const packages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
@@ -6223,7 +6226,6 @@ Network: Always Streaming → Optimized for instant access`;
                 sports_plus: 0,
                 arabic: 0,
                 movies: 0,
-                series: 0,
                 adult: 0
             };
             
@@ -6234,7 +6236,6 @@ Network: Always Streaming → Optimized for instant access`;
             let sportsPlusPackage = null;
             let arabicPackage = null;
             let moviesPackage = null;
-            let seriesPackage = null;
             let adultPackageObj = null;
             
             if (packages.length > 0) {
@@ -6276,11 +6277,6 @@ Network: Always Streaming → Optimized for instant access`;
                     pkg.name && pkg.name.toLowerCase().includes('movie')
                 );
                 
-                // Find Series package
-                seriesPackage = packages.find(pkg => 
-                    pkg.name && pkg.name.toLowerCase().includes('series')
-                );
-                
                 // Find Adult package
                 adultPackageObj = packages.find(pkg => 
                     pkg.isAdult === true || 
@@ -6309,9 +6305,6 @@ Network: Always Streaming → Optimized for instant access`;
             if (moviesPackage) {
                 addonPrices.movies = moviesPackage.price || moviesPackage.moviesPrice || 0;
             }
-            if (seriesPackage) {
-                addonPrices.series = seriesPackage.price || seriesPackage.seriesPrice || 0;
-            }
             if (adultPackageObj) {
                 addonPrices.adult = adultPackageObj.price || adultPackageObj.adultPackagePrice || 0;
             }
@@ -6321,13 +6314,11 @@ Network: Always Streaming → Optimized for instant access`;
             const sportsPlusPriceInput = document.getElementById('sportsPlusPrice');
             const arabicPriceInput = document.getElementById('arabicPrice');
             const moviesPriceInput = document.getElementById('moviesPrice');
-            const seriesPriceInput = document.getElementById('seriesPrice');
             
             if (sportsPriceInput && sportsPriceInput.value) addonPrices.sports = parseFloat(sportsPriceInput.value);
             if (sportsPlusPriceInput && sportsPlusPriceInput.value) addonPrices.sports_plus = parseFloat(sportsPlusPriceInput.value);
             if (arabicPriceInput && arabicPriceInput.value) addonPrices.arabic = parseFloat(arabicPriceInput.value);
             if (moviesPriceInput && moviesPriceInput.value) addonPrices.movies = parseFloat(moviesPriceInput.value);
-            if (seriesPriceInput && seriesPriceInput.value) addonPrices.series = parseFloat(seriesPriceInput.value);
             
             if (basicTV) {
                 monthlyPrice += basePrice;
@@ -6349,9 +6340,6 @@ Network: Always Streaming → Optimized for instant access`;
             }
             if (moviesAddon) {
                 monthlyPrice += addonPrices.movies;
-            }
-            if (seriesAddon) {
-                monthlyPrice += addonPrices.series;
             }
             if (adultAddon) {
                 monthlyPrice += addonPrices.adult;
@@ -6736,11 +6724,7 @@ Network: Always Streaming → Optimized for instant access`;
                                         <span id="moviesAddonLabel">🔒 Movies Package - LOCKED</span>
                                     </label>
                                     
-                                    <!-- Series Addon -->
-                                    <label id="seriesAddonContainer" style="color: rgba(255,255,255,0.3); display: flex; align-items: center; cursor: not-allowed; margin-bottom: 8px; opacity: 0.6;">
-                                        <input type="checkbox" name="customerAddons" value="series" id="seriesAddon" style="margin-right: 8px; transform: scale(1.1);" onchange="updateTotalPrice()" disabled>
-                                        <span id="seriesAddonLabel">📺 Series Package - LOCKED</span>
-                                    </label>
+
                                     
                                     <!-- Adult Package Addon -->
                                     <label id="adultAddonContainer" style="color: rgba(255,255,255,0.3); display: flex; align-items: center; cursor: not-allowed; opacity: 0.6;">
@@ -6864,10 +6848,8 @@ Network: Always Streaming → Optimized for instant access`;
             if (!mainContent) return;
             
             // Load packages from storage
-            const storedPackages = localStorage.getItem('adminPackages') || localStorage.getItem('packages');
-            packages = JSON.parse(storedPackages) || [];
-            console.log('📦 showPackagesSection loaded packages:', packages.length);
-            console.log('📦 Raw localStorage content:', storedPackages);
+            packages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
+            console.log('📦 Loaded packages:', packages.length);
             
             mainContent.innerHTML = `
                 <div class="dashboard-header">
@@ -6882,6 +6864,11 @@ Network: Always Streaming → Optimized for instant access`;
                             <div>
                                 <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Package Name:</label>
                                 <input type="text" id="packageName" placeholder="Premium HD Package" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                            </div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">🎬 Stream URL (MP4/HLS):</label>
+                                <input type="url" id="packageStreamUrl" placeholder="https://192.168.1.100:3000/stream.m3u8 or https://192.168.1.100/movies/video.mp4" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 4px;">Enter the direct URL for MP4 videos from your library or HLS stream from Nimble transcoder</div>
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                                 <div>
@@ -6934,11 +6921,7 @@ Network: Always Streaming → Optimized for instant access`;
                                         <label style="color: rgba(255,255,255,0.7); font-size: 13px;">Movies Package ($):</label>
                                         <input type="number" id="moviesPrice" placeholder="" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
                                     </div>
-                                    <div>
-                                        <label style="color: rgba(156,39,176,0.8); font-size: 13px;">📺 Series Package ($):</label>
-                                        <input type="number" id="seriesPrice" placeholder="" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(156,39,176,0.3); border-radius: 6px; color: white;">
-                                    </div>
-                                    
+
                                     <div>
                                         <label style="color: rgba(255,71,87,0.8); font-size: 13px;">🔞 Adult Package ($):</label>
                                         <input type="number" id="adultPackagePrice" placeholder="" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,71,87,0.3); border-radius: 6px; color: white;">
@@ -7020,26 +7003,7 @@ Network: Always Streaming → Optimized for instant access`;
                         <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px;">
                             <h4 style="color: white; margin-bottom: 10px;">📦 Available Packages</h4>
                             <div id="packagesList" style="color: rgba(255,255,255,0.7); font-size: 13px;">
-                                ${packages.length === 0 ? 'No packages created yet. Use the form to create your first package.' : packages.map((pkg, idx) => {
-                                    // Determine package type for styling - Series gets purple, Adult gets red
-                                    const isSeriesPackage = pkg.name.toLowerCase().includes('series') || pkg.name.toLowerCase().includes('tv shows') || (pkg.seriesPrice && pkg.seriesPrice > 0);
-                                    const isAdultPackage = !isSeriesPackage && (pkg.isAdult || pkg.name.toLowerCase().includes('adult') || pkg.name.toLowerCase().includes('xxx') || (pkg.adultPackagePrice && pkg.adultPackagePrice > 0));
-                                    
-                                    // Set colors based on package type
-                                    const bgColor = isAdultPackage ? 'rgba(255,71,87,0.15)' : (isSeriesPackage ? 'rgba(156,39,176,0.15)' : 'rgba(255,255,255,0.05)');
-                                    const borderColor = isAdultPackage ? '#ff4757' : (isSeriesPackage ? '#9c27b0' : '#4caf50');
-                                    const textColor = isAdultPackage ? '#ff4757' : (isSeriesPackage ? '#9c27b0' : 'white');
-                                    const icon = isAdultPackage ? '🔞 ' : (isSeriesPackage ? '📺 ' : '');
-                                    
-                                    return `<div style="margin-bottom: 10px; padding: 10px; background: ${bgColor}; border-radius: 6px; border-left: 3px solid ${borderColor};">
-                                        <div style="font-weight: 600; color: ${textColor};">${icon}${pkg.name}</div>
-                                        <div style="font-size: 12px; color: rgba(255,255,255,0.7);">$${pkg.price}/${pkg.duration} ${pkg.adultPackagePrice > 0 ? `| Adult: $${pkg.adultPackagePrice}` : ''} ${pkg.seriesPrice > 0 ? `| Series: $${pkg.seriesPrice}` : ''}</div>
-                                        <div style="margin-top: 8px; display: flex; gap: 5px;">
-                                            <button onclick="editPackage('${idx}')" style="background: #2196f3; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 10px; cursor: pointer;">✏️ EDIT</button>
-                                            <button onclick="deletePackage('${idx}')" style="background: #f44336; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 10px; cursor: pointer;">🗑️ Delete</button>
-                                        </div>
-                                    </div>`;
-                                }).join('')}
+                                ${packages.length === 0 ? 'No packages created yet. Use the form to create your first package.' : ''}
                             </div>
                         </div>
                         
@@ -7079,11 +7043,9 @@ Network: Always Streaming → Optimized for instant access`;
             const plexMoviesSection = localStorage.getItem('plexMoviesSection') || '26';
             const plexAdultSection = localStorage.getItem('plexAdultSection') || '21';
             const plexArabicSection = localStorage.getItem('plexArabicSection') || '7';
-            const plexSeriesSection = localStorage.getItem('plexSeriesSection') || '8';
             const cachedMovies = JSON.parse(localStorage.getItem('plexCachedMovies') || '[]');
             const cachedAdult = JSON.parse(localStorage.getItem('plexCachedAdult') || '[]');
             const cachedArabic = JSON.parse(localStorage.getItem('plexCachedArabic') || '[]');
-            const cachedSeries = JSON.parse(localStorage.getItem('plexCachedSeries') || '[]');
             
             mainContent.innerHTML = `
                 <div class="dashboard-header">
@@ -7125,10 +7087,6 @@ Network: Always Streaming → Optimized for instant access`;
                                     <label style="color: rgba(255,255,255,0.8); font-size: 14px; display: block; margin-bottom: 5px;">Arabic Section ID:</label>
                                     <input type="text" id="plexArabicSection" value="${plexArabicSection}" placeholder="7" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
                                 </div>
-                                <div>
-                                    <label style="color: rgba(255,255,255,0.8); font-size: 14px; display: block; margin-bottom: 5px;">Series Section ID:</label>
-                                    <input type="text" id="plexSeriesSection" value="${plexSeriesSection}" placeholder="8" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
-                                </div>
                             </div>
                             <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
                                 <button onclick="savePlexSettings()" class="btn btn-success" style="padding: 12px 25px;">💾 Save Settings</button>
@@ -7155,17 +7113,9 @@ Network: Always Streaming → Optimized for instant access`;
                                     <span style="color: rgba(255,255,255,0.8);">Cached Movies:</span>
                                     <span style="color: #2196f3; font-weight: 600;">${cachedMovies.length} videos</span>
                                 </div>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <div style="display: flex; justify-content: space-between;">
                                     <span style="color: rgba(255,255,255,0.8);">Cached Adult:</span>
                                     <span style="color: #ff4757; font-weight: 600;">${cachedAdult.length} videos</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                    <span style="color: rgba(255,255,255,0.8);">Cached Arabic:</span>
-                                    <span style="color: #ffc107; font-weight: 600;">${cachedArabic.length} videos</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span style="color: rgba(255,255,255,0.8);">Cached Series:</span>
-                                    <span style="color: #9c27b0; font-weight: 600;">${cachedSeries.length} shows</span>
                                 </div>
                             </div>
                             <button onclick="loadAndCachePlexContent()" class="btn btn-warning" style="width: 100%; padding: 15px;">📦 Cache All Content for Client</button>
@@ -7223,21 +7173,6 @@ Network: Always Streaming → Optimized for instant access`;
                             <button onclick="importAdultXML()" class="btn btn-danger" style="width: 100%; padding: 12px;">📥 Import Adult Videos</button>
                             <div id="adultCount" style="margin-top: 10px; color: #4caf50; font-size: 13px; font-weight: bold;">Adult videos cached: ${cachedAdult.length}</div>
                         </div>
-                        
-                        <!-- Series Import -->
-                        <div style="background: rgba(156, 39, 176, 0.1); padding: 20px; border-radius: 8px; border: 1px solid #9c27b0;">
-                            <h4 style="color: #9c27b0; margin-bottom: 15px;">📺 Series Library</h4>
-                            <div style="margin-bottom: 15px;">
-                                <button onclick="copyPlexUrl('series')" class="btn btn-secondary" style="width: 100%; margin-bottom: 10px; padding: 12px;">📋 Copy Series URL</button>
-                                <p style="color: #888; font-size: 12px;">1. Click button → 2. Open URL in browser → 3. Select All (Ctrl+A) → 4. Copy (Ctrl+C) → 5. Paste below</p>
-                            </div>
-                            <div style="margin-bottom: 15px;">
-                                <label style="color: #ccc; font-size: 13px;">Paste Series XML:</label>
-                                <textarea id="seriesXmlInput" placeholder="Paste the entire XML content here..." style="width: 100%; height: 120px; padding: 10px; border-radius: 6px; border: 1px solid #444; background: #1a1a2e; color: white; font-size: 12px; margin-top: 5px;"></textarea>
-                            </div>
-                            <button onclick="importSeriesXML()" class="btn btn-secondary" style="width: 100%; padding: 12px;">📥 Import Series</button>
-                            <div id="seriesCount" style="margin-top: 10px; color: #4caf50; font-size: 13px; font-weight: bold;">Series cached: ${cachedSeries.length}</div>
-                        </div>
                     </div>
                     
                     <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
@@ -7266,7 +7201,6 @@ Network: Always Streaming → Optimized for instant access`;
             const moviesSection = document.getElementById('plexMoviesSection')?.value || '26';
             const adultSection = document.getElementById('plexAdultSection')?.value || '21';
             const arabicSection = document.getElementById('plexArabicSection')?.value || '7';
-            const seriesSection = document.getElementById('plexSeriesSection')?.value || '8';
             
             localStorage.setItem('plexServerUrl', serverUrl);
             localStorage.setItem('plexLocalUrl', localUrl);
@@ -7274,7 +7208,6 @@ Network: Always Streaming → Optimized for instant access`;
             localStorage.setItem('plexMoviesSection', moviesSection);
             localStorage.setItem('plexAdultSection', adultSection);
             localStorage.setItem('plexArabicSection', arabicSection);
-            localStorage.setItem('plexSeriesSection', seriesSection);
             
             // Update the PLEX_CONFIG object
             if (window.PLEX_CONFIG) {
@@ -7290,22 +7223,79 @@ Network: Always Streaming → Optimized for instant access`;
         function updateCachedCounts() {
             const cachedMovies = JSON.parse(localStorage.getItem('plexCachedMovies') || '[]');
             const cachedAdult = JSON.parse(localStorage.getItem('plexCachedAdult') || '[]');
-            const cachedArabic = JSON.parse(localStorage.getItem('plexCachedArabic') || '[]');
-            const cachedSeries = JSON.parse(localStorage.getItem('plexCachedSeries') || '[]');
             
             const moviesCountEl = document.getElementById('moviesCount');
             const adultCountEl = document.getElementById('adultCount');
-            const arabicCountEl = document.getElementById('arabicCount');
-            const seriesCountEl = document.getElementById('seriesCount');
             
             if (moviesCountEl) moviesCountEl.textContent = `Movies cached: ${cachedMovies.length}`;
             if (adultCountEl) adultCountEl.textContent = `Adult videos cached: ${cachedAdult.length}`;
-            if (arabicCountEl) arabicCountEl.textContent = `Arabic videos cached: ${cachedArabic.length}`;
-            if (seriesCountEl) seriesCountEl.textContent = `Series cached: ${cachedSeries.length}`;
         }
 
         // Section Functions
         window.showAdminDashboard = function() {
+        function updatePackagesList() {
+            console.log('updatePackagesList called');
+            const packagesList = document.getElementById('packagesList');
+            if (!packagesList) {
+                console.error('packagesList element not found');
+                return;
+            }
+            
+            // Load packages from localStorage - ensure consistency with adminPackages
+            const packages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
+            
+            packagesList.innerHTML = packages.map((pkg, index) => {
+                const isAdultPackage = pkg.isAdult || 
+                                      pkg.name.toLowerCase().includes('adult') || 
+                                      pkg.name.toLowerCase().includes('xxx') ||
+                                      (pkg.addonPrices && pkg.addonPrices.adult && pkg.addonPrices.adult > 0) ||
+                                      (pkg.adultPackagePrice && pkg.adultPackagePrice > 0);
+                
+                return `
+                    <div style="border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 15px; margin-bottom: 15px; background: ${isAdultPackage ? 'rgba(255,71,87,0.15)' : 'rgba(255,255,255,0.05)'}; border-left: 3px solid ${isAdultPackage ? '#ff4757' : '#4caf50'};">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <div>
+                                <h5 style="color: ${isAdultPackage ? '#ff4757' : 'white'}; margin: 0; font-size: 15px; font-weight: 600;">
+                                    ${isAdultPackage ? '🔞 ' : ''}${pkg.name}
+                                    ${isAdultPackage ? '<span style="color: #ff4757; font-size: 11px; font-weight: normal; margin-left: 8px;">(ADULT CONTENT)</span>' : ''}
+                                </h5>
+                                <div style="font-size: 12px; color: rgba(255,255,255,0.8); margin-top: 4px;">
+                                    <strong>Base:</strong> $${pkg.price}/${pkg.duration}
+                                    ${pkg.adultPackagePrice > 0 ? ` | <strong style="color: #ff4757;">Adult Price:</strong> $${pkg.adultPackagePrice}` : ''}
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <button onclick="editPackage('${index}')" style="background: #2196f3; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">✏️ EDIT</button>
+                                <button onclick="cancelPackageEdit()" style="background: #ff9800; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">❌ CANCEL</button>
+                                <button onclick="deletePackage('${index}')" style="background: #f44336; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">🗑️ Delete</button>
+                            </div>
+                        </div>
+                        
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.8); margin-bottom: 8px;">
+                            <strong>Device Pricing:</strong>
+                            ${pkg.secondTVPrice > 0 ? `2nd TV: $${pkg.secondTVPrice}` : ''}
+                            ${pkg.thirdTVPrice > 0 ? ` | 3rd TV: $${pkg.thirdTVPrice}` : ''}
+                            ${pkg.secondTVPrice <= 0 && pkg.thirdTVPrice <= 0 ? ' No additional devices' : ''}
+                        </div>
+                        
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.8); margin-bottom: 8px;">
+                            <strong>Addon Pricing:</strong>
+                            ${pkg.sportsPrice > 0 ? `Sports: $${pkg.sportsPrice}` : ''}
+                            ${pkg.moviesPrice > 0 ? ` | Movies: $${pkg.moviesPrice}` : ''}
+                            ${!pkg.sportsPrice && !pkg.moviesPrice ? ' No addon pricing set' : ''}
+                        </div>
+                        
+                        ${pkg.features ? `<div style="margin-top: 8px; font-size: 11px; color: rgba(255,255,255,0.7); padding: 8px; background: rgba(255,255,255,0.1); border-radius: 4px;">${pkg.features}</div>` : ''}
+                        
+                        ${isAdultPackage ? `
+                            <div style="margin-top: 8px; padding: 6px 10px; background: rgba(255,71,87,0.2); border-radius: 4px; font-size: 11px; color: #ff4757; font-weight: 600;">
+                                ⚠️ ADULT CONTENT: This package is hidden in client interface and requires special access
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
 
         // Edit package function
         window.editPackage = function(packageIndex) {
@@ -8432,18 +8422,6 @@ Network: Always Streaming → Optimized for instant access`;
             console.log('🎛️🎛️🎛️ ADMIN PANEL V2.1 - WITH XML IMPORT 🎛️🎛️🎛️');
             console.log('🚀 Initializing Optimized Admin Panel...');
             
-            // AUTO-LOAD: Try to load data from GitHub on startup (if sync is configured)
-            setTimeout(() => {
-                const githubUsername = localStorage.getItem('githubUsername');
-                const githubRepo = localStorage.getItem('githubRepo');
-                if (githubUsername && githubRepo) {
-                    console.log('📡 Auto-loading data from GitHub on startup...');
-                    if (typeof autoLoadFromGitHub === 'function') {
-                        autoLoadFromGitHub();
-                    }
-                }
-            }, 1000); // Wait 1 second for page to fully load
-            
             // Initialize password manager
             passwordManager.initialize();
             
@@ -8605,14 +8583,12 @@ Network: Always Streaming → Optimized for instant access`;
             const sportsPlusAddonEl = document.getElementById('sportsPlusAddon');
             const arabicAddonEl = document.getElementById('arabicAddon');
             const moviesAddonEl = document.getElementById('moviesAddon');
-            const seriesAddonEl = document.getElementById('seriesAddon');
             const adultAddonEl = document.getElementById('adultAddon');
             
             if (sportsAddonEl) sportsAddonEl.checked = false;
             if (sportsPlusAddonEl) sportsPlusAddonEl.checked = false;
             if (arabicAddonEl) arabicAddonEl.checked = false;
             if (moviesAddonEl) moviesAddonEl.checked = false;
-            if (seriesAddonEl) seriesAddonEl.checked = false;
             if (adultAddonEl) adultAddonEl.checked = false;
             
             // Check for various formats: "sports", "Sports Package", "Sports", etc.
@@ -8620,7 +8596,6 @@ Network: Always Streaming → Optimized for instant access`;
             if (sportsPlusAddonEl) sportsPlusAddonEl.checked = addonsString.includes('sports plus') || addonsString.includes('sports_plus');
             if (arabicAddonEl) arabicAddonEl.checked = addonsString.includes('arabic');
             if (moviesAddonEl) moviesAddonEl.checked = addonsString.includes('movie');
-            if (seriesAddonEl) seriesAddonEl.checked = addonsString.includes('series');
             if (adultAddonEl) adultAddonEl.checked = addonsString.includes('adult');
             
             // Update device selection and price
