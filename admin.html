@@ -1574,11 +1574,20 @@
             
             // Small delay to ensure localStorage is written, then update UI
             setTimeout(() => {
-                updatePackagesList();
+                // Force reload packages from localStorage
+                packages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
+                console.log('📦 Package created, reloading. Total packages:', packages.length);
+                
                 updatePackageStats();
+                updatePackagesList();
                 // Re-render the entire packages section to ensure UI is fully updated
                 showPackagesSection();
-            }, 50);
+                
+                // Debug: Check if packagesList exists
+                const testList = document.getElementById('packagesList');
+                console.log('packagesList element:', testList ? 'Found' : 'NOT FOUND');
+                console.log('Packages in DOM:', testList ? testList.innerHTML.substring(0, 200) : 'N/A');
+            }, 100);
             
             // Update package statistics
             updatePackageStats();
@@ -6988,7 +6997,17 @@ Network: Always Streaming → Optimized for instant access`;
                         <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px;">
                             <h4 style="color: white; margin-bottom: 10px;">📦 Available Packages</h4>
                             <div id="packagesList" style="color: rgba(255,255,255,0.7); font-size: 13px;">
-                                ${packages.length === 0 ? 'No packages created yet. Use the form to create your first package.' : ''}
+                                ${packages.length === 0 ? 'No packages created yet. Use the form to create your first package.' : packages.map((pkg, idx) => {
+                                    const isAdultPackage = pkg.isAdult || pkg.name.toLowerCase().includes('adult') || pkg.name.toLowerCase().includes('xxx') || (pkg.adultPackagePrice && pkg.adultPackagePrice > 0);
+                                    return `<div style="margin-bottom: 10px; padding: 10px; background: ${isAdultPackage ? 'rgba(255,71,87,0.15)' : 'rgba(255,255,255,0.05)'}; border-radius: 6px; border-left: 3px solid ${isAdultPackage ? '#ff4757' : '#4caf50'};">
+                                        <div style="font-weight: 600; color: ${isAdultPackage ? '#ff4757' : 'white'};">${isAdultPackage ? '🔞 ' : ''}${pkg.name}</div>
+                                        <div style="font-size: 12px; color: rgba(255,255,255,0.7);">$${pkg.price}/${pkg.duration} ${pkg.adultPackagePrice > 0 ? `| Adult: $${pkg.adultPackagePrice}` : ''}</div>
+                                        <div style="margin-top: 8px; display: flex; gap: 5px;">
+                                            <button onclick="editPackage('${idx}')" style="background: #2196f3; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 10px; cursor: pointer;">✏️ EDIT</button>
+                                            <button onclick="deletePackage('${idx}')" style="background: #f44336; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 10px; cursor: pointer;">🗑️ Delete</button>
+                                        </div>
+                                    </div>`;
+                                }).join('')}
                             </div>
                         </div>
                         
