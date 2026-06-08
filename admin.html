@@ -3528,18 +3528,22 @@
                 if (data.plexArabicSection) localStorage.setItem('plexArabicSection', data.plexArabicSection);
                 if (data.plexSeriesSection) localStorage.setItem('plexSeriesSection', data.plexSeriesSection);
                 
-                // Load Plex cache data
-                if (data.plexMoviesCache && Array.isArray(data.plexMoviesCache)) {
-                    localStorage.setItem('plexCachedMovies', JSON.stringify(data.plexMoviesCache));
+                // Load Plex cache data (Series support)
+                if (data.plexCachedMovies && Array.isArray(data.plexCachedMovies)) {
+                    localStorage.setItem('plexCachedMovies', JSON.stringify(data.plexCachedMovies));
+                    console.log('📺 Loaded', data.plexCachedMovies.length, 'cached movies');
                 }
-                if (data.plexAdultCache && Array.isArray(data.plexAdultCache)) {
-                    localStorage.setItem('plexCachedAdult', JSON.stringify(data.plexAdultCache));
+                if (data.plexCachedAdult && Array.isArray(data.plexCachedAdult)) {
+                    localStorage.setItem('plexCachedAdult', JSON.stringify(data.plexCachedAdult));
+                    console.log('🔞 Loaded', data.plexCachedAdult.length, 'cached adult');
                 }
-                if (data.plexArabicCache && Array.isArray(data.plexArabicCache)) {
-                    localStorage.setItem('plexCachedArabic', JSON.stringify(data.plexArabicCache));
+                if (data.plexCachedArabic && Array.isArray(data.plexCachedArabic)) {
+                    localStorage.setItem('plexCachedArabic', JSON.stringify(data.plexCachedArabic));
+                    console.log('🔶 Loaded', data.plexCachedArabic.length, 'cached arabic');
                 }
-                if (data.plexSeriesCache && Array.isArray(data.plexSeriesCache)) {
-                    localStorage.setItem('plexCachedSeries', JSON.stringify(data.plexSeriesCache));
+                if (data.plexCachedSeries && Array.isArray(data.plexCachedSeries)) {
+                    localStorage.setItem('plexCachedSeries', JSON.stringify(data.plexCachedSeries));
+                    console.log('📺 Loaded', data.plexCachedSeries.length, 'cached series');
                 }
                 
                 console.log('✅ Auto-load complete!');
@@ -3628,10 +3632,10 @@
                 // NOTE: Don't include githubToken in the export - GitHub will revoke it from public repos!
                 
                 // Get Plex cache data for client viewing
-                const plexMoviesCache = JSON.parse(localStorage.getItem('plexMoviesCache') || '[]');
-                const plexAdultCache = JSON.parse(localStorage.getItem('plexAdultCache') || '[]');
-                const plexArabicCache = JSON.parse(localStorage.getItem('plexArabicCache') || '[]');
-                const plexSeriesCache = JSON.parse(localStorage.getItem('plexCachedSeries') || '[]');
+                const plexCachedMovies = JSON.parse(localStorage.getItem('plexCachedMovies') || '[]');
+                const plexCachedAdult = JSON.parse(localStorage.getItem('plexCachedAdult') || '[]');
+                const plexCachedArabic = JSON.parse(localStorage.getItem('plexCachedArabic') || '[]');
+                const plexCachedSeries = JSON.parse(localStorage.getItem('plexCachedSeries') || '[]');
                 
                 const exportData = {
                     version: '1.0',
@@ -3651,10 +3655,10 @@
                     plexArabicSection: localStorage.getItem('plexArabicSection') || '',
                     plexSeriesSection: localStorage.getItem('plexSeriesSection') || '',
                     // Include Plex cache so movies appear on second device before login
-                    plexMoviesCache: plexMoviesCache,
-                    plexAdultCache: plexAdultCache,
-                    plexArabicCache: plexArabicCache,
-                    plexSeriesCache: plexSeriesCache,
+                    plexCachedMovies: plexCachedMovies,
+                    plexCachedAdult: plexCachedAdult,
+                    plexCachedArabic: plexCachedArabic,
+                    plexCachedSeries: plexCachedSeries,
                     tvSyncUrl: `https://raw.githubusercontent.com/${username}/${repo}/main/admin_data.json`,
                     githubUsername: username,
                     githubRepo: repo
@@ -4792,9 +4796,10 @@
         }
         
         function viewCachedContent() {
-            const movies = JSON.parse(localStorage.getItem('plexMoviesCache')) || [];
-            const adult = JSON.parse(localStorage.getItem('plexAdultCache')) || [];
-            const arabic = JSON.parse(localStorage.getItem('plexArabicCache')) || [];
+            const movies = JSON.parse(localStorage.getItem('plexCachedMovies') || '[]');
+            const adult = JSON.parse(localStorage.getItem('plexCachedAdult') || '[]');
+            const arabic = JSON.parse(localStorage.getItem('plexCachedArabic') || '[]');
+            const series = JSON.parse(localStorage.getItem('plexCachedSeries') || '[]');
             
             let html = '<strong>🎬 Movies (' + movies.length + '):</strong><br>';
             movies.forEach((m, i) => {
@@ -4811,7 +4816,12 @@
                 html += `${i+1}. ${a.name}<br>`;
             });
             
-            if (movies.length === 0 && adult.length === 0 && arabic.length === 0) {
+            html += '<br><strong>📺 Series (' + series.length + '):</strong><br>';
+            series.forEach((s, i) => {
+                html += `${i+1}. ${s.name}<br>`;
+            });
+            
+            if (movies.length === 0 && adult.length === 0 && arabic.length === 0 && series.length === 0) {
                 html = 'No cached content. Add videos using the forms above.';
             }
             
@@ -4821,10 +4831,12 @@
         
         function clearCachedContent() {
             if (confirm('Are you sure you want to clear all cached videos?')) {
-                localStorage.removeItem('plexMoviesCache');
-                localStorage.removeItem('plexAdultCache');
-                localStorage.removeItem('plexArabicCache');
+                localStorage.removeItem('plexCachedMovies');
+                localStorage.removeItem('plexCachedAdult');
+                localStorage.removeItem('plexCachedArabic');
+                localStorage.removeItem('plexCachedSeries');
                 updateCacheCounts();
+                updateCachedCounts();
                 document.getElementById('cachedContentPreview').style.display = 'none';
                 showNotification('🗑️ All cached content cleared', 'info');
             }
@@ -4832,12 +4844,13 @@
         
         // Export cache data for local client use
         function exportCacheData() {
-            const movies = JSON.parse(localStorage.getItem('plexMoviesCache') || '[]');
-            const adult = JSON.parse(localStorage.getItem('plexAdultCache') || '[]');
-            const arabic = JSON.parse(localStorage.getItem('plexArabicCache') || '[]');
+            const movies = JSON.parse(localStorage.getItem('plexCachedMovies') || '[]');
+            const adult = JSON.parse(localStorage.getItem('plexCachedAdult') || '[]');
+            const arabic = JSON.parse(localStorage.getItem('plexCachedArabic') || '[]');
+            const series = JSON.parse(localStorage.getItem('plexCachedSeries') || '[]');
             const plexConfig = JSON.parse(localStorage.getItem('plexConfig') || '{}');
             
-            if (movies.length === 0 && adult.length === 0 && arabic.length === 0) {
+            if (movies.length === 0 && adult.length === 0 && arabic.length === 0 && series.length === 0) {
                 showNotification('❌ No cached content to export', 'error');
                 return;
             }
@@ -4846,12 +4859,10 @@
                 version: '8.0',
                 exportDate: new Date().toISOString(),
                 plexConfig: plexConfig,
-                plexMoviesCache: movies,
-                plexAdultCache: adult,
-                plexArabicCache: arabic,
                 plexCachedMovies: movies,
                 plexCachedAdult: adult,
-                plexCachedArabic: arabic
+                plexCachedArabic: arabic,
+                plexCachedSeries: series
             };
             
             const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
