@@ -1437,6 +1437,7 @@
             const sportsPlusPrice = document.getElementById('sportsPlusPrice')?.value;
             const arabicPrice = document.getElementById('arabicPrice')?.value;
             const moviesPrice = document.getElementById('moviesPrice')?.value;
+            const seriesPrice = document.getElementById('seriesPrice')?.value;
             const adultPackagePrice = document.getElementById('adultPackagePrice')?.value;
             
             // Detect adult package: by name contains "adult"/"xxx" OR by having adult addon price
@@ -1493,6 +1494,7 @@
                 thirdTVPrice: parseFloat(thirdTVPrice || '0'),
                 sportsPrice: parseFloat(sportsPrice || '0'),
                 moviesPrice: parseFloat(moviesPrice || '0'),
+                seriesPrice: parseFloat(seriesPrice || '0'),
                 isAdult: isAdultPackage,
                 adultPackagePrice: isAdultPackage ? parseFloat(adultPackagePrice) : 0,
                 // Authentication System Fields
@@ -4088,6 +4090,7 @@
             const thirdTVPrice = document.getElementById('thirdTVPrice')?.value;
             const sportsPrice = document.getElementById('sportsPrice')?.value;
             const moviesPrice = document.getElementById('moviesPrice')?.value;
+            const seriesPrice = document.getElementById('seriesPrice')?.value;
             const adultPackagePrice = document.getElementById('adultPackagePrice')?.value;
             
             // Detect adult package: by name contains "adult"/"xxx" OR by having adult addon price
@@ -4117,6 +4120,7 @@
                 addonPrices: {
                     sports: parseFloat(sportsPrice || '0'),
                     movies: parseFloat(moviesPrice || '0'),
+                    series: parseFloat(seriesPrice || '0'),
                     adult: isAdultPackage ? parseFloat(adultPackagePrice || '0') : 0
                 },
                 isAdult: isAdultPackage,
@@ -4148,17 +4152,21 @@
                 let priceInfo = `$${price}/${duration}`;
                 if (secondTVPrice) priceInfo += `, 2nd TV: $${secondTVPrice}`;
                 if (thirdTVPrice) priceInfo += `, 3rd TV: $${thirdTVPrice}`;
-                if (sportsPrice || moviesPrice) priceInfo += `, Addons available`;
+                if (sportsPrice || moviesPrice || seriesPrice) priceInfo += `, Addons available`;
+                if (seriesPrice) priceInfo += `, 📺 Series: $${seriesPrice}`;
                 if (isAdultPackage && adultPackagePrice) priceInfo += `, 🔞 Adult: $${adultPackagePrice}`;
                 
                 showNotification(`✅ Package "${name}" created successfully - ${priceInfo}`, 'success');
                 
                 // Clear form
-                const fields = ['packageName', 'packagePrice', 'packageFeatures', 'secondTVPrice', 'thirdTVPrice', 'sportsPrice', 'moviesPrice'];
+                const fields = ['packageName', 'packagePrice', 'packageFeatures', 'secondTVPrice', 'thirdTVPrice', 'sportsPrice', 'moviesPrice', 'seriesPrice'];
                 fields.forEach(field => {
                     const element = document.getElementById(field);
                     if (element) element.value = '';
                 });
+                // Clear adult price separately as it's only shown for adult packages
+                const adultPriceField = document.getElementById('adultPackagePrice');
+                if (adultPriceField) adultPriceField.value = '';
                 
                 // Force reload packages from localStorage to ensure consistency
                 packages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
@@ -4762,11 +4770,15 @@
                 const movies = JSON.parse(localStorage.getItem('plexMoviesCache')) || [];
                 const adult = JSON.parse(localStorage.getItem('plexAdultCache')) || [];
                 const arabic = JSON.parse(localStorage.getItem('plexArabicCache')) || [];
+                const series = JSON.parse(localStorage.getItem('plexSeriesCache')) || [];
                 
                 document.getElementById('moviesCount').textContent = `Movies cached: ${movies.length}`;
                 document.getElementById('adultCount').textContent = `Adult videos cached: ${adult.length}`;
                 if (document.getElementById('arabicCount')) {
                     document.getElementById('arabicCount').textContent = `Arabic videos cached: ${arabic.length}`;
+                }
+                if (document.getElementById('seriesCount')) {
+                    document.getElementById('seriesCount').textContent = `Series cached: ${series.length}`;
                 }
             } catch(e) {}
         }
@@ -4925,97 +4937,111 @@
             }
         };
         
-        function parseVideoXML(xmlString, libraryType) {
-            const videos = [];
-            let sectionId;
-            if (libraryType === 'movies') {
-                sectionId = PLEX_CONFIG.sections.movies;
-            } else if (libraryType === 'adult') {
-                sectionId = PLEX_CONFIG.sections.adult;
-            } else if (libraryType === 'arabic') {
-                sectionId = PLEX_CONFIG.sections.arabic;
+        window.importSeriesXML = function() {
+            const xml = document.getElementById('seriesXmlInput').value.trim();
+            if (!xml) {
+                showNotification('❌ Please paste the Series XML first', 'error');
+                return;
             }
             
+            const series = parseSeriesXML(xml, 'series');
+            if (series.length > 0) {
+                // Save to both keys for compatibility
+                localStorage.setItem('plexSeriesCache', JSON.stringify(series));
+                localStorage.setItem('plexCachedSeries', JSON.stringify(series));
+                updateCacheCounts();
+                showNotification(`✅ Imported ${series.length} series successfully!`, 'success');
+                document.getElementById('seriesXmlInput').value = '';
+            } else {
+                showNotification('❌ No series found in XML. Make sure you pasted the complete XML.', 'error');
+            }
+        };
+        
+        function parseSeriesXML(xmlString, libraryType) {
+            const series = [];
+            const sectionId = localStorage.getItem('plexSeriesSection') || '';
+            
             try {
-                console.log('🔍 Parsing XML, length:', xmlString.length);
+                console.log('🔍 Parsing Series XML, length:', xmlString.length);
                 
-                // Find all Video tags (handles any attribute order)
-                const videoTagMatches = xmlString.match(/<Video[^>]+>/g) || [];
-                console.log('📺 Found Video tags:', videoTagMatches.length);
+                // Plex TV Shows library uses Directory tags for series
+                const directoryMatches = xmlString.match(/<Directory[^>]+>/g) || [];
+                console.log('📺 Found Directory tags (series):', directoryMatches.length);
                 
-                for (const tag of videoTagMatches) {
-                    // Extract ratingKey
+                for (const tag of directoryMatches) {
+                    // Extract ratingKey (series ID)
                     const keyMatch = tag.match(/ratingKey="(\d+)"/);
-                    // Extract title
+                    // Extract title (series name)
                     const titleMatch = tag.match(/title="([^"]+)"/);
+                    // Extract year
+                    const yearMatch = tag.match(/year="(\d+)"/);
+                    // Extract thumb
+                    const thumbMatch = tag.match(/thumb="([^"]+)"/);
                     
                     if (keyMatch && titleMatch) {
-                        const videoId = keyMatch[1];
+                        const seriesId = keyMatch[1];
                         const title = titleMatch[1];
+                        const year = yearMatch ? yearMatch[1] : '';
+                        const thumb = thumbMatch ? thumbMatch[1] : '';
                         
-                        // Use LOCAL URL for playback (127.0.0.1 or local network IP)
-                        const localUrl = PLEX_CONFIG.localUrl || 'http://127.0.0.1:32400';
-                        
-                        // Build stream URL using LOCAL URL
-                        const streamUrl = `${localUrl}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${videoId}&mediaIndex=0&partIndex=0&protocol=hls&X-Plex-Token=${PLEX_CONFIG.token}`;
+                        // Use LOCAL URL for playback
+                        const localUrl = localStorage.getItem('plexLocalUrl') || 'http://127.0.0.1:32400';
+                        const token = localStorage.getItem('plexToken') || '';
                         
                         // Build thumbnail URL using LOCAL URL
-                        const thumbUrl = `${localUrl}/library/metadata/${videoId}/thumb?X-Plex-Token=${PLEX_CONFIG.token}`;
+                        const thumbUrl = thumb ? `${localUrl}${thumb}?X-Plex-Token=${token}` : '';
                         
-                        videos.push({
-                            id: videoId,
+                        series.push({
+                            id: seriesId,
                             name: title,
                             title: title,
-                            url: streamUrl,
+                            year: year,
                             thumb: thumbUrl,
-                            directUrl: streamUrl,
-                            plexServer: localUrl,
-                            plexToken: PLEX_CONFIG.token,
-                            type: libraryType,
+                            poster: thumbUrl,
+                            type: 'series',
                             sectionId: sectionId,
+                            plexServer: localUrl,
+                            plexToken: token,
                             addedAt: Date.now()
                         });
                     }
                 }
                 
                 // Fallback: try to find any ratingKey/title pairs
-                if (videos.length === 0) {
-                    console.log('⚠️ No Video tags found, trying fallback...');
+                if (series.length === 0) {
+                    console.log('⚠️ No Directory tags found, trying fallback...');
                     const allKeys = xmlString.match(/ratingKey="(\d+)"/g) || [];
                     const allTitles = xmlString.match(/title="([^"]+)"/g) || [];
                     console.log('Found keys:', allKeys.length, 'titles:', allTitles.length);
                     
                     for (let i = 0; i < Math.min(allKeys.length, allTitles.length); i++) {
-                        const videoId = allKeys[i].match(/\d+/)[0];
+                        const seriesId = allKeys[i].match(/\d+/)[0];
                         const title = allTitles[i].match(/title="([^"]+)"/)[1];
                         
                         // Use LOCAL URL for playback
-                        const localUrl = PLEX_CONFIG.localUrl || 'http://127.0.0.1:32400';
-                        const streamUrl = `${localUrl}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${videoId}&mediaIndex=0&partIndex=0&protocol=hls&X-Plex-Token=${PLEX_CONFIG.token}`;
-                        const thumbUrl = `${localUrl}/library/metadata/${videoId}/thumb?X-Plex-Token=${PLEX_CONFIG.token}`;
+                        const localUrl = localStorage.getItem('plexLocalUrl') || 'http://127.0.0.1:32400';
+                        const token = localStorage.getItem('plexToken') || '';
                         
-                        videos.push({
-                            id: videoId,
+                        series.push({
+                            id: seriesId,
                             name: title,
                             title: title,
-                            url: streamUrl,
-                            thumb: thumbUrl,
-                            directUrl: streamUrl,
-                            plexServer: localUrl,
-                            plexToken: PLEX_CONFIG.token,
-                            type: libraryType,
+                            type: 'series',
                             sectionId: sectionId,
+                            plexServer: localUrl,
+                            plexToken: token,
                             addedAt: Date.now()
                         });
                     }
                 }
                 
-                console.log(`📺 Parsed ${videos.length} videos from ${libraryType} XML`);
+                console.log(`✅ Parsed ${series.length} series from XML`);
+                return series;
+                
             } catch (error) {
-                console.error('Error parsing XML:', error);
+                console.error('❌ Error parsing Series XML:', error);
+                return [];
             }
-            
-            return videos;
         }
         
         window.copyPlexUrl = function(type) {
@@ -5025,10 +5051,14 @@
             } else if (type === 'adult') {
                 section = PLEX_CONFIG.sections.adult;
             } else if (type === 'arabic') {
-                section = PLEX_CONFIG.sections.arabic;
+                section = localStorage.getItem('plexArabicSection') || PLEX_CONFIG.sections?.arabic;
+            } else if (type === 'series') {
+                section = localStorage.getItem('plexSeriesSection') || PLEX_CONFIG.sections?.series;
             }
             // Use localhost since Plex is running locally
-            const url = `${PLEX_CONFIG.localUrl}/library/sections/${section}/all?X-Plex-Token=${PLEX_CONFIG.token}`;
+            const localUrl = localStorage.getItem('plexLocalUrl') || PLEX_CONFIG.localUrl || 'http://127.0.0.1:32400';
+            const token = localStorage.getItem('plexToken') || PLEX_CONFIG.token || '';
+            const url = `${localUrl}/library/sections/${section}/all?X-Plex-Token=${token}`;
             
             navigator.clipboard.writeText(url).then(() => {
                 showNotification(`✅ ${type} URL copied! Open in new tab, wait for XML to load, then Ctrl+A → Ctrl+C → Paste below`, 'success');
@@ -6268,6 +6298,9 @@ Network: Always Streaming → Optimized for instant access`;
             if (arabicPriceInput && arabicPriceInput.value) addonPrices.arabic = parseFloat(arabicPriceInput.value);
             if (moviesPriceInput && moviesPriceInput.value) addonPrices.movies = parseFloat(moviesPriceInput.value);
             
+            const seriesPriceInput = document.getElementById('seriesPrice');
+            if (seriesPriceInput && seriesPriceInput.value) addonPrices.series = parseFloat(seriesPriceInput.value);
+            
             if (basicTV) {
                 monthlyPrice += basePrice;
             }
@@ -6864,7 +6897,11 @@ Network: Always Streaming → Optimized for instant access`;
                                         <label style="color: rgba(255,255,255,0.7); font-size: 13px;">Movies Package ($):</label>
                                         <input type="number" id="moviesPrice" placeholder="" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
                                     </div>
-
+                                    <div>
+                                        <label style="color: rgba(102,126,234,0.8); font-size: 13px;">📺 Series Package ($):</label>
+                                        <input type="number" id="seriesPrice" placeholder="" style="width: 100%; padding: 10px; background: rgba(102,126,234,0.1); border: 1px solid rgba(102,126,234,0.3); border-radius: 6px; color: white;">
+                                    </div>
+                                    
                                     <div>
                                         <label style="color: rgba(255,71,87,0.8); font-size: 13px;">🔞 Adult Package ($):</label>
                                         <input type="number" id="adultPackagePrice" placeholder="" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,71,87,0.3); border-radius: 6px; color: white;">
@@ -6986,9 +7023,11 @@ Network: Always Streaming → Optimized for instant access`;
             const plexMoviesSection = localStorage.getItem('plexMoviesSection') || '26';
             const plexAdultSection = localStorage.getItem('plexAdultSection') || '21';
             const plexArabicSection = localStorage.getItem('plexArabicSection') || '7';
-            const cachedMovies = JSON.parse(localStorage.getItem('plexCachedMovies') || '[]');
-            const cachedAdult = JSON.parse(localStorage.getItem('plexCachedAdult') || '[]');
-            const cachedArabic = JSON.parse(localStorage.getItem('plexCachedArabic') || '[]');
+            const plexSeriesSection = localStorage.getItem('plexSeriesSection') || '';
+            const cachedMovies = JSON.parse(localStorage.getItem('plexCachedMovies') || localStorage.getItem('plexMoviesCache') || '[]');
+            const cachedAdult = JSON.parse(localStorage.getItem('plexCachedAdult') || localStorage.getItem('plexAdultCache') || '[]');
+            const cachedArabic = JSON.parse(localStorage.getItem('plexCachedArabic') || localStorage.getItem('plexArabicCache') || '[]');
+            const cachedSeries = JSON.parse(localStorage.getItem('plexCachedSeries') || localStorage.getItem('plexSeriesCache') || '[]');
             
             mainContent.innerHTML = `
                 <div class="dashboard-header">
@@ -7030,6 +7069,10 @@ Network: Always Streaming → Optimized for instant access`;
                                     <label style="color: rgba(255,255,255,0.8); font-size: 14px; display: block; margin-bottom: 5px;">Arabic Section ID:</label>
                                     <input type="text" id="plexArabicSection" value="${plexArabicSection}" placeholder="7" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; font-size: 14px;">
                                 </div>
+                                <div>
+                                    <label style="color: rgba(255,255,255,0.8); font-size: 14px; display: block; margin-bottom: 5px;">Series Section ID (TV Shows):</label>
+                                    <input type="text" id="plexSeriesSection" value="${plexSeriesSection}" placeholder="Enter TV Shows section ID" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(102,126,234,0.5); border-radius: 6px; color: #667eea; font-size: 14px;">
+                                </div>
                             </div>
                             <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
                                 <button onclick="savePlexSettings()" class="btn btn-success" style="padding: 12px 25px;">💾 Save Settings</button>
@@ -7056,9 +7099,13 @@ Network: Always Streaming → Optimized for instant access`;
                                     <span style="color: rgba(255,255,255,0.8);">Cached Movies:</span>
                                     <span style="color: #2196f3; font-weight: 600;">${cachedMovies.length} videos</span>
                                 </div>
-                                <div style="display: flex; justify-content: space-between;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                                     <span style="color: rgba(255,255,255,0.8);">Cached Adult:</span>
                                     <span style="color: #ff4757; font-weight: 600;">${cachedAdult.length} videos</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                    <span style="color: rgba(255,255,255,0.8);">Cached Series:</span>
+                                    <span style="color: #667eea; font-weight: 600;">${cachedSeries.length} shows</span>
                                 </div>
                             </div>
                             <button onclick="loadAndCachePlexContent()" class="btn btn-warning" style="width: 100%; padding: 15px;">📦 Cache All Content for Client</button>
@@ -7071,7 +7118,7 @@ Network: Always Streaming → Optimized for instant access`;
                     <h3 class="section-title">📥 Import Videos from Plex (Easy Method)</h3>
                     <p style="color: #4caf50; margin-bottom: 15px; font-weight: bold;">💡 Use this if auto-fetch fails due to CORS restrictions</p>
                     
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px;">
                         <!-- Movies Import -->
                         <div style="background: rgba(33, 150, 243, 0.1); padding: 20px; border-radius: 8px; border: 1px solid #2196f3;">
                             <h4 style="color: #2196f3; margin-bottom: 15px;">🎬 Movies Library</h4>
@@ -7116,6 +7163,21 @@ Network: Always Streaming → Optimized for instant access`;
                             <button onclick="importAdultXML()" class="btn btn-danger" style="width: 100%; padding: 12px;">📥 Import Adult Videos</button>
                             <div id="adultCount" style="margin-top: 10px; color: #4caf50; font-size: 13px; font-weight: bold;">Adult videos cached: ${cachedAdult.length}</div>
                         </div>
+                        
+                        <!-- Series Import -->
+                        <div style="background: rgba(102, 126, 234, 0.1); padding: 20px; border-radius: 8px; border: 1px solid #667eea;">
+                            <h4 style="color: #667eea; margin-bottom: 15px;">📺 Series Library</h4>
+                            <div style="margin-bottom: 15px;">
+                                <button onclick="copyPlexUrl('series')" class="btn btn-info" style="width: 100%; margin-bottom: 10px; padding: 12px; background: linear-gradient(135deg, #667eea, #764ba2); border: none;">📋 Copy Series URL</button>
+                                <p style="color: #888; font-size: 12px;">1. Click button → 2. Open URL in browser → 3. Select All (Ctrl+A) → 4. Copy (Ctrl+C) → 5. Paste below</p>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <label style="color: #ccc; font-size: 13px;">Paste Series XML:</label>
+                                <textarea id="seriesXmlInput" placeholder="Paste the entire XML content here..." style="width: 100%; height: 120px; padding: 10px; border-radius: 6px; border: 1px solid #444; background: #1a1a2e; color: white; font-size: 12px; margin-top: 5px;"></textarea>
+                            </div>
+                            <button onclick="importSeriesXML()" class="btn btn-primary" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea, #764ba2); border: none;">📥 Import Series</button>
+                            <div id="seriesCount" style="margin-top: 10px; color: #667eea; font-size: 13px; font-weight: bold;">Series cached: ${cachedSeries.length}</div>
+                        </div>
                     </div>
                     
                     <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
@@ -7144,6 +7206,7 @@ Network: Always Streaming → Optimized for instant access`;
             const moviesSection = document.getElementById('plexMoviesSection')?.value || '26';
             const adultSection = document.getElementById('plexAdultSection')?.value || '21';
             const arabicSection = document.getElementById('plexArabicSection')?.value || '7';
+            const seriesSection = document.getElementById('plexSeriesSection')?.value || '';
             
             localStorage.setItem('plexServerUrl', serverUrl);
             localStorage.setItem('plexLocalUrl', localUrl);
@@ -7151,15 +7214,17 @@ Network: Always Streaming → Optimized for instant access`;
             localStorage.setItem('plexMoviesSection', moviesSection);
             localStorage.setItem('plexAdultSection', adultSection);
             localStorage.setItem('plexArabicSection', arabicSection);
+            localStorage.setItem('plexSeriesSection', seriesSection);
             
             // Update the PLEX_CONFIG object
             if (window.PLEX_CONFIG) {
                 window.PLEX_CONFIG.serverUrl = serverUrl;
                 window.PLEX_CONFIG.localUrl = localUrl;
                 window.PLEX_CONFIG.token = token;
+                window.PLEX_CONFIG.seriesSection = seriesSection;
             }
             
-            showNotification('✅ Plex settings saved! Local URL: ' + localUrl, 'success');
+            showNotification('✅ Plex settings saved! Series Section: ' + seriesSection, 'success');
         };
         
         // Update cached content counts
@@ -7225,7 +7290,8 @@ Network: Always Streaming → Optimized for instant access`;
                             <strong>Addon Pricing:</strong>
                             ${pkg.sportsPrice > 0 ? `Sports: $${pkg.sportsPrice}` : ''}
                             ${pkg.moviesPrice > 0 ? ` | Movies: $${pkg.moviesPrice}` : ''}
-                            ${!pkg.sportsPrice && !pkg.moviesPrice ? ' No addon pricing set' : ''}
+                            ${pkg.addonPrices?.series > 0 ? ` | 📺 Series: $${pkg.addonPrices.series}` : ''}
+                            ${!pkg.sportsPrice && !pkg.moviesPrice && !pkg.addonPrices?.series ? ' No addon pricing set' : ''}
                         </div>
                         
                         ${pkg.features ? `<div style="margin-top: 8px; font-size: 11px; color: rgba(255,255,255,0.7); padding: 8px; background: rgba(255,255,255,0.1); border-radius: 4px;">${pkg.features}</div>` : ''}
@@ -7351,7 +7417,7 @@ Network: Always Streaming → Optimized for instant access`;
 
         // Clear package form
         window.clearPackageForm = function() {
-            const fields = ['packageName', 'packagePrice', 'secondTVPrice', 'thirdTVPrice', 'sportsPrice', 'moviesPrice', 'adultPackagePrice', 'packageFeatures'];
+            const fields = ['packageName', 'packagePrice', 'secondTVPrice', 'thirdTVPrice', 'sportsPrice', 'moviesPrice', 'seriesPrice', 'adultPackagePrice', 'packageFeatures'];
             fields.forEach(field => {
                 const element = document.getElementById(field);
                 if (element) element.value = '';
