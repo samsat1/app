@@ -3544,26 +3544,29 @@
             const username = document.getElementById('githubUsername')?.value || '';
             const repo = document.getElementById('githubRepo')?.value || '';
             const token = document.getElementById('githubToken')?.value || '';
-            
+            const autoLoad = document.getElementById('githubAutoLoad')?.checked || false;
+
             // Validate token format
             if (!token.startsWith('ghp_') && !token.startsWith('github_pat_')) {
                 showNotification('⚠️ Warning: Token should start with "ghp_" (classic) or "github_pat_" (fine-grained)', 'warning');
             }
-            
+
             localStorage.setItem('githubUsername', username);
             localStorage.setItem('githubRepo', repo);
             localStorage.setItem('githubToken', token);
-            
+            localStorage.setItem('githubAutoLoad', autoLoad ? 'true' : 'false');
+
             // Auto-generate sync URL
             if (username && repo) {
                 const syncUrl = `https://raw.githubusercontent.com/${username}/${repo}/main/admin_data.json`;
                 localStorage.setItem('tvSyncUrl', syncUrl);
             }
-            
+
             // Save token status for debugging
             localStorage.setItem('githubTokenSaved', new Date().toISOString());
-            
-            showNotification('✅ GitHub settings saved! Token is stored in your browser.', 'success');
+
+            const loadStatus = autoLoad ? '✅ Auto-load ENABLED' : '⏸️ Auto-load DISABLED';
+            showNotification(`✅ GitHub settings saved! ${loadStatus}`, 'success');
             console.log('💾 GitHub token saved at:', localStorage.getItem('githubTokenSaved'));
         };
         
@@ -3632,10 +3635,12 @@
             const usernameInput = document.getElementById('githubUsername');
             const repoInput = document.getElementById('githubRepo');
             const tokenInput = document.getElementById('githubToken');
-            
+            const autoLoadInput = document.getElementById('githubAutoLoad');
+
             if (usernameInput) usernameInput.value = localStorage.getItem('githubUsername') || '';
             if (repoInput) repoInput.value = localStorage.getItem('githubRepo') || '';
             if (tokenInput) tokenInput.value = localStorage.getItem('githubToken') || '';
+            if (autoLoadInput) autoLoadInput.checked = localStorage.getItem('githubAutoLoad') === 'true';
         };
         
         // Auto-load data from GitHub when admin panel opens
@@ -8563,10 +8568,18 @@ Network: Always Streaming → Optimized for instant access`;
                             </div>
                             <div>
                                 <label style="color: rgba(255,255,255,0.8); font-size: 12px;">Personal Access Token: <a href="https://github.com/settings/tokens" target="_blank" style="color: #667eea;">(Get Token)</a></label>
-                                <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxx" 
+                                <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxx"
                                     style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; box-sizing: border-box;">
                             </div>
-                            <button onclick="saveGithubSettings()" class="btn btn-info" style="padding: 10px;">💾 Save GitHub Settings</button>
+                            <div style="margin-top: 12px; display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" id="githubAutoLoad" style="width: 18px; height: 18px; cursor: pointer;">
+                                <label for="githubAutoLoad" style="color: rgba(255,255,255,0.8); font-size: 13px; cursor: pointer;">
+                                    ✅ Auto-load data from GitHub on startup
+                                </label>
+                            </div>
+                            <div style="margin-top: 15px;">
+                                <button onclick="saveGithubSettings()" class="btn btn-info" style="padding: 10px;">💾 Save GitHub Settings</button>
+                            </div>
                         </div>
                     </div>
                     
@@ -8752,15 +8765,18 @@ Network: Always Streaming → Optimized for instant access`;
             console.log('🎛️🎛️🎛️ ADMIN PANEL V2.1 - WITH XML IMPORT 🎛️🎛️🎛️');
             console.log('🚀 Initializing Optimized Admin Panel...');
             
-            // AUTO-LOAD: Try to load data from GitHub on startup (if sync is configured)
+            // AUTO-LOAD: Try to load data from GitHub on startup (if sync is configured AND enabled)
             setTimeout(() => {
                 const githubUsername = localStorage.getItem('githubUsername');
                 const githubRepo = localStorage.getItem('githubRepo');
-                if (githubUsername && githubRepo) {
+                const autoLoadEnabled = localStorage.getItem('githubAutoLoad') === 'true';
+                if (githubUsername && githubRepo && autoLoadEnabled) {
                     console.log('📡 Auto-loading data from GitHub on startup...');
                     if (typeof autoLoadFromGitHub === 'function') {
                         autoLoadFromGitHub();
                     }
+                } else if (githubUsername && githubRepo && !autoLoadEnabled) {
+                    console.log('📡 GitHub configured but auto-load is DISABLED by user');
                 }
             }, 1000); // Wait 1 second for page to fully load
             
