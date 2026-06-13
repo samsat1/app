@@ -4155,7 +4155,7 @@
                 } catch(e) { console.error('Error parsing cached live channels:', e); }
             }
             
-                       // Load Sports Plus and Sports from Content Library (contentSources)
+                                // Load Sports Plus and Sports from Content Library (contentSources)
             try {
                 const contentSources = JSON.parse(localStorage.getItem('contentSources') || '[]');
                 console.log('🔍 DEBUG contentSources length:', contentSources.length);
@@ -4190,6 +4190,18 @@
                 
                 if (!contentData.sports) contentData.sports = { name: 'Sports', content: [] };
                 contentData.sports.content = sportsChannels.map(src => ({
+                    id: src.id || 'sports_' + Math.random().toString(36).substr(2, 9),
+                    name: src.name || src.title || 'Unknown Sports Channel',
+                    description: src.description || '',
+                    type: src.type || 'hls',
+                    url: src.url || src.streamUrl || '',
+                    package: src.packageId || src.package || '',
+                    packageId: src.packageId || src.package,
+                    category: 'sports'
+                }));
+                console.log(`📦 Loaded ${sportsChannels.length} Sports channels from contentSources`);
+                
+            } catch(e) { console.error('Error loading Sports channels:', e); }
                     id: src.id || 'sports_' + Math.random().toString(36).substr(2, 9),
                     name: src.name || src.title || 'Unknown Sports Channel',
                     description: src.description || '',
