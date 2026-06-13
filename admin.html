@@ -3333,23 +3333,187 @@
 
         // Content management functions
         function addContentSource() {
-            const name = document.getElementById('contentName')?.value;
+            const name = document.getElementById('contentName')?.value?.trim();
             const type = document.getElementById('contentType')?.value;
-            const url = document.getElementById('contentURL')?.value;
+            const url = document.getElementById('contentURL')?.value?.trim();
             const quality = document.getElementById('contentQuality')?.value;
-            
+            const packageId = document.getElementById('contentPackage')?.value || '';
+
             if (!name || !url) {
                 showNotification('❌ Please fill required fields (Name and URL)', 'error');
                 return;
             }
-            
-            showNotification('📺 Adding content source...', 'info');
-            setTimeout(() => {
-                showNotification(`✅ "${name}" (${type}) added successfully - ${quality}`, 'success');
-                // Clear form
-                if (document.getElementById('contentName')) document.getElementById('contentName').value = '';
-                if (document.getElementById('contentURL')) document.getElementById('contentURL').value = '';
-            }, 2000);
+            if (!type) {
+                showNotification('❌ Please select a Platform Type', 'error');
+                return;
+            }
+            if (!quality) {
+                showNotification('❌ Please select a Quality', 'error');
+                return;
+            }
+
+            // Load existing sources
+            const existing = JSON.parse(localStorage.getItem('contentSources')) || [];
+
+            // Check for duplicate URL
+            if (existing.some(s => s.url === url)) {
+                showNotification('❌ This URL is already added!', 'error');
+                return;
+            }
+
+            // Build new source object
+            const newSource = {
+                id: 'src_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+                name: name,
+                type: type,
+                url: url,
+                quality: quality,
+                packageId: packageId || null,
+                packageName: packageId ? (packages.find(p => p.id === packageId)?.name || '') : '',
+                addedAt: new Date().toISOString(),
+                active: true
+            };
+
+            existing.push(newSource);
+            localStorage.setItem('contentSources', JSON.stringify(existing));
+
+            showNotification(`✅ "${name}" added successfully${packageId ? ' → assigned to package' : ''}`, 'success');
+
+            // Clear form completely
+            clearContentSourceForm();
+
+            // Refresh the list and statistics
+            renderContentSourcesList();
+            updateContentStats();
+        }
+
+        // Clear the content source form
+        function clearContentSourceForm() {
+            const nameEl = document.getElementById('contentName');
+            const typeEl = document.getElementById('contentType');
+            const urlEl = document.getElementById('contentURL');
+            const qualityEl = document.getElementById('contentQuality');
+            const pkgEl = document.getElementById('contentPackage');
+            if (nameEl) nameEl.value = '';
+            if (typeEl) typeEl.selectedIndex = 0;
+            if (urlEl) urlEl.value = '';
+            if (qualityEl) qualityEl.selectedIndex = 0;
+            if (pkgEl) pkgEl.selectedIndex = 0;
+        }
+
+        // Render the list of added content sources
+        function renderContentSourcesList() {
+            const listEl = document.getElementById('contentSourcesList');
+            if (!listEl) return;
+
+            const sources = JSON.parse(localStorage.getItem('contentSources')) || [];
+            // Always reload packages fresh from localStorage
+            const livePackages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
+
+            if (sources.length === 0) {
+                listEl.innerHTML = `
+                    <div style="text-align: center; color: rgba(255,255,255,0.5); padding: 30px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px dashed rgba(255,255,255,0.2);">
+                        <div style="font-size: 2.5rem; margin-bottom: 10px;">📭</div>
+                        <div style="font-size: 14px;">No content sources yet. Add your first URL above to get started.</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const packagesOpts = livePackages.map(p =>
+                `<option value="${p.id}">${p.name}</option>`
+            ).join('');
+
+            listEl.innerHTML = sources.map((src, idx) => {
+                const pkgBadge = src.packageName
+                    ? `<span style="background: rgba(76, 175, 80, 0.25); color: #4caf50; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;">📦 ${src.packageName}</span>`
+                    : `<span style="background: rgba(255, 152, 0, 0.2); color: #ff9800; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;">⚠️ Unassigned</span>`;
+
+                return `
+                <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; margin-bottom: 12px; border-left: 3px solid var(--admin-color, #2196f3);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 250px;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;">
+                                <h4 style="color: white; margin: 0; font-size: 15px;">📺 ${src.name}</h4>
+                                ${pkgBadge}
+                            </div>
+                            <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 4px;">
+                                <strong style="color: rgba(255,255,255,0.8);">Type:</strong> ${src.type} &nbsp;|&nbsp;
+                                <strong style="color: rgba(255,255,255,0.8);">Quality:</strong> ${src.quality}
+                            </div>
+                            <div style="font-size: 11px; color: rgba(255,255,255,0.5); word-break: break-all; font-family: monospace; background: rgba(0,0,0,0.3); padding: 6px 8px; border-radius: 4px; margin-top: 6px;">
+                                ${src.url}
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 6px; min-width: 180px;">
+                            <select onchange="assignSourceToPackage('${src.id}', this.value)" style="padding: 6px 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: white; font-size: 12px;">
+                                <option value="">-- Select Package --</option>
+                                ${packagesOpts.replace(`value="${src.packageId}"`, `value="${src.packageId}" selected`)}
+                            </select>
+                            <div style="display: flex; gap: 6px;">
+                                <button onclick="testContentSource('${src.id}')" style="flex: 1; padding: 6px 8px; background: rgba(33, 150, 243, 0.3); border: 1px solid rgba(33, 150, 243, 0.5); border-radius: 4px; color: white; cursor: pointer; font-size: 11px;">▶️ Test</button>
+                                <button onclick="deleteContentSource('${src.id}')" style="flex: 1; padding: 6px 8px; background: rgba(244, 67, 54, 0.3); border: 1px solid rgba(244, 67, 54, 0.5); border-radius: 4px; color: white; cursor: pointer; font-size: 11px;">🗑️ Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // Assign a content source to a package
+        window.assignSourceToPackage = function(sourceId, packageId) {
+            const sources = JSON.parse(localStorage.getItem('contentSources')) || [];
+            const idx = sources.findIndex(s => s.id === sourceId);
+            if (idx === -1) return;
+
+            if (packageId) {
+                const pkg = packages.find(p => p.id === packageId);
+                sources[idx].packageId = packageId;
+                sources[idx].packageName = pkg ? pkg.name : '';
+                showNotification(`✅ Source assigned to "${pkg ? pkg.name : 'package'}"`, 'success');
+            } else {
+                sources[idx].packageId = null;
+                sources[idx].packageName = '';
+                showNotification(`ℹ️ Source unassigned from package`, 'info');
+            }
+
+            localStorage.setItem('contentSources', JSON.stringify(sources));
+            renderContentSourcesList();
+            updateContentStats();
+        };
+
+        // Delete a content source
+        window.deleteContentSource = function(sourceId) {
+            if (!confirm('Delete this content source?')) return;
+            let sources = JSON.parse(localStorage.getItem('contentSources')) || [];
+            sources = sources.filter(s => s.id !== sourceId);
+            localStorage.setItem('contentSources', JSON.stringify(sources));
+            showNotification('🗑️ Content source deleted', 'success');
+            renderContentSourcesList();
+            updateContentStats();
+        };
+
+        // Test the URL by opening it in a new tab
+        window.testContentSource = function(sourceId) {
+            const sources = JSON.parse(localStorage.getItem('contentSources')) || [];
+            const src = sources.find(s => s.id === sourceId);
+            if (src) {
+                window.open(src.url, '_blank');
+                showNotification(`▶️ Opening "${src.name}" in new tab...`, 'info');
+            }
+        };
+
+        // Update content statistics dynamically
+        function updateContentStats() {
+            const sources = JSON.parse(localStorage.getItem('contentSources')) || [];
+            const totalEl = document.getElementById('statTotalSources');
+            const assignedEl = document.getElementById('statAssignedSources');
+            const unassignedEl = document.getElementById('statUnassignedSources');
+
+            if (totalEl) totalEl.textContent = sources.length;
+            if (assignedEl) assignedEl.textContent = sources.filter(s => s.packageId).length;
+            if (unassignedEl) unassignedEl.textContent = sources.filter(s => !s.packageId).length;
         }
 
         // Settings management functions
@@ -8466,87 +8630,121 @@ Network: Always Streaming → Optimized for instant access`;
         window.showContentSection = function() {
             const mainContent = document.querySelector('.admin-main');
             if (!mainContent) return;
-            
+
+            // ALWAYS reload packages fresh from localStorage to get latest data
+            const livePackages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
+
+            // Build the packages options for the dropdown
+            const packagesOptions = livePackages.length
+                ? livePackages.map(p => `<option value="${p.id}">${p.name} ($${p.price}/${p.duration})</option>`).join('')
+                : '<option value="">-- No packages created yet --</option>';
+
             mainContent.innerHTML = `
                 <div class="dashboard-header">
                     <h1 class="dashboard-title">📺 Content Library</h1>
                     <p class="dashboard-subtitle">Manage your content sources and streaming platforms</p>
                 </div>
-                
+
                 <div class="section-grid">
                     <div class="section-card">
                         <h3 class="section-title">➕ Add Content Source</h3>
                         <div style="display: flex; flex-direction: column; gap: 15px;">
                             <div>
-                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Source Name:</label>
-                                <input type="text" id="contentName" placeholder="Netflix HD" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Source Name: *</label>
+                                <input type="text" id="contentName" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
                             </div>
                             <div>
                                 <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Platform Type:</label>
                                 <select id="contentType" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                    <option value="">-- Select Type --</option>
                                     <option>Movie Streaming</option>
                                     <option>TV Shows</option>
                                     <option>Sports</option>
                                     <option>News</option>
                                     <option>Kids Content</option>
                                     <option>International</option>
+                                    <option>Live TV Channel</option>
                                 </select>
                             </div>
                             <div>
-                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Stream URL:</label>
-                                <input type="url" id="contentURL" placeholder="http://your-stream-url/stream.m3u8" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Stream URL: *</label>
+                                <input type="url" id="contentURL" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
                             </div>
                             <div>
                                 <label style="color: rgba(255,255,255,0.8); font-size: 14px;">Quality:</label>
                                 <select id="contentQuality" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                    <option value="">-- Select Quality --</option>
                                     <option>4K Ultra HD</option>
                                     <option>1080p HD</option>
                                     <option>720p HD</option>
                                     <option>480p SD</option>
                                 </select>
                             </div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px; display: flex; justify-content: space-between; align-items: center;">
+                                    <span>Assign to Package:</span>
+                                    <span id="contentPkgCount" style="font-size: 11px; color: rgba(255,255,255,0.5); font-weight: normal;">Loading...</span>
+                                </label>
+                                <select id="contentPackage" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                    <option value="">-- No Package (add later) --</option>
+                                    ${packagesOptions}
+                                </select>
+                            </div>
                             <button onclick="addContentSource()" class="btn btn-primary" style="padding: 12px 20px;">➕ Add Source</button>
                         </div>
                     </div>
-                    
+
                     <div class="section-card">
                         <h3 class="section-title">📊 Content Statistics</h3>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 20px;">
                             <div style="text-align: center; padding: 20px; background: rgba(33, 150, 243, 0.2); border-radius: 8px;">
-                                <div style="font-size: 2rem; font-weight: bold; color: #2196f3;">400</div>
-                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Total Channels</div>
+                                <div id="statTotalSources" style="font-size: 2rem; font-weight: bold; color: #2196f3;">0</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Total Sources</div>
                             </div>
                             <div style="text-align: center; padding: 20px; background: rgba(76, 175, 80, 0.2); border-radius: 8px;">
-                                <div style="font-size: 2rem; font-weight: bold; color: #4caf50;">380</div>
-                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">HD Channels</div>
+                                <div id="statAssignedSources" style="font-size: 2rem; font-weight: bold; color: #4caf50;">0</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Assigned</div>
                             </div>
                             <div style="text-align: center; padding: 20px; background: rgba(255, 152, 0, 0.2); border-radius: 8px;">
-                                <div style="font-size: 2rem; font-weight: bold; color: #ff9800;">95%</div>
-                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Quality Score</div>
+                                <div id="statUnassignedSources" style="font-size: 2rem; font-weight: bold; color: #ff9800;">0</div>
+                                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Unassigned</div>
                             </div>
                         </div>
                         <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px;">
-                            <h4 style="color: white; margin-bottom: 10px;">📺 Content Categories</h4>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
-                                <span style="color: rgba(255,255,255,0.8);">Sports Channels:</span>
-                                <span style="color: #4caf50; font-weight: 600;">85</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
-                                <span style="color: rgba(255,255,255,0.8);">Movies:</span>
-                                <span style="color: #2196f3; font-weight: 600;">120</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
-                                <span style="color: rgba(255,255,255,0.8);">TV Shows:</span>
-                                <span style="color: #ff9800; font-weight: 600;">95</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                                <span style="color: rgba(255,255,255,0.8);">International:</span>
-                                <span style="color: #9c27b0; font-weight: 100;">100</span>
+                            <h4 style="color: white; margin-bottom: 10px;">💡 Quick Tips</h4>
+                            <div style="font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.7;">
+                                • Use <strong style="color: #4caf50;">HLS</strong> URLs ending in <code style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 3px;">.m3u8</code> for live channels<br>
+                                • Use <strong style="color: #4caf50;">MP4</strong> URLs for video on demand content<br>
+                                • Assign a package now or later from the list below
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Saved Content Sources List -->
+                <div class="section-card" style="margin-top: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 class="section-title" style="margin: 0;">📋 Saved Content Sources</h3>
+                        <button onclick="renderContentSourcesList(); updateContentStats();" class="btn btn-info" style="padding: 6px 12px; font-size: 12px;">🔄 Refresh</button>
+                    </div>
+                    <div id="contentSourcesList">
+                        <!-- Populated dynamically by renderContentSourcesList() -->
+                    </div>
+                </div>
             `;
+
+            // Render the saved sources list and statistics
+            renderContentSourcesList();
+            updateContentStats();
+
+            // Show package count next to dropdown label
+            const pkgCountEl = document.getElementById('contentPkgCount');
+            if (pkgCountEl) {
+                pkgCountEl.textContent = livePackages.length > 0
+                    ? `${livePackages.length} package(s) available`
+                    : 'No packages found - create one in Packages & Pricing';
+                pkgCountEl.style.color = livePackages.length > 0 ? '#4caf50' : '#ff9800';
+            }
         };
 
         // Initialize system
@@ -8584,31 +8782,88 @@ Network: Always Streaming → Optimized for instant access`;
             // Initialize with your actual Plex library structure if none exist
             const existingLibraries = localStorage.getItem('plexLibraries');
             if (!existingLibraries) {
-                // Initialize with your actual folders that exist in Plex
+                // Initialize with your actual folders that exist in Plex (including Series)
                 const actualLibraries = [
-                    { 
-                        id: 'movies_folder', 
-                        name: 'Movies', 
-                        type: 'movie', 
-                        count: 0, 
+                    {
+                        id: 'movies_folder',
+                        name: 'Movies',
+                        type: 'movie',
+                        count: 0,
                         isAdult: false,
                         fromSetup: 'Your Plex Movies folder'
                     },
-                    { 
-                        id: 'adult_folder', 
-                        name: 'Adult', 
-                        type: 'movie', 
-                        count: 0, 
+                    {
+                        id: 'adult_folder',
+                        name: 'Adult',
+                        type: 'movie',
+                        count: 0,
                         isAdult: true,
                         fromSetup: 'Your Plex Adult folder'
+                    },
+                    {
+                        id: 'series_folder',
+                        name: 'Series',
+                        type: 'series',
+                        count: 0,
+                        isAdult: false,
+                        fromSetup: 'Your Plex Series folder'
                     }
                 ];
                 localStorage.setItem('plexLibraries', JSON.stringify(actualLibraries));
-                console.log('📁 Initialized with your Movies and Adult folders from Plex');
+                console.log('📁 Initialized with Movies, Adult, and Series folders from Plex');
             }
+
+            // Auto-map Series package to Series library if mappings don't exist
+            setTimeout(() => {
+                const mappings = JSON.parse(localStorage.getItem('packageContentMappings') || '{}');
+                const allPackages = JSON.parse(localStorage.getItem('adminPackages')) || [];
+
+                allPackages.forEach(pkg => {
+                    if (!mappings[pkg.id]) {
+                        const pkgName = pkg.name.toLowerCase();
+                        const isSeries = pkgName.includes('series');
+                        const isAdult = pkgName.includes('adult') || pkgName.includes('xxx');
+                        // Always streaming: news, sport, basic (live TV channels)
+                        const isLive = pkgName.includes('news') ||
+                                       pkgName.includes('sport') ||
+                                       pkgName === 'basic' ||
+                                       pkg.isLive === true;
+
+                        const mapping = {
+                            name: pkg.name,
+                            contentMapping: {
+                                name: pkg.name,
+                                libraries: isSeries ? ['series_folder']
+                                          : isAdult ? ['adult_folder']
+                                          : isLive ? ['movies_folder']
+                                          : ['movies_folder'],
+                                channels: [],
+                                features: pkg.features ? pkg.features.split(',').map(f => f.trim()) : [],
+                                accessLevel: pkg.isAdult ? 4 : 1,
+                                passwordProtected: pkg.isAdult || false,
+                                type: isLive ? 'live_tv' : 'vod',
+                                streamingMode: isLive ? 'always_streaming' : 'on_demand',
+                                source: isLive ? 'satellite_qam_udp' : 'pc_library_plex'
+                            },
+                            autoGenerated: true,
+                            createdAt: new Date().toISOString()
+                        };
+                        mappings[pkg.id] = mapping;
+                        console.log('🔗 Auto-mapped: ' + pkg.name + ' → ' + (isLive ? 'always_streaming' : 'on_demand'));
+                    }
+                });
+
+                localStorage.setItem('packageContentMappings', JSON.stringify(mappings));
+                console.log('✅ Package mappings auto-fixed!');
+            }, 500);
             
             // Load packages from localStorage
             packages = JSON.parse(localStorage.getItem('adminPackages')) || JSON.parse(localStorage.getItem('packages')) || [];
+
+            // Sync packages to window scope for all sections
+            window.packages = packages;
+
+            console.log('📦 Loaded ' + packages.length + ' packages from localStorage');
             
             // Load GitHub settings from localStorage
             const savedGithubUsername = localStorage.getItem('githubUsername');
