@@ -4155,41 +4155,42 @@
                 } catch(e) { console.error('Error parsing cached live channels:', e); }
             }
             
-            // Load Sports Plus and Sports from adminPackages
+            // Load Sports Plus and Sports from Content Library (contentSources)
             try {
+                const contentSources = JSON.parse(localStorage.getItem('contentSources') || '[]');
                 const adminPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
                 
-                // Sports Plus channels (from admin - Nimble streams)
-                const sportsPlusChannels = adminPackages.filter(pkg => pkg.type === 'sports_plus' || pkg.category === 'sports-plus' || (pkg.packageName && pkg.packageName.toLowerCase().includes('sports plus')));
+                // Sports Plus channels (from Content Library)
+                const sportsPlusChannels = contentSources.filter(src => src.packageId && src.packageId.toLowerCase().includes('sports plus'));
                 if (!contentData.sportsPlus) contentData.sportsPlus = { name: 'Sports Plus', content: [] };
-                contentData.sportsPlus.content = sportsPlusChannels.map(pkg => ({
-                    id: pkg.id || pkg.packageId || 'sportsplus_' + Math.random().toString(36).substr(2, 9),
-                    name: pkg.packageName || pkg.name || 'Unknown Sports Plus Channel',
-                    description: pkg.packageDescription || pkg.description || '',
-                    type: 'hls',
-                    url: pkg.url || pkg.streamUrl || '',
-                    package: pkg.packageName || '',
-                    packageId: pkg.packageId || pkg.id,
+                contentData.sportsPlus.content = sportsPlusChannels.map(src => ({
+                    id: src.id || 'sportsplus_' + Math.random().toString(36).substr(2, 9),
+                    name: src.name || 'Unknown Sports Plus Channel',
+                    description: src.description || '',
+                    type: src.type || 'hls',
+                    url: src.url || '',
+                    package: src.packageId || '',
+                    packageId: src.packageId,
                     category: 'sports-plus'
                 }));
-                console.log(`📦 Loaded ${sportsPlusChannels.length} Sports Plus channels from adminPackages`);
+                console.log(`📦 Loaded ${sportsPlusChannels.length} Sports Plus channels from contentSources`);
                 
-                // Sports channels (separate from Sports Plus)
-                const sportsChannels = adminPackages.filter(pkg => pkg.type === 'live_sports' || pkg.category === 'sports' || (pkg.packageName && pkg.packageName.toLowerCase().includes('sport') && !pkg.packageName.toLowerCase().includes('plus')));
+                // Sports channels (from Content Library)
+                const sportsChannels = contentSources.filter(src => src.packageId && src.packageId.toLowerCase().includes('sports') && !src.packageId.toLowerCase().includes('plus'));
                 if (!contentData.sports) contentData.sports = { name: 'Sports', content: [] };
-                contentData.sports.content = sportsChannels.map(pkg => ({
-                    id: pkg.id || pkg.packageId || 'sports_' + Math.random().toString(36).substr(2, 9),
-                    name: pkg.packageName || pkg.name || 'Unknown Sports Channel',
-                    description: pkg.packageDescription || pkg.description || '',
-                    type: 'hls',
-                    url: pkg.url || pkg.streamUrl || '',
-                    package: pkg.packageName || '',
-                    packageId: pkg.packageId || pkg.id,
+                contentData.sports.content = sportsChannels.map(src => ({
+                    id: src.id || 'sports_' + Math.random().toString(36).substr(2, 9),
+                    name: src.name || 'Unknown Sports Channel',
+                    description: src.description || '',
+                    type: src.type || 'hls',
+                    url: src.url || '',
+                    package: src.packageId || '',
+                    packageId: src.packageId,
                     category: 'sports'
                 }));
-                console.log(`📦 Loaded ${sportsChannels.length} Sports channels from adminPackages`);
+                console.log(`📦 Loaded ${sportsChannels.length} Sports channels from contentSources`);
                 
-            } catch(e) { console.error('Error loading Arabic/Sports Plus:', e); }
+            } catch(e) { console.error('Error loading Sports channels:', e); }
             
             // Update tab counts immediately
             const moviesTabUpdate = document.querySelector('.source-tab[data-source="movies"]');
