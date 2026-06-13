@@ -3785,7 +3785,10 @@
                 const plexMoviesCache = JSON.parse(localStorage.getItem('plexMoviesCache') || '[]');
                 const plexAdultCache = JSON.parse(localStorage.getItem('plexAdultCache') || '[]');
                 const plexArabicCache = JSON.parse(localStorage.getItem('plexArabicCache') || '[]');
-                
+                const plexSeriesCache = JSON.parse(localStorage.getItem('plexSeriesCache') || '[]');
+                // Get Content Library channels (sports, etc.)
+                const contentSources = JSON.parse(localStorage.getItem('contentSources') || '[]');
+
                 const exportData = {
                     version: '1.0',
                     exportDate: new Date().toISOString(),
@@ -3802,10 +3805,14 @@
                     plexMoviesSection: localStorage.getItem('plexMoviesSection') || '',
                     plexAdultSection: localStorage.getItem('plexAdultSection') || '',
                     plexArabicSection: localStorage.getItem('plexArabicSection') || '',
+                    plexSeriesSection: localStorage.getItem('plexSeriesSection') || '',
                     // Include Plex cache so movies appear on second device before login
                     plexMoviesCache: plexMoviesCache,
                     plexAdultCache: plexAdultCache,
                     plexArabicCache: plexArabicCache,
+                    plexSeriesCache: plexSeriesCache,
+                    // Include Content Library channels (sports, sports plus, etc.)
+                    contentSources: contentSources,
                     tvSyncUrl: `https://raw.githubusercontent.com/${username}/${repo}/main/admin_data.json`,
                     githubUsername: username,
                     githubRepo: repo
