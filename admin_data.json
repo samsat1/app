@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-13T01:58:45.732Z",
+  "exportDate": "2026-06-13T02:02:43.356Z",
   "customers": [
     {
       "id": "CUST_1781243847099",
@@ -93,17 +93,16 @@
       "thirdTVPrice": 7,
       "sportsPrice": 7,
       "moviesPrice": 0,
-      "seriesPrice": -1,
+      "seriesPrice": 0,
       "isAdult": "",
       "adultPackagePrice": 0,
       "approved": true,
-      "approvedDate": "2026-06-13T01:05:54.978Z",
+      "approvedDate": "2026-06-13T02:02:01.863Z",
       "approvedBy": "admin",
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-06-13T01:05:54.978Z",
-      "id": "PKG_1781312754978"
+      "createdAt": "2026-06-13T02:02:01.863Z"
     },
     {
       "name": "Sports Plus",
@@ -118,13 +117,12 @@
       "isAdult": "",
       "adultPackagePrice": 0,
       "approved": true,
-      "approvedDate": "2026-06-13T01:06:32.553Z",
+      "approvedDate": "2026-06-13T02:02:15.334Z",
       "approvedBy": "admin",
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-06-13T01:06:32.553Z",
-      "id": "PKG_1781312792553"
+      "createdAt": "2026-06-13T02:02:15.334Z"
     },
     {
       "name": "Arabic",
@@ -319,8 +317,8 @@
       "adult": false,
       "arabic": false,
       "type": "mp4",
-      "thumb": "http://192.168.1.100:32400/library/metadata/2847/thumb/1780955884?X-Plex-Token=htzjxGKbK2Pc6qr7UCfH",
-      "art": "http://192.168.1.100:32400/library/metadata/2847/art/1780955884?X-Plex-Token=htzjxGKbK2Pc6qr7UCfH",
+      "thumb": "http://192.168.1.100:32400/library/metadata/2847/thumb/1781315996?X-Plex-Token=htzjxGKbK2Pc6qr7UCfH",
+      "art": "http://192.168.1.100:32400/library/metadata/2847/art/1781315996?X-Plex-Token=htzjxGKbK2Pc6qr7UCfH",
       "url": "http://192.168.1.100:32400/library/parts/4845/1780025669/file.mp4?X-Plex-Token=htzjxGKbK2Pc6qr7UCfH",
       "streamingMode": "on-demand",
       "year": 2026,
@@ -337,8 +335,8 @@
       "adult": false,
       "arabic": false,
       "type": "mp4",
-      "thumb": "http://192.168.1.100:32400/library/metadata/2851/thumb/1780956749?X-Plex-Token=htzjxGKbK2Pc6qr7UCfH",
-      "art": "http://192.168.1.100:32400/library/metadata/2851/art/1780956749?X-Plex-Token=htzjxGKbK2Pc6qr7UCfH",
+      "thumb": "http://192.168.1.100:32400/library/metadata/2851/thumb/1781315997?X-Plex-Token=htzjxGKbK2Pc6qr7UCfH",
+      "art": "http://192.168.1.100:32400/library/metadata/2851/art/1781315997?X-Plex-Token=htzjxGKbK2Pc6qr7UCfH",
       "url": "http://192.168.1.100:32400/library/parts/4849/1780025735/file.mp4?X-Plex-Token=htzjxGKbK2Pc6qr7UCfH",
       "streamingMode": "on-demand",
       "year": 2026,
@@ -427,8 +425,8 @@
       "adult": false,
       "arabic": false,
       "type": "mp4",
-      "thumb": "http://192.168.1.100:32400/library/metadata/2879/thumb/1780959953?X-Plex-Token=htzjxGKbK2Pc6qr7UCfH",
-      "art": "http://192.168.1.100:32400/library/metadata/2879/art/1780959953?X-Plex-Token=htzjxGKbK2Pc6qr7UCfH",
+      "thumb": "http://192.168.1.100:32400/library/metadata/2879/thumb/1781315998?X-Plex-Token=htzjxGKbK2Pc6qr7UCfH",
+      "art": "http://192.168.1.100:32400/library/metadata/2879/art/1781315998?X-Plex-Token=htzjxGKbK2Pc6qr7UCfH",
       "url": "http://192.168.1.100:32400/library/parts/4881/1780025539/file.mp4?X-Plex-Token=htzjxGKbK2Pc6qr7UCfH",
       "streamingMode": "on-demand",
       "year": 2026,
