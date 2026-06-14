@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-14T01:04:38.407Z",
+  "exportDate": "2026-06-14T01:09:01.337Z",
   "customers": [
     {
       "id": "CUST_1781243847099",
@@ -102,7 +102,8 @@
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-06-13T02:02:01.863Z"
+      "createdAt": "2026-06-13T02:02:01.863Z",
+      "id": "PKG_1781399297381_ds1t8"
     },
     {
       "name": "Sports Plus",
@@ -122,7 +123,8 @@
       "rejectedDate": null,
       "rejectedBy": null,
       "rejectionReason": null,
-      "createdAt": "2026-06-13T02:02:15.334Z"
+      "createdAt": "2026-06-13T02:02:15.334Z",
+      "id": "PKG_1781399297381_9a2u6"
     },
     {
       "name": "Arabic",
@@ -9949,8 +9951,8 @@
       "type": "Sports",
       "url": "http://192.168.1.100:8080/ch1/live.m3u8",
       "quality": "1080p HD",
-      "packageId": "undefined",
-      "packageName": "",
+      "packageId": "PKG_1781399297381_9a2u6",
+      "packageName": "Sports Plus",
       "addedAt": "2026-06-14T00:58:13.297Z",
       "active": true
     },
@@ -9960,8 +9962,8 @@
       "type": "Sports",
       "url": "http://192.168.1.100:8080/ch2/live.m3u8",
       "quality": "1080p HD",
-      "packageId": "undefined",
-      "packageName": "",
+      "packageId": "PKG_1781399297381_ds1t8",
+      "packageName": "Sports",
       "addedAt": "2026-06-14T00:59:36.894Z",
       "active": true
     }
