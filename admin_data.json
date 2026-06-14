@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-13T02:02:43.356Z",
+  "exportDate": "2026-06-14T01:01:42.000Z",
   "customers": [
     {
       "id": "CUST_1781243847099",
@@ -306,6 +306,7 @@
   "plexMoviesSection": "5",
   "plexAdultSection": "4",
   "plexArabicSection": "7",
+  "plexSeriesSection": "",
   "plexMoviesCache": [
     {
       "id": "plex_5_2847",
@@ -9642,6 +9643,31 @@
       "streamingMode": "on-demand",
       "duration": 32647,
       "ratingKey": "5070"
+    }
+  ],
+  "plexSeriesCache": [],
+  "contentSources": [
+    {
+      "id": "src_1781398693297_85nz6",
+      "name": "Bein Max 1",
+      "type": "Sports",
+      "url": "http://192.168.1.100:8080/ch1/live.m3u8",
+      "quality": "1080p HD",
+      "packageId": "undefined",
+      "packageName": "",
+      "addedAt": "2026-06-14T00:58:13.297Z",
+      "active": true
+    },
+    {
+      "id": "src_1781398776894_6wimm",
+      "name": "Bein Max 2",
+      "type": "Sports",
+      "url": "http://192.168.1.100:8080/ch2/live.m3u8",
+      "quality": "1080p HD",
+      "packageId": "undefined",
+      "packageName": "",
+      "addedAt": "2026-06-14T00:59:36.894Z",
+      "active": true
     }
   ],
   "tvSyncUrl": "https://raw.githubusercontent.com/samsat1/app/main/admin_data.json",
