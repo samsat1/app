@@ -1,8 +1,46 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-14T23:39:54.123Z",
-  "customers": [],
-  "clientAuthCustomers": [],
+  "exportDate": "2026-06-15T01:09:11.739Z",
+  "customers": [
+    {
+      "id": "CUST_1781485581340",
+      "username": "sam222",
+      "name": "sam",
+      "phone": "8787875",
+      "plan": "Basic TV Package, 2nd TV, 3rd TV",
+      "addons": "Sports Package, Sports Plus Package, Arabic Package, Movies Package, Series Package, Adult Content Package",
+      "monthlyPrice": 67.5,
+      "totalPrice": 810,
+      "expiryDate": "2027-06-15",
+      "password": "222222",
+      "macAddress": "",
+      "adultPassword": "112233",
+      "status": "active",
+      "duration": "12 Months",
+      "durationMonths": 12,
+      "createdAt": "2026-06-15T01:06:21.340Z"
+    }
+  ],
+  "clientAuthCustomers": [
+    {
+      "id": "CUST_1781485581340",
+      "username": "sam222",
+      "name": "sam",
+      "phone": "8787875",
+      "plan": "Basic TV Package, 2nd TV, 3rd TV",
+      "addons": "Sports Package, Sports Plus Package, Arabic Package, Movies Package, Series Package, Adult Content Package",
+      "monthlyPrice": 67.5,
+      "totalPrice": 810,
+      "expiryDate": "2027-06-15",
+      "password": "222222",
+      "macAddress": "",
+      "adultPassword": "112233",
+      "status": "active",
+      "duration": "12 Months",
+      "durationMonths": 12,
+      "createdAt": "2026-06-15T01:06:21.340Z"
+    }
+  ],
   "packages": [
     {
       "name": "Basic",
@@ -9907,25 +9945,25 @@
   ],
   "contentSources": [
     {
-      "id": "src_1781480178560_f467i",
-      "name": "Bein MAX2",
-      "type": "Sports",
-      "url": "http://192.168.1.100:8080/ch2/live.m3u8",
-      "quality": "1080p HD",
-      "packageId": "PKG_1781479894452",
-      "packageName": "Sports Plus",
-      "addedAt": "2026-06-14T23:36:18.560Z",
-      "active": true
-    },
-    {
-      "id": "src_1781480220942_0n00h",
-      "name": "Bein MAX1",
+      "id": "src_1781485694843_grxk3",
+      "name": "MAX 1",
       "type": "Sports",
       "url": "http://192.168.1.100:8080/ch1/live.m3u8",
       "quality": "1080p HD",
+      "packageId": "PKG_1781479894452",
+      "packageName": "Sports Plus",
+      "addedAt": "2026-06-15T01:08:14.843Z",
+      "active": true
+    },
+    {
+      "id": "src_1781485743859_21tpu",
+      "name": "MAX 2",
+      "type": "Sports",
+      "url": "http://192.168.1.100:8080/ch2/live.m3u8",
+      "quality": "1080p HD",
       "packageId": "PKG_1781479853005",
       "packageName": "Sports",
-      "addedAt": "2026-06-14T23:37:00.942Z",
+      "addedAt": "2026-06-15T01:09:03.859Z",
       "active": true
     }
   ],
