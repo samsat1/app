@@ -6193,6 +6193,11 @@
             
             let filteredContent = contentData[currentSource].content;
             
+            // Debug: log filter context for Sports / Sports Plus
+            if (currentSource === 'sports' || currentSource === 'sportsPlus') {
+                console.log(`🔍 [Filter] source=${currentSource} | contentArray.length=${filteredContent.length} | customerAddons='${customerAddons}' | accessiblePackageIds=`, accessiblePackageIds);
+            }
+
             // Filter content based on subscription access
             filteredContent = filteredContent.filter(item => {
                 // Check if this is Plex content (has category field set)
@@ -6235,22 +6240,40 @@
                     return s;
                 };
                 const pkgId = normalizePid(item.packageId) || normalizePid(item.requiresPackage);
+
+                // ✅ Helper: determine if this item is Sports / Sports Plus (by type or package name)
+                const itemCatLower = (item.category || '').toLowerCase();
+                const itemTypeLower = (item.type || '').toLowerCase();
+                const itemPkgLower = (item.packageName || item.package || '').toLowerCase();
+                const isSportsPlusItem =
+                    itemPkgLower.includes('sports plus') || itemPkgLower.includes('sportsplus') ||
+                    itemCatLower === 'sports-plus' || itemCatLower === 'sportsplus' ||
+                    itemTypeLower === 'sports plus' || itemTypeLower === 'sportsplus';
+                const isSportsItem =
+                    (itemPkgLower.includes('sport') || itemCatLower === 'sports' || itemTypeLower === 'sports') &&
+                    !isSportsPlusItem;
+
+                // ✅ Helper: does the customer have the matching addon for Sports / Sports Plus?
+                const hasSportsPlusAddon =
+                    customerAddons.includes('sports plus') ||
+                    customerAddons.includes('sportsplus') ||
+                    customerAddons.includes('sports');
+                const hasSportsAddon = customerAddons.includes('sports');
+
                 if (pkgId) {
-                    return accessiblePackageIds.includes(pkgId);
+                    // 1) Primary check: customer's accessible packages include the item's packageId
+                    if (accessiblePackageIds.includes(pkgId)) return true;
+                    // 2) Fallback for Sports / Sports Plus content: also allow if the customer has the matching addon
+                    if (isSportsPlusItem && hasSportsPlusAddon) return true;
+                    if (isSportsItem && hasSportsAddon) return true;
+                    // 3) No match at all
+                    return false;
                 }
 
                 // No valid package id (e.g. content added without selecting a package) -
                 // fall back to addon-based access for Sports / Sports Plus content.
-                const itemCatLower = (item.category || '').toLowerCase();
-                const itemPkgLower = (item.package || '').toLowerCase();
-                if (itemCatLower === 'sports-plus' || itemPkgLower.includes('sports plus')) {
-                    return customerAddons.includes('sports plus') ||
-                           customerAddons.includes('sportsplus') ||
-                           customerAddons.includes('sports');
-                }
-                if (itemCatLower === 'sports' || (itemPkgLower.includes('sport') && !itemPkgLower.includes('plus'))) {
-                    return customerAddons.includes('sports');
-                }
+                if (isSportsPlusItem) return hasSportsPlusAddon;
+                if (isSportsItem) return hasSportsAddon;
 
                 return true;
             });
