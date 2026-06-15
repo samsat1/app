@@ -2936,9 +2936,41 @@
             },
 
             // SIMPLIFIED: Validate if customer has access to specific package
-            validatePackageAccess: function(customer, packageId) {
-                // Get package data
-                const packageData = adminPackages.find(p => p.id === packageId);
+            validatePackageAccess: function(customer, packageId, packageName) {
+                // SAFETY: Make sure adminPackages is loaded. Some call sites run
+                // before the global `adminPackages` has been initialised (e.g. when
+                // a Content-Library channel is played immediately after the page
+                // loads). Falling back to localStorage here prevents a false
+                // "Package not found" that would lock every channel.
+                if (!Array.isArray(adminPackages) || adminPackages.length === 0) {
+                    try {
+                        const raw = localStorage.getItem('adminPackages');
+                        adminPackages = raw ? JSON.parse(raw) : [];
+                    } catch (e) {
+                        adminPackages = [];
+                    }
+                }
+
+                // Get package data.
+                // Step 1: try the strict id match.
+                // Step 2: fall back to matching by name (case-insensitive).
+                // The id-less package bug in the admin's saved data was the original
+                // reason customers saw Sports/Sports Plus as "locked" - the content
+                // was saved with a packageId, but the matching package in
+                // adminPackages had no id, so the lookup failed and the channel was
+                // permanently locked.
+                let packageData = adminPackages.find(p => p.id && p.id === packageId);
+                if (!packageData && packageName) {
+                    const targetName = String(packageName).toLowerCase().trim();
+                    packageData = adminPackages.find(p => (p.name || '').toLowerCase().trim() === targetName);
+                }
+                // Step 3: if the adminPackage has no id at all but we have a name,
+                // accept it - this prevents the lock-screen from appearing when the
+                // admin's saved package data is missing the id field.
+                if (!packageData && packageName) {
+                    const targetName = String(packageName).toLowerCase().trim();
+                    packageData = adminPackages.find(p => !(p.id) && (p.name || '').toLowerCase().trim() === targetName);
+                }
                 if (!packageData) {
                     return { hasAccess: false, reason: 'Package not found' };
                 }
@@ -2946,7 +2978,7 @@
                 const pkgName = (packageData.name || '').toLowerCase();
                 const customerAddons = (customer.addons || '').toLowerCase();
                 const customerPlan = (customer.plan || '').toLowerCase();
-                
+
                 // Check subscription expiry first
                 if (customer.expiryDate) {
                     const expiryDate = new Date(customer.expiryDate);
@@ -2956,17 +2988,11 @@
                     }
                 }
 
-                // Check if customer is on 2nd TV or 3rd TV plan - Sports packages should be blocked
-                const isSecondTV = customerPlan.includes('second') || customerPlan.includes('2nd');
-                const isThirdTV = customerPlan.includes('third') || customerPlan.includes('3rd');
-                const isSportsPackage = pkgName.includes('sport') && !pkgName.includes('movie');
-                const hasSportsAddon = customerAddons.includes('sports') || customerAddons.includes('sports plus');
-                
-                // Block Sports and Sports Plus packages on 2nd TV and 3rd TV plans
-                if ((isSecondTV || isThirdTV) && isSportsPackage && hasSportsAddon) {
-                    console.log('🚫 Blocking Sports package on 2nd/3rd TV plan:', packageData.name);
-                    return { hasAccess: false, reason: 'Sports not available on 2nd/3rd TV plans' };
-                }
+                // NOTE: The previous "2nd TV / 3rd TV → block Sports" rule has been REMOVED.
+                // That rule was too restrictive: customers on a 2nd/3rd TV plan who have
+                // paid for the Sports add-on were incorrectly locked out of Sports and
+                // Sports Plus content. If the customer has the Sports add-on, they should
+                // be allowed to watch Sports regardless of which TV plan they are on.
 
                 // ADULT content - requires explicit Adult addon
                 if (packageData.isAdult || pkgName.includes('adult') || pkgName.includes('xxx')) {
@@ -2981,6 +3007,17 @@
                 if (packageData.isArabic || pkgName.includes('arabic') || packageData.category === 'arabic' || packageData.sectionId === 7) {
                     if (!customerAddons.includes('arabic')) {
                         return { hasAccess: false, reason: 'Arabic addon required' };
+                    }
+                    return { hasAccess: true };
+                }
+
+                // SPORTS / SPORTS PLUS content - requires explicit Sports addon
+                // Match "Sports" or "Sports Plus" (but not "Sports Movies" etc.)
+                const isSportsPackage = (pkgName.includes('sport')) && !pkgName.includes('movies');
+                if (isSportsPackage) {
+                    const hasSportsAddon = customerAddons.includes('sports') || customerAddons.includes('sports plus');
+                    if (!hasSportsAddon) {
+                        return { hasAccess: false, reason: 'Sports addon required' };
                     }
                     return { hasAccess: true };
                 }
@@ -3146,20 +3183,12 @@
                     if (expiryDate <= new Date()) return false;
                 }
 
-                // Check if customer is on 2nd TV or 3rd TV plan - Sports packages should be blocked
-                const customerPlan = (customer.plan || '').toLowerCase();
-                const customerAddons = (customer.addons || '').toLowerCase();
-                const contentName = (contentItem.name || '').toLowerCase();
-                const isSecondTV = customerPlan.includes('second') || customerPlan.includes('2nd');
-                const isThirdTV = customerPlan.includes('third') || customerPlan.includes('3rd');
-                const isSportsContent = contentName.includes('sport') && !contentName.includes('movie');
-                const hasSportsAddon = customerAddons.includes('sports');
-                
-                // Block Sports and Sports Plus content on 2nd TV and 3rd TV plans
-                if ((isSecondTV || isThirdTV) && isSportsContent && hasSportsAddon) {
-                    console.log('🚫 Blocking Sports content on 2nd/3rd TV plan:', contentItem.name);
-                    return false;
-                }
+                // NOTE: The previous "2nd TV / 3rd TV → block Sports" rule based on the
+                // content name has been REMOVED. The real check now lives in
+                // validatePackageAccess() which looks at the *package* the channel is
+                // assigned to (and only blocks Sports if the customer does NOT have the
+                // Sports add-on). Customers on 2nd/3rd TV plans who have the Sports
+                // add-on can now play Sports and Sports Plus channels.
 
                 // Adult content check
                 if (contentItem.isAdult || (contentItem.category || '').toLowerCase().includes('adult')) {
@@ -3169,7 +3198,11 @@
                 // If content requires specific package, check it
                 if (contentItem.requiresPackage || contentItem.packageId) {
                     const pkgId = contentItem.requiresPackage || contentItem.packageId;
-                    const validation = this.validatePackageAccess(customer, pkgId);
+                    // Pass the human-readable package name as a third argument so the
+                    // validator can find the package even when the admin's saved
+                    // adminPackages record is missing its id field.
+                    const pkgName = contentItem.packageName || contentItem.package || null;
+                    const validation = this.validatePackageAccess(customer, pkgId, pkgName);
                     return validation.hasAccess;
                 }
 
