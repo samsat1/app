@@ -2863,9 +2863,11 @@
         
         // Content Data - defined early to prevent ReferenceError
         const contentData = {
-            live: { name: 'Live TV', content: [], streamingMode: 'always-streaming' },
+            // Default streaming modes: only News (inside Live TV), Sports, and Sports Plus
+            // are always-streaming. Everything else is on-demand to keep network traffic low.
+            live: { name: 'Live TV', content: [], streamingMode: 'on-demand' },
             'sports-live': { name: 'Sports TV', content: [], streamingMode: 'always-streaming' },
-            'livetv-addon': { name: 'TV Addon', content: [], streamingMode: 'always-streaming' },
+            'livetv-addon': { name: 'TV Addon', content: [], streamingMode: 'on-demand' },
             vod: { name: 'Video on Demand', content: [], streamingMode: 'on-demand' },
             series: { name: 'TV Series', content: [], streamingMode: 'on-demand' },
             movies: { name: 'Movies', content: [], streamingMode: 'on-demand' },
@@ -2873,7 +2875,10 @@
             addon: { name: 'Add-on Packages', content: [], streamingMode: 'mixed' },
             adult: { name: 'Adult Content', content: [], streamingMode: 'on-demand' },
             arabic: { name: 'Arabic Content', content: [], streamingMode: 'on-demand' },
-            internet: { name: 'Internet Videos', content: [], streamingMode: 'on-demand' }
+            internet: { name: 'Internet Videos', content: [], streamingMode: 'on-demand' },
+            news: { name: 'News', content: [], streamingMode: 'always-streaming' },
+            sports: { name: 'Sports', content: [], streamingMode: 'always-streaming' },
+            sportsPlus: { name: 'Sports Plus', content: [], streamingMode: 'always-streaming' }
         };
         
         let isFullscreenMode = false; // Track if VLC fullscreen is active
@@ -3928,50 +3933,64 @@
         // Get streaming mode for content
         function getContentStreamingMode(content) {
             if (!content) return 'on-demand';
-            
+
             // Plex content (has sectionId) should always stream immediately
             if (content.sectionId) {
                 return 'always-streaming';
             }
-            
+
+            // ✅ Check content name / category FIRST so News channels inside the
+            // Live TV source are correctly identified as always-streaming
+            // (otherwise the source-level `streamingMode: 'always-streaming'`
+            // would force ALL Live TV channels to auto-stream).
+            const contentName = (content.name || '').toLowerCase();
+            const contentDescription = (content.description || '').toLowerCase();
+            const category = (content.category || '').toLowerCase();
+
+            // ✅ ALWAYS-STREAMING categories: News, Sports, Sports Plus
+            // These are preloaded to keep the stream warm and reduce buffer time.
+            // Everything else is on-demand to reduce network traffic.
+            const isNewsContent =
+                contentName.includes('news') ||
+                contentDescription.includes('news') ||
+                category === 'news' ||
+                category === 'news-tv';
+            const isSportsContent =
+                contentName.includes('sport') ||
+                contentDescription.includes('sport') ||
+                category === 'sports' ||
+                category === 'sports-plus' ||
+                category === 'sportsplus' ||
+                category === 'sports-live' ||
+                category === 'sport';
+
+            if (isNewsContent || isSportsContent) {
+                return 'always-streaming';
+            }
+
             // Determine streaming mode based on content type and source
             if (content.streamingMode && content.streamingMode !== 'on-demand') {
                 return content.streamingMode; // Use explicitly set mode (except on-demand for movies)
             }
-            
-            // Plex movies are always-streaming
-            if (content.type === 'movies' || content.type === 'mp4') {
-                return 'always-streaming';
-            }
-            
-            // Auto-detect based on content characteristics (with safety checks)
-            const contentName = (content.name || '').toLowerCase();
-            const contentDescription = (content.description || '').toLowerCase();
-            const category = (content.category || '').toLowerCase();
-            
-            // Always-streaming content: News, Sports, Movies, Live TV
-            const alwaysStreamingKeywords = ['news', 'sport', 'movie', 'cinema', 'film', 'live'];
-            const isAlwaysStreaming = alwaysStreamingKeywords.some(keyword => 
-                contentName.includes(keyword) || 
-                contentDescription.includes(keyword) || 
-                category.includes(keyword)
-            );
-            
-            if (isAlwaysStreaming) {
-                return 'always-streaming';
-            }
-            
-            // Check source-based streaming mode
+
+            // Check source-based streaming mode.
+            // By default everything is on-demand EXCEPT News/Sports/Sports Plus sources.
             const sourceStreamingModes = {
-                'live': 'always-streaming',
-                'movies': 'always-streaming',
+                'live': 'on-demand',
+                'movies': 'on-demand',
                 'vod': 'on-demand',
                 'basic': 'on-demand',
                 'addon': 'on-demand',
                 'adult': 'on-demand',
-                'internet': 'on-demand'
+                'arabic': 'on-demand',
+                'series': 'on-demand',
+                'internet': 'on-demand',
+                'news': 'always-streaming',
+                'sports': 'always-streaming',
+                'sportsPlus': 'always-streaming',
+                'sports-live': 'always-streaming'
             };
-            
+
             return sourceStreamingModes[currentSource] || 'on-demand';
         }
 
@@ -4513,11 +4532,16 @@
                 });
                 console.log('🔍 DEBUG tvLive matches:', tvLiveChannels.length);
 
-                if (!contentData.live) contentData.live = { name: 'Live TV', content: [], streamingMode: 'always-streaming' };
+                if (!contentData.live) contentData.live = { name: 'Live TV', content: [], streamingMode: 'on-demand' };
 
                 // Merge: do not overwrite the cached live channels that were already loaded
                 // (e.g. from the satellite/QAM pipeline). Only ADD the content-library HLS
                 // streams that were not already present.
+                // NOTE: do NOT set `streamingMode: 'always-streaming'` on individual items.
+                // The streaming mode is now determined per-item by `getContentStreamingMode()`
+                // based on whether the channel name/category matches News or Sports.
+                // This way ONLY News channels inside Live TV are always-streaming; the rest
+                // are on-demand to keep network traffic low.
                 const existingUrls = new Set((contentData.live.content || []).map(c => c.url));
                 const newLiveItems = tvLiveChannels
                     .filter(src => !existingUrls.has(src.url || src.streamUrl || ''))
@@ -4529,8 +4553,7 @@
                         url: src.url || src.streamUrl || '',
                         package: src.packageName || src.packageId || src.package || 'basic',
                         packageId: src.packageId || src.package || 'basic',
-                        category: 'live-tv',
-                        streamingMode: 'always-streaming'
+                        category: (src.category || 'live-tv').toLowerCase()
                     }));
                 contentData.live.content = (contentData.live.content || []).concat(newLiveItems);
                 console.log(`📦 Loaded ${newLiveItems.length} TV LIVE channels from contentSources (total Live TV now: ${contentData.live.content.length})`);
@@ -7294,11 +7317,13 @@
 
         // Preload always-streaming content
         function preloadAlwaysStreamingContent() {
-            console.log('🔄 Preloading always-streaming content...');
-            
-            // Preload content from always-streaming sources
-            const alwaysStreamingSources = ['live', 'movies'];
-            
+            console.log('🔄 Preloading always-streaming content (News / Sports / Sports Plus)...');
+
+            // ✅ Only News, Sports, Sports Plus are preloaded.
+            // Everything else (Movies, regular Live TV, Series, etc.) is on-demand
+            // to minimize local network traffic.
+            const alwaysStreamingSources = ['sports', 'sportsPlus', 'sports-live', 'news'];
+
             alwaysStreamingSources.forEach(source => {
                 const sourceData = contentData[source];
                 if (sourceData && sourceData.content.length > 0) {
@@ -7306,13 +7331,13 @@
                     const contentToPreload = sourceData.content[0];
                     if (contentToPreload && shouldPreloadContent(contentToPreload)) {
                         console.log(`📺 Preloading ${contentToPreload.name} from ${source}`);
-                        
+
                         // Create a hidden video element for preloading
                         const preloadVideo = document.createElement('video');
                         preloadVideo.preload = 'auto';
                         preloadVideo.style.display = 'none';
                         preloadVideo.muted = true;
-                        
+
                         if (contentToPreload.type === 'hls' && Hls.isSupported()) {
                             const preloadHls = new Hls();
                             preloadHls.loadSource(contentToPreload.url);
@@ -7320,9 +7345,9 @@
                         } else if (contentToPreload.type === 'mp4') {
                             preloadVideo.src = contentToPreload.url;
                         }
-                        
+
                         document.body.appendChild(preloadVideo);
-                        
+
                         // Remove preloaded video after 10 seconds to prevent memory issues
                         setTimeout(() => {
                             if (preloadVideo.parentNode) {
@@ -7332,6 +7357,39 @@
                     }
                 }
             });
+
+            // ✅ Also scan the `live` source for News channels (e.g. BBC News, CNN, Al Jazeera)
+            // and preload them. These are detected by the content name/category containing "news".
+            const liveSource = contentData['live'];
+            if (liveSource && liveSource.content.length > 0) {
+                const newsChannel = liveSource.content.find(ch => {
+                    const n = (ch.name || '').toLowerCase();
+                    const c = (ch.category || '').toLowerCase();
+                    return n.includes('news') || c === 'news' || c === 'news-tv';
+                });
+                if (newsChannel && shouldPreloadContent(newsChannel)) {
+                    console.log(`📺 Preloading News channel from live: ${newsChannel.name}`);
+                    const preloadVideo = document.createElement('video');
+                    preloadVideo.preload = 'auto';
+                    preloadVideo.style.display = 'none';
+                    preloadVideo.muted = true;
+
+                    if (newsChannel.type === 'hls' && Hls.isSupported()) {
+                        const preloadHls = new Hls();
+                        preloadHls.loadSource(newsChannel.url);
+                        preloadHls.attachMedia(preloadVideo);
+                    } else if (newsChannel.type === 'mp4') {
+                        preloadVideo.src = newsChannel.url;
+                    }
+
+                    document.body.appendChild(preloadVideo);
+                    setTimeout(() => {
+                        if (preloadVideo.parentNode) {
+                            preloadVideo.parentNode.removeChild(preloadVideo);
+                        }
+                    }, 10000);
+                }
+            }
         }
 
         // Initialize preloading after login
