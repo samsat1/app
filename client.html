@@ -795,6 +795,27 @@
             margin-top: 2px;
         }
 
+        .source-tab .tab-label {
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 1.1;
+        }
+
+        .source-tab .tab-count {
+            font-size: 10px;
+            opacity: 0.85;
+            margin-top: 3px;
+            padding: 1px 6px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.12);
+            min-width: 18px;
+            text-align: center;
+        }
+
+        .source-tab.active .tab-count {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
         .source-tab.active {
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
             color: white;
@@ -4442,44 +4463,36 @@
 
             } catch(e) { console.error('Error loading contentSources (Sports / TV LIVE):', e); }
             
-            // Update tab counts immediately
-            const moviesTabUpdate = document.querySelector('.source-tab[data-source="movies"]');
-            if (moviesTabUpdate) moviesTabUpdate.textContent = `Movies (${contentData.movies.content.length})`;
-
-            const adultTabUpdate = document.querySelector('.source-tab[data-source="adult"]');
-            if (adultTabUpdate) adultTabUpdate.textContent = `Adult (${contentData.adult.content.length})`;
+            // Update tab counts immediately (count shown UNDER the tab label)
+            setTabCount('.source-tab[data-source="movies"]', '🎬 Movies', contentData.movies.content.length);
+            setTabCount('.source-tab[data-source="adult"]', '🔞 Adult', contentData.adult.content.length);
 
             // Update Arabic tab count
-            const arabicTabUpdate = document.querySelector('.source-tab[data-source="arabic"]');
-            if (arabicTabUpdate && contentData.arabic) {
-                arabicTabUpdate.textContent = `Arabic (${contentData.arabic.content.length})`;
+            if (contentData.arabic) {
+                setTabCount('.source-tab[data-source="arabic"]', '🕌 Arabic', contentData.arabic.content.length);
             }
 
             // Update Series tab count
-            const seriesTabUpdate = document.querySelector('.source-tab[data-source="series"]');
-            if (seriesTabUpdate && contentData.series) {
-                seriesTabUpdate.textContent = `Series (${contentData.series.content.length})`;
+            if (contentData.series) {
+                setTabCount('.source-tab[data-source="series"]', '📺 Series', contentData.series.content.length);
                 console.log(`📺 Updated Series tab: ${contentData.series.content.length} series`);
             }
 
             // Update Live TV tab count (includes the newly added TV LIVE channels from contentSources)
-            const liveTabUpdate = document.querySelector('.source-tab[data-source="live"]');
-            if (liveTabUpdate && contentData.live) {
-                liveTabUpdate.textContent = `📺 Live TV (${contentData.live.content.length})`;
+            if (contentData.live) {
+                setTabCount('.source-tab[data-source="live"]', '📺 Live TV', contentData.live.content.length);
                 console.log(`📺 Updated Live TV tab: ${contentData.live.content.length} channels`);
             }
 
             // Update Sports tab count (from contentSources)
-            const sportsTabUpdate = document.querySelector('.source-tab[data-source="sports"]');
-            if (sportsTabUpdate && contentData.sports) {
-                sportsTabUpdate.textContent = `⚽ Sports (${contentData.sports.content.length})`;
+            if (contentData.sports) {
+                setTabCount('.source-tab[data-source="sports"]', '⚽ Sports', contentData.sports.content.length);
                 console.log(`⚽ Updated Sports tab: ${contentData.sports.content.length} channels`);
             }
 
             // Update Sports Plus tab count (from contentSources)
-            const sportsPlusTabUpdate = document.querySelector('.source-tab[data-source="sportsPlus"]');
-            if (sportsPlusTabUpdate && contentData.sportsPlus) {
-                sportsPlusTabUpdate.textContent = `🏆 Sports Plus (${contentData.sportsPlus.content.length})`;
+            if (contentData.sportsPlus) {
+                setTabCount('.source-tab[data-source="sportsPlus"]', '🏆 Sports <span>Plus</span>', contentData.sportsPlus.content.length);
                 console.log(`🏆 Updated Sports Plus tab: ${contentData.sportsPlus.content.length} channels`);
             }
             
@@ -4670,24 +4683,19 @@
                 console.error('❌ This is likely a CORS issue - browser blocking requests to local Plex server');
             }
             
-            // Update tab counts after live fetch
-            const moviesTab = document.querySelector('.source-tab[data-source="movies"]');
-            if (moviesTab) moviesTab.textContent = `Movies (${contentData.movies.content.length})`;
-            
-            const adultTabLive = document.querySelector('.source-tab[data-source="adult"]');
-            if (adultTabLive) adultTabLive.textContent = `Adult (${contentData.adult.content.length})`;
-            
+            // Update tab counts after live fetch (count shown UNDER the tab label)
+            setTabCount('.source-tab[data-source="movies"]', '🎬 Movies', contentData.movies.content.length);
+            setTabCount('.source-tab[data-source="adult"]', '🔞 Adult', contentData.adult.content.length);
+
             // Update Arabic tab count
-            const arabicTab = document.querySelector('.source-tab[data-source="arabic"]');
-            if (arabicTab && contentData.arabic) {
-                arabicTab.textContent = `Arabic (${contentData.arabic.content.length})`;
+            if (contentData.arabic) {
+                setTabCount('.source-tab[data-source="arabic"]', '🕌 Arabic', contentData.arabic.content.length);
                 console.log(`📺 Updated Arabic tab: ${contentData.arabic.content.length} videos`);
             }
-            
+
             // Update Series tab count
-            const seriesTab = document.querySelector('.source-tab[data-source="series"]');
-            if (seriesTab && contentData.series) {
-                seriesTab.textContent = `Series (${contentData.series.content.length})`;
+            if (contentData.series) {
+                setTabCount('.source-tab[data-source="series"]', '📺 Series', contentData.series.content.length);
                 console.log(`📺 Updated Series tab: ${contentData.series.content.length} series`);
             }
             
@@ -4885,16 +4893,13 @@
                     console.log(`🔞 Loaded ${mediaContent.adult.length} adult videos from Plex`);
                 }
                 
-                // Update tab labels with real counts
-                const moviesTab = document.querySelector('.source-tab[data-source="movies"]');
-                const vodTab = document.querySelector('.source-tab[data-source="vod"]');
-                if (moviesTab) moviesTab.textContent = `Movies (${contentData.movies.content.length})`;
-                if (vodTab) vodTab.textContent = `VOD (${contentData.vod.content.length})`;
-                
+                // Update tab labels with real counts (count shown UNDER the tab label)
+                setTabCount('.source-tab[data-source="movies"]', '🎬 Movies', contentData.movies.content.length);
+                setTabCount('.source-tab[data-source="vod"]', '📀 VOD', contentData.vod.content.length);
+
                 // Update Arabic tab count
-                const arabicTabLibraries = document.querySelector('.source-tab[data-source="arabic"]');
-                if (arabicTabLibraries && contentData.arabic) {
-                    arabicTabLibraries.textContent = `Arabic (${contentData.arabic.content.length})`;
+                if (contentData.arabic) {
+                    setTabCount('.source-tab[data-source="arabic"]', '🕌 Arabic', contentData.arabic.content.length);
                 }
                 
                 console.log('✅ Content updated from media libraries');
@@ -6109,26 +6114,48 @@
             renderContent();
         }
         
+        // Helper: set a tab's label and count number (count shown UNDER the label, not beside)
+        function setTabCount(selector, label, count) {
+            const el = document.querySelector(selector);
+            if (el) {
+                el.innerHTML = `<span class="tab-label">${label}</span><span class="tab-count">${count}</span>`;
+            }
+            return el;
+        }
+
         // Show/hide Live TV tabs based on content and user access
         function updateLiveTabs() {
-            const sportsTab = document.getElementById('sportsLiveTab');
+            // ✅ FIX: use the actual element IDs that exist in the HTML
+            const sportsTab = document.getElementById('sportsTab');
+            const sportsPlusTab = document.getElementById('sportsPlusTab');
             const tvAddonTab = document.getElementById('liveTvAddonTab');
             
             // Check if user has access to these packages
+            const userAddons = (currentUser && currentUser.addons ? currentUser.addons : '').toLowerCase();
+            const userPackages = (currentUser && currentUser.packages ? currentUser.packages : '').toString().toLowerCase();
             const hasSportsAccess = currentUser && (currentUser.role === 'admin' || 
-                (currentUser.addons && currentUser.addons.includes('Sports')) ||
-                (currentUser.packages && currentUser.packages.includes('sports')));
+                userAddons.includes('sports') || userPackages.includes('sports'));
             const hasTvAddonAccess = currentUser && (currentUser.role === 'admin' || 
-                (currentUser.addons && currentUser.addons.includes('TV Addon')) ||
-                (currentUser.packages && currentUser.packages.includes('livetv-addon')));
-            
+                userAddons.includes('tv addon') || userPackages.includes('livetv-addon'));
+
+            // ✅ FIX: use the actual data arrays that contentSources populates
+            const sportsCount = (contentData.sports && contentData.sports.content) ? contentData.sports.content.length : 0;
+            const sportsPlusCount = (contentData.sportsPlus && contentData.sportsPlus.content) ? contentData.sportsPlus.content.length : 0;
+            const liveAddonCount = (contentData['livetv-addon'] && contentData['livetv-addon'].content) ? contentData['livetv-addon'].content.length : 0;
+
             // Show tabs if user has access AND there's content
             if (sportsTab) {
-                sportsTab.style.display = (hasSportsAccess && contentData['sports-live'].content.length > 0) ? 'block' : 'none';
+                // If there is content OR user has explicit access, show the tab
+                sportsTab.style.display = (sportsCount > 0 || hasSportsAccess) ? 'block' : 'none';
+            }
+            if (sportsPlusTab) {
+                sportsPlusTab.style.display = (sportsPlusCount > 0 || hasSportsAccess) ? 'block' : 'none';
             }
             if (tvAddonTab) {
-                tvAddonTab.style.display = (hasTvAddonAccess && contentData['livetv-addon'].content.length > 0) ? 'block' : 'none';
+                tvAddonTab.style.display = (hasTvAddonAccess && liveAddonCount > 0) ? 'block' : 'none';
             }
+            
+            console.log('🔧 updateLiveTabs:', { sportsCount, sportsPlusCount, hasSportsAccess });
         }
 
         function renderContent() {
