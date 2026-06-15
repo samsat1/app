@@ -3185,6 +3185,9 @@
                     return [];
                 }
 
+                const customerAddons = (customer.addons || '').toLowerCase();
+                const hasSportsAddon = customerAddons.includes('sports');
+
                 return content.filter(item => {
                     // If content doesn't require a package, show it
                     if (!item.requiresPackage) {
@@ -3193,7 +3196,36 @@
 
                     // Check if customer has access to required package
                     const validation = this.validatePackageAccess(customer, item.requiresPackage);
-                    return validation.hasAccess;
+                    if (validation.hasAccess) return true;
+
+                    // FALLBACK: If package not found (orphan pkgId), check addons for Sports content
+                    if (validation.reason === 'Package not found') {
+                        const itemCategory = (item.category || '').toLowerCase();
+                        const itemPackage = (item.package || item.packageName || '').toLowerCase();
+                        const itemName = (item.name || '').toLowerCase();
+                        const itemType = (item.type || '').toLowerCase();
+
+                        const looksLikeSportsPlus = itemCategory === 'sports-plus' ||
+                            itemCategory === 'sports_plus' ||
+                            itemPackage.includes('sports plus') ||
+                            itemName.includes('sports plus') ||
+                            itemType.includes('sports plus') ||
+                            itemType.includes('sports-plus');
+                        const looksLikeSports = itemCategory === 'sports' ||
+                            itemPackage.includes('sport') ||
+                            itemName.includes('sport') ||
+                            itemType.includes('sport');
+
+                        if (looksLikeSportsPlus && hasSportsAddon) {
+                            console.log(`✅ [filter] Orphan pkgId fallback (Sports+): ${item.name}`);
+                            return true;
+                        }
+                        if (looksLikeSports && hasSportsAddon && !looksLikeSportsPlus) {
+                            console.log(`✅ [filter] Orphan pkgId fallback (Sports): ${item.name}`);
+                            return true;
+                        }
+                    }
+                    return false;
                 });
             },
 
@@ -3317,6 +3349,36 @@
                 if (contentItem && contentItem.type && (contentItem.type.toLowerCase().includes('sport') || (contentItem.packageName || '').toLowerCase().includes('sport'))) {
                     console.log(`🔐 [canAccess] item="${contentItem.name}" pkgId=${effectivePkgId} result.hasAccess=${validation.hasAccess} reason="${validation.reason || ''}"`);
                 }
+
+                // FALLBACK: If package not found, but content looks like Sports/Sports Plus and customer
+                // has the matching addon, grant access. This handles orphan packageIds in content items.
+                if (!validation.hasAccess && validation.reason === 'Package not found') {
+                    const itemCategory = (contentItem.category || '').toLowerCase();
+                    const itemPackage = (contentItem.package || contentItem.packageName || '').toLowerCase();
+                    const itemName = (contentItem.name || '').toLowerCase();
+                    const itemType = (contentItem.type || '').toLowerCase();
+
+                    const looksLikeSportsPlus = itemCategory === 'sports-plus' ||
+                        itemCategory === 'sports_plus' ||
+                        itemPackage.includes('sports plus') ||
+                        itemName.includes('sports plus') ||
+                        itemType.includes('sports plus') ||
+                        itemType.includes('sports-plus');
+                    const looksLikeSports = itemCategory === 'sports' ||
+                        itemPackage.includes('sport') ||
+                        itemName.includes('sport') ||
+                        itemType.includes('sport');
+
+                    if (looksLikeSportsPlus && hasSportsAddon) {
+                        console.log(`✅ [canAccess] Orphan pkgId fallback (Sports+): ${contentItem.name} - customer has Sports addon`);
+                        return true;
+                    }
+                    if (looksLikeSports && hasSportsAddon && !looksLikeSportsPlus) {
+                        console.log(`✅ [canAccess] Orphan pkgId fallback (Sports): ${contentItem.name} - customer has Sports addon`);
+                        return true;
+                    }
+                }
+
                 return validation.hasAccess;
             },
 
