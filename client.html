@@ -3029,6 +3029,7 @@
                 // Get package data
                 const packageData = adminPackages.find(p => p.id === packageId);
                 if (!packageData) {
+                    console.log(`🔒 [validate] Package not found for id: ${packageId}`);
                     return { hasAccess: false, reason: 'Package not found' };
                 }
 
@@ -3053,8 +3054,15 @@
                 const hasSportsAddon = customerAddons.includes('sports');
 
                 // Block Sports and Sports Plus content on 2nd TV and 3rd TV plans
+                // Only block when customer is on a 2nd/3rd TV plan AND does NOT have the explicit Sports addon
+                if ((isSecondTV || isThirdTV) && isSportsContent && !hasSportsAddon) {
+                    console.log(`🚫 [validate] Blocking Sports on 2nd/3rd TV (no addon): ${packageData.name}`);
+                    return { hasAccess: false, reason: 'Sports not available on 2nd/3rd TV plans without addon' };
+                }
+                // If the customer is on 2nd/3rd TV but has the explicit Sports addon, allow access
                 if ((isSecondTV || isThirdTV) && isSportsContent && hasSportsAddon) {
-                    return { hasAccess: false, reason: 'Sports not available on 2nd/3rd TV plans' };
+                    console.log(`✅ [validate] 2nd/3rd TV customer HAS Sports addon - allowing access to: ${packageData.name}`);
+                    return { hasAccess: true };
                 }
 
                 // ADULT content - requires explicit Adult addon
@@ -3079,6 +3087,7 @@
                 const isSportsPackage = (pkgName.includes('sport')) && !pkgName.includes('movies');
                 if (isSportsPackage) {
                     const hasSportsAddon = customerAddons.includes('sports') || customerAddons.includes('sports plus');
+                    console.log(`🔍 [validate] Sports pkg=${packageData.name} | customerAddons="${customerAddons}" | hasSportsAddon=${hasSportsAddon} | customerPlan="${customerPlan}" | isSecondTV=${isSecondTV} | isThirdTV=${isThirdTV}`);
                     if (!hasSportsAddon) {
                         return { hasAccess: false, reason: 'Sports addon required' };
                     }
@@ -3305,6 +3314,9 @@
 
                 // Specific package required - validate it
                 const validation = this.validatePackageAccess(customer, effectivePkgId);
+                if (contentItem && contentItem.type && (contentItem.type.toLowerCase().includes('sport') || (contentItem.packageName || '').toLowerCase().includes('sport'))) {
+                    console.log(`🔐 [canAccess] item="${contentItem.name}" pkgId=${effectivePkgId} result.hasAccess=${validation.hasAccess} reason="${validation.reason || ''}"`);
+                }
                 return validation.hasAccess;
             },
 
