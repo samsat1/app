@@ -2755,7 +2755,75 @@
 
     <script>
         console.log('🎬🎬🎬 CLIENT V6.6 LOADED - WEBVIEW COMPATIBLE 🎬🎬🎬');
-        
+
+        // ============================================================
+        // SELF-HEALING MIGRATION (runs once per page load)
+        // Repairs contentSources entries that were saved with
+        // packageId: "undefined" (the literal string) and an empty
+        // packageName, which prevented the client matcher from
+        // loading them into the Sports / Sports Plus sections.
+        // ============================================================
+        (function migrateContentSources() {
+            try {
+                const raw = localStorage.getItem('contentSources');
+                if (!raw) return;
+                const list = JSON.parse(raw);
+                if (!Array.isArray(list) || list.length === 0) return;
+
+                const packages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                const findPkg = (predicate) => packages.find(p => predicate(p));
+
+                let changed = 0;
+                const repaired = list.map(src => {
+                    const pid = (src.packageId === null || src.packageId === undefined)
+                        ? '' : String(src.packageId);
+                    const pname = (src.packageName || '').toString();
+                    const isBroken =
+                        (pid === 'undefined' || pid === '' || pid === 'null') &&
+                        (!pname || pname.trim() === '');
+
+                    if (!isBroken) return src;
+
+                    // Try to repair by routing on the platform type.
+                    const t = (src.type || '').toString().toLowerCase();
+                    let target = null;
+                    if (t === 'sports plus' || t === 'sportsplus' || t.includes('sports plus')) {
+                        target = findPkg(p => (p.name || '').toLowerCase().includes('sports plus'));
+                    } else if (t === 'sports' || (t.includes('sport') && !t.includes('plus'))) {
+                        target = findPkg(p => {
+                            const n = (p.name || '').toLowerCase();
+                            return n.includes('sport') && !n.includes('plus');
+                        });
+                    } else if (t === 'movies' || t === 'movie streaming') {
+                        target = findPkg(p => (p.name || '').toLowerCase().includes('movie'));
+                    } else if (t === 'tv shows' || t === 'series') {
+                        target = findPkg(p => (p.name || '').toLowerCase().includes('series'));
+                    } else if (t === 'adult') {
+                        target = findPkg(p => p.isAdult || (p.name || '').toLowerCase().includes('adult'));
+                    } else if (t === 'live tv channel' || t === 'basic_tv') {
+                        target = findPkg(p => (p.name || '').toLowerCase().includes('basic'));
+                    }
+
+                    if (target) {
+                        changed++;
+                        return {
+                            ...src,
+                            packageId: target.id,
+                            packageName: target.name
+                        };
+                    }
+                    return src;
+                });
+
+                if (changed > 0) {
+                    localStorage.setItem('contentSources', JSON.stringify(repaired));
+                    console.log(`🔧 Migrated ${changed} content source(s) with broken packageId.`);
+                }
+            } catch (e) {
+                console.warn('Content source migration skipped:', e);
+            }
+        })();
+
         // Global Variables
         let player = null;
         let hls = null;
@@ -2936,41 +3004,9 @@
             },
 
             // SIMPLIFIED: Validate if customer has access to specific package
-            validatePackageAccess: function(customer, packageId, packageName) {
-                // SAFETY: Make sure adminPackages is loaded. Some call sites run
-                // before the global `adminPackages` has been initialised (e.g. when
-                // a Content-Library channel is played immediately after the page
-                // loads). Falling back to localStorage here prevents a false
-                // "Package not found" that would lock every channel.
-                if (!Array.isArray(adminPackages) || adminPackages.length === 0) {
-                    try {
-                        const raw = localStorage.getItem('adminPackages');
-                        adminPackages = raw ? JSON.parse(raw) : [];
-                    } catch (e) {
-                        adminPackages = [];
-                    }
-                }
-
-                // Get package data.
-                // Step 1: try the strict id match.
-                // Step 2: fall back to matching by name (case-insensitive).
-                // The id-less package bug in the admin's saved data was the original
-                // reason customers saw Sports/Sports Plus as "locked" - the content
-                // was saved with a packageId, but the matching package in
-                // adminPackages had no id, so the lookup failed and the channel was
-                // permanently locked.
-                let packageData = adminPackages.find(p => p.id && p.id === packageId);
-                if (!packageData && packageName) {
-                    const targetName = String(packageName).toLowerCase().trim();
-                    packageData = adminPackages.find(p => (p.name || '').toLowerCase().trim() === targetName);
-                }
-                // Step 3: if the adminPackage has no id at all but we have a name,
-                // accept it - this prevents the lock-screen from appearing when the
-                // admin's saved package data is missing the id field.
-                if (!packageData && packageName) {
-                    const targetName = String(packageName).toLowerCase().trim();
-                    packageData = adminPackages.find(p => !(p.id) && (p.name || '').toLowerCase().trim() === targetName);
-                }
+            validatePackageAccess: function(customer, packageId) {
+                // Get package data
+                const packageData = adminPackages.find(p => p.id === packageId);
                 if (!packageData) {
                     return { hasAccess: false, reason: 'Package not found' };
                 }
@@ -2988,11 +3024,17 @@
                     }
                 }
 
-                // NOTE: The previous "2nd TV / 3rd TV → block Sports" rule has been REMOVED.
-                // That rule was too restrictive: customers on a 2nd/3rd TV plan who have
-                // paid for the Sports add-on were incorrectly locked out of Sports and
-                // Sports Plus content. If the customer has the Sports add-on, they should
-                // be allowed to watch Sports regardless of which TV plan they are on.
+                // Check if customer is on 2nd TV or 3rd TV plan - Sports packages should be blocked
+                const contentName = (packageData.name || '').toLowerCase();
+                const isSecondTV = customerPlan.includes('second') || customerPlan.includes('2nd');
+                const isThirdTV = customerPlan.includes('third') || customerPlan.includes('3rd');
+                const isSportsContent = contentName.includes('sport') && !contentName.includes('movie');
+                const hasSportsAddon = customerAddons.includes('sports');
+
+                // Block Sports and Sports Plus content on 2nd TV and 3rd TV plans
+                if ((isSecondTV || isThirdTV) && isSportsContent && hasSportsAddon) {
+                    return { hasAccess: false, reason: 'Sports not available on 2nd/3rd TV plans' };
+                }
 
                 // ADULT content - requires explicit Adult addon
                 if (packageData.isAdult || pkgName.includes('adult') || pkgName.includes('xxx')) {
@@ -3183,31 +3225,66 @@
                     if (expiryDate <= new Date()) return false;
                 }
 
-                // NOTE: The previous "2nd TV / 3rd TV → block Sports" rule based on the
-                // content name has been REMOVED. The real check now lives in
-                // validatePackageAccess() which looks at the *package* the channel is
-                // assigned to (and only blocks Sports if the customer does NOT have the
-                // Sports add-on). Customers on 2nd/3rd TV plans who have the Sports
-                // add-on can now play Sports and Sports Plus channels.
+                // Check if customer is on 2nd TV or 3rd TV plan - Sports packages should be blocked
+                const customerPlan = (customer.plan || '').toLowerCase();
+                const customerAddons = (customer.addons || '').toLowerCase();
+                const contentName = (contentItem.name || '').toLowerCase();
+                const isSecondTV = customerPlan.includes('second') || customerPlan.includes('2nd');
+                const isThirdTV = customerPlan.includes('third') || customerPlan.includes('3rd');
+                const isSportsContent = contentName.includes('sport') && !contentName.includes('movie');
+                const hasSportsAddon = customerAddons.includes('sports');
+
+                // Block Sports and Sports Plus content on 2nd TV and 3rd TV plans
+                if ((isSecondTV || isThirdTV) && isSportsContent && hasSportsAddon) {
+                    console.log('🚫 Blocking Sports content on 2nd/3rd TV plan:', contentItem.name);
+                    return false;
+                }
 
                 // Adult content check
                 if (contentItem.isAdult || (contentItem.category || '').toLowerCase().includes('adult')) {
                     return this.canAccessAdult();
                 }
 
-                // If content requires specific package, check it
-                if (contentItem.requiresPackage || contentItem.packageId) {
-                    const pkgId = contentItem.requiresPackage || contentItem.packageId;
-                    // Pass the human-readable package name as a third argument so the
-                    // validator can find the package even when the admin's saved
-                    // adminPackages record is missing its id field.
-                    const pkgName = contentItem.packageName || contentItem.package || null;
-                    const validation = this.validatePackageAccess(customer, pkgId, pkgName);
-                    return validation.hasAccess;
+                // Normalize package id (treat literal "undefined" / "null" / empty as no specific package).
+                const normalizePid = (v) => {
+                    if (v === null || v === undefined) return '';
+                    const s = String(v).trim();
+                    if (!s || s === 'undefined' || s === 'null') return '';
+                    return s;
+                };
+
+                // Resolve the effective requiresPackage value, ignoring bogus "undefined" strings.
+                const effectivePkgId = normalizePid(
+                    contentItem.requiresPackage || contentItem.packageId
+                );
+
+                // Sports / Sports Plus content loaded from contentSources (Content Library) often
+                // has an empty or "undefined" packageId even though the admin added the user to
+                // the addon. In that case, fall back to addon-based access (customer addons).
+                if (!effectivePkgId) {
+                    // Sports Plus content - requires "sports plus" addon
+                    if (
+                        (contentItem.category || '').toLowerCase() === 'sports-plus' ||
+                        (contentItem.package || '').toLowerCase().includes('sports plus')
+                    ) {
+                        return customerAddons.includes('sports plus') ||
+                               customerAddons.includes('sportsplus') ||
+                               hasSportsAddon;
+                    }
+                    // Sports content - requires "sports" addon
+                    if (
+                        (contentItem.category || '').toLowerCase() === 'sports' ||
+                        (contentItem.package || '').toLowerCase().includes('sport')
+                    ) {
+                        return hasSportsAddon;
+                    }
+                    // No package info and not a special category - allow if active
+                    return customer.status === 'active' || !!customer.plan;
                 }
 
-                // Regular content - allow if customer has active subscription
-                return customer.status === 'active' || !!customer.plan;
+                // Specific package required - validate it
+                const validation = this.validatePackageAccess(customer, effectivePkgId);
+                return validation.hasAccess;
             },
 
             // Real-time authentication updates
@@ -4197,12 +4274,33 @@
                 // Helper: get the package identifier we will match against.
                 // IMPORTANT: prefer the human-readable name (packageName) over the opaque id (packageId).
                 // Otherwise the filter would never match (e.g. "pkg_123" never contains "sports plus").
-                const getPkgKey = (src) => (src.packageName || src.package || src.packageId || '').toString().toLowerCase();
+                // Also normalizes the string "undefined" (which appears when no package was selected
+                // and JSON.stringify stored the literal "undefined") to an empty string.
+                const normalizeStr = (v) => {
+                    if (v === null || v === undefined) return '';
+                    const s = String(v).trim().toLowerCase();
+                    if (s === 'undefined' || s === 'null') return '';
+                    return s;
+                };
+                const getPkgKey = (src) => {
+                    return (
+                        normalizeStr(src.packageName) ||
+                        normalizeStr(src.package) ||
+                        normalizeStr(src.packageId) ||
+                        ''
+                    );
+                };
+                const getTypeKey = (src) => normalizeStr(src.type);
 
                 // ---- Sports Plus channels (add-on) ----
+                // Match by packageName/packageId first, then by the `type` field as a fallback
+                // (covers content sources added without selecting a package, e.g. type="Sports Plus").
                 const sportsPlusChannels = contentSources.filter(src => {
                     const pid = getPkgKey(src);
-                    return pid.includes('sports plus') || pid.includes('sportsplus');
+                    if (pid.includes('sports plus') || pid.includes('sportsplus')) return true;
+                    // Fallback: match the platform Type when it explicitly indicates Sports Plus.
+                    const tid = getTypeKey(src);
+                    return tid === 'sports plus' || tid === 'sportsplus' || tid.includes('sports plus');
                 });
                 console.log('🔍 DEBUG sportsPlus matches:', sportsPlusChannels.length);
 
@@ -4215,14 +4313,40 @@
                     url: src.url || src.streamUrl || '',
                     package: src.packageName || src.packageId || src.package || '',
                     packageId: src.packageId || src.package,
+                    // Use the actual matching package (or empty) so access checks don't fail
+                    // when the source was saved with packageId="undefined".
+                    requiresPackage: (() => {
+                        const p = normalizeStr(src.packageId);
+                        if (p && p !== 'undefined') return p;
+                        // Try to resolve to the Sports Plus package id from adminPackages
+                        try {
+                            const pkgs = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                            const sp = pkgs.find(pp => (pp.name || '').toLowerCase().includes('sports plus'));
+                            return sp ? sp.id : '';
+                        } catch (e) { return ''; }
+                    })(),
+                    packageName: src.packageName || (() => {
+                        try {
+                            const pkgs = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                            const sp = pkgs.find(pp => (pp.name || '').toLowerCase().includes('sports plus'));
+                            return sp ? sp.name : '';
+                        } catch (e) { return ''; }
+                    })(),
                     category: 'sports-plus'
                 }));
                 console.log(`📦 Loaded ${sportsPlusChannels.length} Sports Plus channels from contentSources`);
 
                 // ---- Sports channels (add-on) ----
+                // Match by packageName/packageId OR by the `type` field (covers unassigned content).
+                // We also explicitly exclude items that matched the Sports Plus filter above.
+                const sportsPlusIds = new Set(sportsPlusChannels.map(s => s.id));
                 const sportsChannels = contentSources.filter(src => {
+                    if (sportsPlusIds.has(src.id)) return false;
                     const pid = getPkgKey(src);
-                    return pid.includes('sport') && !pid.includes('plus');
+                    if (pid.includes('sport') && !pid.includes('plus')) return true;
+                    // Fallback: match platform Type "Sports" (not Sports Plus).
+                    const tid = getTypeKey(src);
+                    return tid === 'sports' || (tid.includes('sport') && !tid.includes('plus'));
                 });
                 console.log('🔍 DEBUG sports matches:', sportsChannels.length);
 
@@ -4235,6 +4359,29 @@
                     url: src.url || src.streamUrl || '',
                     package: src.packageName || src.packageId || src.package || '',
                     packageId: src.packageId || src.package,
+                    requiresPackage: (() => {
+                        const p = normalizeStr(src.packageId);
+                        if (p && p !== 'undefined') return p;
+                        // Try to resolve to the Sports package id from adminPackages
+                        try {
+                            const pkgs = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                            const sp = pkgs.find(pp => {
+                                const n = (pp.name || '').toLowerCase();
+                                return n.includes('sport') && !n.includes('plus');
+                            });
+                            return sp ? sp.id : '';
+                        } catch (e) { return ''; }
+                    })(),
+                    packageName: src.packageName || (() => {
+                        try {
+                            const pkgs = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                            const sp = pkgs.find(pp => {
+                                const n = (pp.name || '').toLowerCase();
+                                return n.includes('sport') && !n.includes('plus');
+                            });
+                            return sp ? sp.name : '';
+                        } catch (e) { return ''; }
+                    })(),
                     category: 'sports'
                 }));
                 console.log(`📦 Loaded ${sportsChannels.length} Sports channels from contentSources`);
@@ -4254,6 +4401,20 @@
                         pid === 'live' ||
                         pid === 'basic_tv'
                     );
+                });
+                // Also include content sources whose type says it's a basic / live tv channel
+                // (e.g. type="Live TV Channel" or type="basic_tv") when no package was selected.
+                contentSources.forEach(src => {
+                    if (tvLiveChannels.find(s => s.id === src.id)) return; // already included
+                    const tid = getTypeKey(src);
+                    const pid = getPkgKey(src);
+                    if (
+                        (!pid) && // no package assigned
+                        (tid === 'live tv channel' || tid === 'live' || tid === 'basic_tv' ||
+                         tid.includes('tv live') || tid.includes('live tv'))
+                    ) {
+                        tvLiveChannels.push(src);
+                    }
                 });
                 console.log('🔍 DEBUG tvLive matches:', tvLiveChannels.length);
 
@@ -6038,13 +6199,32 @@
                 
                 // If no special category, check requiresPackage/packageId
                 if (!item.requiresPackage && !item.packageId) return true;
-                
-                // Check if user's accessible packages include this item's package
-                const pkgId = item.packageId || item.requiresPackage;
+
+                // Normalize package id (treat literal "undefined" / "null" / empty as no specific package).
+                const normalizePid = (v) => {
+                    if (v === null || v === undefined) return '';
+                    const s = String(v).trim();
+                    if (!s || s === 'undefined' || s === 'null') return '';
+                    return s;
+                };
+                const pkgId = normalizePid(item.packageId) || normalizePid(item.requiresPackage);
                 if (pkgId) {
                     return accessiblePackageIds.includes(pkgId);
                 }
-                
+
+                // No valid package id (e.g. content added without selecting a package) -
+                // fall back to addon-based access for Sports / Sports Plus content.
+                const itemCatLower = (item.category || '').toLowerCase();
+                const itemPkgLower = (item.package || '').toLowerCase();
+                if (itemCatLower === 'sports-plus' || itemPkgLower.includes('sports plus')) {
+                    return customerAddons.includes('sports plus') ||
+                           customerAddons.includes('sportsplus') ||
+                           customerAddons.includes('sports');
+                }
+                if (itemCatLower === 'sports' || (itemPkgLower.includes('sport') && !itemPkgLower.includes('plus'))) {
+                    return customerAddons.includes('sports');
+                }
+
                 return true;
             });
             

@@ -3362,14 +3362,50 @@
             }
 
             // Build new source object
+            // FIX: If no package was explicitly selected, auto-derive the package from the
+            // platform type so that Sports / Sports Plus / Movies / etc. content is correctly
+            // routed to the right client tab. Without this, packageId ends up as the string
+            // "undefined" and the client matcher never finds it.
+            let resolvedPackageId = packageId || '';
+            let resolvedPackageName = '';
+            if (resolvedPackageId) {
+                resolvedPackageName = (packages.find(p => p.id === resolvedPackageId)?.name) || '';
+            } else {
+                // Auto-derive package from type
+                const typeToPackageName = {
+                    'sports': 'Sports',
+                    'sports plus': 'Sports Plus',
+                    'sportsplus': 'Sports Plus',
+                    'movies': 'Movies',
+                    'movie streaming': 'Movies',
+                    'tv shows': 'Series',
+                    'series': 'Series',
+                    'adult': 'Adult',
+                    'news': 'News',
+                    'kids content': 'Kids',
+                    'kids': 'Kids',
+                    'international': 'International',
+                    'live tv channel': 'Live TV',
+                    'basic_tv': 'Basic'
+                };
+                const targetName = (typeToPackageName[(type || '').toLowerCase()] || '').toLowerCase();
+                if (targetName) {
+                    const autoPkg = packages.find(p => (p.name || '').toLowerCase() === targetName);
+                    if (autoPkg) {
+                        resolvedPackageId = autoPkg.id;
+                        resolvedPackageName = autoPkg.name;
+                    }
+                }
+            }
+
             const newSource = {
                 id: 'src_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
                 name: name,
                 type: type,
                 url: url,
                 quality: quality,
-                packageId: packageId || null,
-                packageName: packageId ? (packages.find(p => p.id === packageId)?.name || '') : '',
+                packageId: resolvedPackageId || null,
+                packageName: resolvedPackageName,
                 addedAt: new Date().toISOString(),
                 active: true
             };
@@ -8680,6 +8716,7 @@ Network: Always Streaming → Optimized for instant access`;
                                     <option>Movie Streaming</option>
                                     <option>TV Shows</option>
                                     <option>Sports</option>
+                                    <option>Sports Plus</option>
                                     <option>News</option>
                                     <option>Kids Content</option>
                                     <option>International</option>
