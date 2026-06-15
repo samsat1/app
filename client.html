@@ -3495,12 +3495,12 @@
                 
                 // IMPORTANT: Wait for customer data to be available
                 const clientAuthCustomers = localStorage.getItem('clientAuthCustomers');
-                const adminCustomersRaw = localStorage.getItem('adminCustomers');
-                const customers = JSON.parse(clientAuthCustomers || adminCustomersRaw || '[]');
+                const adminCustomers = localStorage.getItem('adminCustomers');
+                const customers = JSON.parse(clientAuthCustomers || adminCustomers || '[]');
                 
                 console.log('🔑 Auto-login: Customer data status:', {
                     clientAuthCustomers: clientAuthCustomers ? 'FOUND (' + JSON.parse(clientAuthCustomers).length + ')' : 'NONE',
-                    adminCustomers: adminCustomersRaw ? 'FOUND (' + JSON.parse(adminCustomersRaw).length + ')' : 'NONE',
+                    adminCustomers: adminCustomers ? 'FOUND (' + JSON.parse(adminCustomers).length + ')' : 'NONE',
                     totalCustomers: customers.length
                 });
                 
@@ -3978,20 +3978,17 @@
             const cachedMovies = localStorage.getItem('plexMoviesCache');
             const cachedAdult = localStorage.getItem('plexAdultCache');
             const cachedArabic = localStorage.getItem('plexArabicCache');
-            const cachedSeries = localStorage.getItem('plexSeriesCache') || localStorage.getItem('plexCachedSeries');
             const cachedLive = localStorage.getItem('liveChannelsCache');
             
             console.log('📦 Checking cached Plex content:', {
                 moviesCache: cachedMovies ? 'FOUND' : 'NONE',
                 adultCache: cachedAdult ? 'FOUND' : 'NONE',
                 arabicCache: cachedArabic ? 'FOUND' : 'NONE',
-                seriesCache: cachedSeries ? 'FOUND' : 'NONE',
                 liveCache: cachedLive ? 'FOUND' : 'NONE'
             });
             
             let moviesLoaded = false;
             let adultLoaded = false;
-            let seriesLoaded = false;
             
             // Load movies - check admin packages first (section ID 5), then Plex cache
             try {
@@ -4096,49 +4093,6 @@
                 
             } catch(e) { console.error('Error loading Arabic:', e); }
             
-            // Load Series (TV Shows) from admin packages (section ID 18) or Plex cache
-            try {
-                const adminPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
-                
-                // Series packages from admin (section ID 18) - check first
-                const adminSeries = adminPackages.filter(pkg => 
-                    pkg.sectionId === 18 || 
-                    pkg.type === 'series' || 
-                    pkg.category === 'series' || 
-                    (pkg.packageName && (
-                        pkg.packageName.toLowerCase().includes('series') || 
-                        pkg.packageName.toLowerCase().includes('tv show')
-                    ))
-                );
-                
-                if (adminSeries.length > 0) {
-                    if (!contentData.series) contentData.series = { name: 'TV Series', content: [] };
-                    contentData.series.content = adminSeries.map(pkg => ({
-                        id: pkg.id || pkg.packageId || 'series_' + Math.random().toString(36).substr(2, 9),
-                        name: pkg.packageName || pkg.name || 'Unknown Series',
-                        description: pkg.packageDescription || pkg.description || '',
-                        type: 'hls',
-                        url: pkg.url || pkg.streamUrl || '',
-                        package: pkg.packageName || '',
-                        packageId: pkg.packageId || pkg.id,
-                        category: 'series'
-                    }));
-                    console.log(`📦 Loaded ${adminSeries.length} series from admin (section ID 18)`);
-                    seriesLoaded = true;
-                } else if (cachedSeries) {
-                    // Fallback to Plex cache
-                    try {
-                        const series = JSON.parse(cachedSeries);
-                        if (series && series.length > 0) {
-                            if (!contentData.series) contentData.series = { name: 'TV Series', content: [] };
-                            contentData.series.content = series;
-                            console.log(`📦 Loaded ${series.length} series from Plex cache`);
-                            seriesLoaded = true;
-                        }
-                    } catch(e) { console.error('Error parsing cached series:', e); }
-                }
-            } catch(e) { console.error('Error loading Series:', e); }
-            
             // Load cached live channels
             if (cachedLive) {
                 try {
@@ -4155,53 +4109,82 @@
                 } catch(e) { console.error('Error parsing cached live channels:', e); }
             }
             
-            // Load Sports Plus and Sports from Content Library (contentSources)
+            // Load Live TV, Sports and Sports Plus from adminPackages (Content Library HLS streams)
+            // This works the SAME WAY as the Sports/Sports Plus loader below.
+            // The Content Library "Add Source" form in admin.html saves entries with:
+            //   type: 'live_tv' / 'live_sports' / 'sports_plus'
+            //   category: 'live-tv' / 'sports' / 'sports-plus'
+            // We only load entries that have a real HLS stream URL (source === 'content_library'),
+            // so we never accidentally include addon price-only packages.
             try {
-                const contentSources = JSON.parse(localStorage.getItem('contentSources') || '[]');
-                console.log('🔍 DEBUG contentSources length:', contentSources.length);
-                console.log('🔍 DEBUG contentSources raw:', JSON.stringify(contentSources));
+                const adminPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                const liveTvFromAdmin = adminPackages.filter(pkg =>
+                    pkg.source === 'content_library' &&
+                    pkg.url &&
+                    (pkg.type === 'live_tv' ||
+                     pkg.category === 'live-tv' ||
+                     (pkg.packageName && pkg.packageName.toLowerCase().includes('live tv')))
+                );
+                if (liveTvFromAdmin.length > 0) {
+                    if (!contentData.live) contentData.live = { name: 'Live TV', content: [], streamingMode: 'always-streaming' };
+                    // Append to whatever was loaded from cachedLive (don't overwrite)
+                    const existing = contentData.live.content || [];
+                    const existingIds = new Set(existing.map(c => c.id || c.url));
+                    liveTvFromAdmin.forEach(pkg => {
+                        const id = pkg.id || pkg.packageId || 'livetv_' + Math.random().toString(36).substr(2, 9);
+                        if (existingIds.has(id)) return;
+                        existing.push({
+                            id: id,
+                            name: pkg.packageName || pkg.name || 'Live TV Channel',
+                            description: pkg.packageDescription || pkg.description || '',
+                            type: 'hls',
+                            url: pkg.url || pkg.streamUrl || '',
+                            package: pkg.packageName || '',
+                            packageId: pkg.packageId || pkg.id,
+                            category: 'live-tv'
+                        });
+                    });
+                    contentData.live.content = existing;
+                    console.log(`📦 Loaded ${liveTvFromAdmin.length} Live TV channels from Content Library`);
+                    if (typeof updateLiveTabs === 'function') updateLiveTabs();
+                }
+            } catch(e) { console.error('Error loading Live TV from admin:', e); }
+            
+            // Load Sports Plus and Sports from adminPackages
+            try {
+                const adminPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
                 
-                // Sports Plus channels - try multiple matching strategies
-                const sportsPlusChannels = contentSources.filter(src => {
-                    const pid = (src.packageId || src.package || src.packageName || '').toString().toLowerCase();
-                    return pid.includes('sports plus') || pid.includes('sportsplus');
-                });
-                console.log('🔍 DEBUG sportsPlus matches:', sportsPlusChannels.length);
-                
+                // Sports Plus channels (from admin - Nimble streams)
+                const sportsPlusChannels = adminPackages.filter(pkg => pkg.type === 'sports_plus' || pkg.category === 'sports-plus' || (pkg.packageName && pkg.packageName.toLowerCase().includes('sports plus')));
                 if (!contentData.sportsPlus) contentData.sportsPlus = { name: 'Sports Plus', content: [] };
-                contentData.sportsPlus.content = sportsPlusChannels.map(src => ({
-                    id: src.id || 'sportsplus_' + Math.random().toString(36).substr(2, 9),
-                    name: src.name || src.title || 'Unknown Sports Plus Channel',
-                    description: src.description || '',
-                    type: src.type || 'hls',
-                    url: src.url || src.streamUrl || '',
-                    package: src.packageId || src.package || '',
-                    packageId: src.packageId || src.package,
+                contentData.sportsPlus.content = sportsPlusChannels.map(pkg => ({
+                    id: pkg.id || pkg.packageId || 'sportsplus_' + Math.random().toString(36).substr(2, 9),
+                    name: pkg.packageName || pkg.name || 'Unknown Sports Plus Channel',
+                    description: pkg.packageDescription || pkg.description || '',
+                    type: 'hls',
+                    url: pkg.url || pkg.streamUrl || '',
+                    package: pkg.packageName || '',
+                    packageId: pkg.packageId || pkg.id,
                     category: 'sports-plus'
                 }));
-                console.log(`📦 Loaded ${sportsPlusChannels.length} Sports Plus channels from contentSources`);
+                console.log(`📦 Loaded ${sportsPlusChannels.length} Sports Plus channels from adminPackages`);
                 
-                // Sports channels
-                const sportsChannels = contentSources.filter(src => {
-                    const pid = (src.packageId || src.package || src.packageName || '').toString().toLowerCase();
-                    return pid.includes('sport') && !pid.includes('plus');
-                });
-                console.log('🔍 DEBUG sports matches:', sportsChannels.length);
-                
+                // Sports channels (separate from Sports Plus)
+                const sportsChannels = adminPackages.filter(pkg => pkg.type === 'live_sports' || pkg.category === 'sports' || (pkg.packageName && pkg.packageName.toLowerCase().includes('sport') && !pkg.packageName.toLowerCase().includes('plus')));
                 if (!contentData.sports) contentData.sports = { name: 'Sports', content: [] };
-                contentData.sports.content = sportsChannels.map(src => ({
-                    id: src.id || 'sports_' + Math.random().toString(36).substr(2, 9),
-                    name: src.name || src.title || 'Unknown Sports Channel',
-                    description: src.description || '',
-                    type: src.type || 'hls',
-                    url: src.url || src.streamUrl || '',
-                    package: src.packageId || src.package || '',
-                    packageId: src.packageId || src.package,
+                contentData.sports.content = sportsChannels.map(pkg => ({
+                    id: pkg.id || pkg.packageId || 'sports_' + Math.random().toString(36).substr(2, 9),
+                    name: pkg.packageName || pkg.name || 'Unknown Sports Channel',
+                    description: pkg.packageDescription || pkg.description || '',
+                    type: 'hls',
+                    url: pkg.url || pkg.streamUrl || '',
+                    package: pkg.packageName || '',
+                    packageId: pkg.packageId || pkg.id,
                     category: 'sports'
                 }));
-                console.log(`📦 Loaded ${sportsChannels.length} Sports channels from contentSources`);
+                console.log(`📦 Loaded ${sportsChannels.length} Sports channels from adminPackages`);
                 
-            } catch(e) { console.error('Error loading Sports channels:', e); }
+            } catch(e) { console.error('Error loading Arabic/Sports Plus:', e); }
             
             // Update tab counts immediately
             const moviesTabUpdate = document.querySelector('.source-tab[data-source="movies"]');
@@ -4216,17 +4199,10 @@
                 arabicTabUpdate.textContent = `Arabic (${contentData.arabic.content.length})`;
             }
             
-            // Update Series tab count
-            const seriesTabUpdate = document.querySelector('.source-tab[data-source="series"]');
-            if (seriesTabUpdate && contentData.series) {
-                seriesTabUpdate.textContent = `Series (${contentData.series.content.length})`;
-                console.log(`📺 Updated Series tab: ${contentData.series.content.length} series`);
-            }
-            
             // Refresh display if cached content loaded
-            if (moviesLoaded || adultLoaded || seriesLoaded || (contentData.arabic && contentData.arabic.content.length > 0)) {
+            if (moviesLoaded || adultLoaded || (contentData.arabic && contentData.arabic.content.length > 0)) {
                 console.log('📺 ====== PLEX CONTENT LOADED FROM CACHE ======');
-                console.log('📺 Final counts:', { movies: contentData.movies.content.length, adult: contentData.adult.content.length, arabic: contentData.arabic ? contentData.arabic.content.length : 0, series: contentData.series ? contentData.series.content.length : 0 });
+                console.log('📺 Final counts:', { movies: contentData.movies.content.length, adult: contentData.adult.content.length, arabic: contentData.arabic ? contentData.arabic.content.length : 0 });
                 
                 // Always refresh display to show the loaded content
                 renderContent();
@@ -4775,155 +4751,15 @@
             }
         }
         
-        async function selectSeries(index) {
+        function selectSeries(index) {
             selectedSeries = contentData.series.content[index];
             seriesViewState = 'seasons';
-            
-            // If series has no seasons data, try to fetch from Plex on demand
-            if (!selectedSeries.seasons && (selectedSeries.ratingKey || selectedSeries.id)) {
-                const contentList = document.getElementById('contentList');
-                if (contentList) {
-                    contentList.innerHTML = '<div class="empty-message">⏳ Loading seasons for ' + selectedSeries.name + '...</div>';
-                }
-                
-                const ratingKey = selectedSeries.ratingKey || (selectedSeries.id ? selectedSeries.id.toString().replace('series_', '') : null);
-                const serverUrl = selectedSeries.plexServer || localStorage.getItem('plexServerUrl');
-                const token = selectedSeries.plexToken || localStorage.getItem('plexToken') || localStorage.getItem('plexAutoToken');
-                
-                if (ratingKey && serverUrl && token) {
-                    try {
-                        const seasons = await fetchSeriesSeasons(serverUrl, token, ratingKey);
-                        if (seasons && seasons.length > 0) {
-                            selectedSeries.seasons = seasons;
-                            selectedSeries.totalSeasons = seasons.length;
-                            selectedSeries.totalEpisodes = seasons.reduce((sum, s) => sum + (s.episodes?.length || 0), 0);
-                        }
-                    } catch (e) {
-                        console.error('Failed to fetch seasons:', e);
-                    }
-                }
-            }
-            
             renderSeriesContent();
         }
         
-        // Fetch seasons and episodes for a specific show from Plex
-        async function fetchSeriesSeasons(serverUrl, token, showRatingKey) {
-            try {
-                const leavesUrl = `${serverUrl}/library/metadata/${showRatingKey}/allLeaves?X-Plex-Token=${token}`;
-                console.log(`📡 Fetching episodes for show ${showRatingKey}`);
-                const response = await fetch(leavesUrl);
-                if (!response.ok) return [];
-                
-                const text = await response.text();
-                const parser = new DOMParser();
-                const xml = parser.parseFromString(text, 'text/xml');
-                const videoElements = xml.querySelectorAll('Video');
-                const episodes = Array.from(videoElements).map(v => ({
-                    ratingKey: v.getAttribute('ratingKey'),
-                    title: v.getAttribute('title'),
-                    summary: v.getAttribute('summary'),
-                    duration: v.getAttribute('duration'),
-                    parentIndex: parseInt(v.getAttribute('parentIndex') || '1'),
-                    index: parseInt(v.getAttribute('index') || '0'),
-                    thumb: v.getAttribute('thumb'),
-                    Media: [{ Part: [{ key: v.querySelector('Part')?.getAttribute('key') }] }]
-                }));
-                
-                // Group by season
-                const seasonsMap = {};
-                for (const ep of episodes) {
-                    const seasonNum = ep.parentIndex || 1;
-                    const seasonKey = `season_${seasonNum}`;
-                    if (!seasonsMap[seasonKey]) {
-                        seasonsMap[seasonKey] = {
-                            id: `${showRatingKey}_season_${seasonNum}`,
-                            name: `Season ${seasonNum}`,
-                            seasonNumber: seasonNum,
-                            episodes: []
-                        };
-                    }
-                    seasonsMap[seasonKey].episodes.push({
-                        id: `episode_${ep.ratingKey}`,
-                        name: ep.title || `Episode ${ep.index}`,
-                        description: ep.summary || '',
-                        duration: ep.duration,
-                        seasonNumber: ep.parentIndex,
-                        episodeNumber: ep.index,
-                        thumb: ep.thumb ? `${serverUrl}${ep.thumb}?X-Plex-Token=${token}` : '',
-                        url: ep.Media?.[0]?.Part?.[0]?.key ? `${serverUrl}${ep.Media[0].Part[0].key}?X-Plex-Token=${token}` : '',
-                        plexToken: token
-                    });
-                }
-                
-                Object.values(seasonsMap).forEach(s => {
-                    s.episodes.sort((a, b) => (a.episodeNumber || 0) - (b.episodeNumber || 0));
-                });
-                
-                const seasons = Object.values(seasonsMap).sort((a, b) => a.seasonNumber - b.seasonNumber);
-                console.log(`📡 Found ${seasons.length} seasons with ${episodes.length} total episodes`);
-                return seasons;
-            } catch (e) {
-                console.error('Error fetching series seasons:', e);
-                return [];
-            }
-        }
-        
         function renderSeasonList(series, container) {
-            if (!series) {
-                container.innerHTML = '<div class="empty-message">❌ Series not found.</div>';
-                return;
-            }
-            
-            if (!series.seasons || series.seasons.length === 0) {
-                // If this is a flat (episode-level) item from Plex with a URL, offer to play it directly
-                if (series.url) {
-                    container.innerHTML = `
-                        <div class="season-header" style="
-                            padding: 20px;
-                            background: linear-gradient(135deg, #1a1a2e, #16213e);
-                            margin: -20px -20px 20px -20px;
-                            border-bottom: 2px solid #7c3aed;
-                            display: flex;
-                            align-items: center;
-                            gap: 15px;
-                        ">
-                            <button onclick="backToSeriesList()" style="
-                                background: #7c3aed;
-                                color: white;
-                                border: none;
-                                padding: 10px 20px;
-                                border-radius: 8px;
-                                cursor: pointer;
-                                font-weight: bold;
-                            ">← Back</button>
-                            <div>
-                                <h2 style="color: #fff; margin: 0 0 5px 0;">${series.name}</h2>
-                                <p style="color: #aaa; margin: 0;">${series.description || ''}</p>
-                            </div>
-                        </div>
-                        <div style="padding: 20px; text-align: center;">
-                            <div class="empty-message" style="margin-bottom: 20px;">
-                                ⚠️ No seasons cached for this show.
-                                <br><br>
-                                Please re-cache the Series library from the admin panel
-                                (Plex Management → Cache Content) to fetch seasons and episodes.
-                            </div>
-                            ${series.url ? `<button onclick="playContentById('${series.id}')" style="
-                                background: linear-gradient(135deg, #7c3aed, #a855f7);
-                                color: white;
-                                border: none;
-                                padding: 15px 40px;
-                                border-radius: 8px;
-                                cursor: pointer;
-                                font-weight: bold;
-                                font-size: 16px;
-                            ">▶️ Play This Item</button>` : ''}
-                        </div>
-                    `;
-                } else {
-                    container.innerHTML = '<div class="empty-message">No seasons available. Please re-cache the Series library from the admin panel.</div>';
-                }
+            if (!series || !series.seasons) {
+                container.innerHTML = '<div class="empty-message">No seasons available.</div>';
                 return;
             }
             
@@ -5065,36 +4901,15 @@
         
         function playEpisode(index) {
             const episode = selectedSeason.episodes[index];
-            if (!episode) {
-                console.error('❌ Episode not found at index:', index);
-                return;
-            }
-            if (!episode.url) {
-                showError('No video URL available for this episode.');
-                return;
-            }
-            
-            // Add the episode to a flat content list so playContent can find it by ID
-            // This way playContent's authentication/package checks still apply
-            if (!contentData.series.content) contentData.series.content = [];
-            
-            // Check if this episode is already in the flat list
-            const existingIndex = contentData.series.content.findIndex(c => String(c.id) === String(episode.id));
-            if (existingIndex === -1) {
-                contentData.series.content.push({
-                    id: episode.id,
+            if (episode && episode.url) {
+                playContent({
                     name: episode.name,
-                    description: episode.description || '',
                     url: episode.url,
+                    description: episode.description,
                     type: 'series',
-                    category: 'series',
-                    thumb: episode.thumb || '',
-                    plexToken: episode.plexToken || ''
+                    plexToken: episode.plexToken
                 });
             }
-            
-            // Now call playContent with the episode ID (it will find it in contentData.series.content)
-            playContent(episode.id);
         }
         
         function formatDuration(ms) {
@@ -7772,21 +7587,7 @@
                     localStorage.setItem('plexCachedArabic', JSON.stringify(data.plexArabicCache));
                     console.log(`✅ Synced ${data.plexArabicCache.length} Arabic channels to cache`);
                 }
-                // Sync series cache
-                if (data.plexSeriesCache && Array.isArray(data.plexSeriesCache)) {
-                    localStorage.setItem('plexSeriesCache', JSON.stringify(data.plexSeriesCache));
-                    localStorage.setItem('plexCachedSeries', JSON.stringify(data.plexSeriesCache));
-                    console.log(`✅ Synced ${data.plexSeriesCache.length} series to cache`);
-                }
-                // Sync Content Library channels (sports, sports plus, etc.)
-                if (data.contentSources && Array.isArray(data.contentSources)) {
-                    localStorage.setItem('contentSources', JSON.stringify(data.contentSources));
-                    console.log(`✅ Synced ${data.contentSources.length} content sources (channels)`);
-                }
-                if (data.plexSeriesSection) {
-                    localStorage.setItem('plexSeriesSection', data.plexSeriesSection);
-                }
-
+                
                 // CRITICAL: Import reseller-created customers so they can login on this device
                 if (data.clientAuthCustomers && Array.isArray(data.clientAuthCustomers)) {
                     // REPLACE with server data to ensure deleted customers are removed
