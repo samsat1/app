@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-16T05:12:58.237Z",
+  "exportDate": "2026-06-16T05:38:51.908Z",
   "customers": [
     {
       "id": "CUST_1781485581340",
@@ -9965,14 +9965,14 @@
       "active": true
     },
     {
-      "id": "src_1781586764126_cpt5k",
+      "id": "src_1781588324315_qugiw",
       "name": "LBCi",
       "type": "News",
-      "url": "http://192.168.1.100:8080/ch3/live.m3u8",
+      "url": "http://192.168.1.100:8080/channel3.m3u8",
       "quality": "1080p HD",
       "packageId": "PKG_1781479718346",
       "packageName": "Basic",
-      "addedAt": "2026-06-16T05:12:44.126Z",
+      "addedAt": "2026-06-16T05:38:44.315Z",
       "active": true
     }
   ],
