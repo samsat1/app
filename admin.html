@@ -5968,6 +5968,16 @@ Network: Always Streaming → Optimized for instant access`;
             const customerMacAddress = document.getElementById('customerMacAddress')?.value?.toUpperCase()?.trim() || '';
             const customerAdultPassword = document.getElementById('customerAdultPassword')?.value || '112233';
             const resetDeviceLock = document.getElementById('resetDeviceLock')?.checked || false;
+
+            // ✅ Auto-renewal settings
+            const renewalMode = document.querySelector('input[name="renewalMode"]:checked')?.value || 'manual';
+            const autoRenewalDuration = document.getElementById('autoRenewalDuration')?.value || '1';
+
+            // ✅ Network binding settings
+            const bindToRouter = document.getElementById('bindToRouter')?.checked || false;
+            const authorizedRouterIP = document.getElementById('authorizedRouterIP')?.value?.trim() || '';
+            const authorizedMacAddress = document.getElementById('authorizedMacAddress')?.value?.toUpperCase()?.trim() || '';
+            const authorizedSSID = document.getElementById('authorizedSSID')?.value?.trim() || '';
             
             if (!customerName || !customerUsername || !customerExpiry || !customerPassword) {
                 showNotification('❌ Please fill all required fields: Name, Username, Expiry Date, and Password', 'error');
@@ -6107,6 +6117,16 @@ Network: Always Streaming → Optimized for instant access`;
                         macAddress: customerMacAddress,
                         adultPassword: selectedAddons.includes('Adult Content Package') ? customerAdultPassword : '',
                         resetDeviceLock: resetDeviceLock ? Date.now() : (customer.resetDeviceLock || 0),
+                        // ✅ Auto-renewal settings
+                        renewalMode: renewalMode,
+                        autoRenewalDuration: renewalMode === 'auto' ? parseInt(autoRenewalDuration) : 0,
+                        autoRenewalEnabled: renewalMode === 'auto',
+                        lastAutoRenewal: existingCustomer?.lastAutoRenewal || null,
+                        // ✅ Network binding settings
+                        bindToRouter: bindToRouter,
+                        authorizedRouterIP: bindToRouter ? authorizedRouterIP : '',
+                        authorizedMacAddress: bindToRouter ? authorizedMacAddress : '',
+                        authorizedSSID: bindToRouter ? authorizedSSID : '',
                         status: 'active',
                         duration: calculation.duration,
                         durationMonths: calculation.durationMonths,
@@ -6172,6 +6192,16 @@ Network: Always Streaming → Optimized for instant access`;
                     password: customerPassword,
                     macAddress: customerMacAddress,
                     adultPassword: selectedAddons.includes('Adult Content Package') ? customerAdultPassword : '',
+                    // ✅ Auto-renewal settings
+                    renewalMode: renewalMode,
+                    autoRenewalDuration: renewalMode === 'auto' ? parseInt(autoRenewalDuration) : 0,
+                    autoRenewalEnabled: renewalMode === 'auto',
+                    lastAutoRenewal: null,
+                    // ✅ Network binding settings
+                    bindToRouter: bindToRouter,
+                    authorizedRouterIP: bindToRouter ? authorizedRouterIP : '',
+                    authorizedMacAddress: bindToRouter ? authorizedMacAddress : '',
+                    authorizedSSID: bindToRouter ? authorizedSSID : '',
                     status: 'active',
                     duration: calculation.duration,
                     durationMonths: calculation.durationMonths,
@@ -6830,6 +6860,20 @@ Network: Always Streaming → Optimized for instant access`;
                 }, 0);
                 totalRevenueEl.textContent = `$${totalRevenue.toFixed(2)}/month`;
             }
+
+            // ✅ Update network binding count
+            const boundCustomersEl = document.getElementById('boundCustomers');
+            if (boundCustomersEl) {
+                const boundCount = customers.filter(c => c.bindToRouter).length;
+                boundCustomersEl.textContent = boundCount;
+            }
+
+            // ✅ Update auto-renewal count
+            const autoRenewalCountEl = document.getElementById('autoRenewalCount');
+            if (autoRenewalCountEl) {
+                const autoCount = customers.filter(c => c.autoRenewalEnabled).length;
+                autoRenewalCountEl.textContent = autoCount;
+            }
             
             // Update recent customers list
             const recentCustomersEl = document.getElementById('recentCustomers');
@@ -7083,6 +7127,67 @@ Network: Always Streaming → Optimized for instant access`;
                                 </div>
                                 <input type="hidden" id="customerMacAddress" value="">
                             </div>
+
+                            <!-- ✅ Auto-Renewal / Manual Renewal -->
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">🔄 Subscription Renewal Mode</label>
+                                <div style="background: rgba(76,175,80,0.1); border: 1px solid rgba(76,175,80,0.3); border-radius: 8px; padding: 12px; margin-top: 8px;">
+                                    <label style="display: flex; align-items: center; cursor: pointer; color: white; margin-bottom: 8px;">
+                                        <input type="radio" name="renewalMode" value="manual" checked style="margin-right: 10px; transform: scale(1.2);">
+                                        <span>✋ <strong>Manual Renewal</strong> — Customer must contact you to renew before expiry</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; cursor: pointer; color: white; margin-bottom: 8px;">
+                                        <input type="radio" name="renewalMode" value="auto" style="margin-right: 10px; transform: scale(1.2);">
+                                        <span>🔁 <strong>Auto-Renewal</strong> — Auto-extend the subscription before it expires (3 days before)</span>
+                                    </label>
+                                    <div id="autoRenewalSettings" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(76,175,80,0.3);">
+                                        <label style="color: rgba(255,255,255,0.7); font-size: 13px;">Auto-Renewal Duration:</label>
+                                        <select id="autoRenewalDuration" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; margin-top: 5px;">
+                                            <option value="1">1 Month (same as initial)</option>
+                                            <option value="3">3 Months</option>
+                                            <option value="6">6 Months</option>
+                                            <option value="12">12 Months</option>
+                                        </select>
+                                        <div style="font-size: 11px; color: rgba(76,175,80,0.8); margin-top: 5px;">
+                                            ℹ️ The system will auto-extend by this duration when 3 days remain before expiry.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ✅ Network Binding (Router / Mikrotik protection) -->
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 14px;">🛡️ Network Binding (Router Protection)</label>
+                                <div style="background: rgba(33,150,243,0.1); border: 1px solid rgba(33,150,243,0.3); border-radius: 8px; padding: 12px; margin-top: 8px;">
+                                    <label style="display: flex; align-items: center; cursor: pointer; color: white; margin-bottom: 8px;">
+                                        <input type="checkbox" id="bindToRouter" style="margin-right: 10px; transform: scale(1.2);">
+                                        <span>🔒 <strong>Bind to Specific Router/Gateway</strong> — Prevent account sharing across networks</span>
+                                    </label>
+                                    <div id="routerBindingSettings" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(33,150,243,0.3);">
+                                        <div style="margin-bottom: 10px;">
+                                            <label style="color: rgba(255,255,255,0.7); font-size: 13px;">Authorized Router/Gateway IP:</label>
+                                            <input type="text" id="authorizedRouterIP" placeholder="e.g., 192.168.1.1 or 10.0.0.1" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; margin-top: 5px; font-family: monospace;">
+                                            <div style="font-size: 11px; color: rgba(33,150,243,0.8); margin-top: 5px;">
+                                                The customer's gateway IP. Login will be blocked from any other network.
+                                            </div>
+                                        </div>
+                                        <div style="margin-bottom: 10px;">
+                                            <label style="color: rgba(255,255,255,0.7); font-size: 13px;">Authorized MAC Address (optional):</label>
+                                            <input type="text" id="authorizedMacAddress" placeholder="e.g., AA:BB:CC:DD:EE:FF" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; margin-top: 5px; font-family: monospace;">
+                                            <div style="font-size: 11px; color: rgba(33,150,243,0.8); margin-top: 5px;">
+                                                The MAC address of the customer's device. Login will be blocked from any other device.
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label style="color: rgba(255,255,255,0.7); font-size: 13px;">Authorized SSID (optional):</label>
+                                            <input type="text" id="authorizedSSID" placeholder="e.g., MyHomeWiFi" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; margin-top: 5px;">
+                                            <div style="font-size: 11px; color: rgba(33,150,243,0.8); margin-top: 5px;">
+                                                The WiFi network name. Detected automatically where supported.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             
                             <div id="adultPasswordSection" style="display: none;">
                                 <label style="color: #ff4757; font-size: 14px;">🔞 Adult Content Password</label>
@@ -7122,6 +7227,31 @@ Network: Always Streaming → Optimized for instant access`;
                                 <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">Monthly Revenue</div>
                             </div>
                         </div>
+                        <div style="background: rgba(76,175,80,0.1); border: 1px solid rgba(76,175,80,0.3); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                            <h4 style="color: #4caf50; margin-bottom: 10px;">🔁 Auto-Renewal Control</h4>
+                            <p style="color: rgba(255,255,255,0.7); font-size: 13px; margin-bottom: 12px;">
+                                Process auto-renewals for customers whose subscription expires within 3 days. Auto-renewal is enabled per-customer in the form above.
+                            </p>
+                            <button onclick="processAutoRenewals()" class="btn btn-success" style="padding: 10px 20px;">
+                                🔁 Run Auto-Renewal Now
+                            </button>
+                            <div style="font-size: 12px; color: rgba(76,175,80,0.8); margin-top: 10px;">
+                                ℹ️ Customers with <strong>Auto-Renewal</strong> enabled will have their subscription extended automatically.
+                            </div>
+                        </div>
+                        <div style="background: rgba(33,150,243,0.1); border: 1px solid rgba(33,150,243,0.3); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                            <h4 style="color: #2196f3; margin-bottom: 10px;">🛡️ Network Binding Summary</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px;">
+                                <div style="text-align: center; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+                                    <div style="font-size: 1.4rem; font-weight: bold; color: #2196f3;" id="boundCustomers">0</div>
+                                    <div style="font-size: 11px; color: rgba(255,255,255,0.7);">Bound to Network</div>
+                                </div>
+                                <div style="text-align: center; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+                                    <div style="font-size: 1.4rem; font-weight: bold; color: #ff9800;" id="autoRenewalCount">0</div>
+                                    <div style="font-size: 11px; color: rgba(255,255,255,0.7);">Auto-Renewal Enabled</div>
+                                </div>
+                            </div>
+                        </div>
                         <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; margin-bottom: 15px;">
                             <h4 style="color: white; margin-bottom: 10px;">👥 Recent Customers</h4>
                             <div id="recentCustomers" style="color: rgba(255,255,255,0.7); font-size: 13px;">
@@ -7151,11 +7281,102 @@ Network: Always Streaming → Optimized for instant access`;
             setTimeout(() => {
                 updateDeviceSelection();
                 updateTotalPrice();
+
+                // ✅ Auto-renewal mode toggle
+                const renewalRadios = document.querySelectorAll('input[name="renewalMode"]');
+                renewalRadios.forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        const settings = document.getElementById('autoRenewalSettings');
+                        if (settings) {
+                            settings.style.display = this.value === 'auto' ? 'block' : 'none';
+                        }
+                    });
+                });
+
+                // ✅ Network binding toggle
+                const bindCheckbox = document.getElementById('bindToRouter');
+                if (bindCheckbox) {
+                    bindCheckbox.addEventListener('change', function() {
+                        const settings = document.getElementById('routerBindingSettings');
+                        if (settings) {
+                            settings.style.display = this.checked ? 'block' : 'none';
+                        }
+                    });
+                }
             }, 100);
-            
+
             // Load existing customers
             loadCustomersFromStorage();
             updateCustomerStats();
+        };
+
+        // ✅ Process auto-renewals for all eligible customers
+        window.processAutoRenewals = function() {
+            try {
+                const customers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
+                const now = new Date();
+                const threeDaysFromNow = new Date();
+                threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+                let renewedCount = 0;
+                let skippedCount = 0;
+
+                customers.forEach(customer => {
+                    if (!customer.autoRenewalEnabled || customer.renewalMode !== 'auto') {
+                        skippedCount++;
+                        return;
+                    }
+                    if (!customer.expiryDate) {
+                        skippedCount++;
+                        return;
+                    }
+                    const expiry = new Date(customer.expiryDate);
+                    // Only renew if expiry is within the next 3 days AND hasn't been renewed today
+                    if (expiry <= threeDaysFromNow && expiry > now) {
+                        const lastRenewal = customer.lastAutoRenewal ? new Date(customer.lastAutoRenewal) : null;
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        if (lastRenewal && lastRenewal >= today) {
+                            // Already renewed today
+                            return;
+                        }
+                        // Extend expiry by autoRenewalDuration months
+                        const months = customer.autoRenewalDuration || 1;
+                        const newExpiry = new Date(expiry);
+                        newExpiry.setMonth(newExpiry.getMonth() + months);
+                        customer.expiryDate = newExpiry.toISOString().split('T')[0];
+                        customer.lastAutoRenewal = new Date().toISOString();
+                        renewedCount++;
+                    }
+                });
+
+                if (renewedCount > 0) {
+                    localStorage.setItem('adminCustomers', JSON.stringify(customers));
+                    // Also update clientAuthCustomers and iptvCustomers
+                    const clientAuthCustomers = JSON.parse(localStorage.getItem('clientAuthCustomers') || '[]');
+                    customers.forEach(updated => {
+                        const idx = clientAuthCustomers.findIndex(c => c.id === updated.id);
+                        if (idx !== -1) {
+                            clientAuthCustomers[idx] = updated;
+                        }
+                    });
+                    localStorage.setItem('clientAuthCustomers', JSON.stringify(clientAuthCustomers));
+                    const iptvCustomers = JSON.parse(localStorage.getItem('iptvCustomers') || '[]');
+                    customers.forEach(updated => {
+                        const idx = iptvCustomers.findIndex(c => c.id === updated.id);
+                        if (idx !== -1) {
+                            iptvCustomers[idx] = updated;
+                        }
+                    });
+                    localStorage.setItem('iptvCustomers', JSON.stringify(iptvCustomers));
+                    showNotification(`🔁 Auto-renewal processed: ${renewedCount} customer(s) renewed`, 'success');
+                } else {
+                    showNotification('ℹ️ No auto-renewals due at this time', 'info');
+                }
+                console.log(`🔁 Auto-renewal: ${renewedCount} renewed, ${skippedCount} skipped (not eligible)`);
+            } catch (e) {
+                console.error('Error processing auto-renewals:', e);
+                showNotification('❌ Error processing auto-renewals', 'error');
+            }
         };
 
         // Package Management Section
@@ -9247,14 +9468,41 @@ Network: Always Streaming → Optimized for instant access`;
             // Update device selection and price
             updateDeviceSelection();
             updateTotalPrice();
-            
+
+            // ✅ Load auto-renewal settings
+            const renewalMode = customer.renewalMode || 'manual';
+            const renewalRadio = document.querySelector(`input[name="renewalMode"][value="${renewalMode}"]`);
+            if (renewalRadio) renewalRadio.checked = true;
+            const autoRenewalSettings = document.getElementById('autoRenewalSettings');
+            if (autoRenewalSettings) {
+                autoRenewalSettings.style.display = renewalMode === 'auto' ? 'block' : 'none';
+            }
+            const autoRenewalDuration = document.getElementById('autoRenewalDuration');
+            if (autoRenewalDuration) {
+                autoRenewalDuration.value = (customer.autoRenewalDuration || 1).toString();
+            }
+
+            // ✅ Load network binding settings
+            const bindCheckbox = document.getElementById('bindToRouter');
+            if (bindCheckbox) bindCheckbox.checked = !!customer.bindToRouter;
+            const routerSettings = document.getElementById('routerBindingSettings');
+            if (routerSettings) {
+                routerSettings.style.display = customer.bindToRouter ? 'block' : 'none';
+            }
+            const authorizedRouterIP = document.getElementById('authorizedRouterIP');
+            if (authorizedRouterIP) authorizedRouterIP.value = customer.authorizedRouterIP || '';
+            const authorizedMacAddress = document.getElementById('authorizedMacAddress');
+            if (authorizedMacAddress) authorizedMacAddress.value = customer.authorizedMacAddress || '';
+            const authorizedSSID = document.getElementById('authorizedSSID');
+            if (authorizedSSID) authorizedSSID.value = customer.authorizedSSID || '';
+
             // Set form to edit mode
             window.editingCustomerId = customer.id;
             window.renewalMode = false;
             document.getElementById('customerFormTitle').textContent = '✏️ Edit Customer';
             document.getElementById('addCustomerBtn').textContent = '💾 Save Changes';
             document.getElementById('cancelEditBtn').style.display = 'inline-block';
-            
+
             console.log('Edit mode activated - editingCustomerId:', window.editingCustomerId);
         }
         

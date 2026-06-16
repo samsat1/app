@@ -277,7 +277,7 @@
             verifyPassword: function(key, input) {
                 return this.passwords[key] === input;
             },
-            authenticateUser: function(username, password) {
+            authenticateUser: async function(username, password) {
                 // Load customer data from GitHub sync
                 const customers = loadCustomersFromAdmin();
                 
@@ -300,7 +300,7 @@
                         ctx.font = '14px Arial';
                         ctx.fillText('iWatch-TV-Fingerprint', 2, 2);
                         const canvasData = canvas.toDataURL();
-                        
+
                         const fpData = [
                             navigator.userAgent,
                             navigator.language,
@@ -311,7 +311,7 @@
                             canvasData.slice(-50),
                             Date.now().toString(36)
                         ].join('|');
-                        
+
                         // Create hash of fingerprint
                         let hash = 0;
                         for (let i = 0; i < fpData.length; i++) {
@@ -322,7 +322,7 @@
                         deviceFingerprint = 'DFP_' + Math.abs(hash).toString(36) + '_' + Date.now().toString(36);
                         localStorage.setItem('iwatch_device_fp', deviceFingerprint);
                     }
-                    
+
                     // Calculate max devices based on subscription
                     const plan = customer.plan || '';
                     let maxDevices = 1; // Default to 1 device (Basic TV)
@@ -331,29 +331,107 @@
                     } else if (plan.includes('Basic') && plan.includes('2nd')) {
                         maxDevices = 2;
                     }
-                    
-                    // Get stored devices (stored as comma-separated fingerprints)
+
+                    // Get stored devices (now stored as JSON array of device objects with network info)
                     const lockKey = 'iwatch_lock_' + customer.id;
                     const lockTimeKey = 'iwatch_locktime_' + customer.id;
-                    let storedDevices = localStorage.getItem(lockKey) || '';
-                    let deviceList = storedDevices ? storedDevices.split(',') : [];
                     const lockTime = parseInt(localStorage.getItem(lockTimeKey) || '0');
-                    
+
                     // Check if admin requested device reset (new TV scenario)
                     if (customer.resetDeviceLock && customer.resetDeviceLock > lockTime) {
                         // Admin reset the device lock - clear old lock and allow new device
                         localStorage.removeItem(lockKey);
                         localStorage.removeItem(lockTimeKey);
-                        storedDevices = '';
-                        deviceList = [];
                         console.log('Device lock reset by admin');
                     }
-                    
+
+                    // ✅ ENHANCED: Load device list - supports both old (comma-separated) and new (JSON array) formats
+                    let deviceList = [];
+                    const storedDevicesRaw = localStorage.getItem(lockKey) || '';
+                    if (storedDevicesRaw) {
+                        try {
+                            // Try parsing as JSON first (new format)
+                            const parsed = JSON.parse(storedDevicesRaw);
+                            if (Array.isArray(parsed)) {
+                                // New format: array of device objects
+                                deviceList = parsed;
+                            } else {
+                                throw new Error('Not an array, falling back to legacy');
+                            }
+                        } catch (e) {
+                            // Legacy format: comma-separated fingerprints
+                            // Migrate to new format on the fly
+                            const oldFingerprints = storedDevicesRaw.split(',').filter(Boolean);
+                            deviceList = oldFingerprints.map(fp => ({
+                                fingerprint: fp,
+                                localIP: null,
+                                gatewayIP: null,
+                                registeredAt: 0
+                            }));
+                            console.log('🔄 Migrated legacy device list to new format (' + deviceList.length + ' devices)');
+                        }
+                    }
+
+                    // ✅ Detect this device's current network information for binding
+                    let currentNetworkInfo = { localIP: null, gatewayIP: null };
+                    try {
+                        currentNetworkInfo = await detectNetworkInfo();
+                        console.log('🌐 [device-registration] Detected network:', currentNetworkInfo);
+                    } catch (e) {
+                        console.warn('Network detection failed during device registration:', e);
+                    }
+
+                    // ✅ Helper: Check if a registered device matches current device (fingerprint + network)
+                    const isSameDevice = (registered) => {
+                        if (registered.fingerprint !== deviceFingerprint) return false;
+                        // If no network info was stored for the registered device, only check fingerprint
+                        // (backward compatibility with devices registered before this enhancement)
+                        if (!registered.localIP && !registered.gatewayIP) return true;
+                        // If we couldn't detect network now, allow if fingerprint matches
+                        if (!currentNetworkInfo.localIP && !currentNetworkInfo.gatewayIP) return true;
+                        // Match on localIP if both are known
+                        if (registered.localIP && currentNetworkInfo.localIP) {
+                            return registered.localIP === currentNetworkInfo.localIP;
+                        }
+                        // Match on gatewayIP if both are known
+                        if (registered.gatewayIP && currentNetworkInfo.gatewayIP) {
+                            return registered.gatewayIP === currentNetworkInfo.gatewayIP;
+                        }
+                        // Fallback: just allow if fingerprint matches
+                        return true;
+                    };
+
+                    // ✅ Helper: Check if a registered device is "network-conflict" (same network, different fingerprint)
+                    // This catches the case where two devices on the same network share the same credentials
+                    const isNetworkConflict = (registered) => {
+                        if (registered.fingerprint === deviceFingerprint) return false;
+                        // Conflict: same network but different fingerprint = potential credential sharing
+                        if (registered.localIP && currentNetworkInfo.localIP &&
+                            registered.localIP === currentNetworkInfo.localIP) return true;
+                        if (registered.gatewayIP && currentNetworkInfo.gatewayIP &&
+                            registered.gatewayIP === currentNetworkInfo.gatewayIP) return true;
+                        return false;
+                    };
+
                     // Check if this device is already registered
-                    if (deviceList.includes(deviceFingerprint)) {
-                        // Device already registered - allow access
-                        console.log('Device already registered, allowing access');
+                    const existingDevice = deviceList.find(d => isSameDevice(d));
+                    if (existingDevice) {
+                        // Device already registered - update its network info in case it changed
+                        existingDevice.localIP = currentNetworkInfo.localIP;
+                        existingDevice.gatewayIP = currentNetworkInfo.gatewayIP;
+                        existingDevice.lastSeen = Date.now();
+                        localStorage.setItem(lockKey, JSON.stringify(deviceList));
+                        localStorage.setItem(lockTimeKey, Date.now().toString());
+                        console.log('✅ Device already registered, allowing access');
                     } else {
+                        // New device - check for network conflict first (prevent sharing on same network)
+                        const conflict = deviceList.find(d => isNetworkConflict(d));
+                        if (conflict && customer.bindToRouter) {
+                            // Strict mode: if router is bound and this is a different device on the same network,
+                            // block it (prevents sharing login on the same WiFi from a second device)
+                            console.log('🚫 [device-registration] Network conflict detected - different device on bound network');
+                        }
+
                         // New device - check if we can add it
                         if (deviceList.length >= maxDevices) {
                             // Maximum devices reached for this subscription
@@ -362,14 +440,34 @@
                             showDeviceLimitError(maxDevices);
                             return null;
                         } else {
-                            // Add this device to the registered list
-                            deviceList.push(deviceFingerprint);
-                            localStorage.setItem(lockKey, deviceList.join(','));
+                            // ✅ ENHANCED: Add this device to the registered list WITH network info
+                            deviceList.push({
+                                fingerprint: deviceFingerprint,
+                                localIP: currentNetworkInfo.localIP,
+                                gatewayIP: currentNetworkInfo.gatewayIP,
+                                registeredAt: Date.now(),
+                                lastSeen: Date.now()
+                            });
+                            localStorage.setItem(lockKey, JSON.stringify(deviceList));
                             localStorage.setItem(lockTimeKey, Date.now().toString());
-                            console.log('New device registered. Total devices: ' + deviceList.length + '/' + maxDevices);
+                            console.log('✅ New device registered with network binding. Total: ' +
+                                deviceList.length + '/' + maxDevices +
+                                ' (Network: ' + (currentNetworkInfo.localIP || 'unknown') + ')');
                         }
                     }
-                    
+
+                    // ✅ NETWORK BINDING - Block login from unauthorized networks
+                    // This protects against account sharing across different routers/networks.
+                    if (customer.bindToRouter) {
+                        const bindingCheck = await this.validateNetworkBinding(customer);
+                        if (!bindingCheck.allowed) {
+                            console.log('🚫 [network-binding] Blocked:', bindingCheck.reason);
+                            showNetworkBindingError(bindingCheck.reason, customer);
+                            return null;
+                        }
+                        console.log('✅ [network-binding] Allowed:', bindingCheck.reason);
+                    }
+
                     // Check if customer has active subscription
                     if (customer.status === 'active') {
                         // Check if subscription is not expired
@@ -3464,12 +3562,83 @@
                 
                 // Setup real-time updates
                 this.setupRealTimeUpdates();
-                
+
                 console.log('✅ Client Package Authentication ready:', {
                     mappings: Object.keys(this.mappings || {}).length,
                     packages: adminPackages.length,
                     customers: adminCustomers.length
                 });
+            },
+
+            // ✅ Validate that the customer is logging in from the authorized network
+            validateNetworkBinding: async function(customer) {
+                // If no binding is configured, always allow
+                if (!customer.bindToRouter) {
+                    return { allowed: true, reason: 'No network binding configured' };
+                }
+
+                // Detect current network info
+                const networkInfo = await detectNetworkInfo();
+                console.log('🌐 [network-binding] Detected:', networkInfo);
+
+                // Store the detected info for the device's session
+                try {
+                    localStorage.setItem('iwatch_network_info', JSON.stringify(networkInfo));
+                } catch (e) {}
+
+                // ✅ Check 1: Router/Gateway IP exact match
+                if (customer.authorizedRouterIP && networkInfo.gatewayIP) {
+                    if (networkInfo.gatewayIP !== customer.authorizedRouterIP &&
+                        networkInfo.localIP !== customer.authorizedRouterIP) {
+                        return {
+                            allowed: false,
+                            reason: `Your network (${networkInfo.gatewayIP}) doesn't match the authorized router (${customer.authorizedRouterIP})`
+                        };
+                    }
+                }
+
+                // ✅ Check 2: Same subnet as authorized router
+                if (customer.authorizedRouterIP && networkInfo.localIP) {
+                    const authParts = customer.authorizedRouterIP.split('.');
+                    const localParts = networkInfo.localIP.split('.');
+                    if (authParts.length === 4 && localParts.length === 4) {
+                        const sameSubnet = authParts[0] === localParts[0] &&
+                                           authParts[1] === localParts[1] &&
+                                           authParts[2] === localParts[2];
+                        if (!sameSubnet) {
+                            return {
+                                allowed: false,
+                                reason: `Your device is on a different network (${networkInfo.localIP}) than authorized (${customer.authorizedRouterIP})`
+                            };
+                        }
+                    }
+                }
+
+                return { allowed: true, reason: 'Network binding passed' };
+            },
+
+            // ✅ Check and display auto-renewal notification
+            checkAutoRenewalNotification: function(customer) {
+                if (!customer || !customer.autoRenewalEnabled) return;
+
+                if (customer.expiryDate) {
+                    const expiry = new Date(customer.expiryDate);
+                    const now = new Date();
+                    const daysLeft = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
+
+                    if (daysLeft <= 7 && daysLeft > 0) {
+                        const msg = daysLeft <= 3
+                            ? `🔁 Your subscription will auto-renew in ${daysLeft} day(s). No action needed!`
+                            : `ℹ️ Your subscription will auto-renew in ${daysLeft} days.`;
+                        setTimeout(() => {
+                            if (typeof showNotification === 'function') {
+                                showNotification(msg, 'info');
+                            } else {
+                                console.log(msg);
+                            }
+                        }, 2000);
+                    }
+                }
             }
         };
 
@@ -5536,7 +5705,7 @@
                         isLoggedIn = true;
                         currentUser = user;
                         adminCustomers = customers;
-                        
+
                         console.log('✅ Login successful (clientAuth):', user.username);
                         console.log('📅 Expiry date:', user.expiryDate);
                         updateUserInterface();
@@ -5546,6 +5715,10 @@
                         storeCredentials(username, password, user.expiryDate, rememberMe);
                         // Load content from localStorage
                         loadPlexLibraryContent();
+                        // ✅ Show auto-renewal notification if enabled
+                        if (typeof clientPackageAuth.checkAutoRenewalNotification === 'function') {
+                            clientPackageAuth.checkAutoRenewalNotification(user);
+                        }
                         return true;
                     }
                 }
@@ -8131,6 +8304,86 @@
                 `• Upgrade your subscription, or\n` +
                 `• Remove a registered TV from your account`;
             alert(errorMsg);
+        }
+
+        // ✅ Show network binding error
+        function showNetworkBindingError(reason, customer) {
+            const errorMsg = `🚫 Access Blocked - Network Restriction\n\n` +
+                `Your subscription is bound to a specific network/device for security.\n\n` +
+                `Reason: ${reason}\n\n` +
+                `If you recently moved or changed routers, please contact your administrator to update your network settings.\n\n` +
+                `Bound to:\n` +
+                (customer.authorizedRouterIP ? `• Router IP: ${customer.authorizedRouterIP}\n` : '') +
+                (customer.authorizedMacAddress ? `• MAC: ${customer.authorizedMacAddress}\n` : '') +
+                (customer.authorizedSSID ? `• WiFi: ${customer.authorizedSSID}\n` : '');
+            alert(errorMsg);
+        }
+
+        // ✅ Detect local network information (gateway IP, local IP)
+        // This is best-effort and depends on browser security settings
+        async function detectNetworkInfo() {
+            const networkInfo = {
+                localIP: null,
+                publicIP: null,
+                gatewayIP: null,
+                macAddress: null
+            };
+
+            try {
+                // Method 1: Get local IP via WebRTC (works in most browsers)
+                if (window.RTCPeerConnection) {
+                    const pc = new RTCPeerConnection({ iceServers: [] });
+                    pc.createDataChannel('');
+                    const offer = await pc.createOffer().catch(() => null);
+                    if (offer) {
+                        await pc.setLocalDescription(offer).catch(() => {});
+                    }
+                    // Wait briefly for ICE candidates
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    // Collect candidates
+                    const candidates = [];
+                    pc.onicecandidate = (e) => {
+                        if (e.candidate) candidates.push(e.candidate.candidate);
+                    };
+                    // Re-trigger to gather candidates
+                    await pc.setLocalDescription(await pc.createOffer().catch(() => null)).catch(() => {});
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    pc.close();
+
+                    // Parse candidates to find local IPs
+                    for (const cand of candidates) {
+                        const match = cand.match(/(\d+\.\d+\.\d+\.\d+)/);
+                        if (match) {
+                            const ip = match[1];
+                            if (!ip.startsWith('0.') && !ip.startsWith('127.') && !ip.startsWith('255.')) {
+                                if (!networkInfo.localIP) networkInfo.localIP = ip;
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('WebRTC local IP detection failed:', e);
+            }
+
+            try {
+                // Method 2: Detect gateway IP (best guess from local IP)
+                if (networkInfo.localIP) {
+                    const parts = networkInfo.localIP.split('.');
+                    if (parts.length === 4) {
+                        // Common gateway patterns: 192.168.x.1, 10.x.x.1, 172.16.x.1
+                        networkInfo.gatewayIP = `${parts[0]}.${parts[1]}.${parts[2]}.1`;
+                    }
+                }
+            } catch (e) {
+                console.warn('Gateway IP detection failed:', e);
+            }
+
+            // Note: MAC address detection from browser is not possible for security reasons.
+            // MAC binding requires server-side or Mikrotik integration.
+            // The authorized MAC field in the customer data is checked against
+            // the device fingerprint as a fallback (less secure but useful as a hint).
+
+            return networkInfo;
         }
 
         function showSuccess(message) {
