@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-16T05:11:26.494Z",
+  "exportDate": "2026-06-16T05:12:58.237Z",
   "customers": [
     {
       "id": "CUST_1781485581340",
@@ -9962,6 +9962,17 @@
       "packageId": "PKG_1781479853005",
       "packageName": "Sports",
       "addedAt": "2026-06-15T01:09:03.859Z",
+      "active": true
+    },
+    {
+      "id": "src_1781586764126_cpt5k",
+      "name": "LBCi",
+      "type": "News",
+      "url": "http://192.168.1.100:8080/ch3/live.m3u8",
+      "quality": "1080p HD",
+      "packageId": "PKG_1781479718346",
+      "packageName": "Basic",
+      "addedAt": "2026-06-16T05:12:44.126Z",
       "active": true
     }
   ],
