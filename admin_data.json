@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-18T08:48:50.142Z",
+  "exportDate": "2026-06-18T21:13:39.022Z",
   "customers": [
     {
       "id": "CUST_1781485581340",
@@ -10009,36 +10009,36 @@
   ],
   "contentSources": [
     {
-      "id": "src_1781770479882_sw1qh",
-      "name": "MAX 1",
-      "type": "Sports",
-      "url": "http://192.168.1.100:3000/live/ch1.m3u8",
-      "quality": "1080p HD",
-      "packageId": "undefined",
-      "packageName": "",
-      "addedAt": "2026-06-18T08:14:39.882Z",
-      "active": true
-    },
-    {
-      "id": "src_1781771605343_8mnqj",
-      "name": "MAX 2",
-      "type": "Sports Plus",
-      "url": "http://192.168.1.100:3000/live/ch2.m3u8",
-      "quality": "1080p HD",
-      "packageId": "undefined",
-      "packageName": "",
-      "addedAt": "2026-06-18T08:33:25.343Z",
-      "active": true
-    },
-    {
-      "id": "src_1781772489588_0nwxm",
+      "id": "src_1781816879017_ng426",
       "name": "NTV",
       "type": "News",
-      "url": "http://192.168.1.100:3000/live/ch3.m3u8",
+      "url": "http://192.168.1.100:8080/live/ch3.m3u8",
       "quality": "1080p HD",
       "packageId": "PKG_1781479718346",
       "packageName": "Basic",
-      "addedAt": "2026-06-18T08:48:09.588Z",
+      "addedAt": "2026-06-18T21:07:59.017Z",
+      "active": true
+    },
+    {
+      "id": "src_1781817004378_hf409",
+      "name": "MAX",
+      "type": "Sports Plus",
+      "url": "http://192.168.1.100:8080/live/ch1.m3u8",
+      "quality": "1080p HD",
+      "packageId": null,
+      "packageName": "Sports Plus",
+      "addedAt": "2026-06-18T21:10:04.378Z",
+      "active": true
+    },
+    {
+      "id": "src_1781817068313_bu85l",
+      "name": "MAX2",
+      "type": "Sports",
+      "url": "http://192.168.1.100:8080/live/ch2.m3u8",
+      "quality": "1080p HD",
+      "packageId": null,
+      "packageName": "Sports",
+      "addedAt": "2026-06-18T21:11:08.313Z",
       "active": true
     }
   ],
