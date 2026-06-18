@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-18T23:03:03.113Z",
+  "exportDate": "2026-06-18T23:05:19.573Z",
   "customers": [
     {
       "id": "CUST_1781485581340",
@@ -10031,14 +10031,14 @@
       "active": true
     },
     {
-      "id": "src_1781823597610_ucp7r",
+      "id": "src_1781823910157_9p93h",
       "name": "NTV",
-      "type": "News",
+      "type": "Live TV Channel",
       "url": "http://192.168.1.100:3000/live/ch3.m3u8",
       "quality": "1080p HD",
       "packageId": "PKG_1781479718346",
       "packageName": "Basic",
-      "addedAt": "2026-06-18T22:59:57.610Z",
+      "addedAt": "2026-06-18T23:05:10.157Z",
       "active": true
     }
   ],
