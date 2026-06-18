@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-18T08:28:44.495Z",
+  "exportDate": "2026-06-18T08:33:40.808Z",
   "customers": [
     {
       "id": "CUST_1781485581340",
@@ -10020,17 +10020,6 @@
       "active": true
     },
     {
-      "id": "src_1781770636011_ycz0y",
-      "name": "Sport 1",
-      "type": "Sports Plus",
-      "url": "http://192.168.1.100:3000/live/ch2.m3u8",
-      "quality": "1080p HD",
-      "packageId": "undefined",
-      "packageName": "",
-      "addedAt": "2026-06-18T08:17:16.011Z",
-      "active": true
-    },
-    {
       "id": "src_1781770764661_d9v1t",
       "name": "MTV",
       "type": "News",
@@ -10039,6 +10028,17 @@
       "packageId": "PKG_1781479718346",
       "packageName": "",
       "addedAt": "2026-06-18T08:19:24.661Z",
+      "active": true
+    },
+    {
+      "id": "src_1781771605343_8mnqj",
+      "name": "MAX 2",
+      "type": "Sports Plus",
+      "url": "http://192.168.1.100:3000/live/ch2.m3u8",
+      "quality": "1080p HD",
+      "packageId": "undefined",
+      "packageName": "",
+      "addedAt": "2026-06-18T08:33:25.343Z",
       "active": true
     }
   ],
