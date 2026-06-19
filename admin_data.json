@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-19T00:39:16.140Z",
+  "exportDate": "2026-06-19T00:43:16.873Z",
   "customers": [],
   "clientAuthCustomers": [],
   "packages": [],
@@ -18,7 +18,41 @@
   "plexAdultCache": [],
   "plexArabicCache": [],
   "plexSeriesCache": [],
-  "contentSources": [],
+  "contentSources": [
+    {
+      "id": "src_1781829685097_bzb7t",
+      "name": "MAX 1",
+      "type": "Sports",
+      "url": "http://192.168.1.100:3000/live/ch1.m3u8",
+      "quality": "1080p HD",
+      "packageId": null,
+      "packageName": "Sports",
+      "addedAt": "2026-06-19T00:41:25.097Z",
+      "active": true
+    },
+    {
+      "id": "src_1781829742756_yl0ge",
+      "name": "MAX 2",
+      "type": "Sports Plus",
+      "url": "http://192.168.1.100:3000/live/ch2.m3u8",
+      "quality": "1080p HD",
+      "packageId": null,
+      "packageName": "Sports Plus",
+      "addedAt": "2026-06-19T00:42:22.756Z",
+      "active": true
+    },
+    {
+      "id": "src_1781829769890_p25l9",
+      "name": "N T V",
+      "type": "News",
+      "url": "http://192.168.1.100:3000/live/ch3.m3u8",
+      "quality": "1080p HD",
+      "packageId": null,
+      "packageName": "",
+      "addedAt": "2026-06-19T00:42:49.890Z",
+      "active": true
+    }
+  ],
   "tvSyncUrl": "https://raw.githubusercontent.com/samsat1/app/main/admin_data.json",
   "githubUsername": "samsat1",
   "githubRepo": "app"
