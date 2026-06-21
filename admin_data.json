@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-21T03:47:28.392Z",
+  "exportDate": "2026-06-21T03:50:16.400Z",
   "customers": [
     {
       "id": "CUST_1781832944600",
@@ -29,34 +29,7 @@
       "createdAt": "2026-06-19T01:35:44.600Z"
     }
   ],
-  "clientAuthCustomers": [
-    {
-      "id": "CUST_1781832944600",
-      "username": "sam222",
-      "name": "salame abdul khalek",
-      "phone": "7865321",
-      "plan": "Basic TV Package, 2nd TV, 3rd TV",
-      "addons": "Sports Package, Sports Plus Package, Arabic Package, Movies Package, Series Package, Adult Content Package",
-      "monthlyPrice": 71.5,
-      "totalPrice": 71.5,
-      "expiryDate": "2026-07-19",
-      "password": "222222",
-      "macAddress": "",
-      "adultPassword": "112233",
-      "renewalMode": "auto",
-      "autoRenewalDuration": 6,
-      "autoRenewalEnabled": true,
-      "lastAutoRenewal": null,
-      "bindToRouter": false,
-      "authorizedRouterIP": "",
-      "authorizedMacAddress": "",
-      "authorizedSSID": "",
-      "status": "active",
-      "duration": "1 Month",
-      "durationMonths": 1,
-      "createdAt": "2026-06-19T01:35:44.600Z"
-    }
-  ],
+  "clientAuthCustomers": [],
   "packages": [
     {
       "name": "Basic",
@@ -11560,41 +11533,7 @@
       "totalEpisodes": 50
     }
   ],
-  "contentSources": [
-    {
-      "id": "src_1781829685097_bzb7t",
-      "name": "MAX 1",
-      "type": "Sports",
-      "url": "http://192.168.1.100:3000/live/ch1.m3u8",
-      "quality": "1080p HD",
-      "packageId": null,
-      "packageName": "Sports",
-      "addedAt": "2026-06-19T00:41:25.097Z",
-      "active": true
-    },
-    {
-      "id": "src_1781829742756_yl0ge",
-      "name": "MAX 2",
-      "type": "Sports Plus",
-      "url": "http://192.168.1.100:3000/live/ch2.m3u8",
-      "quality": "1080p HD",
-      "packageId": null,
-      "packageName": "Sports Plus",
-      "addedAt": "2026-06-19T00:42:22.756Z",
-      "active": true
-    },
-    {
-      "id": "src_1781833149252_b7mct",
-      "name": "NTV",
-      "type": "News",
-      "url": "http://192.168.1.100:3000/live/ch3.m3u8",
-      "quality": "1080p HD",
-      "packageId": "PKG_1781832639649",
-      "packageName": "Basic",
-      "addedAt": "2026-06-19T01:39:09.252Z",
-      "active": true
-    }
-  ],
+  "contentSources": [],
   "tvSyncUrl": "https://raw.githubusercontent.com/samsat1/app/main/admin_data.json",
   "githubUsername": "samsat1",
   "githubRepo": "app"
