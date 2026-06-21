@@ -5354,11 +5354,11 @@
                                 ">${series.thumb || series.art ? '' : '📺'}</div>
                                 <div class="series-info" style="padding: 12px;">
                                     <h3 style="color: #fff; margin: 0 0 8px 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${series.name}</h3>
+                                    ${series.description ? `<p style="color: #cbd5e1; font-size: 12px; margin: 0 0 6px 0; font-weight: 500;">${series.description}</p>` : ''}
                                     <div style="color: #aaa; font-size: 12px;">
                                         <span>📂 ${series.totalSeasons || 0} Seasons</span>
                                         <span style="margin-left: 10px;">🎬 ${series.totalEpisodes || 0} Episodes</span>
                                     </div>
-                                    ${series.description ? `<p style="color: #888; font-size: 11px; margin: 8px 0 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${series.description}</p>` : ''}
                                 </div>
                             </div>
                         `).join('')}
@@ -5501,8 +5501,7 @@
                             <div class="empty-message" style="margin-bottom: 20px;">
                                 ⚠️ No seasons cached for this show.
                                 <br><br>
-                                Please re-cache the Series library from the admin panel
-                                (Plex Management → Cache Content) to fetch seasons and episodes.
+                                Please try again later or contact support if this continues.
                             </div>
                             ${series.url ? `<button onclick="playContentById('${series.id}')" style="
                                 background: linear-gradient(135deg, #7c3aed, #a855f7);
@@ -5517,7 +5516,7 @@
                         </div>
                     `;
                 } else {
-                    container.innerHTML = '<div class="empty-message">No seasons available. Please re-cache the Series library from the admin panel.</div>';
+                    container.innerHTML = '<div class="empty-message">No seasons available. Please try again later.</div>';
                 }
                 return;
             }
@@ -5689,6 +5688,14 @@
             }
             
             // Now call playContent with the episode ID (it will find it in contentData.series.content)
+            // ✅ FIX: detect content-type from URL so series episodes don't get incorrectly
+            // routed to the Plex handler (which would fail with "check server connection").
+            const epUrl = episode.url || '';
+            const epType = epUrl.includes('.m3u8') || epUrl.includes('/hls/') ? 'hls'
+                         : epUrl.includes('.mp4') ? 'mp4'
+                         : 'hls'; // default to hls so HLS.js handles it
+            const ep = contentData.series.content.find(c => String(c.id) === String(episode.id));
+            if (ep) ep.type = epType;
             playContent(episode.id);
         }
         
@@ -7205,7 +7212,7 @@
                     video.onerror = function() {
                         console.error('❌ Video load error:', video.error);
                         clearTimeout(videoTimeout);
-                        showError('Failed to load video. Please check Plex server connection.');
+                        showError('Failed to load video. Please try again or contact support if the issue continues.');
                     };
                     
                     video.onplay = function() {
@@ -7243,7 +7250,7 @@
                 
                 if (!token) {
                     console.error('❌ No Plex token found!');
-                    showError('Plex token not configured. Please check admin settings.');
+                    showError('Unable to load this content right now. Please contact support if this continues.');
                     return;
                 }
                 
@@ -7257,13 +7264,13 @@
                             .then(r => r.text())
                             .then(xml => {
                                 console.log('📺 Fetched Plex metadata');
-                                showError('Content metadata error. Please refresh the content library.');
+                                showError('Unable to load this item right now. Please try again later.');
                             })
                             .catch(e => {
-                                showError('Content metadata error. Please refresh the content library.');
+                                showError('Unable to load this item right now. Please try again later.');
                             });
                     } else {
-                        showError('Content metadata error. Please refresh the content library.');
+                        showError('Unable to load this item right now. Please try again later.');
                     }
                     return;
                 }
@@ -7276,7 +7283,7 @@
                 
             } catch (error) {
                 console.error('Plex playback error:', error);
-                showError('Failed to load Plex content: ' + error.message);
+                showError('Failed to load video. Please try again or contact support.');
             }
         }
         
@@ -7393,7 +7400,7 @@
                 });
                 // ✅ FIX: keep window.hlsInstance in sync
                 window.hlsInstance = hls;
-                hls.loadSource(url);
+                hls.loadSource(getProxiedStreamUrl(url));
                 hls.attachMedia(player.el().querySelector('video'));
                 hls.on(Hls.Events.MANIFEST_PARSED, () => {
                     player.play().catch(e => console.log('Autoplay blocked'));
@@ -7477,13 +7484,13 @@
                 }
                 
                 // DIRECT NATIVE PLAYBACK - fastest for LG/Samsung
-                video.src = content.url;
+                video.src = getProxiedStreamUrl(content.url);
                 video.load();
                 
                 // Add error listener
                 video.onerror = function() {
                     console.error('❌ Video load error:', video.error);
-                    showError('Failed to load video. URL may be invalid or server unreachable.');
+                    showError('Failed to load video. Please try again or contact support if the issue continues.');
                 };
                 
                 // Play immediately
@@ -7536,7 +7543,16 @@
                 // can destroy the correct instance every time.
                 window.hlsInstance = hls;
 
-                hls.loadSource(content.url);
+                // ✅ FIX: Wrap stream URL with a CORS proxy if configured.
+                // This solves "URL plays in VLC but not in browser" issues caused by
+                // missing CORS headers on the streaming server. The user can set
+                // a CORS proxy URL via localStorage.setItem('corsProxyUrl', 'https://...')
+                // or via the admin panel settings.
+                const proxiedUrl = getProxiedStreamUrl(content.url);
+                if (proxiedUrl !== content.url) {
+                    console.log('🌐 Using CORS proxy for stream:', proxiedUrl);
+                }
+                hls.loadSource(proxiedUrl);
                 hls.attachMedia(video);
                 
                 hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -7556,6 +7572,10 @@
                     if (data.fatal) {
                         if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
                             console.log('🔄 Network error - recovering...');
+                            // ✅ FIX: Detect CORS / mixed content and show a friendly message
+                            if (data.details && /access-control-allow-origin|mixed-content|cors/i.test(JSON.stringify(data))) {
+                                showError('Video is temporarily unavailable. Please try again later or contact support.');
+                            }
                             hls.startLoad();
                         } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
                             console.log('🔄 Media error - recovering...');
@@ -7572,11 +7592,21 @@
             } else {
                 // Final fallback - native video
                 console.log('📺 Using native video fallback');
+                // ✅ FIX: Detect mixed-content (HTTPS page loading HTTP stream)
+                if (window.location.protocol === 'https:' && content.url && content.url.startsWith('http://')) {
+                    showError('Video is temporarily unavailable. Please try again later or contact support.');
+                }
                 video.src = content.url;
                 video.load();
                 const playPromise = video.play();
                 if (playPromise !== undefined) {
-                    playPromise.catch(e => showTVPlayPrompt(content));
+                    playPromise.catch(e => {
+                        if (e && /NotSupportedError|DOMException/i.test(String(e))) {
+                            showError('Video is temporarily unavailable. Please try again later or contact support.');
+                        } else {
+                            showTVPlayPrompt(content);
+                        }
+                    });
                 }
                 video.play().catch(e => console.log('Autoplay blocked'));
             }
@@ -7584,7 +7614,33 @@
             // Update now playing info
             updateNowPlaying(content);
         }
-        
+
+        // ✅ FIX: Wrap a stream URL with the configured CORS proxy.
+        // This solves "URL plays in VLC but not in browser" issues caused by missing
+        // CORS headers on the streaming server, or mixed-content (HTTPS page → HTTP stream).
+        // The user can configure a CORS proxy by setting localStorage 'corsProxyUrl'.
+        // Examples of valid values:
+        //   - 'https://corsproxy.io/?' (prefixes the URL with this)
+        //   - 'https://my-proxy.example.com/?url=' (concatenated)
+        //   - '' or null (disabled - returns URL as-is)
+        function getProxiedStreamUrl(url) {
+            if (!url) return url;
+            try {
+                const proxy = localStorage.getItem('corsProxyUrl');
+                if (!proxy || !proxy.trim()) return url;
+                // Support two common proxy styles:
+                //   1) Prefix proxy (e.g. "https://corsproxy.io/?")  → proxy + encodeURIComponent(url)
+                //   2) Query proxy  (e.g. "https://my-proxy/?url=")  → proxy + encodeURIComponent(url)
+                if (proxy.includes('?url=') || proxy.includes('&url=') || /[?&]$/.test(proxy)) {
+                    return proxy + encodeURIComponent(url);
+                }
+                // Default: treat as prefix
+                return proxy + encodeURIComponent(url);
+            } catch (e) {
+                return url;
+            }
+        }
+
         // Fallback function to try HLS.js when native playback fails
         function tryHLSJsFallback(url) {
             console.log('🔄 Trying HLS.js fallback...');
@@ -7603,9 +7659,9 @@
                     maxMaxBufferLength: 30
                 });
                 
-                hls.loadSource(url);
+                hls.loadSource(getProxiedStreamUrl(url));
                 hls.attachMedia(video);
-                
+
                 hls.on(Hls.Events.MANIFEST_PARSED, () => {
                     console.log('✅ HLS.js fallback loaded successfully');
                     video.play().catch(e => console.log('Autoplay blocked'));
@@ -7814,7 +7870,7 @@
                 // Add error listener
                 nativeVideo.onerror = function() {
                     console.error('❌ MP4 Video load error:', nativeVideo.error);
-                    showError('Failed to load MP4 video. URL may be invalid or server unreachable.');
+                    showError('Failed to load video. Please try again or contact support if the issue continues.');
                 };
                 
                 // Play immediately
@@ -10068,7 +10124,7 @@
             statusElement.innerHTML = '<span class="status-expired">⚠️ Subscription Expired</span>';
             statusElement.className = 'package-status status-expired';
         } else {
-            statusElement.innerHTML = '<span class="status-inactive">📦 Not Subscribed - Contact Admin</span>';
+            statusElement.innerHTML = '<span class="status-inactive">📦 Not Subscribed - Contact Support</span>';
             statusElement.className = 'package-status status-inactive';
         }
         
