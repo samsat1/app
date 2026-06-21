@@ -5375,21 +5375,31 @@
         async function selectSeries(index) {
             selectedSeries = contentData.series.content[index];
             seriesViewState = 'seasons';
-            
+
             // If series has no seasons data, try to fetch from Plex on demand
-            if (!selectedSeries.seasons && (selectedSeries.ratingKey || selectedSeries.id)) {
+            // ✅ FIX: Only try to fetch seasons if we have a VALID numeric Plex ratingKey.
+            // Series loaded from adminPackages have IDs like "PKG_xxx" or "series_random"
+            // which are NOT valid Plex ratingKeys. Using them causes silent failures.
+            const extractedRatingKey = selectedSeries.ratingKey
+                || (selectedSeries.id && !String(selectedSeries.id).startsWith('series_')
+                    ? selectedSeries.id
+                    : (selectedSeries.id ? String(selectedSeries.id).replace('series_', '') : null));
+
+            // A valid Plex ratingKey is always a numeric string
+            const isValidRatingKey = extractedRatingKey && /^\d+$/.test(String(extractedRatingKey));
+
+            if (!selectedSeries.seasons && isValidRatingKey) {
                 const contentList = document.getElementById('contentList');
                 if (contentList) {
                     contentList.innerHTML = '<div class="empty-message">⏳ Loading seasons for ' + selectedSeries.name + '...</div>';
                 }
-                
-                const ratingKey = selectedSeries.ratingKey || (selectedSeries.id ? selectedSeries.id.toString().replace('series_', '') : null);
+
                 const serverUrl = selectedSeries.plexServer || localStorage.getItem('plexServerUrl');
                 const token = selectedSeries.plexToken || localStorage.getItem('plexToken') || localStorage.getItem('plexAutoToken');
-                
-                if (ratingKey && serverUrl && token) {
+
+                if (serverUrl && token) {
                     try {
-                        const seasons = await fetchSeriesSeasons(serverUrl, token, ratingKey);
+                        const seasons = await fetchSeriesSeasons(serverUrl, token, extractedRatingKey);
                         if (seasons && seasons.length > 0) {
                             selectedSeries.seasons = seasons;
                             selectedSeries.totalSeasons = seasons.length;
@@ -5400,7 +5410,7 @@
                     }
                 }
             }
-            
+
             renderSeriesContent();
         }
         
@@ -5505,7 +5515,7 @@
                                 <br><br>
                                 Please try again later or contact support if this continues.
                             </div>
-                            ${series.url ? `<button onclick="playContentById('${series.id}')" style="
+                            ${series.url ? `<button onclick="playContent('${series.id}')" style="
                                 background: linear-gradient(135deg, #7c3aed, #a855f7);
                                 color: white;
                                 border: none;
