@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-21T04:21:01.210Z",
+  "exportDate": "2026-06-21T04:23:13.590Z",
   "customers": [
     {
       "id": "CUST_1781832944600",
@@ -9675,7 +9675,7 @@
       "sectionId": "18",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "fmJBKbyaJqRPmko5t6yV",
-      "addedAt": 1782015648219
+      "addedAt": 1782015787741
     },
     {
       "id": "5382",
@@ -9688,7 +9688,7 @@
       "sectionId": "18",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "fmJBKbyaJqRPmko5t6yV",
-      "addedAt": 1782015648219
+      "addedAt": 1782015787741
     },
     {
       "id": "5591",
@@ -9701,7 +9701,7 @@
       "sectionId": "18",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "fmJBKbyaJqRPmko5t6yV",
-      "addedAt": 1782015648219
+      "addedAt": 1782015787741
     },
     {
       "id": "5487",
@@ -9714,7 +9714,7 @@
       "sectionId": "18",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "fmJBKbyaJqRPmko5t6yV",
-      "addedAt": 1782015648219
+      "addedAt": 1782015787741
     },
     {
       "id": "5463",
@@ -9727,7 +9727,7 @@
       "sectionId": "18",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "fmJBKbyaJqRPmko5t6yV",
-      "addedAt": 1782015648219
+      "addedAt": 1782015787741
     },
     {
       "id": "5676",
@@ -9740,7 +9740,7 @@
       "sectionId": "18",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "fmJBKbyaJqRPmko5t6yV",
-      "addedAt": 1782015648219
+      "addedAt": 1782015787741
     },
     {
       "id": "5624",
@@ -9753,7 +9753,7 @@
       "sectionId": "18",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "fmJBKbyaJqRPmko5t6yV",
-      "addedAt": 1782015648219
+      "addedAt": 1782015787741
     }
   ],
   "contentSources": [
