@@ -7261,7 +7261,14 @@
                 if (isTV) {
                     // TV browsers - use native playback
                     console.log('📺 TV detected - using native playback for Plex');
-                    video.src = content.url;
+                    // ✅ FIX: Apply CORS proxy (same as handleHLSContent) so that
+                    // Plex direct part URLs are not blocked by the TV browser's
+                    // CORS policy. Without this, series episodes fail with
+                    // "Failed to load" while movies (which go through
+                    // getProxiedStreamUrl via handleHLSContent) work fine.
+                    const playUrl = getProxiedStreamUrl(content.url);
+                    console.log('📺 Proxied play URL:', playUrl.substring(0, 100) + '...');
+                    video.src = playUrl;
                     video.load();
                     
                     // Set timeout to detect if video doesn't start playing
@@ -7302,15 +7309,15 @@
                     // Desktop - use Video.js
                     console.log('🖥️ Desktop detected - using Video.js for Plex');
                     if (player && typeof player.src === 'function') {
-                        player.src({ type: 'video/mp4', src: content.url });
+                        player.src({ type: 'video/mp4', src: getProxiedStreamUrl(content.url) });
                         player.play().catch(e => {
                             console.log('⚠️ Video.js play failed, trying native:', e);
-                            video.src = content.url;
+                            video.src = getProxiedStreamUrl(content.url);
                             video.load();
                             video.play().catch(err => showError('Failed to play video'));
                         });
                     } else {
-                        video.src = content.url;
+                        video.src = getProxiedStreamUrl(content.url);
                         video.load();
                         video.play().catch(e => showError('Failed to play video'));
                     }
