@@ -8484,7 +8484,7 @@
                 const passwordField = document.getElementById('password');
                 if (usernameField) usernameField.value = '';
                 if (passwordField) passwordField.value = '';
-                
+
                 document.getElementById('loginModal').classList.add('show');
                 // Small delay to ensure fields are cleared before focus
                 setTimeout(() => {
@@ -8492,6 +8492,22 @@
                 }, 50);
             }
         }
+
+        window.showSettingsModal = function() {
+            const m = document.getElementById('settingsModal');
+            if (m) {
+                m.style.display = 'block';
+                m.classList.add('show');
+            }
+        };
+
+        window.hideSettingsModal = function() {
+            const m = document.getElementById('settingsModal');
+            if (m) {
+                m.classList.remove('show');
+                m.style.display = 'none';
+            }
+        };
 
         function hideLoginModal() {
             document.getElementById('loginModal').classList.remove('show');
@@ -9621,14 +9637,18 @@
                     '.close-btn',
                     '[tabindex]:not([tabindex="-1"])'
                 ];
-                
+
+                // If a modal is currently shown, only focus elements inside that modal
+                const visibleModal = document.querySelector('.login-modal.show:not([style*="display: none"]), .adult-modal.show:not([style*="display: none"])');
+                const rootSelector = visibleModal ? visibleModal : document;
+
                 this.focusableElements = Array.from(
-                    document.querySelectorAll(selectors.join(','))
+                    rootSelector.querySelectorAll(selectors.join(','))
                 ).filter(el => {
                     const rect = el.getBoundingClientRect();
                     const style = window.getComputedStyle(el);
-                    return rect.width > 0 && rect.height > 0 && 
-                           style.display !== 'none' && 
+                    return rect.width > 0 && rect.height > 0 &&
+                           style.display !== 'none' &&
                            style.visibility !== 'hidden';
                 });
             },
