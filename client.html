@@ -2713,24 +2713,8 @@
                         Remember me on this TV
                     </label>
                 </div>
-
-                <button type="button" class="login-btn" id="loginBtn" onclick="window.loginBtnClick && window.loginBtnClick()">Login</button>
-
-                <!-- On-screen D-pad buttons (backup for boxes with non-standard remotes) -->
-                <div style="margin-top: 20px; text-align: center;">
-                    <p style="color: #888; font-size: 11px; margin-bottom: 8px;">On-Screen Navigation (Tap if remote doesn't work)</p>
-                    <div style="display: inline-grid; grid-template-columns: repeat(3, 36px); grid-template-rows: repeat(3, 36px); gap: 3px;">
-                        <div></div>
-                        <button onclick="tvRemote && tvRemote.moveFocus('up')" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; color: #fff; font-size: 18px; cursor: pointer;">▲</button>
-                        <div></div>
-                        <button onclick="tvRemote && tvRemote.moveFocus('left')" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; color: #fff; font-size: 18px; cursor: pointer;">◀</button>
-                        <button onclick="window.loginBtnClick && window.loginBtnClick()" style="background: rgba(102,126,234,0.6); border: 1px solid rgba(102,126,234,0.8); border-radius: 6px; color: #fff; font-size: 14px; cursor: pointer; font-weight: bold;">OK</button>
-                        <button onclick="tvRemote && tvRemote.moveFocus('right')" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; color: #fff; font-size: 18px; cursor: pointer;">▶</button>
-                        <div></div>
-                        <button onclick="tvRemote && tvRemote.moveFocus('down')" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; color: #fff; font-size: 18px; cursor: pointer;">▼</button>
-                        <div></div>
-                    </div>
-                </div>
+                
+                <button type="submit" class="login-btn" id="loginBtn">Login</button>
             </form>
             
             <div class="error-message" id="errorMessage" style="display: none;">
@@ -8500,7 +8484,7 @@
                 const passwordField = document.getElementById('password');
                 if (usernameField) usernameField.value = '';
                 if (passwordField) passwordField.value = '';
-
+                
                 document.getElementById('loginModal').classList.add('show');
                 // Small delay to ensure fields are cleared before focus
                 setTimeout(() => {
@@ -8508,22 +8492,6 @@
                 }, 50);
             }
         }
-
-        window.showSettingsModal = function() {
-            const m = document.getElementById('settingsModal');
-            if (m) {
-                m.style.display = 'block';
-                m.classList.add('show');
-            }
-        };
-
-        window.hideSettingsModal = function() {
-            const m = document.getElementById('settingsModal');
-            if (m) {
-                m.classList.remove('show');
-                m.style.display = 'none';
-            }
-        };
 
         function hideLoginModal() {
             document.getElementById('loginModal').classList.remove('show');
@@ -8571,81 +8539,19 @@
                     loginBtn.textContent = 'Login';
                 });
                 
-                // Direct login button click handler - reliable on Android WebView and TV remotes
-        window.loginBtnClick = async function() {
-            const loginBtn = document.getElementById('loginBtn');
-            if (!loginBtn || loginBtn.disabled) return;
-            
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value.trim();
-            
-            if (!username || !password) {
-                console.log('Username and password are required');
-                if (typeof showNotification === 'function') {
-                    showNotification('Please enter username and password', 'error');
+                // Also add click handler to the login button as backup
+                const loginBtn = document.getElementById('loginBtn');
+                if (loginBtn) {
+                    loginBtn.addEventListener('click', function(e) {
+                        // Only handle click if form hasn't already been submitted
+                        if (e.detail === 0) return; // Skip if this was triggered by form submit
+                        
+                        const form = document.getElementById('loginForm');
+                        if (form && !loginBtn.disabled) {
+                            form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                        }
+                    });
                 }
-                return;
-            }
-            
-            // Immediate feedback
-            loginBtn.disabled = true;
-            loginBtn.textContent = 'Logging in...';
-            loginBtn.blur();
-            
-            try {
-                const loginSuccess = await loginUser(username, password);
-                console.log('Login attempt result:', loginSuccess);
-                
-                if (loginSuccess) {
-                    document.getElementById('username').value = '';
-                    document.getElementById('password').value = '';
-                    setTimeout(() => {
-                        document.getElementById('username').value = '';
-                        document.getElementById('password').value = '';
-                    }, 100);
-                }
-            } catch (e) {
-                console.log('Login error:', e.message);
-            } finally {
-                loginBtn.disabled = false;
-                loginBtn.textContent = 'Login';
-            }
-        };
-        
-        // Also add click handler to the login button as backup
-        const loginBtn = document.getElementById('loginBtn');
-        if (loginBtn) {
-            loginBtn.addEventListener('click', function(e) {
-                // Direct call to loginBtnClick - reliable on all platforms
-                if (typeof window.loginBtnClick === 'function') {
-                    window.loginBtnClick();
-                }
-            });
-        }
-        
-        // Enter key on username/password inputs - trigger login (form no longer auto-submits because button is type="button")
-        const usernameInput = document.getElementById('username');
-        const passwordInput = document.getElementById('password');
-        if (usernameInput) {
-            usernameInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (typeof window.loginBtnClick === 'function') {
-                        window.loginBtnClick();
-                    }
-                }
-            });
-        }
-        if (passwordInput) {
-            passwordInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (typeof window.loginBtnClick === 'function') {
-                        window.loginBtnClick();
-                    }
-                }
-            });
-        }
             }
 
             // Adult password
@@ -9653,18 +9559,14 @@
                     '.close-btn',
                     '[tabindex]:not([tabindex="-1"])'
                 ];
-
-                // If a modal is currently shown, only focus elements inside that modal
-                const visibleModal = document.querySelector('.login-modal.show:not([style*="display: none"]), .adult-modal.show:not([style*="display: none"])');
-                const rootSelector = visibleModal ? visibleModal : document;
-
+                
                 this.focusableElements = Array.from(
-                    rootSelector.querySelectorAll(selectors.join(','))
+                    document.querySelectorAll(selectors.join(','))
                 ).filter(el => {
                     const rect = el.getBoundingClientRect();
                     const style = window.getComputedStyle(el);
-                    return rect.width > 0 && rect.height > 0 &&
-                           style.display !== 'none' &&
+                    return rect.width > 0 && rect.height > 0 && 
+                           style.display !== 'none' && 
                            style.visibility !== 'hidden';
                 });
             },
@@ -9777,9 +9679,6 @@
             // Handle remote button press
             setupRemoteListeners() {
                 document.addEventListener('keydown', (e) => {
-                    // DEBUG: Log ALL key events to console - helps diagnose Mortal T1 and other Android boxes
-                    console.log('🔑 KEY: key=' + e.key + ' code=' + e.code + ' keyCode=' + e.keyCode + ' which=' + e.which);
-                    
                     // Ignore if typing in input - allow normal text editing including backspace
                     if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
                         // Only handle navigation keys in input fields, let all others (including Backspace) work normally
@@ -9792,22 +9691,20 @@
                         // Navigation - Arrow Keys
                         case 'ArrowUp':
                             e.preventDefault();
-                            // Use general navigation in modals/inputs; only use list nav for content list
-                            const inContentListUp = document.activeElement?.closest('.content-list') !== null;
-                            if (inContentListUp && !document.activeElement?.classList.contains('control-btn')) {
-                                this.moveFocusInList('up');
-                            } else {
+                            // Check if on control button - use general navigation
+                            if (document.activeElement?.classList.contains('control-btn')) {
                                 this.moveFocus('up');
+                            } else {
+                                this.moveFocusInList('up');
                             }
                             break;
                         case 'ArrowDown':
                             e.preventDefault();
-                            // Use general navigation in modals/inputs; only use list nav for content list
-                            const inContentListDown = document.activeElement?.closest('.content-list') !== null;
-                            if (inContentListDown && !document.activeElement?.classList.contains('control-btn')) {
-                                this.moveFocusInList('down');
-                            } else {
+                            // Check if on control button - use general navigation
+                            if (document.activeElement?.classList.contains('control-btn')) {
                                 this.moveFocus('down');
+                            } else {
+                                this.moveFocusInList('down');
                             }
                             break;
                         case 'ArrowLeft':
@@ -9923,21 +9820,11 @@
                     switch(keyCode) {
                         case 19: // Android D-pad UP
                             e.preventDefault();
-                            const inContentListAndUp = document.activeElement?.closest('.content-list') !== null;
-                            if (inContentListAndUp && !document.activeElement?.classList.contains('control-btn')) {
-                                this.moveFocusInList('up');
-                            } else {
-                                this.moveFocus('up');
-                            }
+                            this.moveFocusInList('up');
                             break;
                         case 20: // Android D-pad DOWN
                             e.preventDefault();
-                            const inContentListAndDown = document.activeElement?.closest('.content-list') !== null;
-                            if (inContentListAndDown && !document.activeElement?.classList.contains('control-btn')) {
-                                this.moveFocusInList('down');
-                            } else {
-                                this.moveFocus('down');
-                            }
+                            this.moveFocusInList('down');
                             break;
                         case 21: // Android D-pad LEFT
                             e.preventDefault();
