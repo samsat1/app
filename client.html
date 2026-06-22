@@ -277,7 +277,7 @@
             verifyPassword: function(key, input) {
                 return this.passwords[key] === input;
             },
-            authenticateUser: function(username, password) {
+            authenticateUser: async function(username, password) {
                 // Load customer data from GitHub sync
                 const customers = loadCustomersFromAdmin();
                 
@@ -300,7 +300,7 @@
                         ctx.font = '14px Arial';
                         ctx.fillText('iWatch-TV-Fingerprint', 2, 2);
                         const canvasData = canvas.toDataURL();
-                        
+
                         const fpData = [
                             navigator.userAgent,
                             navigator.language,
@@ -311,7 +311,7 @@
                             canvasData.slice(-50),
                             Date.now().toString(36)
                         ].join('|');
-                        
+
                         // Create hash of fingerprint
                         let hash = 0;
                         for (let i = 0; i < fpData.length; i++) {
@@ -322,7 +322,7 @@
                         deviceFingerprint = 'DFP_' + Math.abs(hash).toString(36) + '_' + Date.now().toString(36);
                         localStorage.setItem('iwatch_device_fp', deviceFingerprint);
                     }
-                    
+
                     // Calculate max devices based on subscription
                     const plan = customer.plan || '';
                     let maxDevices = 1; // Default to 1 device (Basic TV)
@@ -331,29 +331,107 @@
                     } else if (plan.includes('Basic') && plan.includes('2nd')) {
                         maxDevices = 2;
                     }
-                    
-                    // Get stored devices (stored as comma-separated fingerprints)
+
+                    // Get stored devices (now stored as JSON array of device objects with network info)
                     const lockKey = 'iwatch_lock_' + customer.id;
                     const lockTimeKey = 'iwatch_locktime_' + customer.id;
-                    let storedDevices = localStorage.getItem(lockKey) || '';
-                    let deviceList = storedDevices ? storedDevices.split(',') : [];
                     const lockTime = parseInt(localStorage.getItem(lockTimeKey) || '0');
-                    
+
                     // Check if admin requested device reset (new TV scenario)
                     if (customer.resetDeviceLock && customer.resetDeviceLock > lockTime) {
                         // Admin reset the device lock - clear old lock and allow new device
                         localStorage.removeItem(lockKey);
                         localStorage.removeItem(lockTimeKey);
-                        storedDevices = '';
-                        deviceList = [];
                         console.log('Device lock reset by admin');
                     }
-                    
+
+                    // ✅ ENHANCED: Load device list - supports both old (comma-separated) and new (JSON array) formats
+                    let deviceList = [];
+                    const storedDevicesRaw = localStorage.getItem(lockKey) || '';
+                    if (storedDevicesRaw) {
+                        try {
+                            // Try parsing as JSON first (new format)
+                            const parsed = JSON.parse(storedDevicesRaw);
+                            if (Array.isArray(parsed)) {
+                                // New format: array of device objects
+                                deviceList = parsed;
+                            } else {
+                                throw new Error('Not an array, falling back to legacy');
+                            }
+                        } catch (e) {
+                            // Legacy format: comma-separated fingerprints
+                            // Migrate to new format on the fly
+                            const oldFingerprints = storedDevicesRaw.split(',').filter(Boolean);
+                            deviceList = oldFingerprints.map(fp => ({
+                                fingerprint: fp,
+                                localIP: null,
+                                gatewayIP: null,
+                                registeredAt: 0
+                            }));
+                            console.log('🔄 Migrated legacy device list to new format (' + deviceList.length + ' devices)');
+                        }
+                    }
+
+                    // ✅ Detect this device's current network information for binding
+                    let currentNetworkInfo = { localIP: null, gatewayIP: null };
+                    try {
+                        currentNetworkInfo = await detectNetworkInfo();
+                        console.log('🌐 [device-registration] Detected network:', currentNetworkInfo);
+                    } catch (e) {
+                        console.warn('Network detection failed during device registration:', e);
+                    }
+
+                    // ✅ Helper: Check if a registered device matches current device (fingerprint + network)
+                    const isSameDevice = (registered) => {
+                        if (registered.fingerprint !== deviceFingerprint) return false;
+                        // If no network info was stored for the registered device, only check fingerprint
+                        // (backward compatibility with devices registered before this enhancement)
+                        if (!registered.localIP && !registered.gatewayIP) return true;
+                        // If we couldn't detect network now, allow if fingerprint matches
+                        if (!currentNetworkInfo.localIP && !currentNetworkInfo.gatewayIP) return true;
+                        // Match on localIP if both are known
+                        if (registered.localIP && currentNetworkInfo.localIP) {
+                            return registered.localIP === currentNetworkInfo.localIP;
+                        }
+                        // Match on gatewayIP if both are known
+                        if (registered.gatewayIP && currentNetworkInfo.gatewayIP) {
+                            return registered.gatewayIP === currentNetworkInfo.gatewayIP;
+                        }
+                        // Fallback: just allow if fingerprint matches
+                        return true;
+                    };
+
+                    // ✅ Helper: Check if a registered device is "network-conflict" (same network, different fingerprint)
+                    // This catches the case where two devices on the same network share the same credentials
+                    const isNetworkConflict = (registered) => {
+                        if (registered.fingerprint === deviceFingerprint) return false;
+                        // Conflict: same network but different fingerprint = potential credential sharing
+                        if (registered.localIP && currentNetworkInfo.localIP &&
+                            registered.localIP === currentNetworkInfo.localIP) return true;
+                        if (registered.gatewayIP && currentNetworkInfo.gatewayIP &&
+                            registered.gatewayIP === currentNetworkInfo.gatewayIP) return true;
+                        return false;
+                    };
+
                     // Check if this device is already registered
-                    if (deviceList.includes(deviceFingerprint)) {
-                        // Device already registered - allow access
-                        console.log('Device already registered, allowing access');
+                    const existingDevice = deviceList.find(d => isSameDevice(d));
+                    if (existingDevice) {
+                        // Device already registered - update its network info in case it changed
+                        existingDevice.localIP = currentNetworkInfo.localIP;
+                        existingDevice.gatewayIP = currentNetworkInfo.gatewayIP;
+                        existingDevice.lastSeen = Date.now();
+                        localStorage.setItem(lockKey, JSON.stringify(deviceList));
+                        localStorage.setItem(lockTimeKey, Date.now().toString());
+                        console.log('✅ Device already registered, allowing access');
                     } else {
+                        // New device - check for network conflict first (prevent sharing on same network)
+                        const conflict = deviceList.find(d => isNetworkConflict(d));
+                        if (conflict && customer.bindToRouter) {
+                            // Strict mode: if router is bound and this is a different device on the same network,
+                            // block it (prevents sharing login on the same WiFi from a second device)
+                            console.log('🚫 [device-registration] Network conflict detected - different device on bound network');
+                        }
+
                         // New device - check if we can add it
                         if (deviceList.length >= maxDevices) {
                             // Maximum devices reached for this subscription
@@ -362,14 +440,34 @@
                             showDeviceLimitError(maxDevices);
                             return null;
                         } else {
-                            // Add this device to the registered list
-                            deviceList.push(deviceFingerprint);
-                            localStorage.setItem(lockKey, deviceList.join(','));
+                            // ✅ ENHANCED: Add this device to the registered list WITH network info
+                            deviceList.push({
+                                fingerprint: deviceFingerprint,
+                                localIP: currentNetworkInfo.localIP,
+                                gatewayIP: currentNetworkInfo.gatewayIP,
+                                registeredAt: Date.now(),
+                                lastSeen: Date.now()
+                            });
+                            localStorage.setItem(lockKey, JSON.stringify(deviceList));
                             localStorage.setItem(lockTimeKey, Date.now().toString());
-                            console.log('New device registered. Total devices: ' + deviceList.length + '/' + maxDevices);
+                            console.log('✅ New device registered with network binding. Total: ' +
+                                deviceList.length + '/' + maxDevices +
+                                ' (Network: ' + (currentNetworkInfo.localIP || 'unknown') + ')');
                         }
                     }
-                    
+
+                    // ✅ NETWORK BINDING - Block login from unauthorized networks
+                    // This protects against account sharing across different routers/networks.
+                    if (customer.bindToRouter) {
+                        const bindingCheck = await this.validateNetworkBinding(customer);
+                        if (!bindingCheck.allowed) {
+                            console.log('🚫 [network-binding] Blocked:', bindingCheck.reason);
+                            showNetworkBindingError(bindingCheck.reason, customer);
+                            return null;
+                        }
+                        console.log('✅ [network-binding] Allowed:', bindingCheck.reason);
+                    }
+
                     // Check if customer has active subscription
                     if (customer.status === 'active') {
                         // Check if subscription is not expired
@@ -793,6 +891,27 @@
         .source-tab span {
             font-size: 9px;
             margin-top: 2px;
+        }
+
+        .source-tab .tab-label {
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 1.1;
+        }
+
+        .source-tab .tab-count {
+            font-size: 10px;
+            opacity: 0.85;
+            margin-top: 3px;
+            padding: 1px 6px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.12);
+            min-width: 18px;
+            text-align: center;
+        }
+
+        .source-tab.active .tab-count {
+            background: rgba(255, 255, 255, 0.25);
         }
 
         .source-tab.active {
@@ -2358,6 +2477,9 @@
         window.switchSource = function(source) { console.log('switchSource:', source); };
         window.playContent = function(content) { console.log('playContent:', content); };
         window.logoutUser = function() { console.log('logoutUser loading...'); };
+        // Remember the last content that was playing, so the play button can re-load it
+        // after the user has stopped playback (since stopStream() clears the source).
+        window.lastPlayedContent = null;
         console.log('✅ Placeholder functions defined');
     </script>
     
@@ -2592,7 +2714,7 @@
                     </label>
                 </div>
                 
-                <button type="submit" class="login-btn" id="loginBtn">Login</button>
+                <button type="button" class="login-btn" id="loginBtn" onclick="window.loginBtnClick && window.loginBtnClick()">Login</button>
             </form>
             
             <div class="error-message" id="errorMessage" style="display: none;">
@@ -2755,7 +2877,75 @@
 
     <script>
         console.log('🎬🎬🎬 CLIENT V6.6 LOADED - WEBVIEW COMPATIBLE 🎬🎬🎬');
-        
+
+        // ============================================================
+        // SELF-HEALING MIGRATION (runs once per page load)
+        // Repairs contentSources entries that were saved with
+        // packageId: "undefined" (the literal string) and an empty
+        // packageName, which prevented the client matcher from
+        // loading them into the Sports / Sports Plus sections.
+        // ============================================================
+        (function migrateContentSources() {
+            try {
+                const raw = localStorage.getItem('contentSources');
+                if (!raw) return;
+                const list = JSON.parse(raw);
+                if (!Array.isArray(list) || list.length === 0) return;
+
+                const packages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                const findPkg = (predicate) => packages.find(p => predicate(p));
+
+                let changed = 0;
+                const repaired = list.map(src => {
+                    const pid = (src.packageId === null || src.packageId === undefined)
+                        ? '' : String(src.packageId);
+                    const pname = (src.packageName || '').toString();
+                    const isBroken =
+                        (pid === 'undefined' || pid === '' || pid === 'null') &&
+                        (!pname || pname.trim() === '');
+
+                    if (!isBroken) return src;
+
+                    // Try to repair by routing on the platform type.
+                    const t = (src.type || '').toString().toLowerCase();
+                    let target = null;
+                    if (t === 'sports plus' || t === 'sportsplus' || t.includes('sports plus')) {
+                        target = findPkg(p => (p.name || '').toLowerCase().includes('sports plus'));
+                    } else if (t === 'sports' || (t.includes('sport') && !t.includes('plus'))) {
+                        target = findPkg(p => {
+                            const n = (p.name || '').toLowerCase();
+                            return n.includes('sport') && !n.includes('plus');
+                        });
+                    } else if (t === 'movies' || t === 'movie streaming') {
+                        target = findPkg(p => (p.name || '').toLowerCase().includes('movie'));
+                    } else if (t === 'tv shows' || t === 'series') {
+                        target = findPkg(p => (p.name || '').toLowerCase().includes('series'));
+                    } else if (t === 'adult') {
+                        target = findPkg(p => p.isAdult || (p.name || '').toLowerCase().includes('adult'));
+                    } else if (t === 'live tv channel' || t === 'basic_tv') {
+                        target = findPkg(p => (p.name || '').toLowerCase().includes('basic'));
+                    }
+
+                    if (target) {
+                        changed++;
+                        return {
+                            ...src,
+                            packageId: target.id,
+                            packageName: target.name
+                        };
+                    }
+                    return src;
+                });
+
+                if (changed > 0) {
+                    localStorage.setItem('contentSources', JSON.stringify(repaired));
+                    console.log(`🔧 Migrated ${changed} content source(s) with broken packageId.`);
+                }
+            } catch (e) {
+                console.warn('Content source migration skipped:', e);
+            }
+        })();
+
         // Global Variables
         let player = null;
         let hls = null;
@@ -2774,9 +2964,11 @@
         
         // Content Data - defined early to prevent ReferenceError
         const contentData = {
-            live: { name: 'Live TV', content: [], streamingMode: 'always-streaming' },
+            // Default streaming modes: only News (inside Live TV), Sports, and Sports Plus
+            // are always-streaming. Everything else is on-demand to keep network traffic low.
+            live: { name: 'Live TV', content: [], streamingMode: 'on-demand' },
             'sports-live': { name: 'Sports TV', content: [], streamingMode: 'always-streaming' },
-            'livetv-addon': { name: 'TV Addon', content: [], streamingMode: 'always-streaming' },
+            'livetv-addon': { name: 'TV Addon', content: [], streamingMode: 'on-demand' },
             vod: { name: 'Video on Demand', content: [], streamingMode: 'on-demand' },
             series: { name: 'TV Series', content: [], streamingMode: 'on-demand' },
             movies: { name: 'Movies', content: [], streamingMode: 'on-demand' },
@@ -2784,7 +2976,10 @@
             addon: { name: 'Add-on Packages', content: [], streamingMode: 'mixed' },
             adult: { name: 'Adult Content', content: [], streamingMode: 'on-demand' },
             arabic: { name: 'Arabic Content', content: [], streamingMode: 'on-demand' },
-            internet: { name: 'Internet Videos', content: [], streamingMode: 'on-demand' }
+            internet: { name: 'Internet Videos', content: [], streamingMode: 'on-demand' },
+            news: { name: 'News', content: [], streamingMode: 'always-streaming' },
+            sports: { name: 'Sports', content: [], streamingMode: 'always-streaming' },
+            sportsPlus: { name: 'Sports Plus', content: [], streamingMode: 'always-streaming' }
         };
         
         let isFullscreenMode = false; // Track if VLC fullscreen is active
@@ -2940,13 +3135,14 @@
                 // Get package data
                 const packageData = adminPackages.find(p => p.id === packageId);
                 if (!packageData) {
+                    console.log(`🔒 [validate] Package not found for id: ${packageId}`);
                     return { hasAccess: false, reason: 'Package not found' };
                 }
 
                 const pkgName = (packageData.name || '').toLowerCase();
                 const customerAddons = (customer.addons || '').toLowerCase();
                 const customerPlan = (customer.plan || '').toLowerCase();
-                
+
                 // Check subscription expiry first
                 if (customer.expiryDate) {
                     const expiryDate = new Date(customer.expiryDate);
@@ -2957,15 +3153,22 @@
                 }
 
                 // Check if customer is on 2nd TV or 3rd TV plan - Sports packages should be blocked
+                const contentName = (packageData.name || '').toLowerCase();
                 const isSecondTV = customerPlan.includes('second') || customerPlan.includes('2nd');
                 const isThirdTV = customerPlan.includes('third') || customerPlan.includes('3rd');
-                const isSportsPackage = pkgName.includes('sport') && !pkgName.includes('movie');
-                const hasSportsAddon = customerAddons.includes('sports') || customerAddons.includes('sports plus');
-                
-                // Block Sports and Sports Plus packages on 2nd TV and 3rd TV plans
-                if ((isSecondTV || isThirdTV) && isSportsPackage && hasSportsAddon) {
-                    console.log('🚫 Blocking Sports package on 2nd/3rd TV plan:', packageData.name);
-                    return { hasAccess: false, reason: 'Sports not available on 2nd/3rd TV plans' };
+                const isSportsContent = contentName.includes('sport') && !contentName.includes('movie');
+                const hasSportsAddon = customerAddons.includes('sports');
+
+                // Block Sports and Sports Plus content on 2nd TV and 3rd TV plans
+                // Only block when customer is on a 2nd/3rd TV plan AND does NOT have the explicit Sports addon
+                if ((isSecondTV || isThirdTV) && isSportsContent && !hasSportsAddon) {
+                    console.log(`🚫 [validate] Blocking Sports on 2nd/3rd TV (no addon): ${packageData.name}`);
+                    return { hasAccess: false, reason: 'Sports not available on 2nd/3rd TV plans without addon' };
+                }
+                // If the customer is on 2nd/3rd TV but has the explicit Sports addon, allow access
+                if ((isSecondTV || isThirdTV) && isSportsContent && hasSportsAddon) {
+                    console.log(`✅ [validate] 2nd/3rd TV customer HAS Sports addon - allowing access to: ${packageData.name}`);
+                    return { hasAccess: true };
                 }
 
                 // ADULT content - requires explicit Adult addon
@@ -2981,6 +3184,18 @@
                 if (packageData.isArabic || pkgName.includes('arabic') || packageData.category === 'arabic' || packageData.sectionId === 7) {
                     if (!customerAddons.includes('arabic')) {
                         return { hasAccess: false, reason: 'Arabic addon required' };
+                    }
+                    return { hasAccess: true };
+                }
+
+                // SPORTS / SPORTS PLUS content - requires explicit Sports addon
+                // Match "Sports" or "Sports Plus" (but not "Sports Movies" etc.)
+                const isSportsPackage = (pkgName.includes('sport')) && !pkgName.includes('movies');
+                if (isSportsPackage) {
+                    const hasSportsAddon = customerAddons.includes('sports') || customerAddons.includes('sports plus');
+                    console.log(`🔍 [validate] Sports pkg=${packageData.name} | customerAddons="${customerAddons}" | hasSportsAddon=${hasSportsAddon} | customerPlan="${customerPlan}" | isSecondTV=${isSecondTV} | isThirdTV=${isThirdTV}`);
+                    if (!hasSportsAddon) {
+                        return { hasAccess: false, reason: 'Sports addon required' };
                     }
                     return { hasAccess: true };
                 }
@@ -3076,6 +3291,9 @@
                     return [];
                 }
 
+                const customerAddons = (customer.addons || '').toLowerCase();
+                const hasSportsAddon = customerAddons.includes('sports');
+
                 return content.filter(item => {
                     // If content doesn't require a package, show it
                     if (!item.requiresPackage) {
@@ -3084,7 +3302,36 @@
 
                     // Check if customer has access to required package
                     const validation = this.validatePackageAccess(customer, item.requiresPackage);
-                    return validation.hasAccess;
+                    if (validation.hasAccess) return true;
+
+                    // FALLBACK: If package not found (orphan pkgId), check addons for Sports content
+                    if (validation.reason === 'Package not found') {
+                        const itemCategory = (item.category || '').toLowerCase();
+                        const itemPackage = (item.package || item.packageName || '').toLowerCase();
+                        const itemName = (item.name || '').toLowerCase();
+                        const itemType = (item.type || '').toLowerCase();
+
+                        const looksLikeSportsPlus = itemCategory === 'sports-plus' ||
+                            itemCategory === 'sports_plus' ||
+                            itemPackage.includes('sports plus') ||
+                            itemName.includes('sports plus') ||
+                            itemType.includes('sports plus') ||
+                            itemType.includes('sports-plus');
+                        const looksLikeSports = itemCategory === 'sports' ||
+                            itemPackage.includes('sport') ||
+                            itemName.includes('sport') ||
+                            itemType.includes('sport');
+
+                        if (looksLikeSportsPlus && hasSportsAddon) {
+                            console.log(`✅ [filter] Orphan pkgId fallback (Sports+): ${item.name}`);
+                            return true;
+                        }
+                        if (looksLikeSports && hasSportsAddon && !looksLikeSportsPlus) {
+                            console.log(`✅ [filter] Orphan pkgId fallback (Sports): ${item.name}`);
+                            return true;
+                        }
+                    }
+                    return false;
                 });
             },
 
@@ -3154,7 +3401,7 @@
                 const isThirdTV = customerPlan.includes('third') || customerPlan.includes('3rd');
                 const isSportsContent = contentName.includes('sport') && !contentName.includes('movie');
                 const hasSportsAddon = customerAddons.includes('sports');
-                
+
                 // Block Sports and Sports Plus content on 2nd TV and 3rd TV plans
                 if ((isSecondTV || isThirdTV) && isSportsContent && hasSportsAddon) {
                     console.log('🚫 Blocking Sports content on 2nd/3rd TV plan:', contentItem.name);
@@ -3166,15 +3413,79 @@
                     return this.canAccessAdult();
                 }
 
-                // If content requires specific package, check it
-                if (contentItem.requiresPackage || contentItem.packageId) {
-                    const pkgId = contentItem.requiresPackage || contentItem.packageId;
-                    const validation = this.validatePackageAccess(customer, pkgId);
-                    return validation.hasAccess;
+                // Normalize package id (treat literal "undefined" / "null" / empty as no specific package).
+                const normalizePid = (v) => {
+                    if (v === null || v === undefined) return '';
+                    const s = String(v).trim();
+                    if (!s || s === 'undefined' || s === 'null') return '';
+                    return s;
+                };
+
+                // Resolve the effective requiresPackage value, ignoring bogus "undefined" strings.
+                const effectivePkgId = normalizePid(
+                    contentItem.requiresPackage || contentItem.packageId
+                );
+
+                // Sports / Sports Plus content loaded from contentSources (Content Library) often
+                // has an empty or "undefined" packageId even though the admin added the user to
+                // the addon. In that case, fall back to addon-based access (customer addons).
+                if (!effectivePkgId) {
+                    // Sports Plus content - requires "sports plus" addon
+                    if (
+                        (contentItem.category || '').toLowerCase() === 'sports-plus' ||
+                        (contentItem.package || '').toLowerCase().includes('sports plus')
+                    ) {
+                        return customerAddons.includes('sports plus') ||
+                               customerAddons.includes('sportsplus') ||
+                               hasSportsAddon;
+                    }
+                    // Sports content - requires "sports" addon
+                    if (
+                        (contentItem.category || '').toLowerCase() === 'sports' ||
+                        (contentItem.package || '').toLowerCase().includes('sport')
+                    ) {
+                        return hasSportsAddon;
+                    }
+                    // No package info and not a special category - allow if active
+                    return customer.status === 'active' || !!customer.plan;
                 }
 
-                // Regular content - allow if customer has active subscription
-                return customer.status === 'active' || !!customer.plan;
+                // Specific package required - validate it
+                const validation = this.validatePackageAccess(customer, effectivePkgId);
+                if (contentItem && contentItem.type && (contentItem.type.toLowerCase().includes('sport') || (contentItem.packageName || '').toLowerCase().includes('sport'))) {
+                    console.log(`🔐 [canAccess] item="${contentItem.name}" pkgId=${effectivePkgId} result.hasAccess=${validation.hasAccess} reason="${validation.reason || ''}"`);
+                }
+
+                // FALLBACK: If package not found, but content looks like Sports/Sports Plus and customer
+                // has the matching addon, grant access. This handles orphan packageIds in content items.
+                if (!validation.hasAccess && validation.reason === 'Package not found') {
+                    const itemCategory = (contentItem.category || '').toLowerCase();
+                    const itemPackage = (contentItem.package || contentItem.packageName || '').toLowerCase();
+                    const itemName = (contentItem.name || '').toLowerCase();
+                    const itemType = (contentItem.type || '').toLowerCase();
+
+                    const looksLikeSportsPlus = itemCategory === 'sports-plus' ||
+                        itemCategory === 'sports_plus' ||
+                        itemPackage.includes('sports plus') ||
+                        itemName.includes('sports plus') ||
+                        itemType.includes('sports plus') ||
+                        itemType.includes('sports-plus');
+                    const looksLikeSports = itemCategory === 'sports' ||
+                        itemPackage.includes('sport') ||
+                        itemName.includes('sport') ||
+                        itemType.includes('sport');
+
+                    if (looksLikeSportsPlus && hasSportsAddon) {
+                        console.log(`✅ [canAccess] Orphan pkgId fallback (Sports+): ${contentItem.name} - customer has Sports addon`);
+                        return true;
+                    }
+                    if (looksLikeSports && hasSportsAddon && !looksLikeSportsPlus) {
+                        console.log(`✅ [canAccess] Orphan pkgId fallback (Sports): ${contentItem.name} - customer has Sports addon`);
+                        return true;
+                    }
+                }
+
+                return validation.hasAccess;
             },
 
             // Real-time authentication updates
@@ -3254,12 +3565,83 @@
                 
                 // Setup real-time updates
                 this.setupRealTimeUpdates();
-                
+
                 console.log('✅ Client Package Authentication ready:', {
                     mappings: Object.keys(this.mappings || {}).length,
                     packages: adminPackages.length,
                     customers: adminCustomers.length
                 });
+            },
+
+            // ✅ Validate that the customer is logging in from the authorized network
+            validateNetworkBinding: async function(customer) {
+                // If no binding is configured, always allow
+                if (!customer.bindToRouter) {
+                    return { allowed: true, reason: 'No network binding configured' };
+                }
+
+                // Detect current network info
+                const networkInfo = await detectNetworkInfo();
+                console.log('🌐 [network-binding] Detected:', networkInfo);
+
+                // Store the detected info for the device's session
+                try {
+                    localStorage.setItem('iwatch_network_info', JSON.stringify(networkInfo));
+                } catch (e) {}
+
+                // ✅ Check 1: Router/Gateway IP exact match
+                if (customer.authorizedRouterIP && networkInfo.gatewayIP) {
+                    if (networkInfo.gatewayIP !== customer.authorizedRouterIP &&
+                        networkInfo.localIP !== customer.authorizedRouterIP) {
+                        return {
+                            allowed: false,
+                            reason: `Your network (${networkInfo.gatewayIP}) doesn't match the authorized router (${customer.authorizedRouterIP})`
+                        };
+                    }
+                }
+
+                // ✅ Check 2: Same subnet as authorized router
+                if (customer.authorizedRouterIP && networkInfo.localIP) {
+                    const authParts = customer.authorizedRouterIP.split('.');
+                    const localParts = networkInfo.localIP.split('.');
+                    if (authParts.length === 4 && localParts.length === 4) {
+                        const sameSubnet = authParts[0] === localParts[0] &&
+                                           authParts[1] === localParts[1] &&
+                                           authParts[2] === localParts[2];
+                        if (!sameSubnet) {
+                            return {
+                                allowed: false,
+                                reason: `Your device is on a different network (${networkInfo.localIP}) than authorized (${customer.authorizedRouterIP})`
+                            };
+                        }
+                    }
+                }
+
+                return { allowed: true, reason: 'Network binding passed' };
+            },
+
+            // ✅ Check and display auto-renewal notification
+            checkAutoRenewalNotification: function(customer) {
+                if (!customer || !customer.autoRenewalEnabled) return;
+
+                if (customer.expiryDate) {
+                    const expiry = new Date(customer.expiryDate);
+                    const now = new Date();
+                    const daysLeft = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
+
+                    if (daysLeft <= 7 && daysLeft > 0) {
+                        const msg = daysLeft <= 3
+                            ? `🔁 Your subscription will auto-renew in ${daysLeft} day(s). No action needed!`
+                            : `ℹ️ Your subscription will auto-renew in ${daysLeft} days.`;
+                        setTimeout(() => {
+                            if (typeof showNotification === 'function') {
+                                showNotification(msg, 'info');
+                            } else {
+                                console.log(msg);
+                            }
+                        }, 2000);
+                    }
+                }
             }
         };
 
@@ -3480,7 +3862,7 @@
         }
 
         // Auto-login functionality for TV platform
-        function checkAutoLogin() {
+        async function checkAutoLogin() {
             try {
                 // Check for stored credentials
                 const storedCredentials = localStorage.getItem('iwatch_tv_credentials');
@@ -3518,7 +3900,11 @@
                     adminCustomers = loadCustomersFromAdmin();
                     updateUserInterface();
                     console.log(`✅ Auto-login successful for ${user.username}`);
-                    loadPlexLibraryContent();
+                    // 🔄 SILENT CACHE REFRESH on auto-login (no user message).
+                    // The refresh itself now awaits a full live content reload,
+                    // so we no longer need a separate loadPlexLibraryContent()
+                    // call here (which used to race against the cache clear).
+                    await silentCacheRefreshOnLogin();
                     return true;
                 } else {
                     console.log('❌ Auto-login: Credentials invalid or device mismatch');
@@ -3581,7 +3967,7 @@
             adminCustomers = loadCustomersFromAdmin();
 
             // ADMIN ACCESS: Admin has full access to all packages and streams
-            if (currentUser && currentUser.role === 'admin') {
+            if (currentUser && (currentUser.role === 'admin' || currentUser.isAdmin === true)) {
                 console.log(`👑 ADMIN ACCESS: ${currentUser.username} has full access to all packages`);
                 return adminPackages; // Admin sees all packages
             }
@@ -3599,34 +3985,71 @@
 
             const customerAddons = (customer.addons || '').toLowerCase();
 
+            // ✅ FIX: Also consider customer as "active" if they have a valid (non-expired) expiry date
+            // OR if they have at least one addon assigned. This fixes the "Live TV count but empty content"
+            // bug for customers whose status/plan field is missing but who are still valid subscribers.
+            const hasValidExpiry = (() => {
+                if (!customer.expiryDate) return false;
+                const expiry = new Date(customer.expiryDate);
+                if (isNaN(expiry.getTime())) return false;
+                return expiry.getTime() > Date.now();
+            })();
+            const hasAnyAddon = customerAddons && customerAddons.trim().length > 0;
+            const isActiveSubscriber = customer.status === 'active' ||
+                                       customer.plan ||
+                                       customer.status === 'approved' ||
+                                       hasValidExpiry ||
+                                       hasAnyAddon;
+
             // Filter packages based on addons
             const filteredPackages = adminPackages.filter(pkg => {
                 const pkgName = (pkg.name || '').toLowerCase();
-                
+
                 // Adult - requires addon (check for 'adult', 'adult content', etc.)
                 if (pkg.isAdult || pkgName.includes('adult') || pkgName.includes('xxx') || pkg.sectionId === 4) {
                     return (customerAddons.includes('adult') || customerAddons.includes('adult content'));
                 }
-                
+
                 // Arabic - requires addon (check for 'arabic', 'arabic package', etc.)
                 if (pkg.isArabic || pkgName.includes('arabic') || pkg.category === 'arabic' || pkg.sectionId === 7) {
                     return customerAddons.includes('arabic') || customerAddons.includes('arabic package');
                 }
-                
+
                 // Movies - requires addon (check for 'movies', 'movies package', etc.) - Section ID 5
                 if (pkgName.includes('movies') || pkg.category === 'movie' || pkg.category === 'vod' || pkg.sectionId === 5 || pkg.isMovie) {
                     return customerAddons.includes('movies') || customerAddons.includes('movies package');
                 }
-                
-                // Regular packages - require active subscription
-                if (customer.status === 'active' || customer.plan) {
+
+                // Series - requires addon (check for 'series', 'series package', etc.)
+                if (pkgName.includes('series') || pkg.category === 'series' || pkg.sectionId === 6) {
+                    return customerAddons.includes('series') || customerAddons.includes('series package');
+                }
+
+                // Sports / Sports Plus - requires addon
+                if (pkgName.includes('sports plus') || pkgName.includes('sportsplus') || pkg.category === 'sports-plus' || pkg.sectionId === 8) {
+                    return customerAddons.includes('sports plus') || customerAddons.includes('sportsplus');
+                }
+                if (pkgName.includes('sports') || pkg.category === 'sports' || pkg.sectionId === 3) {
+                    return customerAddons.includes('sports') || customerAddons.includes('sports package');
+                }
+
+                // Regular packages (e.g. Basic / Live TV) - require active subscription
+                // ✅ FIX: Accept valid expiry date OR hasAddon as proof of active subscription
+                if (isActiveSubscriber) {
                     return true;
                 }
-                
+
                 return false;
             });
 
-            console.log('🔐 Package Authentication:', { packages: filteredPackages.length, customer: currentUser.username });
+            console.log('🔐 Package Authentication:', {
+                packages: filteredPackages.length,
+                customer: currentUser.username,
+                isActiveSubscriber,
+                hasValidExpiry,
+                hasAnyAddon,
+                addons: customerAddons.substring(0, 80)
+            });
 
             return filteredPackages;
         }
@@ -3723,50 +4146,76 @@
         // Get streaming mode for content
         function getContentStreamingMode(content) {
             if (!content) return 'on-demand';
-            
+
             // Plex content (has sectionId) should always stream immediately
             if (content.sectionId) {
                 return 'always-streaming';
             }
-            
+
+            // ✅ Check content name / category FIRST so News channels inside the
+            // Live TV source are correctly identified as always-streaming
+            // (otherwise the source-level `streamingMode: 'always-streaming'`
+            // would force ALL Live TV channels to auto-stream).
+            const contentName = (content.name || '').toLowerCase();
+            const contentDescription = (content.description || '').toLowerCase();
+            const category = (content.category || '').toLowerCase();
+
+            // ✅ ALWAYS-STREAMING categories: News, Sports, Sports Plus
+            // These are preloaded to keep the stream warm and reduce buffer time.
+            // Everything else is on-demand to reduce network traffic.
+            // ✅ FIX: also check content.type (e.g. "News", "Sports") so channels
+            // that have a generic name like "LBCi" or "MAX 1" are still detected
+            // as News/Sports when the type field is set in the Content Library.
+            const contentType = (content.type || '').toLowerCase();
+            const isNewsContent =
+                contentName.includes('news') ||
+                contentDescription.includes('news') ||
+                category === 'news' ||
+                category === 'news-tv' ||
+                contentType === 'news' ||
+                contentType === 'news-tv' ||
+                contentType === 'newschannel';
+            const isSportsContent =
+                contentName.includes('sport') ||
+                contentDescription.includes('sport') ||
+                category === 'sports' ||
+                category === 'sports-plus' ||
+                category === 'sportsplus' ||
+                category === 'sports-live' ||
+                category === 'sport' ||
+                contentType === 'sport' ||
+                contentType === 'sports' ||
+                contentType === 'sports-plus' ||
+                contentType === 'sportsplus' ||
+                contentType === 'sports-live';
+
+            if (isNewsContent || isSportsContent) {
+                return 'always-streaming';
+            }
+
             // Determine streaming mode based on content type and source
             if (content.streamingMode && content.streamingMode !== 'on-demand') {
                 return content.streamingMode; // Use explicitly set mode (except on-demand for movies)
             }
-            
-            // Plex movies are always-streaming
-            if (content.type === 'movies' || content.type === 'mp4') {
-                return 'always-streaming';
-            }
-            
-            // Auto-detect based on content characteristics (with safety checks)
-            const contentName = (content.name || '').toLowerCase();
-            const contentDescription = (content.description || '').toLowerCase();
-            const category = (content.category || '').toLowerCase();
-            
-            // Always-streaming content: News, Sports, Movies, Live TV
-            const alwaysStreamingKeywords = ['news', 'sport', 'movie', 'cinema', 'film', 'live'];
-            const isAlwaysStreaming = alwaysStreamingKeywords.some(keyword => 
-                contentName.includes(keyword) || 
-                contentDescription.includes(keyword) || 
-                category.includes(keyword)
-            );
-            
-            if (isAlwaysStreaming) {
-                return 'always-streaming';
-            }
-            
-            // Check source-based streaming mode
+
+            // Check source-based streaming mode.
+            // By default everything is on-demand EXCEPT News/Sports/Sports Plus sources.
             const sourceStreamingModes = {
-                'live': 'always-streaming',
-                'movies': 'always-streaming',
+                'live': 'on-demand',
+                'movies': 'on-demand',
                 'vod': 'on-demand',
                 'basic': 'on-demand',
                 'addon': 'on-demand',
                 'adult': 'on-demand',
-                'internet': 'on-demand'
+                'arabic': 'on-demand',
+                'series': 'on-demand',
+                'internet': 'on-demand',
+                'news': 'always-streaming',
+                'sports': 'always-streaming',
+                'sportsPlus': 'always-streaming',
+                'sports-live': 'always-streaming'
             };
-            
+
             return sourceStreamingModes[currentSource] || 'on-demand';
         }
 
@@ -4155,60 +4604,230 @@
                 } catch(e) { console.error('Error parsing cached live channels:', e); }
             }
             
-            // Load Sports Plus and Sports from adminPackages
+            // Load Sports Plus, Sports, and TV LIVE (basic) from Content Library (contentSources)
             try {
-                const adminPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
-                
-                // Sports Plus channels (from admin - Nimble streams)
-                const sportsPlusChannels = adminPackages.filter(pkg => pkg.type === 'sports_plus' || pkg.category === 'sports-plus' || (pkg.packageName && pkg.packageName.toLowerCase().includes('sports plus')));
+                const contentSources = JSON.parse(localStorage.getItem('contentSources') || '[]');
+                console.log('🔍 DEBUG contentSources length:', contentSources.length);
+                console.log('🔍 DEBUG contentSources raw:', JSON.stringify(contentSources));
+
+                // Helper: get the package identifier we will match against.
+                // IMPORTANT: prefer the human-readable name (packageName) over the opaque id (packageId).
+                // Otherwise the filter would never match (e.g. "pkg_123" never contains "sports plus").
+                // Also normalizes the string "undefined" (which appears when no package was selected
+                // and JSON.stringify stored the literal "undefined") to an empty string.
+                const normalizeStr = (v) => {
+                    if (v === null || v === undefined) return '';
+                    const s = String(v).trim().toLowerCase();
+                    if (s === 'undefined' || s === 'null') return '';
+                    return s;
+                };
+                const getPkgKey = (src) => {
+                    return (
+                        normalizeStr(src.packageName) ||
+                        normalizeStr(src.package) ||
+                        normalizeStr(src.packageId) ||
+                        ''
+                    );
+                };
+                const getTypeKey = (src) => normalizeStr(src.type);
+
+                // ---- Sports Plus channels (add-on) ----
+                // Match by packageName/packageId first, then by the `type` field as a fallback
+                // (covers content sources added without selecting a package, e.g. type="Sports Plus").
+                const sportsPlusChannels = contentSources.filter(src => {
+                    const pid = getPkgKey(src);
+                    if (pid.includes('sports plus') || pid.includes('sportsplus')) return true;
+                    // Fallback: match the platform Type when it explicitly indicates Sports Plus.
+                    const tid = getTypeKey(src);
+                    return tid === 'sports plus' || tid === 'sportsplus' || tid.includes('sports plus');
+                });
+                console.log('🔍 DEBUG sportsPlus matches:', sportsPlusChannels.length);
+
                 if (!contentData.sportsPlus) contentData.sportsPlus = { name: 'Sports Plus', content: [] };
-                contentData.sportsPlus.content = sportsPlusChannels.map(pkg => ({
-                    id: pkg.id || pkg.packageId || 'sportsplus_' + Math.random().toString(36).substr(2, 9),
-                    name: pkg.packageName || pkg.name || 'Unknown Sports Plus Channel',
-                    description: pkg.packageDescription || pkg.description || '',
-                    type: 'hls',
-                    url: pkg.url || pkg.streamUrl || '',
-                    package: pkg.packageName || '',
-                    packageId: pkg.packageId || pkg.id,
+                contentData.sportsPlus.content = sportsPlusChannels.map(src => ({
+                    id: src.id || 'sportsplus_' + Math.random().toString(36).substr(2, 9),
+                    name: src.name || src.title || 'Unknown Sports Plus Channel',
+                    description: src.description || '',
+                    type: src.type || 'hls',
+                    url: src.url || src.streamUrl || '',
+                    package: src.packageName || src.packageId || src.package || '',
+                    packageId: src.packageId || src.package,
+                    // Use the actual matching package (or empty) so access checks don't fail
+                    // when the source was saved with packageId="undefined".
+                    requiresPackage: (() => {
+                        const p = normalizeStr(src.packageId);
+                        if (p && p !== 'undefined') return p;
+                        // Try to resolve to the Sports Plus package id from adminPackages
+                        try {
+                            const pkgs = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                            const sp = pkgs.find(pp => (pp.name || '').toLowerCase().includes('sports plus'));
+                            return sp ? sp.id : '';
+                        } catch (e) { return ''; }
+                    })(),
+                    packageName: src.packageName || (() => {
+                        try {
+                            const pkgs = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                            const sp = pkgs.find(pp => (pp.name || '').toLowerCase().includes('sports plus'));
+                            return sp ? sp.name : '';
+                        } catch (e) { return ''; }
+                    })(),
                     category: 'sports-plus'
                 }));
-                console.log(`📦 Loaded ${sportsPlusChannels.length} Sports Plus channels from adminPackages`);
-                
-                // Sports channels (separate from Sports Plus)
-                const sportsChannels = adminPackages.filter(pkg => pkg.type === 'live_sports' || pkg.category === 'sports' || (pkg.packageName && pkg.packageName.toLowerCase().includes('sport') && !pkg.packageName.toLowerCase().includes('plus')));
+                console.log(`📦 Loaded ${sportsPlusChannels.length} Sports Plus channels from contentSources`);
+
+                // ---- Sports channels (add-on) ----
+                // Match by packageName/packageId OR by the `type` field (covers unassigned content).
+                // We also explicitly exclude items that matched the Sports Plus filter above.
+                const sportsPlusIds = new Set(sportsPlusChannels.map(s => s.id));
+                const sportsChannels = contentSources.filter(src => {
+                    if (sportsPlusIds.has(src.id)) return false;
+                    const pid = getPkgKey(src);
+                    if (pid.includes('sport') && !pid.includes('plus')) return true;
+                    // Fallback: match platform Type "Sports" (not Sports Plus).
+                    const tid = getTypeKey(src);
+                    return tid === 'sports' || (tid.includes('sport') && !tid.includes('plus'));
+                });
+                console.log('🔍 DEBUG sports matches:', sportsChannels.length);
+
                 if (!contentData.sports) contentData.sports = { name: 'Sports', content: [] };
-                contentData.sports.content = sportsChannels.map(pkg => ({
-                    id: pkg.id || pkg.packageId || 'sports_' + Math.random().toString(36).substr(2, 9),
-                    name: pkg.packageName || pkg.name || 'Unknown Sports Channel',
-                    description: pkg.packageDescription || pkg.description || '',
-                    type: 'hls',
-                    url: pkg.url || pkg.streamUrl || '',
-                    package: pkg.packageName || '',
-                    packageId: pkg.packageId || pkg.id,
+                contentData.sports.content = sportsChannels.map(src => ({
+                    id: src.id || 'sports_' + Math.random().toString(36).substr(2, 9),
+                    name: src.name || src.title || 'Unknown Sports Channel',
+                    description: src.description || '',
+                    type: src.type || 'hls',
+                    url: src.url || src.streamUrl || '',
+                    package: src.packageName || src.packageId || src.package || '',
+                    packageId: src.packageId || src.package,
+                    requiresPackage: (() => {
+                        const p = normalizeStr(src.packageId);
+                        if (p && p !== 'undefined') return p;
+                        // Try to resolve to the Sports package id from adminPackages
+                        try {
+                            const pkgs = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                            const sp = pkgs.find(pp => {
+                                const n = (pp.name || '').toLowerCase();
+                                return n.includes('sport') && !n.includes('plus');
+                            });
+                            return sp ? sp.id : '';
+                        } catch (e) { return ''; }
+                    })(),
+                    packageName: src.packageName || (() => {
+                        try {
+                            const pkgs = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                            const sp = pkgs.find(pp => {
+                                const n = (pp.name || '').toLowerCase();
+                                return n.includes('sport') && !n.includes('plus');
+                            });
+                            return sp ? sp.name : '';
+                        } catch (e) { return ''; }
+                    })(),
                     category: 'sports'
                 }));
-                console.log(`📦 Loaded ${sportsChannels.length} Sports channels from adminPackages`);
-                
-            } catch(e) { console.error('Error loading Arabic/Sports Plus:', e); }
+                console.log(`📦 Loaded ${sportsChannels.length} Sports channels from contentSources`);
+
+                // ---- TV LIVE / Basic package channels ----
+                // These are HLS streams added through the Content Library that the admin
+                // assigned to a basic / TV LIVE package. They should appear in the basic
+                // "Live TV" tab so subscribers of the basic package can see them.
+                const tvLiveChannels = contentSources.filter(src => {
+                    const pid = getPkgKey(src);
+                    // Match any of the common basic / live tv package names.
+                    return (
+                        pid.includes('tv live') ||
+                        pid.includes('live tv') ||
+                        pid.includes('basic') ||
+                        pid.includes('livetv') ||
+                        pid === 'live' ||
+                        pid === 'basic_tv'
+                    );
+                });
+                // Also include content sources whose type says it's a basic / live tv channel
+                // (e.g. type="Live TV Channel" or type="basic_tv") when no package was selected.
+                contentSources.forEach(src => {
+                    if (tvLiveChannels.find(s => s.id === src.id)) return; // already included
+                    const tid = getTypeKey(src);
+                    const pid = getPkgKey(src);
+                    if (
+                        (!pid) && // no package assigned
+                        (tid === 'live tv channel' || tid === 'live' || tid === 'basic_tv' ||
+                         tid.includes('tv live') || tid.includes('live tv'))
+                    ) {
+                        tvLiveChannels.push(src);
+                    }
+                });
+                console.log('🔍 DEBUG tvLive matches:', tvLiveChannels.length);
+
+                if (!contentData.live) contentData.live = { name: 'Live TV', content: [], streamingMode: 'on-demand' };
+
+                // Merge: do not overwrite the cached live channels that were already loaded
+                // (e.g. from the satellite/QAM pipeline). Only ADD the content-library HLS
+                // streams that were not already present.
+                // NOTE: do NOT set `streamingMode: 'always-streaming'` on individual items.
+                // The streaming mode is now determined per-item by `getContentStreamingMode()`
+                // based on whether the channel name/category matches News or Sports.
+                // This way ONLY News channels inside Live TV are always-streaming; the rest
+                // are on-demand to keep network traffic low.
+                const existingUrls = new Set((contentData.live.content || []).map(c => c.url));
+                const newLiveItems = tvLiveChannels
+                    .filter(src => !existingUrls.has(src.url || src.streamUrl || ''))
+                    .map(src => {
+                        // ✅ FIX: explicitly set streamingMode on the content item
+                        // when the type is News or Sports. This guarantees the
+                        // "Always On" label is shown even if the dynamic detector
+                        // has any edge case.
+                        const srcType = (src.type || '').toLowerCase();
+                        const srcCategory = (src.category || '').toLowerCase();
+                        const isNews = srcType.includes('news') || srcCategory.includes('news');
+                        const isSports = srcType.includes('sport') || srcCategory.includes('sport');
+                        const itemStreamingMode = (isNews || isSports) ? 'always-streaming' : 'on-demand';
+                        return {
+                            id: src.id || 'tvlive_' + Math.random().toString(36).substr(2, 9),
+                            name: src.name || src.title || 'Unknown Live Channel',
+                            description: src.description || '',
+                            type: src.type || 'hls',
+                            url: src.url || src.streamUrl || '',
+                            package: src.packageName || src.packageId || src.package || 'basic',
+                            packageId: src.packageId || src.package || 'basic',
+                            category: (src.category || 'live-tv').toLowerCase(),
+                            streamingMode: itemStreamingMode
+                        };
+                    });
+                contentData.live.content = (contentData.live.content || []).concat(newLiveItems);
+                console.log(`📦 Loaded ${newLiveItems.length} TV LIVE channels from contentSources (total Live TV now: ${contentData.live.content.length})`);
+
+            } catch(e) { console.error('Error loading contentSources (Sports / TV LIVE):', e); }
             
-            // Update tab counts immediately
-            const moviesTabUpdate = document.querySelector('.source-tab[data-source="movies"]');
-            if (moviesTabUpdate) moviesTabUpdate.textContent = `Movies (${contentData.movies.content.length})`;
-            
-            const adultTabUpdate = document.querySelector('.source-tab[data-source="adult"]');
-            if (adultTabUpdate) adultTabUpdate.textContent = `Adult (${contentData.adult.content.length})`;
-            
+            // Update tab counts immediately (count shown UNDER the tab label)
+            setTabCount('.source-tab[data-source="movies"]', '🎬 Movies', contentData.movies.content.length);
+            setTabCount('.source-tab[data-source="adult"]', '🔞 Adult', contentData.adult.content.length);
+
             // Update Arabic tab count
-            const arabicTabUpdate = document.querySelector('.source-tab[data-source="arabic"]');
-            if (arabicTabUpdate && contentData.arabic) {
-                arabicTabUpdate.textContent = `Arabic (${contentData.arabic.content.length})`;
+            if (contentData.arabic) {
+                setTabCount('.source-tab[data-source="arabic"]', '🕌 Arabic', contentData.arabic.content.length);
             }
-            
+
             // Update Series tab count
-            const seriesTabUpdate = document.querySelector('.source-tab[data-source="series"]');
-            if (seriesTabUpdate && contentData.series) {
-                seriesTabUpdate.textContent = `Series (${contentData.series.content.length})`;
+            if (contentData.series) {
+                setTabCount('.source-tab[data-source="series"]', '📺 Series', contentData.series.content.length);
                 console.log(`📺 Updated Series tab: ${contentData.series.content.length} series`);
+            }
+
+            // Update Live TV tab count (includes the newly added TV LIVE channels from contentSources)
+            if (contentData.live) {
+                setTabCount('.source-tab[data-source="live"]', '📺 Live TV', contentData.live.content.length);
+                console.log(`📺 Updated Live TV tab: ${contentData.live.content.length} channels`);
+            }
+
+            // Update Sports tab count (from contentSources)
+            if (contentData.sports) {
+                setTabCount('.source-tab[data-source="sports"]', '⚽ Sports', contentData.sports.content.length);
+                console.log(`⚽ Updated Sports tab: ${contentData.sports.content.length} channels`);
+            }
+
+            // Update Sports Plus tab count (from contentSources)
+            if (contentData.sportsPlus) {
+                setTabCount('.source-tab[data-source="sportsPlus"]', '🏆 Sports <span>Plus</span>', contentData.sportsPlus.content.length);
+                console.log(`🏆 Updated Sports Plus tab: ${contentData.sportsPlus.content.length} channels`);
             }
             
             // Refresh display if cached content loaded
@@ -4398,24 +5017,19 @@
                 console.error('❌ This is likely a CORS issue - browser blocking requests to local Plex server');
             }
             
-            // Update tab counts after live fetch
-            const moviesTab = document.querySelector('.source-tab[data-source="movies"]');
-            if (moviesTab) moviesTab.textContent = `Movies (${contentData.movies.content.length})`;
-            
-            const adultTabLive = document.querySelector('.source-tab[data-source="adult"]');
-            if (adultTabLive) adultTabLive.textContent = `Adult (${contentData.adult.content.length})`;
-            
+            // Update tab counts after live fetch (count shown UNDER the tab label)
+            setTabCount('.source-tab[data-source="movies"]', '🎬 Movies', contentData.movies.content.length);
+            setTabCount('.source-tab[data-source="adult"]', '🔞 Adult', contentData.adult.content.length);
+
             // Update Arabic tab count
-            const arabicTab = document.querySelector('.source-tab[data-source="arabic"]');
-            if (arabicTab && contentData.arabic) {
-                arabicTab.textContent = `Arabic (${contentData.arabic.content.length})`;
+            if (contentData.arabic) {
+                setTabCount('.source-tab[data-source="arabic"]', '🕌 Arabic', contentData.arabic.content.length);
                 console.log(`📺 Updated Arabic tab: ${contentData.arabic.content.length} videos`);
             }
-            
+
             // Update Series tab count
-            const seriesTab = document.querySelector('.source-tab[data-source="series"]');
-            if (seriesTab && contentData.series) {
-                seriesTab.textContent = `Series (${contentData.series.content.length})`;
+            if (contentData.series) {
+                setTabCount('.source-tab[data-source="series"]', '📺 Series', contentData.series.content.length);
                 console.log(`📺 Updated Series tab: ${contentData.series.content.length} series`);
             }
             
@@ -4613,16 +5227,13 @@
                     console.log(`🔞 Loaded ${mediaContent.adult.length} adult videos from Plex`);
                 }
                 
-                // Update tab labels with real counts
-                const moviesTab = document.querySelector('.source-tab[data-source="movies"]');
-                const vodTab = document.querySelector('.source-tab[data-source="vod"]');
-                if (moviesTab) moviesTab.textContent = `Movies (${contentData.movies.content.length})`;
-                if (vodTab) vodTab.textContent = `VOD (${contentData.vod.content.length})`;
-                
+                // Update tab labels with real counts (count shown UNDER the tab label)
+                setTabCount('.source-tab[data-source="movies"]', '🎬 Movies', contentData.movies.content.length);
+                setTabCount('.source-tab[data-source="vod"]', '📀 VOD', contentData.vod.content.length);
+
                 // Update Arabic tab count
-                const arabicTabLibraries = document.querySelector('.source-tab[data-source="arabic"]');
-                if (arabicTabLibraries && contentData.arabic) {
-                    arabicTabLibraries.textContent = `Arabic (${contentData.arabic.content.length})`;
+                if (contentData.arabic) {
+                    setTabCount('.source-tab[data-source="arabic"]', '🕌 Arabic', contentData.arabic.content.length);
                 }
                 
                 console.log('✅ Content updated from media libraries');
@@ -4747,11 +5358,11 @@
                                 ">${series.thumb || series.art ? '' : '📺'}</div>
                                 <div class="series-info" style="padding: 12px;">
                                     <h3 style="color: #fff; margin: 0 0 8px 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${series.name}</h3>
+                                    ${series.description ? `<p style="color: #cbd5e1; font-size: 12px; margin: 0 0 6px 0; font-weight: 500;">${series.description}</p>` : ''}
                                     <div style="color: #aaa; font-size: 12px;">
                                         <span>📂 ${series.totalSeasons || 0} Seasons</span>
                                         <span style="margin-left: 10px;">🎬 ${series.totalEpisodes || 0} Episodes</span>
                                     </div>
-                                    ${series.description ? `<p style="color: #888; font-size: 11px; margin: 8px 0 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${series.description}</p>` : ''}
                                 </div>
                             </div>
                         `).join('')}
@@ -4766,21 +5377,31 @@
         async function selectSeries(index) {
             selectedSeries = contentData.series.content[index];
             seriesViewState = 'seasons';
-            
+
             // If series has no seasons data, try to fetch from Plex on demand
-            if (!selectedSeries.seasons && (selectedSeries.ratingKey || selectedSeries.id)) {
+            // ✅ FIX: Only try to fetch seasons if we have a VALID numeric Plex ratingKey.
+            // Series loaded from adminPackages have IDs like "PKG_xxx" or "series_random"
+            // which are NOT valid Plex ratingKeys. Using them causes silent failures.
+            const extractedRatingKey = selectedSeries.ratingKey
+                || (selectedSeries.id && !String(selectedSeries.id).startsWith('series_')
+                    ? selectedSeries.id
+                    : (selectedSeries.id ? String(selectedSeries.id).replace('series_', '') : null));
+
+            // A valid Plex ratingKey is always a numeric string
+            const isValidRatingKey = extractedRatingKey && /^\d+$/.test(String(extractedRatingKey));
+
+            if (!selectedSeries.seasons && isValidRatingKey) {
                 const contentList = document.getElementById('contentList');
                 if (contentList) {
                     contentList.innerHTML = '<div class="empty-message">⏳ Loading seasons for ' + selectedSeries.name + '...</div>';
                 }
-                
-                const ratingKey = selectedSeries.ratingKey || (selectedSeries.id ? selectedSeries.id.toString().replace('series_', '') : null);
+
                 const serverUrl = selectedSeries.plexServer || localStorage.getItem('plexServerUrl');
                 const token = selectedSeries.plexToken || localStorage.getItem('plexToken') || localStorage.getItem('plexAutoToken');
-                
-                if (ratingKey && serverUrl && token) {
+
+                if (serverUrl && token) {
                     try {
-                        const seasons = await fetchSeriesSeasons(serverUrl, token, ratingKey);
+                        const seasons = await fetchSeriesSeasons(serverUrl, token, extractedRatingKey);
                         if (seasons && seasons.length > 0) {
                             selectedSeries.seasons = seasons;
                             selectedSeries.totalSeasons = seasons.length;
@@ -4791,7 +5412,7 @@
                     }
                 }
             }
-            
+
             renderSeriesContent();
         }
         
@@ -4894,10 +5515,9 @@
                             <div class="empty-message" style="margin-bottom: 20px;">
                                 ⚠️ No seasons cached for this show.
                                 <br><br>
-                                Please re-cache the Series library from the admin panel
-                                (Plex Management → Cache Content) to fetch seasons and episodes.
+                                Please try again later or contact support if this continues.
                             </div>
-                            ${series.url ? `<button onclick="playContentById('${series.id}')" style="
+                            ${series.url ? `<button onclick="playContent('${series.id}')" style="
                                 background: linear-gradient(135deg, #7c3aed, #a855f7);
                                 color: white;
                                 border: none;
@@ -4910,7 +5530,7 @@
                         </div>
                     `;
                 } else {
-                    container.innerHTML = '<div class="empty-message">No seasons available. Please re-cache the Series library from the admin panel.</div>';
+                    container.innerHTML = '<div class="empty-message">No seasons available. Please try again later.</div>';
                 }
                 return;
             }
@@ -5061,11 +5681,20 @@
                 showError('No video URL available for this episode.');
                 return;
             }
-            
+
             // Add the episode to a flat content list so playContent can find it by ID
             // This way playContent's authentication/package checks still apply
             if (!contentData.series.content) contentData.series.content = [];
-            
+
+            // ✅ FIX: Use the SAME direct MP4 URL that Movies use (which work on TV).
+            // Previously we tried Plex's universal transcode endpoint (HLS) but the
+            // user's Plex server returns HTTP 400 for that endpoint, so the TV shows
+            // "Failed to load video". Movies work because they go through
+            // handlePlexContent() with a direct MP4 URL that the TV plays natively.
+            // We route Series through the SAME handler so the playback path is identical.
+            const playUrl = episode.url;
+            const epType = 'mp4'; // Direct MP4 file (same as Movies)
+
             // Check if this episode is already in the flat list
             const existingIndex = contentData.series.content.findIndex(c => String(c.id) === String(episode.id));
             if (existingIndex === -1) {
@@ -5073,14 +5702,27 @@
                     id: episode.id,
                     name: episode.name,
                     description: episode.description || '',
-                    url: episode.url,
-                    type: 'series',
+                    url: playUrl,
+                    type: epType,
                     category: 'series',
+                    sectionId: episode.sectionId || '',   // route to handlePlexContent
+                    isPlex: true,                         // route to handlePlexContent
                     thumb: episode.thumb || '',
-                    plexToken: episode.plexToken || ''
+                    plexToken: episode.plexToken || '',
+                    plexServer: episode.plexServer || '',
+                    ratingKey: episode.ratingKey || (episode.id ? String(episode.id).replace('episode_', '') : '')
                 });
+            } else {
+                // Update existing entry to use the same direct MP4 path as Movies
+                const existing = contentData.series.content[existingIndex];
+                existing.url = playUrl;
+                existing.type = epType;
+                if (episode.sectionId) existing.sectionId = episode.sectionId;
+                existing.isPlex = true;
+                if (episode.plexServer) existing.plexServer = episode.plexServer;
+                if (episode.ratingKey) existing.ratingKey = episode.ratingKey;
             }
-            
+
             // Now call playContent with the episode ID (it will find it in contentData.series.content)
             playContent(episode.id);
         }
@@ -5149,6 +5791,49 @@
             return currentUser.permissions.includes(addonName) || currentUser.permissions.includes('full_access');
         }
 
+        // ============================================================
+        // SILENT CACHE REFRESH ON LOGIN
+        // Clears stale Plex content caches so that every fresh login
+        // forces a live fetch from the server (fixes stale-data issues
+        // on TVs that were caching broken/old episode URLs). No user
+        // message is shown - this is intentional and silent.
+        // ============================================================
+        async function silentCacheRefreshOnLogin() {
+            try {
+                // Cache keys that store the *content* fetched from the
+                // server. Clearing these makes loadPlexLibraryContent()
+                // fall through to a live re-fetch on next load.
+                const contentCacheKeys = [
+                    'plexMoviesCache',
+                    'plexAdultCache',
+                    'plexArabicCache',
+                    'plexSeriesCache',
+                    'plexCachedSeries',
+                    'liveChannelsCache'
+                ];
+                let cleared = 0;
+                contentCacheKeys.forEach(key => {
+                    if (localStorage.getItem(key) !== null) {
+                        localStorage.removeItem(key);
+                        cleared++;
+                    }
+                });
+                // Intentionally keep: clientAuthCustomers, adminCustomers,
+                // adminPackages, iwatch_tv_credentials, iwatch_tv_expiry,
+                // plexServerUrl, plexToken, plex*Libraries, contentSources.
+                console.log('🔄 Silent cache refresh on login: cleared ' + cleared + ' content cache(s)');
+                // Immediately re-fetch fresh content so the UI never
+                // falls back to a "zero packages" state right after login.
+                // Awaiting this keeps the cache-clear + live-reload atomic
+                // from the caller's perspective (no race condition where
+                // loadPackagesFromAdmin() runs before content is restored).
+                await loadPlexLibraryContent();
+            } catch (e) {
+                // Never let cache clearing break the login flow
+                console.warn('Silent cache refresh on login failed:', e);
+            }
+        }
+
         async function loginUser(username, password) {
             // LOCAL VERSION - Use localStorage instead of Firebase
             try {
@@ -5157,12 +5842,12 @@
                 if (clientAuthCustomersRaw) {
                     const customers = JSON.parse(clientAuthCustomersRaw);
                     const user = customers.find(c => c.username === username && c.password === password);
-                    
+
                     if (user) {
                         isLoggedIn = true;
                         currentUser = user;
                         adminCustomers = customers;
-                        
+
                         console.log('✅ Login successful (clientAuth):', user.username);
                         console.log('📅 Expiry date:', user.expiryDate);
                         updateUserInterface();
@@ -5170,23 +5855,30 @@
                         // Store credentials for auto-login
                         const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
                         storeCredentials(username, password, user.expiryDate, rememberMe);
-                        // Load content from localStorage
-                        loadPlexLibraryContent();
+                        // 🔄 SILENT CACHE REFRESH on login (no user message).
+                        // The refresh itself now awaits a full live content reload,
+                        // so we no longer need a separate loadPlexLibraryContent()
+                        // call here (which used to race against the cache clear).
+                        await silentCacheRefreshOnLogin();
+                        // ✅ Show auto-renewal notification if enabled
+                        if (typeof clientPackageAuth.checkAutoRenewalNotification === 'function') {
+                            clientPackageAuth.checkAutoRenewalNotification(user);
+                        }
                         return true;
                     }
                 }
-                
+
                 // Fallback to adminCustomers for backward compatibility
                 const adminCustomersRaw = localStorage.getItem('adminCustomers');
                 if (adminCustomersRaw) {
                     const customers = JSON.parse(adminCustomersRaw);
                     const user = customers.find(c => c.username === username && c.password === password);
-                    
+
                     if (user) {
                         isLoggedIn = true;
                         currentUser = user;
                         adminCustomers = customers;
-                        
+
                         console.log('✅ Login successful (admin fallback):', user.username);
                         console.log('📅 Expiry date:', user.expiryDate);
                         updateUserInterface();
@@ -5194,15 +5886,18 @@
                         // Store credentials for auto-login
                         const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
                         storeCredentials(username, password, user.expiryDate, rememberMe);
-                        // Load content from localStorage
-                        loadPlexLibraryContent();
+                        // 🔄 SILENT CACHE REFRESH on login (no user message).
+                        // The refresh itself now awaits a full live content reload,
+                        // so we no longer need a separate loadPlexLibraryContent()
+                        // call here (which used to race against the cache clear).
+                        await silentCacheRefreshOnLogin();
                         return true;
                     }
                 }
             } catch(e) {
                 console.log('Local login failed:', e.message);
             }
-            
+
             showNotification('Invalid username or password', 'error');
             return false;
         }
@@ -5837,37 +6532,61 @@
             renderContent();
         }
         
+        // Helper: set a tab's label and count number (count shown UNDER the label, not beside)
+        function setTabCount(selector, label, count) {
+            const el = document.querySelector(selector);
+            if (el) {
+                el.innerHTML = `<span class="tab-label">${label}</span><span class="tab-count">${count}</span>`;
+            }
+            return el;
+        }
+
         // Show/hide Live TV tabs based on content and user access
         function updateLiveTabs() {
-            const sportsTab = document.getElementById('sportsLiveTab');
+            // ✅ FIX: use the actual element IDs that exist in the HTML
+            const sportsTab = document.getElementById('sportsTab');
+            const sportsPlusTab = document.getElementById('sportsPlusTab');
             const tvAddonTab = document.getElementById('liveTvAddonTab');
             
             // Check if user has access to these packages
+            const userAddons = (currentUser && currentUser.addons ? currentUser.addons : '').toLowerCase();
+            const userPackages = (currentUser && currentUser.packages ? currentUser.packages : '').toString().toLowerCase();
             const hasSportsAccess = currentUser && (currentUser.role === 'admin' || 
-                (currentUser.addons && currentUser.addons.includes('Sports')) ||
-                (currentUser.packages && currentUser.packages.includes('sports')));
+                userAddons.includes('sports') || userPackages.includes('sports'));
             const hasTvAddonAccess = currentUser && (currentUser.role === 'admin' || 
-                (currentUser.addons && currentUser.addons.includes('TV Addon')) ||
-                (currentUser.packages && currentUser.packages.includes('livetv-addon')));
-            
+                userAddons.includes('tv addon') || userPackages.includes('livetv-addon'));
+
+            // ✅ FIX: use the actual data arrays that contentSources populates
+            const sportsCount = (contentData.sports && contentData.sports.content) ? contentData.sports.content.length : 0;
+            const sportsPlusCount = (contentData.sportsPlus && contentData.sportsPlus.content) ? contentData.sportsPlus.content.length : 0;
+            const liveAddonCount = (contentData['livetv-addon'] && contentData['livetv-addon'].content) ? contentData['livetv-addon'].content.length : 0;
+
             // Show tabs if user has access AND there's content
             if (sportsTab) {
-                sportsTab.style.display = (hasSportsAccess && contentData['sports-live'].content.length > 0) ? 'block' : 'none';
+                // If there is content OR user has explicit access, show the tab
+                sportsTab.style.display = (sportsCount > 0 || hasSportsAccess) ? 'block' : 'none';
+            }
+            if (sportsPlusTab) {
+                sportsPlusTab.style.display = (sportsPlusCount > 0 || hasSportsAccess) ? 'block' : 'none';
             }
             if (tvAddonTab) {
-                tvAddonTab.style.display = (hasTvAddonAccess && contentData['livetv-addon'].content.length > 0) ? 'block' : 'none';
+                tvAddonTab.style.display = (hasTvAddonAccess && liveAddonCount > 0) ? 'block' : 'none';
             }
+            
+            console.log('🔧 updateLiveTabs:', { sportsCount, sportsPlusCount, hasSportsAccess });
         }
 
         function renderContent() {
+            // ✅ Always render the categories row first (so all tabs, including Series,
+            // show their category text like "All", "Series", etc.)
+            renderCategories();
+
             // Special handling for Series browsing
             if (currentSource === 'series') {
                 renderSeriesContent();
                 return;
             }
-            
-            renderCategories();
-            
+
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             
             // Apply customer subscription filtering
@@ -5894,6 +6613,41 @@
             
             let filteredContent = contentData[currentSource].content;
             
+            // Debug: log filter context for Sports / Sports Plus
+            if (currentSource === 'sports' || currentSource === 'sportsPlus') {
+                console.log(`🔍 [Filter] source=${currentSource} | contentArray.length=${filteredContent.length} | customerAddons='${customerAddons}' | accessiblePackageIds=`, accessiblePackageIds);
+            }
+
+            // ✅ FIX: Re-evaluate "active subscriber" here as well, so the filter has access to the
+            // exact same customer data and the same expiry / addon logic as the package filter.
+            const _isActiveSubscriberForFilter = (() => {
+                try {
+                    const ca = (() => {
+                        const cAuth = JSON.parse(localStorage.getItem('clientAuthCustomers') || '[]');
+                        let c = cAuth.find(x => x.username === currentUser?.username);
+                        if (!c) {
+                            const aCust = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
+                            c = aCust.find(x => x.username === currentUser?.username);
+                        }
+                        return c;
+                    })();
+                    if (!ca) return false;
+                    const addons = (ca.addons || '').toLowerCase();
+                    const hasAnyAddon = addons.trim().length > 0;
+                    const hasValidExpiry = (() => {
+                        if (!ca.expiryDate) return false;
+                        const ex = new Date(ca.expiryDate);
+                        if (isNaN(ex.getTime())) return false;
+                        return ex.getTime() > Date.now();
+                    })();
+                    return ca.status === 'active' ||
+                           ca.status === 'approved' ||
+                           ca.plan ||
+                           hasValidExpiry ||
+                           hasAnyAddon;
+                } catch (e) { return false; }
+            })();
+
             // Filter content based on subscription access
             filteredContent = filteredContent.filter(item => {
                 // Check if this is Plex content (has category field set)
@@ -5901,39 +6655,104 @@
                 const isAdult = item.adult || item.isAdult || category === 'adult';
                 const isArabic = item.arabic || item.isArabic || category === 'arabic';
                 const isMovie = category === 'movie' || category === 'vod';
-                
+
                 // If it's Plex content, check addon access
                 if (isAdult || isArabic || isMovie) {
                     // Adult content - requires addon + password
                     if (isAdult) {
-                        const hasAdultAddon = customerAddons.includes('adult') || 
+                        const hasAdultAddon = customerAddons.includes('adult') ||
                                             customerAddons.includes('adult content') ||
                                             customerAddons.includes('adult content package');
                         return hasAdultAddon && adultUnlocked;
                     }
-                    
+
                     // Arabic content - requires addon
                     if (isArabic) {
-                        return customerAddons.includes('arabic') || 
+                        return customerAddons.includes('arabic') ||
                                customerAddons.includes('arabic package');
                     }
-                    
+
                     // Movies content - requires addon
                     if (isMovie) {
-                        return customerAddons.includes('movies') || 
+                        return customerAddons.includes('movies') ||
                                customerAddons.includes('movies package');
                     }
                 }
-                
+
                 // If no special category, check requiresPackage/packageId
                 if (!item.requiresPackage && !item.packageId) return true;
-                
-                // Check if user's accessible packages include this item's package
-                const pkgId = item.packageId || item.requiresPackage;
+
+                // Normalize package id (treat literal "undefined" / "null" / empty as no specific package).
+                const normalizePid = (v) => {
+                    if (v === null || v === undefined) return '';
+                    const s = String(v).trim();
+                    if (!s || s === 'undefined' || s === 'null') return '';
+                    return s;
+                };
+                const pkgId = normalizePid(item.packageId) || normalizePid(item.requiresPackage);
+
+                // ✅ Helper: determine if this item is Sports / Sports Plus (by type or package name)
+                const itemCatLower = (item.category || '').toLowerCase();
+                const itemTypeLower = (item.type || '').toLowerCase();
+                const itemPkgLower = (item.packageName || item.package || '').toLowerCase();
+                const isSportsPlusItem =
+                    itemPkgLower.includes('sports plus') || itemPkgLower.includes('sportsplus') ||
+                    itemCatLower === 'sports-plus' || itemCatLower === 'sportsplus' ||
+                    itemTypeLower === 'sports plus' || itemTypeLower === 'sportsplus';
+                const isSportsItem =
+                    (itemPkgLower.includes('sport') || itemCatLower === 'sports' || itemTypeLower === 'sports') &&
+                    !isSportsPlusItem;
+
+                // ✅ Helper: does the customer have the matching addon for Sports / Sports Plus?
+                const hasSportsPlusAddon =
+                    customerAddons.includes('sports plus') ||
+                    customerAddons.includes('sportsplus') ||
+                    customerAddons.includes('sports');
+                const hasSportsAddon = customerAddons.includes('sports');
+
                 if (pkgId) {
-                    return accessiblePackageIds.includes(pkgId);
+                    // 1) Primary check: customer's accessible packages include the item's packageId
+                    if (accessiblePackageIds.includes(pkgId)) return true;
+                    // 2) Fallback for Sports / Sports Plus content: also allow if the customer has the matching addon
+                    if (isSportsPlusItem && hasSportsPlusAddon) return true;
+                    if (isSportsItem && hasSportsAddon) return true;
+
+                    // ✅ SAFETY-NET FIX: For Live TV / basic-package content whose packageId
+                    // does not appear in the customer's accessible package list, still allow
+                    // the item if the customer is an active subscriber. This prevents the
+                    // "Live TV shows a count but content is empty" bug when the admin
+                    // package id differs from the literal "basic" or "live" used on the
+                    // content item.
+                    const pkgIdLower = pkgId.toLowerCase();
+                    const isLiveOrBasicItem =
+                        pkgIdLower === 'basic' ||
+                        pkgIdLower === 'live' ||
+                        pkgIdLower === 'livetv' ||
+                        pkgIdLower === 'live_tv' ||
+                        pkgIdLower === 'live-tv' ||
+                        pkgIdLower === 'tv_live' ||
+                        pkgIdLower === 'tv-live' ||
+                        pkgIdLower === 'basic_tv' ||
+                        pkgIdLower === 'basic-tv' ||
+                        itemPkgLower.includes('live tv') ||
+                        itemPkgLower.includes('live-tv') ||
+                        itemPkgLower.includes('livetv') ||
+                        itemPkgLower.includes('basic') ||
+                        currentSource === 'live';
+                    if (isLiveOrBasicItem && _isActiveSubscriberForFilter) {
+                        console.log(`✅ [Filter] Safety-net: allowing Live TV / basic item "${item.name}" (pkgId="${pkgId}") for active subscriber`);
+                        return true;
+                    }
+
+                    // 3) No match at all
+                    return false;
                 }
-                
+
+                // No valid package id (e.g. content added without selecting a package) -
+                // fall back to addon-based access for Sports / Sports Plus content.
+                if (isSportsPlusItem) return hasSportsPlusAddon;
+                if (isSportsItem) return hasSportsAddon;
+
                 return true;
             });
             
@@ -5982,7 +6801,7 @@
                     adultTabUpdate.textContent = `Adult (${availableContent.length})`;
                 }
             }
-            
+
             contentList.innerHTML = availableContent.map((item, index) => {
                 const typeIcon = getSourceIcon(currentSource);
                 const typeBadge = getBadgeClass(currentSource);
@@ -6366,9 +7185,16 @@
             const streamingMode = getContentStreamingMode(content);
             
             // Check for Plex content first (adult content from Plex server)
-            const isPlexContent = content.plexToken || content.sectionId || content.isPlex || 
-                                  (content.category === 'adult' && content.url?.includes('plex')) ||
-                                  content.url?.startsWith('http') && content.type !== 'hls' && content.type !== 'mp4';
+            // ✅ FIX: also exclude HLS streams (URL ends in .m3u8) so that channels
+            // added through the Content Library with a generic type (e.g. "News",
+            // "Sports") but pointing to an HLS URL are routed to the HLS handler
+            // instead of the Plex handler.
+            const isHlsUrl = content.url?.includes('.m3u8') || content.url?.includes('/hls/');
+            const isPlexContent = !isHlsUrl && (
+                content.plexToken || content.sectionId || content.isPlex ||
+                (content.category === 'adult' && content.url?.includes('plex')) ||
+                (content.url?.startsWith('http') && content.type !== 'hls' && content.type !== 'mp4')
+            );
             
             if (isPlexContent) {
                 // Plex content - use Plex handler
@@ -6435,7 +7261,14 @@
                 if (isTV) {
                     // TV browsers - use native playback
                     console.log('📺 TV detected - using native playback for Plex');
-                    video.src = content.url;
+                    // ✅ FIX: Apply CORS proxy (same as handleHLSContent) so that
+                    // Plex direct part URLs are not blocked by the TV browser's
+                    // CORS policy. Without this, series episodes fail with
+                    // "Failed to load" while movies (which go through
+                    // getProxiedStreamUrl via handleHLSContent) work fine.
+                    const playUrl = getProxiedStreamUrl(content.url);
+                    console.log('📺 Proxied play URL:', playUrl.substring(0, 100) + '...');
+                    video.src = playUrl;
                     video.load();
                     
                     // Set timeout to detect if video doesn't start playing
@@ -6443,10 +7276,24 @@
                         console.log('⚠️ Video timeout - checking state');
                         if (video.readyState < 2) {
                             console.error('❌ Video not ready, trying HLS fallback');
-                            // Try HLS fallback
+                            // ✅ FIX: Use Plex universal transcode endpoint (not the
+                            // broken .replace('.mp4','/master.m3u8') which doesn't
+                            // start a real transcode session).
                             if (content.url.includes('.mp4')) {
-                                const hlsUrl = content.url.replace('.mp4', '/master.m3u8');
-                                handleHLSStream(hlsUrl + '?X-Plex-Token=' + token);
+                                const basePartUrl = content.url.split('?')[0];
+                                const encodedPath = encodeURIComponent(basePartUrl);
+                                const hlsUrl =
+                                    `${serverUrl}/video/:/transcode/universal/start.m3u8` +
+                                    `?X-Plex-Token=${token}` +
+                                    `&X-Plex-Product=Plex+Web` +
+                                    `&X-Plex-Platform=Web` +
+                                    `&protocol=hls` +
+                                    `&directStreamAudio=1` +
+                                    `&directPlayVideo=0` +
+                                    `&videoQuality=100` +
+                                    `&path=${encodedPath}`;
+                                console.log('🔄 HLS transcode URL:', hlsUrl);
+                                handleHLSStream(hlsUrl);
                             }
                         }
                     }, 5000);
@@ -6464,8 +7311,29 @@
                     
                     video.onerror = function() {
                         console.error('❌ Video load error:', video.error);
-                        clearTimeout(videoTimeout);
-                        showError('Failed to load video. Please check Plex server connection.');
+                        // ✅ FIX: Instead of clearing the timeout and showing an error,
+                        // trigger the HLS fallback immediately so non-"Web Optimized"
+                        // MP4s that fail on TV still play via Plex transcode.
+                        if (content.url.includes('.mp4')) {
+                            console.log('🔄 Direct MP4 failed on TV, switching to HLS transcode...');
+                            const basePartUrl = content.url.split('?')[0];
+                            const encodedPath = encodeURIComponent(basePartUrl);
+                            const hlsUrl =
+                                `${serverUrl}/video/:/transcode/universal/start.m3u8` +
+                                `?X-Plex-Token=${token}` +
+                                `&X-Plex-Product=Plex+Web` +
+                                `&X-Plex-Platform=Web` +
+                                `&protocol=hls` +
+                                `&directStreamAudio=1` +
+                                `&directPlayVideo=0` +
+                                `&videoQuality=100` +
+                                `&path=${encodedPath}`;
+                            console.log('🔄 HLS transcode URL:', hlsUrl);
+                            handleHLSStream(hlsUrl);
+                        } else {
+                            clearTimeout(videoTimeout);
+                            showError('Failed to load video. Please try again or contact support if the issue continues.');
+                        }
                     };
                     
                     video.onplay = function() {
@@ -6476,15 +7344,15 @@
                     // Desktop - use Video.js
                     console.log('🖥️ Desktop detected - using Video.js for Plex');
                     if (player && typeof player.src === 'function') {
-                        player.src({ type: 'video/mp4', src: content.url });
+                        player.src({ type: 'video/mp4', src: getProxiedStreamUrl(content.url) });
                         player.play().catch(e => {
                             console.log('⚠️ Video.js play failed, trying native:', e);
-                            video.src = content.url;
+                            video.src = getProxiedStreamUrl(content.url);
                             video.load();
                             video.play().catch(err => showError('Failed to play video'));
                         });
                     } else {
-                        video.src = content.url;
+                        video.src = getProxiedStreamUrl(content.url);
                         video.load();
                         video.play().catch(e => showError('Failed to play video'));
                     }
@@ -6503,7 +7371,7 @@
                 
                 if (!token) {
                     console.error('❌ No Plex token found!');
-                    showError('Plex token not configured. Please check admin settings.');
+                    showError('Unable to load this content right now. Please contact support if this continues.');
                     return;
                 }
                 
@@ -6517,13 +7385,13 @@
                             .then(r => r.text())
                             .then(xml => {
                                 console.log('📺 Fetched Plex metadata');
-                                showError('Content metadata error. Please refresh the content library.');
+                                showError('Unable to load this item right now. Please try again later.');
                             })
                             .catch(e => {
-                                showError('Content metadata error. Please refresh the content library.');
+                                showError('Unable to load this item right now. Please try again later.');
                             });
                     } else {
-                        showError('Content metadata error. Please refresh the content library.');
+                        showError('Unable to load this item right now. Please try again later.');
                     }
                     return;
                 }
@@ -6536,7 +7404,7 @@
                 
             } catch (error) {
                 console.error('Plex playback error:', error);
-                showError('Failed to load Plex content: ' + error.message);
+                showError('Failed to load video. Please try again or contact support.');
             }
         }
         
@@ -6640,13 +7508,20 @@
             
             if (Hls.isSupported()) {
                 if (hls) hls.destroy();
+                // ✅ FIX: also clear window.hlsInstance
+                if (window.hlsInstance) {
+                    try { window.hlsInstance.destroy(); } catch (e) { /* noop */ }
+                    window.hlsInstance = null;
+                }
                 hls = new Hls({
                     enableWorker: true,
                     maxBufferLength: 60,
                     maxMaxBufferLength: 120,
                     startLevel: -1
                 });
-                hls.loadSource(url);
+                // ✅ FIX: keep window.hlsInstance in sync
+                window.hlsInstance = hls;
+                hls.loadSource(getProxiedStreamUrl(url));
                 hls.attachMedia(player.el().querySelector('video'));
                 hls.on(Hls.Events.MANIFEST_PARSED, () => {
                     player.play().catch(e => console.log('Autoplay blocked'));
@@ -6730,13 +7605,13 @@
                 }
                 
                 // DIRECT NATIVE PLAYBACK - fastest for LG/Samsung
-                video.src = content.url;
+                video.src = getProxiedStreamUrl(content.url);
                 video.load();
                 
                 // Add error listener
                 video.onerror = function() {
                     console.error('❌ Video load error:', video.error);
-                    showError('Failed to load video. URL may be invalid or server unreachable.');
+                    showError('Failed to load video. Please try again or contact support if the issue continues.');
                 };
                 
                 // Play immediately
@@ -6765,7 +7640,14 @@
                 if (hls) {
                     hls.destroy();
                 }
-                
+                // ✅ FIX: also clear window.hlsInstance so the next play
+                // can re-create a clean HLS instance (otherwise after 3-4
+                // stop/play cycles the old reference causes silent failures).
+                if (window.hlsInstance) {
+                    try { window.hlsInstance.destroy(); } catch (e) { /* noop */ }
+                    window.hlsInstance = null;
+                }
+
                 // Optimized HLS.js config for faster start
                 hls = new Hls({
                     enableWorker: false,        // Disable for TV compatibility
@@ -6777,8 +7659,21 @@
                     capLevelToPlayerSize: true,
                     debug: false
                 });
-                
-                hls.loadSource(content.url);
+
+                // ✅ FIX: also keep window.hlsInstance in sync so stopStream
+                // can destroy the correct instance every time.
+                window.hlsInstance = hls;
+
+                // ✅ FIX: Wrap stream URL with a CORS proxy if configured.
+                // This solves "URL plays in VLC but not in browser" issues caused by
+                // missing CORS headers on the streaming server. The user can set
+                // a CORS proxy URL via localStorage.setItem('corsProxyUrl', 'https://...')
+                // or via the admin panel settings.
+                const proxiedUrl = getProxiedStreamUrl(content.url);
+                if (proxiedUrl !== content.url) {
+                    console.log('🌐 Using CORS proxy for stream:', proxiedUrl);
+                }
+                hls.loadSource(proxiedUrl);
                 hls.attachMedia(video);
                 
                 hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -6798,6 +7693,10 @@
                     if (data.fatal) {
                         if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
                             console.log('🔄 Network error - recovering...');
+                            // ✅ FIX: Detect CORS / mixed content and show a friendly message
+                            if (data.details && /access-control-allow-origin|mixed-content|cors/i.test(JSON.stringify(data))) {
+                                showError('Video is temporarily unavailable. Please try again later or contact support.');
+                            }
                             hls.startLoad();
                         } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
                             console.log('🔄 Media error - recovering...');
@@ -6814,11 +7713,21 @@
             } else {
                 // Final fallback - native video
                 console.log('📺 Using native video fallback');
+                // ✅ FIX: Detect mixed-content (HTTPS page loading HTTP stream)
+                if (window.location.protocol === 'https:' && content.url && content.url.startsWith('http://')) {
+                    showError('Video is temporarily unavailable. Please try again later or contact support.');
+                }
                 video.src = content.url;
                 video.load();
                 const playPromise = video.play();
                 if (playPromise !== undefined) {
-                    playPromise.catch(e => showTVPlayPrompt(content));
+                    playPromise.catch(e => {
+                        if (e && /NotSupportedError|DOMException/i.test(String(e))) {
+                            showError('Video is temporarily unavailable. Please try again later or contact support.');
+                        } else {
+                            showTVPlayPrompt(content);
+                        }
+                    });
                 }
                 video.play().catch(e => console.log('Autoplay blocked'));
             }
@@ -6826,7 +7735,33 @@
             // Update now playing info
             updateNowPlaying(content);
         }
-        
+
+        // ✅ FIX: Wrap a stream URL with the configured CORS proxy.
+        // This solves "URL plays in VLC but not in browser" issues caused by missing
+        // CORS headers on the streaming server, or mixed-content (HTTPS page → HTTP stream).
+        // The user can configure a CORS proxy by setting localStorage 'corsProxyUrl'.
+        // Examples of valid values:
+        //   - 'https://corsproxy.io/?' (prefixes the URL with this)
+        //   - 'https://my-proxy.example.com/?url=' (concatenated)
+        //   - '' or null (disabled - returns URL as-is)
+        function getProxiedStreamUrl(url) {
+            if (!url) return url;
+            try {
+                const proxy = localStorage.getItem('corsProxyUrl');
+                if (!proxy || !proxy.trim()) return url;
+                // Support two common proxy styles:
+                //   1) Prefix proxy (e.g. "https://corsproxy.io/?")  → proxy + encodeURIComponent(url)
+                //   2) Query proxy  (e.g. "https://my-proxy/?url=")  → proxy + encodeURIComponent(url)
+                if (proxy.includes('?url=') || proxy.includes('&url=') || /[?&]$/.test(proxy)) {
+                    return proxy + encodeURIComponent(url);
+                }
+                // Default: treat as prefix
+                return proxy + encodeURIComponent(url);
+            } catch (e) {
+                return url;
+            }
+        }
+
         // Fallback function to try HLS.js when native playback fails
         function tryHLSJsFallback(url) {
             console.log('🔄 Trying HLS.js fallback...');
@@ -6845,9 +7780,9 @@
                     maxMaxBufferLength: 30
                 });
                 
-                hls.loadSource(url);
+                hls.loadSource(getProxiedStreamUrl(url));
                 hls.attachMedia(video);
-                
+
                 hls.on(Hls.Events.MANIFEST_PARSED, () => {
                     console.log('✅ HLS.js fallback loaded successfully');
                     video.play().catch(e => console.log('Autoplay blocked'));
@@ -6879,11 +7814,13 @@
 
         // Preload always-streaming content
         function preloadAlwaysStreamingContent() {
-            console.log('🔄 Preloading always-streaming content...');
-            
-            // Preload content from always-streaming sources
-            const alwaysStreamingSources = ['live', 'movies'];
-            
+            console.log('🔄 Preloading always-streaming content (News / Sports / Sports Plus)...');
+
+            // ✅ Only News, Sports, Sports Plus are preloaded.
+            // Everything else (Movies, regular Live TV, Series, etc.) is on-demand
+            // to minimize local network traffic.
+            const alwaysStreamingSources = ['sports', 'sportsPlus', 'sports-live', 'news'];
+
             alwaysStreamingSources.forEach(source => {
                 const sourceData = contentData[source];
                 if (sourceData && sourceData.content.length > 0) {
@@ -6891,13 +7828,13 @@
                     const contentToPreload = sourceData.content[0];
                     if (contentToPreload && shouldPreloadContent(contentToPreload)) {
                         console.log(`📺 Preloading ${contentToPreload.name} from ${source}`);
-                        
+
                         // Create a hidden video element for preloading
                         const preloadVideo = document.createElement('video');
                         preloadVideo.preload = 'auto';
                         preloadVideo.style.display = 'none';
                         preloadVideo.muted = true;
-                        
+
                         if (contentToPreload.type === 'hls' && Hls.isSupported()) {
                             const preloadHls = new Hls();
                             preloadHls.loadSource(contentToPreload.url);
@@ -6905,9 +7842,9 @@
                         } else if (contentToPreload.type === 'mp4') {
                             preloadVideo.src = contentToPreload.url;
                         }
-                        
+
                         document.body.appendChild(preloadVideo);
-                        
+
                         // Remove preloaded video after 10 seconds to prevent memory issues
                         setTimeout(() => {
                             if (preloadVideo.parentNode) {
@@ -6917,6 +7854,42 @@
                     }
                 }
             });
+
+            // ✅ Also scan the `live` source for News channels (e.g. BBC News, CNN, Al Jazeera)
+            // and preload them. These are detected by the content name/category/type
+            // containing "news" (the type field is set in the Content Library).
+            const liveSource = contentData['live'];
+            if (liveSource && liveSource.content.length > 0) {
+                const newsChannel = liveSource.content.find(ch => {
+                    const n = (ch.name || '').toLowerCase();
+                    const c = (ch.category || '').toLowerCase();
+                    const t = (ch.type || '').toLowerCase();
+                    return n.includes('news') || c === 'news' || c === 'news-tv' ||
+                           t === 'news' || t === 'news-tv' || t === 'newschannel';
+                });
+                if (newsChannel && shouldPreloadContent(newsChannel)) {
+                    console.log(`📺 Preloading News channel from live: ${newsChannel.name}`);
+                    const preloadVideo = document.createElement('video');
+                    preloadVideo.preload = 'auto';
+                    preloadVideo.style.display = 'none';
+                    preloadVideo.muted = true;
+
+                    if (newsChannel.type === 'hls' && Hls.isSupported()) {
+                        const preloadHls = new Hls();
+                        preloadHls.loadSource(newsChannel.url);
+                        preloadHls.attachMedia(preloadVideo);
+                    } else if (newsChannel.type === 'mp4') {
+                        preloadVideo.src = newsChannel.url;
+                    }
+
+                    document.body.appendChild(preloadVideo);
+                    setTimeout(() => {
+                        if (preloadVideo.parentNode) {
+                            preloadVideo.parentNode.removeChild(preloadVideo);
+                        }
+                    }, 10000);
+                }
+            }
         }
 
         // Initialize preloading after login
@@ -7018,7 +7991,7 @@
                 // Add error listener
                 nativeVideo.onerror = function() {
                     console.error('❌ MP4 Video load error:', nativeVideo.error);
-                    showError('Failed to load MP4 video. URL may be invalid or server unreachable.');
+                    showError('Failed to load video. Please try again or contact support if the issue continues.');
                 };
                 
                 // Play immediately
@@ -7185,7 +8158,17 @@
             const video = getVideoElement();
             const playBtn = document.getElementById('simplePlayBtn');
             if (!video) return;
-            
+
+            // ✅ FIX: if the source has been cleared (after stopStream), re-load
+            // the last channel that was playing so the play button works
+            // without the user having to re-click the channel tile.
+            const hasSource = !!(video.currentSrc || (player && player.currentSrc && player.currentSrc()));
+            if (video.paused && !hasSource && window.lastPlayedContent && typeof window.playContent === 'function') {
+                console.log('▶️ Re-loading last played channel:', window.lastPlayedContent.name);
+                window.playContent(window.lastPlayedContent.id);
+                return;
+            }
+
             if (video.paused) {
                 video.play().then(() => {
                     if (playBtn) playBtn.textContent = '⏸️';
@@ -7410,8 +8393,16 @@
 
         // Global function for video play/pause - defined early for onclick access
         window.togglePlay = function() {
+            // ✅ FIX: if there is no current content (because the user pressed stop),
+            // try to resume the last channel that was playing. Otherwise the
+            // fullscreen play button does nothing after stopStream().
+            if (!currentContent && window.lastPlayedContent && typeof window.playContent === 'function') {
+                console.log('▶️ Resuming last played channel from fullscreen:', window.lastPlayedContent.name);
+                window.playContent(window.lastPlayedContent.id);
+                return;
+            }
             if (!player || !currentContent) return;
-            
+
             if (player.paused()) {
                 player.play();
             } else {
@@ -7435,13 +8426,25 @@
         // Global function for stopping stream - defined early for onclick access
         window.stopStream = function() {
             if (!player) return;
-            
-            player.pause();
-            player.src('');
-            
+
+            try { player.pause(); } catch (e) { /* noop */ }
+
+            // ✅ FIX: use player.reset() instead of player.src('') — reset()
+            // properly tears down the video element and clears all internal
+            // state. Using player.src('') leaves the player in a half-initialized
+            // state that caused the "stops working after 3-4 plays" bug.
+            try { player.reset(); } catch (e) { /* noop */ }
+
+            // ✅ FIX: destroy BOTH the local hls and window.hlsInstance to fully
+            // release the HLS.js resources. After 3-4 stop/play cycles the old
+            // reference would otherwise be reused and cause silent failures.
             if (hls) {
-                hls.destroy();
+                try { hls.destroy(); } catch (e) { /* already destroyed */ }
                 hls = null;
+            }
+            if (window.hlsInstance) {
+                try { window.hlsInstance.destroy(); } catch (e) { /* already destroyed */ }
+                window.hlsInstance = null;
             }
             
             // Show overlay
@@ -7463,7 +8466,12 @@
             document.querySelectorAll('.content-item').forEach(item => {
                 item.classList.remove('active');
             });
-            
+
+            // ✅ FIX: remember the last content we played so the play button can
+            // resume the same channel without the user having to click the
+            // channel tile again. The source is intentionally cleared, but the
+            // metadata is preserved.
+            window.lastPlayedContent = currentContent;
             currentContent = null;
         }
 
@@ -7476,7 +8484,7 @@
                 const passwordField = document.getElementById('password');
                 if (usernameField) usernameField.value = '';
                 if (passwordField) passwordField.value = '';
-                
+
                 document.getElementById('loginModal').classList.add('show');
                 // Small delay to ensure fields are cleared before focus
                 setTimeout(() => {
@@ -7484,6 +8492,22 @@
                 }, 50);
             }
         }
+
+        window.showSettingsModal = function() {
+            const m = document.getElementById('settingsModal');
+            if (m) {
+                m.style.display = 'block';
+                m.classList.add('show');
+            }
+        };
+
+        window.hideSettingsModal = function() {
+            const m = document.getElementById('settingsModal');
+            if (m) {
+                m.classList.remove('show');
+                m.style.display = 'none';
+            }
+        };
 
         function hideLoginModal() {
             document.getElementById('loginModal').classList.remove('show');
@@ -7531,24 +8555,81 @@
                     loginBtn.textContent = 'Login';
                 });
                 
-                // Also add click handler to the login button as backup
-                const loginBtn = document.getElementById('loginBtn');
-                if (loginBtn) {
-                    // FIX: Previous `if (e.detail === 0) return;` blocked ALL
-                    // D-pad OK presses because D-pad OK triggers element.click()
-                    // programmatically, which fires a click event with e.detail === 0.
-                    // Use a flag to prevent recursion instead.
-                    let _loginDispatching = false;
-                    loginBtn.addEventListener('click', function(e) {
-                        const form = document.getElementById('loginForm');
-                        if (form && !loginBtn.disabled && !_loginDispatching) {
-                            _loginDispatching = true;
-                            form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-                            // Reset flag after short delay to allow re-submit but block recursion
-                            setTimeout(function() { _loginDispatching = false; }, 300);
-                        }
-                    });
+                // Direct login button click handler - reliable on Android WebView and TV remotes
+        window.loginBtnClick = async function() {
+            const loginBtn = document.getElementById('loginBtn');
+            if (!loginBtn || loginBtn.disabled) return;
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            
+            if (!username || !password) {
+                console.log('Username and password are required');
+                if (typeof showNotification === 'function') {
+                    showNotification('Please enter username and password', 'error');
                 }
+                return;
+            }
+            
+            // Immediate feedback
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Logging in...';
+            loginBtn.blur();
+            
+            try {
+                const loginSuccess = await loginUser(username, password);
+                console.log('Login attempt result:', loginSuccess);
+                
+                if (loginSuccess) {
+                    document.getElementById('username').value = '';
+                    document.getElementById('password').value = '';
+                    setTimeout(() => {
+                        document.getElementById('username').value = '';
+                        document.getElementById('password').value = '';
+                    }, 100);
+                }
+            } catch (e) {
+                console.log('Login error:', e.message);
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Login';
+            }
+        };
+        
+        // Also add click handler to the login button as backup
+        const loginBtn = document.getElementById('loginBtn');
+        if (loginBtn) {
+            loginBtn.addEventListener('click', function(e) {
+                // Direct call to loginBtnClick - reliable on all platforms
+                if (typeof window.loginBtnClick === 'function') {
+                    window.loginBtnClick();
+                }
+            });
+        }
+        
+        // Enter key on username/password inputs - trigger login (form no longer auto-submits because button is type="button")
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        if (usernameInput) {
+            usernameInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (typeof window.loginBtnClick === 'function') {
+                        window.loginBtnClick();
+                    }
+                }
+            });
+        }
+        if (passwordInput) {
+            passwordInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (typeof window.loginBtnClick === 'function') {
+                        window.loginBtnClick();
+                    }
+                }
+            });
+        }
             }
 
             // Adult password
@@ -7665,6 +8746,86 @@
             alert(errorMsg);
         }
 
+        // ✅ Show network binding error
+        function showNetworkBindingError(reason, customer) {
+            const errorMsg = `🚫 Access Blocked - Network Restriction\n\n` +
+                `Your subscription is bound to a specific network/device for security.\n\n` +
+                `Reason: ${reason}\n\n` +
+                `If you recently moved or changed routers, please contact your administrator to update your network settings.\n\n` +
+                `Bound to:\n` +
+                (customer.authorizedRouterIP ? `• Router IP: ${customer.authorizedRouterIP}\n` : '') +
+                (customer.authorizedMacAddress ? `• MAC: ${customer.authorizedMacAddress}\n` : '') +
+                (customer.authorizedSSID ? `• WiFi: ${customer.authorizedSSID}\n` : '');
+            alert(errorMsg);
+        }
+
+        // ✅ Detect local network information (gateway IP, local IP)
+        // This is best-effort and depends on browser security settings
+        async function detectNetworkInfo() {
+            const networkInfo = {
+                localIP: null,
+                publicIP: null,
+                gatewayIP: null,
+                macAddress: null
+            };
+
+            try {
+                // Method 1: Get local IP via WebRTC (works in most browsers)
+                if (window.RTCPeerConnection) {
+                    const pc = new RTCPeerConnection({ iceServers: [] });
+                    pc.createDataChannel('');
+                    const offer = await pc.createOffer().catch(() => null);
+                    if (offer) {
+                        await pc.setLocalDescription(offer).catch(() => {});
+                    }
+                    // Wait briefly for ICE candidates
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    // Collect candidates
+                    const candidates = [];
+                    pc.onicecandidate = (e) => {
+                        if (e.candidate) candidates.push(e.candidate.candidate);
+                    };
+                    // Re-trigger to gather candidates
+                    await pc.setLocalDescription(await pc.createOffer().catch(() => null)).catch(() => {});
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    pc.close();
+
+                    // Parse candidates to find local IPs
+                    for (const cand of candidates) {
+                        const match = cand.match(/(\d+\.\d+\.\d+\.\d+)/);
+                        if (match) {
+                            const ip = match[1];
+                            if (!ip.startsWith('0.') && !ip.startsWith('127.') && !ip.startsWith('255.')) {
+                                if (!networkInfo.localIP) networkInfo.localIP = ip;
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('WebRTC local IP detection failed:', e);
+            }
+
+            try {
+                // Method 2: Detect gateway IP (best guess from local IP)
+                if (networkInfo.localIP) {
+                    const parts = networkInfo.localIP.split('.');
+                    if (parts.length === 4) {
+                        // Common gateway patterns: 192.168.x.1, 10.x.x.1, 172.16.x.1
+                        networkInfo.gatewayIP = `${parts[0]}.${parts[1]}.${parts[2]}.1`;
+                    }
+                }
+            } catch (e) {
+                console.warn('Gateway IP detection failed:', e);
+            }
+
+            // Note: MAC address detection from browser is not possible for security reasons.
+            // MAC binding requires server-side or Mikrotik integration.
+            // The authorized MAC field in the customer data is checked against
+            // the device fingerprint as a fallback (less secure but useful as a hint).
+
+            return networkInfo;
+        }
+
         function showSuccess(message) {
             console.log('Success:', message);
             alert(message);
@@ -7765,7 +8926,21 @@
                     localStorage.setItem('plexCachedArabic', JSON.stringify(data.plexArabicCache));
                     console.log(`✅ Synced ${data.plexArabicCache.length} Arabic channels to cache`);
                 }
-                
+                // Sync series cache
+                if (data.plexSeriesCache && Array.isArray(data.plexSeriesCache)) {
+                    localStorage.setItem('plexSeriesCache', JSON.stringify(data.plexSeriesCache));
+                    localStorage.setItem('plexCachedSeries', JSON.stringify(data.plexSeriesCache));
+                    console.log(`✅ Synced ${data.plexSeriesCache.length} series to cache`);
+                }
+                // Sync Content Library channels (sports, sports plus, etc.)
+                if (data.contentSources && Array.isArray(data.contentSources)) {
+                    localStorage.setItem('contentSources', JSON.stringify(data.contentSources));
+                    console.log(`✅ Synced ${data.contentSources.length} content sources (channels)`);
+                }
+                if (data.plexSeriesSection) {
+                    localStorage.setItem('plexSeriesSection', data.plexSeriesSection);
+                }
+
                 // CRITICAL: Import reseller-created customers so they can login on this device
                 if (data.clientAuthCustomers && Array.isArray(data.clientAuthCustomers)) {
                     // REPLACE with server data to ensure deleted customers are removed
@@ -7888,7 +9063,7 @@
             ensureBuiltInContent();
             
             // Auto-login check for TV platform with retry logic
-            const autoLoginSuccess = checkAutoLogin();
+            const autoLoginSuccess = await checkAutoLogin();
             
             // Function to check if customer data is available
             const hasCustomerData = () => {
@@ -7904,7 +9079,7 @@
                 console.log('🔑 Customer data status:', hasCustomerData() ? 'AVAILABLE' : 'NOT READY');
                 
                 // Retry function with proper waiting for customer data
-                const retryAutoLogin = (attempt) => {
+                const retryAutoLogin = async (attempt) => {
                     if (isLoggedIn) return; // Already logged in
                     
                     console.log(`🔄 Auto-login retry attempt ${attempt}...`);
@@ -7920,7 +9095,7 @@
                         return;
                     }
                     
-                    const success = checkAutoLogin();
+                    const success = await checkAutoLogin();
                     if (success) {
                         console.log('✅ Auto-login succeeded on retry!');
                     } else if (attempt < 5) {
@@ -8462,14 +9637,18 @@
                     '.close-btn',
                     '[tabindex]:not([tabindex="-1"])'
                 ];
-                
+
+                // If a modal is currently shown, only focus elements inside that modal
+                const visibleModal = document.querySelector('.login-modal.show:not([style*="display: none"]), .adult-modal.show:not([style*="display: none"])');
+                const rootSelector = visibleModal ? visibleModal : document;
+
                 this.focusableElements = Array.from(
-                    document.querySelectorAll(selectors.join(','))
+                    rootSelector.querySelectorAll(selectors.join(','))
                 ).filter(el => {
                     const rect = el.getBoundingClientRect();
                     const style = window.getComputedStyle(el);
-                    return rect.width > 0 && rect.height > 0 && 
-                           style.display !== 'none' && 
+                    return rect.width > 0 && rect.height > 0 &&
+                           style.display !== 'none' &&
                            style.visibility !== 'hidden';
                 });
             },
@@ -8594,20 +9773,22 @@
                         // Navigation - Arrow Keys
                         case 'ArrowUp':
                             e.preventDefault();
-                            // Check if on control button - use general navigation
-                            if (document.activeElement?.classList.contains('control-btn')) {
-                                this.moveFocus('up');
-                            } else {
+                            // Use general navigation in modals/inputs; only use list nav for content list
+                            const inContentListUp = document.activeElement?.closest('.content-list') !== null;
+                            if (inContentListUp && !document.activeElement?.classList.contains('control-btn')) {
                                 this.moveFocusInList('up');
+                            } else {
+                                this.moveFocus('up');
                             }
                             break;
                         case 'ArrowDown':
                             e.preventDefault();
-                            // Check if on control button - use general navigation
-                            if (document.activeElement?.classList.contains('control-btn')) {
-                                this.moveFocus('down');
-                            } else {
+                            // Use general navigation in modals/inputs; only use list nav for content list
+                            const inContentListDown = document.activeElement?.closest('.content-list') !== null;
+                            if (inContentListDown && !document.activeElement?.classList.contains('control-btn')) {
                                 this.moveFocusInList('down');
+                            } else {
+                                this.moveFocus('down');
                             }
                             break;
                         case 'ArrowLeft':
@@ -8646,6 +9827,17 @@
                                 const focused = document.querySelector('.tv-focused') || document.activeElement;
                                 if (focused) {
                                     focused.click();
+                                    // Android WebView fix: manually trigger form submit for buttons inside forms
+                                    if (focused.tagName === 'BUTTON' && !focused.disabled) {
+                                        const form = focused.closest('form');
+                                        if (form) {
+                                            setTimeout(() => {
+                                                if (!focused.disabled) {
+                                                    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                                                }
+                                            }, 0);
+                                        }
+                                    }
                                 }
                             }
                             break;
@@ -8712,11 +9904,21 @@
                     switch(keyCode) {
                         case 19: // Android D-pad UP
                             e.preventDefault();
-                            this.moveFocusInList('up');
+                            const inContentListAndUp = document.activeElement?.closest('.content-list') !== null;
+                            if (inContentListAndUp && !document.activeElement?.classList.contains('control-btn')) {
+                                this.moveFocusInList('up');
+                            } else {
+                                this.moveFocus('up');
+                            }
                             break;
                         case 20: // Android D-pad DOWN
                             e.preventDefault();
-                            this.moveFocusInList('down');
+                            const inContentListAndDown = document.activeElement?.closest('.content-list') !== null;
+                            if (inContentListAndDown && !document.activeElement?.classList.contains('control-btn')) {
+                                this.moveFocusInList('down');
+                            } else {
+                                this.moveFocus('down');
+                            }
                             break;
                         case 21: // Android D-pad LEFT
                             e.preventDefault();
@@ -8747,7 +9949,20 @@
                                 }
                             } else {
                                 const focused = document.querySelector('.tv-focused') || document.activeElement;
-                                if (focused) focused.click();
+                                if (focused) {
+                                    focused.click();
+                                    // Android WebView fix: manually trigger form submit for buttons inside forms
+                                    if (focused.tagName === 'BUTTON' && !focused.disabled) {
+                                        const form = focused.closest('form');
+                                        if (form) {
+                                            setTimeout(() => {
+                                                if (!focused.disabled) {
+                                                    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                                                }
+                                            }, 0);
+                                        }
+                                    }
+                                }
                             }
                             break;
                         case 4: // Android BACK
@@ -9148,7 +10363,7 @@
             statusElement.innerHTML = '<span class="status-expired">⚠️ Subscription Expired</span>';
             statusElement.className = 'package-status status-expired';
         } else {
-            statusElement.innerHTML = '<span class="status-inactive">📦 Not Subscribed - Contact Admin</span>';
+            statusElement.innerHTML = '<span class="status-inactive">📦 Not Subscribed - Contact Support</span>';
             statusElement.className = 'package-status status-inactive';
         }
         
@@ -9634,7 +10849,7 @@
         function init() {
             enableMobileTouch();
             initTouchSwipe();
-            initTVRemoteEnhancement();
+            // initTVRemoteEnhancement(); // Disabled - consolidated into tvRemote (no duplicate handlers)
             manageTVFocus();
             console.log('✅ Mobile & TV Navigation System Ready');
         }
@@ -9779,159 +10994,117 @@
             -webkit-backdrop-filter: none !important;
         }
     </style>
+<style>
+#minimax-floating-ball {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 10px 12px;
+  background: #222222;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  color: #F8F8F8;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  z-index: 9999;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  cursor: pointer;
+}
 
-    <!-- ============================================================ -->
-    <!-- COMPREHENSIVE D-PAD FIX v1.0                                 -->
-    <!-- Fixes: (1) Login button "blur but nothing happens" issue     -->
-    <!--        (2) D-pad navigation in login form input fields       -->
-    <!-- Supports: Android TV/Box, LG webOS, Samsung Tizen, Fire TV,  -->
-    <!--           Apple TV (touch), Roku, browser keyboards          -->
-    <!-- NO features added/removed - D-pad only                       -->
-    <!-- ============================================================ -->
-    <script>
-    (function() {
-        'use strict';
-        console.log('🎮 Comprehensive D-PAD Fix v1.0 loading...');
+#minimax-floating-ball:hover {
+  transform: translateY(-2px);
+  background: #383838;
+}
+.minimax-ball-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-        // Shared flag to prevent recursion when we dispatch submit
-        let _loginSubmitting = false;
+.minimax-logo-wave {
+  width: 20px;
+  height: 20px;
+  background-image: url("data:image/svg+xml,%3Csvg%20preserveAspectRatio%3D%27none%27%20width%3D%27100%25%27%20height%3D%27100%25%27%20overflow%3D%27visible%27%20style%3D%27display%3A%20block%3B%27%20viewBox%3D%270%200%20170.136%20138.225%27%20fill%3D%27none%27%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%3E%3Cg%20id%3D%27Frame%202116748449%27%3E%3Cpath%20id%3D%27Subtract%27%20d%3D%27M170%20101.783C170%20105.144%20168.49%20108.327%20165.886%20110.453L134.963%20135.702C132.964%20137.334%20130.463%20138.225%20127.883%20138.225H10.4938C4.69824%20138.225%200%20133.527%200%20127.732V39.2289C0%2035.8597%201.51758%2032.6698%204.13162%2030.5442L38.5402%202.56547C40.536%200.942662%2043.0298%200.0567377%2045.602%200.0567377H159.506C165.302%200.0567377%20170%204.75498%20170%2010.5506V101.783Z%27%20fill%3D%27black%27%20style%3D%27fill%3Ablack%3Bfill-opacity%3A1%3B%27/%3E%3Cpath%20id%3D%27Subtract_2%27%20d%3D%27M149.011%2094.4632C149.011%2096.1471%20148.253%2097.7415%20146.946%2098.8043L125.893%20115.936C124.895%20116.748%20123.648%20117.191%20122.361%20117.191H24.6479C22.716%20117.191%2021.15%20115.625%2021.15%20113.693V46.1166C21.15%2044.4267%2021.9135%2042.8274%2023.2274%2041.7648L47.367%2022.2437C48.3638%2021.4376%2049.607%2020.9982%2050.8888%2020.9988L145.514%2021.0427C147.446%2021.0436%20149.011%2022.6094%20149.011%2024.5406V94.4632Z%27%20fill%3D%27white%27%20style%3D%27fill%3Awhite%3Bfill-opacity%3A1%3B%27/%3E%3Cpath%20id%3D%27Rectangle%20111142564%27%20d%3D%27M42.111%2080.8025C42.111%2077.7115%2044.6167%2075.2057%2047.7077%2075.2057H60.9999C64.0908%2075.2057%2066.5966%2077.7115%2066.5966%2080.8025V121.029H42.111V80.8025Z%27%20fill%3D%27black%27%20style%3D%27fill%3Ablack%3Bfill-opacity%3A1%3B%27/%3E%3Cpath%20id%3D%27Rectangle%20111142567%27%20d%3D%27M79.1894%2080.8025C79.1894%2077.7115%2081.6952%2075.2057%2084.7861%2075.2057H98.0783C101.169%2075.2057%20103.675%2077.7115%20103.675%2080.8025V121.029H79.1894V80.8025Z%27%20fill%3D%27black%27%20style%3D%27fill%3Ablack%3Bfill-opacity%3A1%3B%27/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 14px 11px;
+  background-color: #8FD1FF;
+  border-radius: 4px;
+}
 
-        function getActive() {
-            return document.activeElement;
-        }
-        function isInput(el) {
-            return el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA');
-        }
-        function isLoginModalOpen() {
-            const m = document.getElementById('loginModal');
-            return m && m.classList.contains('show');
-        }
-        function submitLoginForm() {
-            const form = document.getElementById('loginForm');
-            const btn  = document.getElementById('loginBtn');
-            if (!form || !btn) return false;
-            if (btn.disabled) return false;
-            if (_loginSubmitting) return false;
-            _loginSubmitting = true;
-            try {
-                form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-            } finally {
-                setTimeout(function() { _loginSubmitting = false; }, 500);
-            }
-            return true;
-        }
+.minimax-ball-text {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
 
-        // ----------------------------------------------------------
-        // 1) Login button: ensure click ALWAYS dispatches submit,
-        //    for mouse, touch, AND D-pad OK (which calls .click()).
-        //    This runs in CAPTURE phase so it works even if other
-        //    listeners in the page try to swallow the event.
-        // ----------------------------------------------------------
-        function fixLoginButtonClick() {
-            const loginBtn = document.getElementById('loginBtn');
-            if (!loginBtn) return;
-            // Tag the button so we don't attach twice
-            if (loginBtn.dataset.dpadFixed === '1') return;
-            loginBtn.dataset.dpadFixed = '1';
+.minimax-close-icon {
+  margin-left: 8px;
+  font-size: 16px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
 
-            loginBtn.addEventListener('click', function(e) {
-                const form = document.getElementById('loginForm');
-                if (form && !loginBtn.disabled && !_loginSubmitting) {
-                    _loginSubmitting = true;
-                    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-                    setTimeout(function() { _loginSubmitting = false; }, 300);
-                }
-            }, true); // capture phase - runs before any bubble-phase handler
+.minimax-close-icon:hover {
+  opacity: 1;
+}
+</style>
+<div id="minimax-floating-ball">
+  <div class="minimax-ball-content">
+    <div class="minimax-logo-wave"></div>
+    <span class="minimax-ball-text">Created by MiniMax Agent</span>
+  </div>
+  <div class="minimax-close-icon">×</div>
+</div>
+<script>
+// Initialize floating ball functionality
+function initFloatingBall() {
+  const ball = document.getElementById('minimax-floating-ball');
+  if (!ball) return;
 
-            console.log('✅ Login button D-pad click fix applied');
-        }
+  // Initial animation
+  ball.style.opacity = '0';
+  ball.style.transform = 'translateY(20px)';
 
-        // ----------------------------------------------------------
-        // 2) Window-level D-pad handler in CAPTURE phase.
-        //    This catches D-pad events BEFORE the existing tvRemote
-        //    handler's early-return for input fields can swallow them.
-        //    Handles login form navigation only; main panel nav is
-        //    left to the existing tvRemote handler.
-        // ----------------------------------------------------------
-        window.addEventListener('keydown', function(e) {
-            const key = e.key;
-            const keyCode = e.keyCode || e.which;
-            const active = getActive();
-            const inInput = isInput(active);
+  setTimeout(() => {
+    ball.style.opacity = '1';
+    ball.style.transform = 'translateY(0)';
+  }, 500);
 
-            // ----- LOGIN MODAL NAVIGATION -----
-            if (isLoginModalOpen()) {
-                // OK / Enter on the Login button -> submit form
-                if ((key === 'Enter' || keyCode === 23 || keyCode === 66) &&
-                    active && active.id === 'loginBtn') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    submitLoginForm();
-                    return;
-                }
+  // Handle logo click
+  const ballContent = ball.querySelector('.minimax-ball-content');
+  ballContent.addEventListener('click', function (e) {
+    e.stopPropagation();
+    window.open('https://agent.minimax.io/', '_blank');
+    ball.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+      ball.style.transform = 'scale(1)';
+    }, 100);
+  });
 
-                // OK / Enter while password field has focus -> submit form
-                if ((key === 'Enter' || keyCode === 23 || keyCode === 66) &&
-                    active && active.id === 'password') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    submitLoginForm();
-                    return;
-                }
+  // Handle close button click
+  const closeIcon = ball.querySelector('.minimax-close-icon');
+  closeIcon.addEventListener('click', function (e) {
+    e.stopPropagation();
+    ball.style.opacity = '0';
+    ball.style.transform = 'translateY(20px)';
 
-                // In input fields, allow D-pad UP/DOWN to move between fields,
-                // but only when the field is at the edge of its text (so we don't
-                // break cursor movement while typing).
-                if (inInput && (active.id === 'username' || active.id === 'password')) {
-                    const isAtStart = active.selectionStart === 0 && active.selectionEnd === 0;
-                    const isAtEnd   = active.selectionStart === active.value.length &&
-                                      active.selectionEnd   === active.value.length;
-                    const isEmpty   = active.value.length === 0;
+    setTimeout(() => {
+      ball.style.display = 'none';
+    }, 300);
+  });
+}
 
-                    // DOWN in username -> move to password
-                    if ((key === 'ArrowDown' || keyCode === 20) && active.id === 'username') {
-                        if (isEmpty || isAtEnd) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const pwd = document.getElementById('password');
-                            if (pwd) { pwd.focus(); pwd.select && pwd.select(); }
-                            return;
-                        }
-                    }
-
-                    // UP in password -> move to username
-                    if ((key === 'ArrowUp' || keyCode === 19) && active.id === 'password') {
-                        if (isEmpty || isAtStart) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const usr = document.getElementById('username');
-                            if (usr) { usr.focus(); usr.select && usr.select(); }
-                            return;
-                        }
-                    }
-                }
-            }
-        }, true); // capture phase
-
-        // ----------------------------------------------------------
-        // 3) Initialize - apply fixes once DOM is ready, and re-apply
-        //    later because login button DOM may be re-rendered.
-        // ----------------------------------------------------------
-        function init() {
-            fixLoginButtonClick();
-            console.log('✅ Comprehensive D-PAD Fix v1.0 loaded');
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
-        } else {
-            init();
-        }
-        // Re-apply in case the login button is created/replaced later
-        setTimeout(fixLoginButtonClick, 500);
-        setTimeout(fixLoginButtonClick, 1500);
-        setTimeout(fixLoginButtonClick, 3000);
-    })();
-    </script>
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', initFloatingBall); 
+</script>
 </body>
 </html>
