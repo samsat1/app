@@ -2714,7 +2714,7 @@
                     </label>
                 </div>
                 
-                <button type="submit" class="login-btn" id="loginBtn">Login</button>
+                <button type="button" class="login-btn" id="loginBtn" onclick="window.loginBtnClick && window.loginBtnClick()">Login</button>
             </form>
             
             <div class="error-message" id="errorMessage" style="display: none;">
@@ -8539,19 +8539,81 @@
                     loginBtn.textContent = 'Login';
                 });
                 
-                // Also add click handler to the login button as backup
-                const loginBtn = document.getElementById('loginBtn');
-                if (loginBtn) {
-                    loginBtn.addEventListener('click', function(e) {
-                        // Only handle click if form hasn't already been submitted
-                        if (e.detail === 0) return; // Skip if this was triggered by form submit
-                        
-                        const form = document.getElementById('loginForm');
-                        if (form && !loginBtn.disabled) {
-                            form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-                        }
-                    });
+                // Direct login button click handler - reliable on Android WebView and TV remotes
+        window.loginBtnClick = async function() {
+            const loginBtn = document.getElementById('loginBtn');
+            if (!loginBtn || loginBtn.disabled) return;
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            
+            if (!username || !password) {
+                console.log('Username and password are required');
+                if (typeof showNotification === 'function') {
+                    showNotification('Please enter username and password', 'error');
                 }
+                return;
+            }
+            
+            // Immediate feedback
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Logging in...';
+            loginBtn.blur();
+            
+            try {
+                const loginSuccess = await loginUser(username, password);
+                console.log('Login attempt result:', loginSuccess);
+                
+                if (loginSuccess) {
+                    document.getElementById('username').value = '';
+                    document.getElementById('password').value = '';
+                    setTimeout(() => {
+                        document.getElementById('username').value = '';
+                        document.getElementById('password').value = '';
+                    }, 100);
+                }
+            } catch (e) {
+                console.log('Login error:', e.message);
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Login';
+            }
+        };
+        
+        // Also add click handler to the login button as backup
+        const loginBtn = document.getElementById('loginBtn');
+        if (loginBtn) {
+            loginBtn.addEventListener('click', function(e) {
+                // Direct call to loginBtnClick - reliable on all platforms
+                if (typeof window.loginBtnClick === 'function') {
+                    window.loginBtnClick();
+                }
+            });
+        }
+        
+        // Enter key on username/password inputs - trigger login (form no longer auto-submits because button is type="button")
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        if (usernameInput) {
+            usernameInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (typeof window.loginBtnClick === 'function') {
+                        window.loginBtnClick();
+                    }
+                }
+            });
+        }
+        if (passwordInput) {
+            passwordInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (typeof window.loginBtnClick === 'function') {
+                        window.loginBtnClick();
+                    }
+                }
+            });
+        }
             }
 
             // Adult password
@@ -9691,20 +9753,22 @@
                         // Navigation - Arrow Keys
                         case 'ArrowUp':
                             e.preventDefault();
-                            // Check if on control button - use general navigation
-                            if (document.activeElement?.classList.contains('control-btn')) {
-                                this.moveFocus('up');
-                            } else {
+                            // Use general navigation in modals/inputs; only use list nav for content list
+                            const inContentListUp = document.activeElement?.closest('.content-list') !== null;
+                            if (inContentListUp && !document.activeElement?.classList.contains('control-btn')) {
                                 this.moveFocusInList('up');
+                            } else {
+                                this.moveFocus('up');
                             }
                             break;
                         case 'ArrowDown':
                             e.preventDefault();
-                            // Check if on control button - use general navigation
-                            if (document.activeElement?.classList.contains('control-btn')) {
-                                this.moveFocus('down');
-                            } else {
+                            // Use general navigation in modals/inputs; only use list nav for content list
+                            const inContentListDown = document.activeElement?.closest('.content-list') !== null;
+                            if (inContentListDown && !document.activeElement?.classList.contains('control-btn')) {
                                 this.moveFocusInList('down');
+                            } else {
+                                this.moveFocus('down');
                             }
                             break;
                         case 'ArrowLeft':
@@ -9820,11 +9884,21 @@
                     switch(keyCode) {
                         case 19: // Android D-pad UP
                             e.preventDefault();
-                            this.moveFocusInList('up');
+                            const inContentListAndUp = document.activeElement?.closest('.content-list') !== null;
+                            if (inContentListAndUp && !document.activeElement?.classList.contains('control-btn')) {
+                                this.moveFocusInList('up');
+                            } else {
+                                this.moveFocus('up');
+                            }
                             break;
                         case 20: // Android D-pad DOWN
                             e.preventDefault();
-                            this.moveFocusInList('down');
+                            const inContentListAndDown = document.activeElement?.closest('.content-list') !== null;
+                            if (inContentListAndDown && !document.activeElement?.classList.contains('control-btn')) {
+                                this.moveFocusInList('down');
+                            } else {
+                                this.moveFocus('down');
+                            }
                             break;
                         case 21: // Android D-pad LEFT
                             e.preventDefault();
