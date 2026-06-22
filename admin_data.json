@@ -1,267 +1,9 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-22T20:47:32.499Z",
-  "customers": [
-    {
-      "id": "CUST_1781832944600",
-      "username": "sam222",
-      "name": "salame abdul khalek",
-      "phone": "7865321",
-      "plan": "Basic TV Package, 2nd TV, 3rd TV",
-      "addons": "Sports Package, Sports Plus Package, Arabic Package, Movies Package, Series Package, Adult Content Package",
-      "monthlyPrice": 71.5,
-      "totalPrice": 643.5,
-      "expiryDate": "2027-03-21",
-      "password": "222222",
-      "macAddress": "",
-      "adultPassword": "112233",
-      "renewalMode": "auto",
-      "autoRenewalDuration": 6,
-      "autoRenewalEnabled": true,
-      "lastAutoRenewal": null,
-      "bindToRouter": false,
-      "authorizedRouterIP": "",
-      "authorizedMacAddress": "",
-      "authorizedSSID": "",
-      "status": "active",
-      "duration": "9 Months",
-      "durationMonths": 9,
-      "createdAt": "2026-06-19T01:35:44.600Z",
-      "resetDeviceLock": 1782081776221,
-      "updatedAt": "2026-06-21T22:42:56.221Z"
-    },
-    {
-      "id": "CUST_1782087163001",
-      "username": "sam555",
-      "name": "sam5",
-      "phone": "89056722",
-      "plan": "Basic TV Package, 2nd TV, 3rd TV",
-      "addons": "Sports Package, Sports Plus Package, Arabic Package, Movies Package, Series Package, Adult Content Package",
-      "monthlyPrice": 71.5,
-      "totalPrice": 643.5,
-      "expiryDate": "2027-03-22",
-      "password": "555555",
-      "macAddress": "",
-      "adultPassword": "112233",
-      "renewalMode": "manual",
-      "autoRenewalDuration": 0,
-      "autoRenewalEnabled": false,
-      "lastAutoRenewal": null,
-      "bindToRouter": false,
-      "authorizedRouterIP": "",
-      "authorizedMacAddress": "",
-      "authorizedSSID": "",
-      "status": "active",
-      "duration": "9 Months",
-      "durationMonths": 9,
-      "createdAt": "2026-06-22T00:12:43.001Z"
-    }
-  ],
-  "clientAuthCustomers": [
-    {
-      "id": "CUST_1781832944600",
-      "username": "sam222",
-      "name": "salame abdul khalek",
-      "phone": "7865321",
-      "plan": "Basic TV Package, 2nd TV, 3rd TV",
-      "addons": "Sports Package, Sports Plus Package, Arabic Package, Movies Package, Series Package, Adult Content Package",
-      "monthlyPrice": 71.5,
-      "totalPrice": 643.5,
-      "expiryDate": "2027-03-21",
-      "password": "222222",
-      "macAddress": "",
-      "adultPassword": "112233",
-      "renewalMode": "auto",
-      "autoRenewalDuration": 6,
-      "autoRenewalEnabled": true,
-      "lastAutoRenewal": null,
-      "bindToRouter": false,
-      "authorizedRouterIP": "",
-      "authorizedMacAddress": "",
-      "authorizedSSID": "",
-      "status": "active",
-      "duration": "9 Months",
-      "durationMonths": 9,
-      "createdAt": "2026-06-19T01:35:44.600Z",
-      "resetDeviceLock": 1782081776221,
-      "updatedAt": "2026-06-21T22:42:56.221Z"
-    },
-    {
-      "id": "CUST_1782087163001",
-      "username": "sam555",
-      "name": "sam5",
-      "phone": "89056722",
-      "plan": "Basic TV Package, 2nd TV, 3rd TV",
-      "addons": "Sports Package, Sports Plus Package, Arabic Package, Movies Package, Series Package, Adult Content Package",
-      "monthlyPrice": 71.5,
-      "totalPrice": 643.5,
-      "expiryDate": "2027-03-22",
-      "password": "555555",
-      "macAddress": "",
-      "adultPassword": "112233",
-      "renewalMode": "manual",
-      "autoRenewalDuration": 0,
-      "autoRenewalEnabled": false,
-      "lastAutoRenewal": null,
-      "bindToRouter": false,
-      "authorizedRouterIP": "",
-      "authorizedMacAddress": "",
-      "authorizedSSID": "",
-      "status": "active",
-      "duration": "9 Months",
-      "durationMonths": 9,
-      "createdAt": "2026-06-22T00:12:43.001Z"
-    }
-  ],
-  "packages": [
-    {
-      "name": "Basic",
-      "price": 6,
-      "duration": "1 Month",
-      "features": "basic",
-      "secondTVPrice": 4,
-      "thirdTVPrice": 4,
-      "sportsPrice": 0,
-      "moviesPrice": 0,
-      "seriesPrice": 0,
-      "isAdult": "",
-      "adultPackagePrice": 0,
-      "approved": true,
-      "approvedDate": "2026-06-19T01:30:39.649Z",
-      "approvedBy": "admin",
-      "rejectedDate": null,
-      "rejectedBy": null,
-      "rejectionReason": null,
-      "createdAt": "2026-06-19T01:30:39.649Z",
-      "id": "PKG_1781832639649"
-    },
-    {
-      "name": "Movies",
-      "price": 8,
-      "duration": "1 Month",
-      "features": "Movies",
-      "secondTVPrice": 5,
-      "thirdTVPrice": 5,
-      "sportsPrice": 0,
-      "moviesPrice": 8,
-      "seriesPrice": 0,
-      "isAdult": "",
-      "adultPackagePrice": 0,
-      "approved": true,
-      "approvedDate": "2026-06-19T01:31:11.125Z",
-      "approvedBy": "admin",
-      "rejectedDate": null,
-      "rejectedBy": null,
-      "rejectionReason": null,
-      "createdAt": "2026-06-19T01:31:11.125Z",
-      "id": "PKG_1781832671125"
-    },
-    {
-      "name": "Arabic",
-      "price": 3,
-      "duration": "1 Month",
-      "features": "Arabic",
-      "secondTVPrice": 3,
-      "thirdTVPrice": 3,
-      "sportsPrice": 0,
-      "moviesPrice": 0,
-      "seriesPrice": 0,
-      "isAdult": "",
-      "adultPackagePrice": 0,
-      "approved": true,
-      "approvedDate": "2026-06-19T01:31:53.917Z",
-      "approvedBy": "admin",
-      "rejectedDate": null,
-      "rejectedBy": null,
-      "rejectionReason": null,
-      "createdAt": "2026-06-19T01:31:53.917Z",
-      "id": "PKG_1781832713917"
-    },
-    {
-      "name": "Sports",
-      "price": 9,
-      "duration": "1 Month",
-      "features": "Sports",
-      "secondTVPrice": 9,
-      "thirdTVPrice": 9,
-      "sportsPrice": 9,
-      "moviesPrice": 0,
-      "seriesPrice": 0,
-      "isAdult": "",
-      "adultPackagePrice": 0,
-      "approved": true,
-      "approvedDate": "2026-06-19T01:32:23.824Z",
-      "approvedBy": "admin",
-      "rejectedDate": null,
-      "rejectedBy": null,
-      "rejectionReason": null,
-      "createdAt": "2026-06-19T01:32:23.824Z",
-      "id": "PKG_1781832743824"
-    },
-    {
-      "name": "Sports Plus",
-      "price": 30,
-      "duration": "1 Month",
-      "features": "Sports Plus",
-      "secondTVPrice": 30,
-      "thirdTVPrice": 30,
-      "sportsPrice": 0,
-      "moviesPrice": 0,
-      "seriesPrice": 0,
-      "isAdult": "",
-      "adultPackagePrice": 0,
-      "approved": true,
-      "approvedDate": "2026-06-19T01:33:06.003Z",
-      "approvedBy": "admin",
-      "rejectedDate": null,
-      "rejectedBy": null,
-      "rejectionReason": null,
-      "createdAt": "2026-06-19T01:33:06.003Z",
-      "id": "PKG_1781832786003"
-    },
-    {
-      "name": "Series",
-      "price": 4.5,
-      "duration": "1 Month",
-      "features": "SSeries",
-      "secondTVPrice": 3,
-      "thirdTVPrice": 3,
-      "sportsPrice": 0,
-      "moviesPrice": 0,
-      "seriesPrice": 4.5,
-      "isAdult": "",
-      "adultPackagePrice": 0,
-      "approved": true,
-      "approvedDate": "2026-06-19T01:33:40.790Z",
-      "approvedBy": "admin",
-      "rejectedDate": null,
-      "rejectedBy": null,
-      "rejectionReason": null,
-      "createdAt": "2026-06-19T01:33:40.790Z",
-      "id": "PKG_1781832820790"
-    },
-    {
-      "name": "Adult",
-      "price": 7.5,
-      "duration": "1 Month",
-      "features": "+18",
-      "secondTVPrice": 2.5,
-      "thirdTVPrice": 2.5,
-      "sportsPrice": 0,
-      "moviesPrice": 0,
-      "seriesPrice": 0,
-      "isAdult": true,
-      "adultPackagePrice": 7.5,
-      "approved": true,
-      "approvedDate": "2026-06-19T01:34:29.584Z",
-      "approvedBy": "admin",
-      "rejectedDate": null,
-      "rejectedBy": null,
-      "rejectionReason": null,
-      "createdAt": "2026-06-19T01:34:29.584Z",
-      "id": "PKG_1781832869584"
-    }
-  ],
+  "exportDate": "2026-06-22T23:26:32.180Z",
+  "customers": [],
+  "clientAuthCustomers": [],
+  "packages": [],
   "resellers": {
     "reseller001": {
       "name": "Reseller 001",
@@ -396,7 +138,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5746/art/1782137756?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8327/1781847213/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 7307854,
+      "duration": 7307840,
       "ratingKey": "5746"
     },
     {
@@ -413,7 +155,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5747/art/1782137764?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8328/1781847369/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 3783738,
+      "duration": 3783714,
       "ratingKey": "5747"
     },
     {
@@ -430,7 +172,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5748/art/1782137773?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8329/1781847836/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6851466,
+      "duration": 6851442,
       "ratingKey": "5748"
     },
     {
@@ -447,7 +189,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5749/art/1782137779?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8330/1781848183/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6976784,
+      "duration": 6976760,
       "ratingKey": "5749"
     },
     {
@@ -464,7 +206,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5750/art/1782137784?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8331/1781848193/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6328413,
+      "duration": 6328389,
       "ratingKey": "5750"
     },
     {
@@ -481,7 +223,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5751/art/1782137790?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8332/1781848396/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6700698,
+      "duration": 6700675,
       "ratingKey": "5751"
     },
     {
@@ -498,7 +240,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5752/art/1782137796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8333/1781848458/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6542431,
+      "duration": 6542407,
       "ratingKey": "5752"
     },
     {
@@ -515,7 +257,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5753/art/1782137801?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8334/1781848788/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6171307,
+      "duration": 6171283,
       "ratingKey": "5753"
     },
     {
@@ -532,7 +274,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5756/art/1782137817?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8337/1781849842/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6277306,
+      "duration": 6277282,
       "ratingKey": "5756"
     },
     {
@@ -549,7 +291,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5757/art/1782137823?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8338/1781849873/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6950661,
+      "duration": 6950638,
       "ratingKey": "5757"
     },
     {
@@ -566,7 +308,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5758/art/1782137829?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8339/1781849845/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6249465,
+      "duration": 6249441,
       "ratingKey": "5758"
     },
     {
@@ -583,7 +325,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5759/art/1782137835?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8340/1781849625/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6502261,
+      "duration": 6502237,
       "ratingKey": "5759"
     },
     {
@@ -600,7 +342,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5760/art/1782137843?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8341/1781857824/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6639166,
+      "duration": 6639142,
       "ratingKey": "5760"
     },
     {
@@ -617,7 +359,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5761/art/1782137852?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8342/1781858452/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6310534,
+      "duration": 6310510,
       "ratingKey": "5761"
     },
     {
@@ -634,7 +376,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5762/art/1782137858?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8343/1781858483/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6406618,
+      "duration": 6406594,
       "ratingKey": "5762"
     },
     {
@@ -651,7 +393,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5763/art/1782137863?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8344/1781858768/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6278653,
+      "duration": 6278629,
       "ratingKey": "5763"
     },
     {
@@ -668,7 +410,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5764/art/1782137870?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8345/1781858931/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6301826,
+      "duration": 6301802,
       "ratingKey": "5764"
     },
     {
@@ -685,7 +427,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5765/art/1782137877?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8346/1781859120/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6765157,
+      "duration": 6765133,
       "ratingKey": "5765"
     },
     {
@@ -702,7 +444,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5766/art/1782137882?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8347/1781859757/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6568020,
+      "duration": 6567996,
       "ratingKey": "5766"
     },
     {
@@ -719,7 +461,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5767/art/1782137888?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8348/1781859886/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6208784,
+      "duration": 6208760,
       "ratingKey": "5767"
     },
     {
@@ -736,7 +478,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5768/art/1782137893?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8349/1781860497/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6266369,
+      "duration": 6266345,
       "ratingKey": "5768"
     },
     {
@@ -753,7 +495,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5769/art/1782137898?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8350/1781859759/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6316942,
+      "duration": 6316919,
       "ratingKey": "5769"
     },
     {
@@ -770,7 +512,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5770/art/1782137902?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8351/1781861505/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6254295,
+      "duration": 6254271,
       "ratingKey": "5770"
     },
     {
@@ -787,7 +529,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5771/art/1782137909?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8352/1781861304/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6259705,
+      "duration": 6259681,
       "ratingKey": "5771"
     },
     {
@@ -804,7 +546,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5772/art/1782137916?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8353/1781863483/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6307236,
+      "duration": 6307213,
       "ratingKey": "5772"
     },
     {
@@ -821,7 +563,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5773/art/1782137926?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8354/1781860877/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6624374,
+      "duration": 6624351,
       "ratingKey": "5773"
     },
     {
@@ -838,7 +580,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5774/art/1782137934?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8355/1781861232/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6494737,
+      "duration": 6494714,
       "ratingKey": "5774"
     },
     {
@@ -855,7 +597,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5775/art/1782137943?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8356/1781863570/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6632060,
+      "duration": 6632037,
       "ratingKey": "5775"
     },
     {
@@ -872,7 +614,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5776/art/1782137951?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8357/1781864240/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6557338,
+      "duration": 6557315,
       "ratingKey": "5776"
     },
     {
@@ -906,7 +648,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5778/art/1782137964?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8359/1781915584/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6503631,
+      "duration": 6503607,
       "ratingKey": "5778"
     },
     {
@@ -923,7 +665,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5779/art/1782137970?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8360/1781915752/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6423731,
+      "duration": 6423707,
       "ratingKey": "5779"
     },
     {
@@ -940,7 +682,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5780/art/1782137977?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8361/1781915752/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6294117,
+      "duration": 6294093,
       "ratingKey": "5780"
     },
     {
@@ -957,7 +699,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5781/art/1782137983?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8362/1781915313/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6272058,
+      "duration": 6272034,
       "ratingKey": "5781"
     },
     {
@@ -974,7 +716,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5782/art/1782137989?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8363/1781916892/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6241733,
+      "duration": 6241709,
       "ratingKey": "5782"
     },
     {
@@ -991,7 +733,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5783/art/1782137994?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8364/1781916963/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6418297,
+      "duration": 6418274,
       "ratingKey": "5783"
     },
     {
@@ -1008,7 +750,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5785/art/1782137996?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8366/1781917872/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6341137,
+      "duration": 6341114,
       "ratingKey": "5785"
     },
     {
@@ -1025,7 +767,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5786/art/1782137996?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8367/1781917809/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6269388,
+      "duration": 6269364,
       "ratingKey": "5786"
     },
     {
@@ -1042,7 +784,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5787/art/1782137997?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8368/1781917832/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6331455,
+      "duration": 6331431,
       "ratingKey": "5787"
     },
     {
@@ -1059,7 +801,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5789/art/1782137997?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8370/1781918777/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6223575,
+      "duration": 6223551,
       "ratingKey": "5789"
     },
     {
@@ -1076,7 +818,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5790/art/1782137998?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8371/1781918773/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6322027,
+      "duration": 6322004,
       "ratingKey": "5790"
     },
     {
@@ -1093,7 +835,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5791/art/1782137998?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8372/1781919807/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6395426,
+      "duration": 6395402,
       "ratingKey": "5791"
     },
     {
@@ -1110,7 +852,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5792/art/1782137999?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8373/1781919882/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6211268,
+      "duration": 6211244,
       "ratingKey": "5792"
     },
     {
@@ -1127,7 +869,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5793/art/1782137999?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8374/1781920656/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6296741,
+      "duration": 6296717,
       "ratingKey": "5793"
     },
     {
@@ -1144,7 +886,7 @@
       "art": "http://192.168.1.100:32400/library/metadata/5794/art/1782138000?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "url": "http://192.168.1.100:32400/library/parts/8375/1781920689/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 7211909,
+      "duration": 7211885,
       "ratingKey": "5794"
     },
     {
@@ -1162,7 +904,7 @@
       "url": "http://192.168.1.100:32400/library/parts/8326/1781846905/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
       "year": 2007,
-      "duration": 9497728,
+      "duration": 9497720,
       "ratingKey": "5745"
     },
     {
@@ -1180,7 +922,7 @@
       "url": "http://192.168.1.100:32400/library/parts/8335/1781849662/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
       "year": 2019,
-      "duration": 6882534,
+      "duration": 6882510,
       "ratingKey": "5754"
     },
     {
@@ -1197,7 +939,7 @@
       "art": "",
       "url": "http://192.168.1.100:32400/library/parts/8369/1781919155/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
       "streamingMode": "on-demand",
-      "duration": 6402461,
+      "duration": 6402438,
       "ratingKey": "5788"
     }
   ],
@@ -10110,95 +9852,2368 @@
   ],
   "plexSeriesCache": [
     {
-      "id": "5376",
+      "id": "series_5376",
       "name": "Cake Boss",
-      "title": "Cake Boss",
-      "year": "2009",
+      "description": "The staff of Carlo's Bakery in Hoboken, New Jersey, led by Buddy Valastro, shows how it prepares elaborate themed cakes for various occasions. Each episode typically features the preparation of two cakes for events including receptions, charity events and theme parties as well as weddings and birthdays.",
+      "category": "series",
+      "isSeries": true,
+      "type": "series",
       "thumb": "http://192.168.1.100:32400/library/metadata/5376/thumb/1781994588?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
-      "poster": "http://192.168.1.100:32400/library/metadata/5376/thumb/1781994588?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
-      "type": "series",
-      "sectionId": "18",
+      "art": "http://192.168.1.100:32400/library/metadata/5376/art/1781994588?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+      "year": 2009,
+      "ratingKey": "5376",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "yc-gXtUcHZo8w1rD8pHr",
-      "addedAt": 1782161193260
+      "seasons": [
+        {
+          "id": "5376_season_1",
+          "name": "Season 1",
+          "seasonNumber": 1,
+          "episodes": [
+            {
+              "id": "episode_5378",
+              "name": "A Bride, a Boat, and Bamboozled!",
+              "description": "Meet award-winning pastry chef and cake decorator Buddy Valastro and his over-the-top family at Carlo's Bakery in Hoboken, New Jersey. After beginning a week completely jam-packed with cake orders, Buddy gets a call from a customer he cannot possibly turn down. Brides Magazine is offering Buddy an inside cover photo spread but he's going to have to create a cake unlike any he's ever done before. Between arguing with his family, producing the standard 300-plus cakes the bakery makes in any given week and running out of sugar, is there any way Buddy and Company are going to get this opportunity of a lifetime cake done in time? All the while Buddy's sisters are planning to throw their brother a surprise birthday party.",
+              "duration": 2701205,
+              "seasonNumber": 1,
+              "episodeNumber": 1,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5378/thumb/1781994590?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/7939/1747063073/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5379",
+              "name": "Bunny, Birthday, and Burnt Food",
+              "description": "It's one of the busiest weeks of the year at Carlo's Bakery with orders pouring in for Easter, and a last-minute Easter Bunny cake turns into more than the team bargained for. There are also three members of the family celebrating birthdays this week and Buddy's sister Grace, who's never cooked for the family before, decides she's going to make Easter dinner.",
+              "duration": 4703018,
+              "seasonNumber": 1,
+              "episodeNumber": 3,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5379/thumb/1781994590?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/7942/1747207333/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5380",
+              "name": "Chinese Culture and Cannolis",
+              "description": "The Carlo's team has a unique and challenging cake to make this week, a traditional Chinese dragon cake for a dragon boat racing team. It's also a big week at the bakery preparing hundreds of cannoli shells for the annual $.25 Throw Back Cannoli Day and on top of all that, Buddy and Lisa are celebrating their eighth wedding anniversary.",
+              "duration": 603436,
+              "seasonNumber": 1,
+              "episodeNumber": 10,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5380/thumb/1781994591?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/7943/1747173763/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5381",
+              "name": "Episode 16",
+              "description": "",
+              "duration": 402535,
+              "seasonNumber": 1,
+              "episodeNumber": 16,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5381/thumb/1781994591?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/7944/1746799188/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            }
+          ]
+        }
+      ],
+      "totalSeasons": 1,
+      "totalEpisodes": 4
     },
     {
-      "id": "5676",
+      "id": "series_5676",
       "name": "Gül Masalı",
-      "title": "Gül Masalı",
-      "year": "2022",
+      "description": "Annesinin ölümüyle kendisine kalan miras sayesinde geçmişin gizemli sırlarıyla karşılaşan Gonca'nın ve Isparta'nın önde gelen ailelerinden Atabey ailesinin oğlu Toprak'ın hikayesini konu alıyor.",
+      "category": "series",
+      "isSeries": true,
+      "type": "series",
       "thumb": "http://192.168.1.100:32400/library/metadata/5676/thumb/1782025323?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
-      "poster": "http://192.168.1.100:32400/library/metadata/5676/thumb/1782025323?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
-      "type": "series",
-      "sectionId": "18",
+      "art": "http://192.168.1.100:32400/library/metadata/5676/art/1782025323?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+      "year": 2022,
+      "ratingKey": "5676",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "yc-gXtUcHZo8w1rD8pHr",
-      "addedAt": 1782161193260
+      "seasons": [
+        {
+          "id": "5676_season_1",
+          "name": "Season 1",
+          "seasonNumber": 1,
+          "episodes": [
+            {
+              "id": "episode_5678",
+              "name": "Bölüm 1",
+              "description": "Annesinin ölümüyle kendisine kalan miras sayesinde geçmişin gizemli sırlarıyla karşılaşan Gonca'nın ve Isparta'nın önde gelen ailelerinden Atabey ailesinin oğlu Toprak'ın hikayesini konu alıyor.",
+              "duration": 2586749,
+              "seasonNumber": 1,
+              "episodeNumber": 1,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5678/thumb/1782025325?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8229/1782006442/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5679",
+              "name": "Bölüm 2",
+              "description": "",
+              "duration": 2755628,
+              "seasonNumber": 1,
+              "episodeNumber": 2,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5679/thumb/1782025325?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8230/1782006509/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5680",
+              "name": "Bölüm 3",
+              "description": "",
+              "duration": 2588398,
+              "seasonNumber": 1,
+              "episodeNumber": 3,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5680/thumb/1782025325?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8231/1782006577/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5681",
+              "name": "Bölüm 4",
+              "description": "",
+              "duration": 2355548,
+              "seasonNumber": 1,
+              "episodeNumber": 4,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5681/thumb/1782025325?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8232/1782006664/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5682",
+              "name": "Bölüm 5",
+              "description": "",
+              "duration": 2389867,
+              "seasonNumber": 1,
+              "episodeNumber": 5,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5682/thumb/1782025325?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8233/1782006879/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5683",
+              "name": "Bölüm 6",
+              "description": "",
+              "duration": 2431686,
+              "seasonNumber": 1,
+              "episodeNumber": 6,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5683/thumb/1782025325?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8234/1782007078/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5684",
+              "name": "Bölüm 7",
+              "description": "",
+              "duration": 2763801,
+              "seasonNumber": 1,
+              "episodeNumber": 7,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5684/thumb/1782025325?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8235/1782007125/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5685",
+              "name": "Bölüm 8",
+              "description": "",
+              "duration": 2498281,
+              "seasonNumber": 1,
+              "episodeNumber": 8,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5685/thumb/1782025325?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8236/1782007595/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5686",
+              "name": "Bölüm 9",
+              "description": "",
+              "duration": 2740953,
+              "seasonNumber": 1,
+              "episodeNumber": 9,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5686/thumb/1782025325?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8237/1782007597/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5687",
+              "name": "Bölüm 10",
+              "description": "",
+              "duration": 2423838,
+              "seasonNumber": 1,
+              "episodeNumber": 10,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5687/thumb/1782025325?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8238/1782014540/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5688",
+              "name": "Bölüm 11",
+              "description": "",
+              "duration": 2544442,
+              "seasonNumber": 1,
+              "episodeNumber": 11,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5688/thumb/1782025325?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8239/1782014590/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5689",
+              "name": "Bölüm 12",
+              "description": "",
+              "duration": 2659265,
+              "seasonNumber": 1,
+              "episodeNumber": 12,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5689/thumb/1782025325?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8240/1782015113/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5690",
+              "name": "Bölüm 13",
+              "description": "",
+              "duration": 2781797,
+              "seasonNumber": 1,
+              "episodeNumber": 13,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5690/thumb/1782025325?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8241/1782015343/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5691",
+              "name": "Bölüm 14",
+              "description": "",
+              "duration": 2714644,
+              "seasonNumber": 1,
+              "episodeNumber": 14,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5691/thumb/1782025325?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8242/1782015255/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5692",
+              "name": "Bölüm 15",
+              "description": "",
+              "duration": 2822873,
+              "seasonNumber": 1,
+              "episodeNumber": 15,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5692/thumb/1782025325?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8243/1782015414/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            }
+          ]
+        }
+      ],
+      "totalSeasons": 1,
+      "totalEpisodes": 15
     },
     {
-      "id": "5695",
+      "id": "series_5695",
       "name": "kherbi",
-      "title": "kherbi",
-      "year": "2011",
+      "description": "The life in a Syrian village with the daily issues of its simple minded poor inhabitants and the continuous conflict between two families for control and recognition",
+      "category": "series",
+      "isSeries": true,
+      "type": "series",
       "thumb": "http://192.168.1.100:32400/library/metadata/5695/thumb/1782015799?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
-      "poster": "http://192.168.1.100:32400/library/metadata/5695/thumb/1782015799?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
-      "type": "series",
-      "sectionId": "18",
+      "art": "http://192.168.1.100:32400/library/metadata/5695/art/1782015799?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+      "year": 2011,
+      "ratingKey": "5695",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "yc-gXtUcHZo8w1rD8pHr",
-      "addedAt": 1782161193260
+      "seasons": [
+        {
+          "id": "5695_season_1",
+          "name": "Season 1",
+          "seasonNumber": 1,
+          "episodes": [
+            {
+              "id": "episode_5697",
+              "name": "Episode 1",
+              "description": "",
+              "duration": 3215963,
+              "seasonNumber": 1,
+              "episodeNumber": 1,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5697/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8277/1781726417/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5698",
+              "name": "Episode 2",
+              "description": "",
+              "duration": 3014042,
+              "seasonNumber": 1,
+              "episodeNumber": 2,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5698/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8278/1781749621/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5699",
+              "name": "Episode 3",
+              "description": "",
+              "duration": 3039004,
+              "seasonNumber": 1,
+              "episodeNumber": 3,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5699/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8279/1781749580/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5700",
+              "name": "Episode 4",
+              "description": "",
+              "duration": 2995304,
+              "seasonNumber": 1,
+              "episodeNumber": 4,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5700/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8280/1781749697/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5701",
+              "name": "Episode 5",
+              "description": "",
+              "duration": 2970273,
+              "seasonNumber": 1,
+              "episodeNumber": 5,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5701/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8281/1781845540/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5702",
+              "name": "Episode 6",
+              "description": "",
+              "duration": 3053841,
+              "seasonNumber": 1,
+              "episodeNumber": 6,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5702/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8282/1781846685/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5703",
+              "name": "Episode 7",
+              "description": "",
+              "duration": 2998160,
+              "seasonNumber": 1,
+              "episodeNumber": 7,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5703/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8283/1777058821/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5704",
+              "name": "Episode 8",
+              "description": "",
+              "duration": 2996720,
+              "seasonNumber": 1,
+              "episodeNumber": 8,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5704/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8284/1781845559/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5705",
+              "name": "Episode 9",
+              "description": "",
+              "duration": 2945845,
+              "seasonNumber": 1,
+              "episodeNumber": 9,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5705/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8285/1781845571/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5706",
+              "name": "Episode 10",
+              "description": "",
+              "duration": 2718406,
+              "seasonNumber": 1,
+              "episodeNumber": 10,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5706/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8286/1781749993/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5707",
+              "name": "Episode 11",
+              "description": "",
+              "duration": 2966070,
+              "seasonNumber": 1,
+              "episodeNumber": 11,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5707/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8287/1781845935/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5708",
+              "name": "Episode 12",
+              "description": "",
+              "duration": 3016829,
+              "seasonNumber": 1,
+              "episodeNumber": 12,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5708/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8288/1781845945/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5709",
+              "name": "Episode 13",
+              "description": "",
+              "duration": 3035869,
+              "seasonNumber": 1,
+              "episodeNumber": 13,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5709/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8289/1781846060/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5710",
+              "name": "Episode 14",
+              "description": "",
+              "duration": 2741858,
+              "seasonNumber": 1,
+              "episodeNumber": 14,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5710/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8290/1781750229/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5711",
+              "name": "Episode 15",
+              "description": "",
+              "duration": 3007703,
+              "seasonNumber": 1,
+              "episodeNumber": 15,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5711/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8291/1781749670/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5712",
+              "name": "Episode 16",
+              "description": "",
+              "duration": 3006148,
+              "seasonNumber": 1,
+              "episodeNumber": 16,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5712/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8292/1781749765/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5713",
+              "name": "Episode 17",
+              "description": "",
+              "duration": 2972990,
+              "seasonNumber": 1,
+              "episodeNumber": 17,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5713/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8293/1781749734/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5714",
+              "name": "Episode 18",
+              "description": "",
+              "duration": 2810984,
+              "seasonNumber": 1,
+              "episodeNumber": 18,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5714/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8294/1781726443/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5715",
+              "name": "Episode 19",
+              "description": "",
+              "duration": 2934305,
+              "seasonNumber": 1,
+              "episodeNumber": 19,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5715/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8296/1781749476/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5716",
+              "name": "Episode 20",
+              "description": "",
+              "duration": 2914870,
+              "seasonNumber": 1,
+              "episodeNumber": 20,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5716/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8297/1781726538/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5717",
+              "name": "Episode 21",
+              "description": "",
+              "duration": 2970296,
+              "seasonNumber": 1,
+              "episodeNumber": 21,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5717/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8298/1781726615/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5718",
+              "name": "Episode 22",
+              "description": "",
+              "duration": 2872145,
+              "seasonNumber": 1,
+              "episodeNumber": 22,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5718/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8299/1781726667/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5719",
+              "name": "Episode 23",
+              "description": "",
+              "duration": 3027040,
+              "seasonNumber": 1,
+              "episodeNumber": 23,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5719/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8300/1781726749/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5720",
+              "name": "Episode 24",
+              "description": "",
+              "duration": 2953671,
+              "seasonNumber": 1,
+              "episodeNumber": 24,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5720/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8301/1781726694/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5721",
+              "name": "Episode 25",
+              "description": "",
+              "duration": 2861325,
+              "seasonNumber": 1,
+              "episodeNumber": 25,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5721/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8302/1781726716/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5722",
+              "name": "Episode 26",
+              "description": "",
+              "duration": 2826240,
+              "seasonNumber": 1,
+              "episodeNumber": 26,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5722/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8303/1781846183/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5723",
+              "name": "Episode 27",
+              "description": "",
+              "duration": 3002572,
+              "seasonNumber": 1,
+              "episodeNumber": 27,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5723/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8304/1781726814/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5724",
+              "name": "Episode 28",
+              "description": "",
+              "duration": 2989081,
+              "seasonNumber": 1,
+              "episodeNumber": 28,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5724/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8305/1781749883/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5725",
+              "name": "Episode 29",
+              "description": "",
+              "duration": 3004360,
+              "seasonNumber": 1,
+              "episodeNumber": 29,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5725/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8306/1781749837/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5726",
+              "name": "Episode 30",
+              "description": "",
+              "duration": 3127472,
+              "seasonNumber": 1,
+              "episodeNumber": 30,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5726/thumb/1782015796?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8307/1781750092/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            }
+          ]
+        }
+      ],
+      "totalSeasons": 1,
+      "totalEpisodes": 30
     },
     {
-      "id": "5382",
+      "id": "series_5382",
       "name": "Mr. Bean",
-      "title": "Mr. Bean",
-      "year": "1990",
+      "description": "Mr Bean (portrayed by Sir Rowan Sebastian Atkinson) is a lazy, crazy, clumsy, mischievous and destructive lunatic alien man from outer space who has fallen to earth out of his UFO. Join him on his adventures of solving problems and creating worse disasters in this hilarious slapstick science fiction comedy Television sitcom series for the entire family.",
+      "category": "series",
+      "isSeries": true,
+      "type": "series",
       "thumb": "http://192.168.1.100:32400/library/metadata/5382/thumb/1781994592?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
-      "poster": "http://192.168.1.100:32400/library/metadata/5382/thumb/1781994592?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
-      "type": "series",
-      "sectionId": "18",
+      "art": "http://192.168.1.100:32400/library/metadata/5382/art/1781994592?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+      "year": 1990,
+      "ratingKey": "5382",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "yc-gXtUcHZo8w1rD8pHr",
-      "addedAt": 1782161193260
+      "seasons": [
+        {
+          "id": "5382_season_1",
+          "name": "Season 1",
+          "seasonNumber": 1,
+          "episodes": [
+            {
+              "id": "episode_5384",
+              "name": "Mind the Baby, Mr. Bean",
+              "description": "On his way to the Southsea funfair, Mr. Bean accidentally becomes lumbered with a baby boy with no idea of how or where he came from, forcing him to try having fun at the fair with the baby. Throughout the day, the baby manages to survive Bean's unique style of mishaps before eventually being reunited with his mother.",
+              "duration": 13061994,
+              "seasonNumber": 1,
+              "episodeNumber": 10,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5384/thumb/1781994594?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/7945/1780727515/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5385",
+              "name": "Back to School Mr. Bean",
+              "description": "Mr. Bean attends an open day of a local school, where he unleashes his usual brand of chaos in the various classes he visits. Afterwards, Bean's day soon takes a sombre turn when he finds that his Mini isn't parked where he left it and is crushed by an Army Tank during the demonstration.",
+              "duration": 12473600,
+              "seasonNumber": 1,
+              "episodeNumber": 11,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5385/thumb/1781994595?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/7946/1780926241/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            }
+          ]
+        }
+      ],
+      "totalSeasons": 1,
+      "totalEpisodes": 2
     },
     {
-      "id": "5487",
+      "id": "series_5487",
       "name": "القضاء",
-      "title": "القضاء",
-      "year": "2021",
+      "description": "Ceylin is a fierce, rule-bending defence attorney whose father was wrongly imprisoned — for her, justice always comes before the law. Ilgaz is a by-the-book prosecutor who believes the two are the same thing. When his brother is accused of murder, he has no choice but to go to her for help. What follows is a gripping cat-and-mouse legal thriller built on brilliant opposing chemistry — winner of the International Emmy for Best Telenovela in 2023.",
+      "category": "series",
+      "isSeries": true,
+      "type": "series",
       "thumb": "http://192.168.1.100:32400/library/metadata/5487/thumb/1782005849?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
-      "poster": "http://192.168.1.100:32400/library/metadata/5487/thumb/1782005849?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
-      "type": "series",
-      "sectionId": "18",
+      "art": "http://192.168.1.100:32400/library/metadata/5487/art/1782005849?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+      "year": 2021,
+      "ratingKey": "5487",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "yc-gXtUcHZo8w1rD8pHr",
-      "addedAt": 1782161193260
+      "seasons": [
+        {
+          "id": "5487_season_1",
+          "name": "Season 1",
+          "seasonNumber": 1,
+          "episodes": [
+            {
+              "id": "episode_5489",
+              "name": "Family Secrets (1)",
+              "description": "Ceylin and Ilgaz, a prosecutor and lawyer, are two people of law whose methods are on opposite poles while they are fighting on the same path. Endlessly clashing and testing each other until they come together to fight a common battle. When Ilgaz catches a murder case in which his brother ends up involved, he must work together with Ceylin to solve the case.",
+              "duration": 2225331,
+              "seasonNumber": 1,
+              "episodeNumber": 1,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5489/thumb/1782005852?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8048/1781905161/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5490",
+              "name": "Family Secrets (2)",
+              "description": "The Erguvan family is shattered by the death of their little girl. It is Ceylin's duty to endure the pain of her mother, sister, and father, in addition to living through her own pain whilst fighting with the last drop of her blood to find her sister's murderer.  With every piece of evidence, a new suspect is added to the list. The questions are increasing.",
+              "duration": 2219015,
+              "seasonNumber": 1,
+              "episodeNumber": 2,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5490/thumb/1782005852?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8049/1781897398/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5491",
+              "name": "Who is the Killer?",
+              "description": "The newest piece of evidence stuns both Ceylin and Ilgaz. Whilst Ilgaz tries to cope with the shock of the lie his father told him; Ceylin pushes the boundaries of Ilgaz and Eren as well as herself in order to find İnci's murderer. Ceylin continues to hide from her family that she is defending Çınar. As the curtain on the murder and the life that İnci hides from everyone is lifted, both Ceylin and Ilgaz will find themselves drifting at unexpected turns, and both will have to learn through painful experiences that their families have secrets that they cannot predict.",
+              "duration": 2356454,
+              "seasonNumber": 1,
+              "episodeNumber": 3,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5491/thumb/1782005852?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8050/1781898205/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5492",
+              "name": "Circle Narrowing",
+              "description": "Witnessing Zafer's interrogation, Ceylin is faced with facts about İnci that she cannot handle. As both Ilgaz and Ceylin implement their own plans, the sense of trust they are trying to cultivate against each other will be tested again. Trying to reach the truth brings them closer over time, and causes walls to rise between them and their families. Will they be able to stand against these walls without collapsing?",
+              "duration": 2494148,
+              "seasonNumber": 1,
+              "episodeNumber": 4,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5492/thumb/1782005852?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8051/1781901192/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5493",
+              "name": "Killer Trapped",
+              "description": "Every clue that emerges brings us closer to the truth step by step; open the loops one by one. However, the knots we untie do not always bring happiness, in the end we have to go through great pain. Pain brings other knots; they also put us on more difficult paths. We understand that; The knots that life throws on our destiny will never end...While both Ceylin and Ilgaz struggle to find İnci's killer, they are tested by their families and loved ones. Ceylin is about to irreversibly lose her family, and Ilgaz, his brother Çınar. Moreover, Pars is determined to put completely different obstacles in front of them. The intersecting paths of Ceylin and Ilgaz are now about to enter a completely different and sharper turn. The adventure they embark on while searching for İnci's murderer will lead them to the truth as they overcome the difficulties they face together. However, this fact will create a much bigger earthquake for both families, but more importantly, the two of them.",
+              "duration": 2246461,
+              "seasonNumber": 1,
+              "episodeNumber": 5,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5493/thumb/1782005853?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8052/1781905163/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5494",
+              "name": "Lie",
+              "description": "It is now known that the person who killed her brother is Engin, and Ceylin is in indescribable pain. The anger rising in her is unbearable, and Ceylin is determined to kill Engin. Although Ilgaz is right in his intuitions, he cannot stand Ceylin's collapse and makes a decision. He finds his own way, albeit harshly, to calm Ceylin down so that they can prove that Engin is the killer. Pars is determined to put aside even his feelings for Ceylin and accuse her of collecting evidence irregularly and ban her from the profession. Ceylin comes face to face with Ilgaz. While Yekta struggles to clear his son's name, Zafer is devastated by the release of Çınar and comes to the brink of a new turn. His decision will change the fate of the two families forever. While Ceylin and Ilgaz are chasing the evidence that will convict Engin, they also look for ways to get out of the difficult situation that Pars has put them in. Will Ilgaz give up on his own rules and lie for Ceylin?",
+              "duration": 2286144,
+              "seasonNumber": 1,
+              "episodeNumber": 6,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5494/thumb/1782005853?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8053/1781905368/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5495",
+              "name": "Conscience",
+              "description": "The news of the marriage of Ceylin and Ilgaz disappoints Pars and Neva. Pars is not at all satisfied with the obstruction of the investigation. Moreover, he, like his brother Neva, is heartbroken. Pars is determined not to let the investigation go. Zafer is about to embark on an irreversible path of revenge with the gun he pulled on Çınar. Will Çınar be able to convince Zafer that he is innocent? Or will this weapon drawn cause a new and great chasm to be opened between the two families? Ceylin is having difficulty pretending that she has nothing against Engin, the murderer of her brother. Ceylin and Ilgaz take new risks when they are looking for ways to put Engin on remand without telling anyone. However, on the one hand, they have to be faster than Yekta, who is doing everything he can to exonerate his son, and elsewhere, they have to fight Pars, who may stand in their way at any moment. Will Ilgaz and Ceylin be able to prove the truth this time?",
+              "duration": 2737540,
+              "seasonNumber": 1,
+              "episodeNumber": 7,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5495/thumb/1782005853?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8054/1781905621/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5496",
+              "name": "Truth",
+              "description": "Ceylin thinks that she has come to the end of her struggle, which she had to keep secret from everyone, from the moment she learned that Engin was the murderer of her brother. He has a big and painful confrontation with Engin. Although Ceylin thinks she can handle it without Ilgaz's help; Thanks to Ilgaz's foresight, events will develop in a completely different way. Metin Çınar comes to the realization that his life reached a breaking point from the moment he came home with bloody hands. Now a very difficult choice awaits him, will he be on the side of his son or on the side of honesty? While trying to recover after the marriage of Ilgaz and Ceylin, Pars decides to try another way in his approach to them and Eren. Ceylin and Ilgaz are forced to cooperate again in order to win the war they openly entered with Yekta. While looking for new ways to prove that Engin is the murderer, they both realize that some feelings that they can't even admit to themselves are blooming.",
+              "duration": 2495866,
+              "seasonNumber": 1,
+              "episodeNumber": 8,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5496/thumb/1782005853?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8055/1781905674/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5497",
+              "name": "Betrayal (1)",
+              "description": "After Engin accuses Yekta, Ceylin and Ilgaz realize that they need to act urgently. Ceylin tries to get Engin to enter the prison irreversibly by the methods suggested to her by Ilgaz... However, this road is full of bumps that will emotionally traumatize Ceylin again. Pars comes face to face with the possibility of revealing an important and big secret about himself as a result of Yekta's accusation and shows a very different attitude than usual to prevent it. Metin encounters an unexpected surprise while trying to find the body of Zafer who disappeared. Yekta, on the other hand, is determined to make him pay for Laçin's stance on Engin's side. Ilgaz and Ceylin get closer to each other emotionally, moreover, this closeness turns into a game-changer for both of them. While trying to finalize Engin's conviction, they have to answer new questions created by feelings they can't even admit to themselves.",
+              "duration": 2783585,
+              "seasonNumber": 1,
+              "episodeNumber": 9,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5497/thumb/1782005853?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8056/1781905837/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5498",
+              "name": "Negligence",
+              "description": "The difficult decision that Ceylin made to put distance between her and Ilgaz is becoming painful for the both of them. Further shocks that will be added to Ilgaz's resentment towards Ceylin will push them to the brink of a big conflict. Engin's trial as a prisoner is about to turn into a new beginning, rather than an end, and a series of events that deeply affect everyone. While planning his vast new goal, a surprise person appears who will help him on this path. Pars is forced to face his secret, which he hides from everyone. Metin tries to protect Cinar on the one hand and struggles with Merdan, who is unquestioningly involved in their lives on the other hand. Gul, on the other hand, is determined to do everything he can to make amends for his mistakes. As Ilgaz and Ceylin collide on opposite lanes in a new case, a fact that will put them both in a big predicament hits their faces at a moment they never expected. They don't know is that the tip of the iceberg.",
+              "duration": 2604025,
+              "seasonNumber": 1,
+              "episodeNumber": 10,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5498/thumb/1782005853?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8057/1781906031/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5499",
+              "name": "Confrontation",
+              "description": "Ceylin and Ilgaz, after the voice message sent, realize that the nightmare they thought was over has actually just begun. Engin has a plan for everyone he believes has harmed him, especially them. Ceylin and Ilgaz stand at the very center of this spiral. Eren, Pars, Çınar, and Yekta begin to try to solve the whole puzzle that confronts them, without letting anyone know. However, this process will leave them all with big questions and surprises that they did not expect. Will they be able to control the anger that rises from a deep place inside them? Or will this anger cause a great fire? While Ilgaz and Ceylin are dealing with Engin's threats on the one hand and the case they are parties to on the other, the knot that their past was tied to reappears. While this situation leaves them in the arms of a cruel \"if only\"; Now, very difficult choices await them both.",
+              "duration": 3152341,
+              "seasonNumber": 1,
+              "episodeNumber": 11,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5499/thumb/1782005853?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8058/1781906447/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5500",
+              "name": "Price",
+              "description": "Ceylin is shaken by the unexpected hesitation from Ilgaz when they are closest to each other. Will irreversibly break the bond that Ilgaz and Ceylin are trying to establish, or will it make it even stronger? Engin's threats, who are completely cornered, turn everyone's world upside down. In this rapidly shrinking time, where everyone tests themselves, roads, separations, and unexpected unions will emerge that will prevent Engin from making a move. Will Engin's little sparks that hurt everyone cause a big fire or will it be extinguished? Despite everything, Ilgaz and Ceylin have to act together professionally in the case they are parties to. As the countdown continues, an unexpected development will lead everyone, especially the two of them, to a new path.",
+              "duration": 2797749,
+              "seasonNumber": 1,
+              "episodeNumber": 12,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5500/thumb/1782005853?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8059/1781906205/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5501",
+              "name": "Suspicion",
+              "description": "\"If you're looking for revenge, dig two graves!\" (Confucius)",
+              "duration": 2264573,
+              "seasonNumber": 1,
+              "episodeNumber": 13,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5501/thumb/1782005853?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8060/1781906525/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5502",
+              "name": "Who is Innocent?",
+              "description": "Ilgaz, who could not get any news from Ceylin, went crazy. For Ilgaz, who knows Ceylin well, it is not difficult at all to think like him and make sense of what he does. On the one hand, the security forces, who are legally alarmed by Engin's escape, on the other hand, mobilize to deal with the loss of Ceylin. Sleepless nights and days await them all. Before the puzzle of who poisoned Engin is solved, the question of who may have been kidnapped has now arisen. In this process, while some of them make a partnership of fate for the sake of their secrets, for others, the end of the road seems obvious. Ceylin, who has been accustomed to overcoming all difficulties on her own, is now in a knot that is difficult to get out of. Will the fate that brings him side by side with Ilgaz every time somehow, this time, will be able to clamp the two of them together with unbreakable ropes?",
+              "duration": 2473622,
+              "seasonNumber": 1,
+              "episodeNumber": 14,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5502/thumb/1782005854?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8061/1781907327/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5503",
+              "name": "Don't Give Up",
+              "description": "Ceylin's pre-trial detention decision shocked Ilgaz and the Erguvan family. Although Ilgaz still believes that Ceylin is innocent, Ceylin experiences great indecision and inconsistencies about the moments when she cannot put the pieces together in her mind. Yekta Tilmen is about to declare a clear war by mobilizing all his strength with the death of his son Engin. This war of justice, which was waged through Engin, is the harbinger of many surprise confrontations along with new partnerships. Stuck between his emotions and justice, Ilgaz now has to grapple with a new problem as well as this dilemma. His quest to find the real criminal who goes at full speed to save Ceylin will leave him in a position he has never encountered before in his life.",
+              "duration": 2338226,
+              "seasonNumber": 1,
+              "episodeNumber": 15,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5503/thumb/1782005854?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8062/1781907667/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5504",
+              "name": "Last Wish",
+              "description": "Ilgaz, torn between the woman he loves and his profession, made an unexpected decision and surprised everyone. What kind of attitude will Ceylin, who is unaware of the predicaments of Ilgaz, who believes in her more than anyone, even himself, take? Believing that all the evidence points to Ceylin for killing his son, Yekta Tilmen rallies the troops to go after her. He will not hesitate to make moves for the sake of achieving the justice he believes in, even if it is at the expense of bringing everyone against him. Ceylin, who has to stay together with many injured women, struggles to remember the murder. She vacillates between being indifferent to the story of these women. Moreover, she's unaware of the swords drawn and the newly formed fronts in the world outside.",
+              "duration": 2447778,
+              "seasonNumber": 1,
+              "episodeNumber": 16,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5504/thumb/1782005854?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8063/1781908089/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5505",
+              "name": "Last Romantic",
+              "description": "With Ilgaz's guidance, some things are starting to become clear for Ceylin, who started to remember the details of the night Engin died. As clues emerge that will clear Ceylin's suspicions, Ilgaz wants to take confident steps on the road to Ceylin's innocence. However, great obstacles await him. Evidence in favor of Ceylin, which is increasingly confusing his son's file, causes Yekta to become more aggressive. While Seda stays close to Yekta to fulfill the task given by Merdan, Çınar again takes a risk and agrees to act with Serdar and gets involved in a dangerous plan. Moreover, this time he is not alone. A new path appears on the horizon for Ilgaz and Ceylin, who realize that they need each other to get up stronger whenever they fall. But this time, this path, which lies in the shadow of bigger decisions, is about to take them to a new threshold.",
+              "duration": 2377375,
+              "seasonNumber": 1,
+              "episodeNumber": 17,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5505/thumb/1782005854?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8064/1781908528/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5506",
+              "name": "One Of Us",
+              "description": "For Ilgaz, who started walking with the woman he loved, a new path was opened in front of him that he had never experienced before professionally. Although Ceylin's presence and the hand she extends to him on this path give him peace and security, nothing is as he sees from behind the lectern. Yekta, who is working hard to find out about his son's murder, is determined to track down the betrayal in his marriage. The time has come to establish new communication with Neva, with whom Pars has not settled since her arrival. The Erguvan family, on the other hand, is unaware of the plan Merdan has prepared for them while dealing with problems that they cannot solve on their own. A surprise new case awaits Ilgaz and Ceylin, who are now walking together professionally. Years go by the tightrope, with the cevval's lawyer Ceylin, straight out, the old prosecutor who doesn't know anything to lie, the new lawyer Ilgaz; The days are waiting for them to get to know each other again.",
+              "duration": 2401361,
+              "seasonNumber": 1,
+              "episodeNumber": 18,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5506/thumb/1782005854?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8065/1781909998/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5507",
+              "name": "Mole",
+              "description": "Ceylin and Ilgaz, who can easily overcome any problem when together, are faced with a problem they never expected. This comradeship, which gives them strength, seems to cause other troubles, albeit unintentionally. Hard days and nights await Prosecutor Pars, whose sense of justice is indisputable. The confusion between the facts he knows to be true and the statements made will force him to choose between himself and his sense of justice. Yekta Tilmen, who struggles with both Lâçin's betrayal and his son's case, awaits new evidence that will strengthen his hand on both issues. Ilgaz, who does not do his best to acquit Ceylin, has also fallen into a formation that defames him. The process of acquittal, which started as a legal war, is about to turn into a real war by revealing the fronts. Although Ilgaz and Ceylin are used to handling everything properly without leaking, the mud thrown seems to pollute the area.",
+              "duration": 2333095,
+              "seasonNumber": 1,
+              "episodeNumber": 19,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5507/thumb/1782005854?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8066/1781908889/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5508",
+              "name": "Betrayal (2)",
+              "description": "The indictment against Ceylin shocked everyone, especially Ceylin. Ilgaz is waiting right next to Ceylin, who thinks that she has been hit from where she did not expect, outstretched her hands to overcome this problem together. While Pars is already tightly squeezed from everywhere in the battle to find justice as soon as possible, he is about to receive unexpected blows. Moreover, Yekta Tilmen, who can go to any lengths to ensure his own justice, is on the other side... Metin Amir and Eren's commissioner, who are engaged in an all-out struggle to find the mole inside the criminal bureau, are waiting for a surprising development. Ilgaz, who does not do his best to acquit Ceylin, is waiting for the most difficult case in his life. In this \"war of justice\", where the fronts are getting sharper, a journey that will shock Ilgaz and Ceylin, who are fighting side by side, awaits.",
+              "duration": 2211004,
+              "seasonNumber": 1,
+              "episodeNumber": 20,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5508/thumb/1782005854?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8067/1781912123/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5509",
+              "name": "Without Rules",
+              "description": "Niyazi's death creates a shock effect for Ilgaz, who wanders around his borders in order to acquit Ceylin. Both Ilgaz and Ceylin were caught in the middle of a big case both legally and in terms of conscience. Yekta realizes that the defenses of Ilgaz and Ceylin are weakening after Niyazi, who, as it turned out, ended his life. Now it is his turn to gather information and reinforce it with evidence in order to be more committed to his cause. However, they do not yet know that an unexpected move that will shock everyone will come from their side. A difficult preparation process awaits Ilgaz, who puts forth all his might to win the case. On the one hand, he has to stay within the legal rules while trying to restrain Ceylin, who is on his own, after the clues to defeat Yekta. However, at the end of this road, both of them will be faced with new information they did not expect and come to the brink of a difficult decision.",
+              "duration": 2445711,
+              "seasonNumber": 1,
+              "episodeNumber": 21,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5509/thumb/1782005854?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8068/1781912143/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5510",
+              "name": "Hope",
+              "description": "Ilgaz and Ceylin, on the one hand, continue Ceylin's journey of being acquitted, on the other hand, they are faced with Yekta, who reveals the battle axes. Every step of the way, they have a ruthless enemy who was there before them... Pars gets into a corner when Ilgaz and Ceylin, whom he believed and helped so far, spread to his relatives within the scope of the expanding case. At this point, Pars will be shaken by the new evidence and confession and will have difficulty balancing his own scales of justice.Young people, who find themselves in a network that they have never met, are faced with tougher and more difficult times as they try to climb out of it. The big trial day awaits Ilgaz and Ceylin, who are strong and invincible when they are together in search of justice. As the ranks of the trial become clear, the new evidence that will emerge will shock both sides, and the decision to be made after the court will be a turning point for the relationship between the two.",
+              "duration": 2268288,
+              "seasonNumber": 1,
+              "episodeNumber": 22,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5510/thumb/1782005855?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8069/1781912738/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5511",
+              "name": "Wound",
+              "description": "The video from Engin created a shock effect for Ceylin, who has just gotten over the tension of the trial. In the light of new information and surprising developments that will perhaps radically change the trial process, will Ilgaz be able to continue defending Ceylin with the same faith as on the first day? Yekta Tilmen, who was defeated as a result of the war he waged, struggles with a situation he has never encountered before in his life. However, Yekta, who continues his war without slowing down with the belief that better days will come, is waiting for an unexpected development. Pars, who has been dealing with Engin's case for a long time, is waiting for a brand new case at the courthouse. Difficult days await the duo of Ilgaz and Ceylin, who have managed to get out of every difficult situation they have been in so far. While these two different souls are trying to stay together under all circumstances, they will suddenly find themselves at a difficult turning point.",
+              "duration": 2410533,
+              "seasonNumber": 1,
+              "episodeNumber": 23,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5511/thumb/1782005855?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8070/1781912753/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5512",
+              "name": "Lie",
+              "description": "A great stalemate awaits the relations of Ceylin and Ilgaz. For the duo, who have complemented each other perfectly until now, their differences this time seem to cause a major crisis. And while they were dragged into a brand new case, which they did not expect... Engin's video turned upside down the theories that everyone thought so far and changed many known ones. On the other hand, Çınar and Serdar, who constantly manage to cause trouble, are in an irreversible stalemate this time. It is as if the struggle of the young people who are under this deadlock to be questioned and to reveal the truth will spread to everyone. Ilgaz and Ceylin, who have always been walking on the path of justice they believed in, are now waiting for the tests they have to pass for their love on the way they walk each other.",
+              "duration": 2376725,
+              "seasonNumber": 1,
+              "episodeNumber": 24,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5512/thumb/1782005855?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8071/1781912995/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5513",
+              "name": "Lost",
+              "description": "Ilgaz deciphered the message Engin sent to Ceylin and told her. Ceylin's unmistakable denial of this message is that her father's disembarkation date has come. Ilgaz, who is after the truth, has already started research on Zafer. For Serdar, who has kept the secrets he has accumulated as an exit ticket, it is now time to use some of them as leverage. It is only a matter of time before this information turns into a weapon that will hit the other side on the Yekta Tilmen front. Will the dossier they were assigned to look at together be able to bring Pars and Derya, who have very different perspectives, together on the same path? Another tough test awaits Ilgaz and Ceylin, who have crossed difficult roads many times. This is the sharpest corner for the future of the two of them, and unpredictable difficult days await them.",
+              "duration": 2185091,
+              "seasonNumber": 1,
+              "episodeNumber": 25,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5513/thumb/1782005855?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8072/1781913026/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5514",
+              "name": "My Dear Home",
+              "description": "Ceylin recognized the clothes at one sight; The body, whose identity is unknown, belongs to her father. Not being able to see her father, for whom she had hoped until now, has shaken her deeply, but Ilgaz Kaya is standing next to her, embracing her. The loss of Zafer has moved many stones in the Kaya family, as it did in the Erguvan family. While trying to deal with the shock of such a loss, all the trumps are on Yekta Tilmen, who is starting to beat the war drums, and her maneuvers on this subject are curious. Everyone mobilized to shed light on the murder for Ceylin and her household, who are trying to cope with her pain. For Ceylin, who is patiently waiting for the truth to be revealed, help will come from an unexpected place. Ilgaz, who is trying to make sense of the dead land on his own family, is also devastated by the mourning of the woman he loves. This unexpected loss, which life has presented to them and knitted with many mistakes, will open the door of a new era for the duo.",
+              "duration": 2226910,
+              "seasonNumber": 1,
+              "episodeNumber": 26,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5514/thumb/1782005855?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8073/1781913393/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5515",
+              "name": "Dagger",
+              "description": "Ceylin, whose family is shattered, sees Metin, who she thinks wants to support her, as her new family. However, this false balance is being destroyed day by day and the transparent veil on it is about to open rapidly and inexorably. Will the Ilgaz-Ceylin couple be able to come out of this wreckage successfully? Eren, who cannot understand how Metin is involved in the incident, is waiting for the most difficult days of his life. At this point, a surprise cooperation awaits him at the end of the day. Yekta, who knows every detail of Zafer's murder and enjoys knowing to the end by not telling anyone, has an unexpected visitor. Ceylin's emotional state worries everyone, who is in a great mourning period with her untimely losses. Ilgaz is ready to hold Ceylin's hand tighter than ever before and embark on a new path. However, the sound of the chains attached to the feet of both of them gradually began to be heard…",
+              "duration": 2438304,
+              "seasonNumber": 1,
+              "episodeNumber": 27,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5515/thumb/1782005855?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8074/1781913383/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5516",
+              "name": "Confession",
+              "description": "Thanks to the clues he found, Ilgaz reached the ultimate truth by himself, and this truth devastated him. Moreover, Ceylin, who is at the heart of this truth, is in a devastated state and needs Ilgaz to get up from where she fell. What attitude will Ilgaz have towards the woman he loves while he has the knowledge of this great secret? The secret investigation of Pars and Eren duo came to light. When their paths crossed with Ilgaz, all the pieces fell into place for them, too. Now, with the issues that everyone has to face, who will take what stance? Ceylin, who wants to hold on to life tightly, has made the first big decisions in her life. Ceylin, who sees Ilgaz as her closest source of power in these decisions, is still unaware of the facts that may emerge. Will it be possible to continue on the road despite everything?",
+              "duration": 2237777,
+              "seasonNumber": 1,
+              "episodeNumber": 28,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5516/thumb/1782005855?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8075/1781913396/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5517",
+              "name": "Shame",
+              "description": "Ceylin caught Ilgaz in a way she could never have guessed. Explaining to Ceylin that this big secret belonging to Çınar and Metin has nothing to do with her will be more challenging for Ilgaz than any case he has faced so far... On the way to Zafer's death, the curtains of doubt began to be lifted. Unexpected surprises will arise for the Pars and Eren front, who try to manage the process with transparency so that Ceylin does not misunderstand, on the one hand, and the Yekta front, who manipulates the event, on the other. Ilgaz and Ceylin, who have started to dream of a common future thanks to the support and trust they have received from each other, are on the verge of the biggest break in their relationship ever. Will there be a ray of hope at the end of the tunnel of uncertainty that awaits them?",
+              "duration": 2323412,
+              "seasonNumber": 1,
+              "episodeNumber": 29,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5517/thumb/1782005855?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8076/1781913586/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5518",
+              "name": "Possibility",
+              "description": "Ceylin surprises Ilgaz and decides to give their relationship a new chance. However, in order to continue, she asks him to make a choice. This choice will turn Ilgaz's whole life upside down. On the one hand, the woman he loves, on the other hand, the family he carries with him for a lifetime… The final turning point has been reached in the murder of Zafer. There is only one thing left that is needed for the pieces to slowly come together and light up the whole event night. For the sake of this possibility of enlightenment, surprise meetings will take place and new agreements will be made. However, what they do not calculate is that Yekta has other plans for them. Ilgaz and Ceylin, who want to find the truth and fight for themselves, will have more difficulties than they expected on this road; they will have to come face to face with all the facts that stand in their way and try to ignore them.",
+              "duration": 2521734,
+              "seasonNumber": 1,
+              "episodeNumber": 30,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5518/thumb/1782005855?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8077/1781913623/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5519",
+              "name": "Destiny",
+              "description": "\"Three things tire people out the most: forgiving, keeping silent when it hurts inside, and dreaming even though you know it won't happen.\" (Chuck Palahniuk)",
+              "duration": 2535178,
+              "seasonNumber": 1,
+              "episodeNumber": 31,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5519/thumb/1782005856?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8078/1781913897/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5520",
+              "name": "Dreams",
+              "description": "Ceylin is not even aware that she is in danger of death besides her already chaotic life and emotions. Ilgaz, on the other hand, cannot fit anywhere. He is one step away from sensing the danger Ceylin is in. Will Ilgaz and Ceylin be able to get out of this stabbing situation? Yekta Tilmen was almost caught red-handed by the Pars Prosecutor in front of the courthouse. Serdar, who has been wanted as a \"witness\" for a long time, suddenly leaves Yekta's car and will change the course of the whole game that has been set up until now. With Serdar's speech, unexpected and surprising associations will emerge in the case of Zafer's murder. The obstacle in the way of Ilgaz and Ceylin is not only the danger of death, the shadow of Zafer's death is still on them. What will be the decision they will make at the point of separation, which they have come to with their own choices?",
+              "duration": 2414713,
+              "seasonNumber": 1,
+              "episodeNumber": 32,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5520/thumb/1782005856?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8079/1781913910/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5521",
+              "name": "I Have Hope",
+              "description": "Ilgaz and Ceylin, whose love for each other wasn't enough for them to be side by side, are now very shaken by their divorce. Moreover, while waiting for the solution of the Yeşim issue, which awaits them, collapsed in the middle of their lives and has not yet been fully clarified... Yekta Tilmen, who has always been the smiling side, has started to open some gaps, albeit small, on the front. On the one hand, while Serdar's dismissal as a suspect with the indictment prepared by Pars is beneficial for him, on the other hand, will he be able to disrupt the unexpected plan prepared against him before it even starts? Ilgaz, who is trying to cope with the pain of separation in his own way, has to deal with the murder of Zafer, which he is close to a solution, on the other hand. In this case, will Ilgaz and Ceylin, whose paths reunite by fate, be able to balance both separating their ways and acting together?",
+              "duration": 2436052,
+              "seasonNumber": 1,
+              "episodeNumber": 33,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5521/thumb/1782005856?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8080/1781913927/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5522",
+              "name": "6 Months Later...",
+              "description": "The protagonists of the story, which started with a murder in which both of them were hurt by their brothers; Ceylin and Ilgaz, whose separate paths have crossed and united for the last time in their professional lives, are at a turning point that they will never forget in this relationship. Yekta, who has destroyed everyone around her with her actions and is about to fall under the huge wave of anger she has created because of this, awaits a desire for revenge that she has never seen from anyone before her. Çınar, on the other hand, wants to start a new life with the untied knot, but will some incalculable developments allow her to achieve this? The \"end\" is still far away in Ilgaz and Ceylin's journey, where will the comma put for now throw them away? Where will their love, the authenticity of which neither they nor their families nor their friends doubt, will evolve in a cascade of events that will grow to such an extent that they can never foresee from today?",
+              "duration": 2623298,
+              "seasonNumber": 1,
+              "episodeNumber": 34,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5522/thumb/1782005856?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8081/1781997809/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5523",
+              "name": "Episode 35",
+              "description": "",
+              "duration": 2871449,
+              "seasonNumber": 1,
+              "episodeNumber": 35,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5523/thumb/1782005856?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8082/1781997875/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5524",
+              "name": "Episode 36",
+              "description": "",
+              "duration": 2789111,
+              "seasonNumber": 1,
+              "episodeNumber": 36,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5524/thumb/1782005856?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8083/1781997925/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5525",
+              "name": "Episode 37",
+              "description": "",
+              "duration": 2562020,
+              "seasonNumber": 1,
+              "episodeNumber": 37,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5525/thumb/1782005856?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8084/1781998169/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5526",
+              "name": "Episode 38",
+              "description": "",
+              "duration": 2778128,
+              "seasonNumber": 1,
+              "episodeNumber": 38,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5526/thumb/1782005856?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8085/1781998237/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5527",
+              "name": "Episode 39",
+              "description": "",
+              "duration": 2670132,
+              "seasonNumber": 1,
+              "episodeNumber": 39,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5527/thumb/1782005856?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8086/1781998490/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5528",
+              "name": "Episode 40",
+              "description": "",
+              "duration": 2311880,
+              "seasonNumber": 1,
+              "episodeNumber": 40,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5528/thumb/1782005856?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8087/1781998465/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5529",
+              "name": "Episode 41",
+              "description": "",
+              "duration": 2122490,
+              "seasonNumber": 1,
+              "episodeNumber": 41,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5529/thumb/1782005856?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8088/1781998586/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5530",
+              "name": "Episode 42",
+              "description": "",
+              "duration": 2402871,
+              "seasonNumber": 1,
+              "episodeNumber": 42,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5530/thumb/1782005857?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8089/1781998655/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5531",
+              "name": "Episode 43",
+              "description": "",
+              "duration": 2121259,
+              "seasonNumber": 1,
+              "episodeNumber": 43,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5531/thumb/1782005857?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8090/1781998925/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5532",
+              "name": "Episode 44",
+              "description": "",
+              "duration": 2278992,
+              "seasonNumber": 1,
+              "episodeNumber": 44,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5532/thumb/1782005857?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8091/1781998916/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5533",
+              "name": "Episode 45",
+              "description": "",
+              "duration": 2377027,
+              "seasonNumber": 1,
+              "episodeNumber": 45,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5533/thumb/1782005857?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8092/1781998567/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5534",
+              "name": "Episode 46",
+              "description": "",
+              "duration": 1914508,
+              "seasonNumber": 1,
+              "episodeNumber": 46,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5534/thumb/1782005857?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8093/1781998939/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5535",
+              "name": "Episode 47",
+              "description": "",
+              "duration": 2386779,
+              "seasonNumber": 1,
+              "episodeNumber": 47,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5535/thumb/1782005857?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8094/1781999229/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5536",
+              "name": "Episode 48",
+              "description": "",
+              "duration": 2519713,
+              "seasonNumber": 1,
+              "episodeNumber": 48,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5536/thumb/1782005857?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8095/1781999444/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5537",
+              "name": "Episode 49",
+              "description": "",
+              "duration": 2032721,
+              "seasonNumber": 1,
+              "episodeNumber": 49,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5537/thumb/1782005857?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8096/1781999514/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5538",
+              "name": "Episode 50",
+              "description": "",
+              "duration": 2335695,
+              "seasonNumber": 1,
+              "episodeNumber": 50,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5538/thumb/1782005857?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8097/1781999607/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5693",
+              "name": "Episode 51",
+              "description": "",
+              "duration": 2576486,
+              "seasonNumber": 1,
+              "episodeNumber": 51,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5693/thumb/1782015670?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8244/1782015480/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5694",
+              "name": "Episode 52",
+              "description": "",
+              "duration": 2414295,
+              "seasonNumber": 1,
+              "episodeNumber": 52,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5694/thumb/1782015670?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8245/1782015584/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5727",
+              "name": "Episode 53",
+              "description": "",
+              "duration": 2178356,
+              "seasonNumber": 1,
+              "episodeNumber": 53,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5727/thumb/1782083745?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8308/1782083650/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5728",
+              "name": "Episode 54",
+              "description": "",
+              "duration": 2226561,
+              "seasonNumber": 1,
+              "episodeNumber": 54,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5728/thumb/1782083936?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8309/1782083804/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5729",
+              "name": "Episode 55",
+              "description": "",
+              "duration": 2156599,
+              "seasonNumber": 1,
+              "episodeNumber": 55,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5729/thumb/1782083937?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8310/1782083819/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5731",
+              "name": "Episode 56",
+              "description": "",
+              "duration": 2316678,
+              "seasonNumber": 1,
+              "episodeNumber": 56,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5731/thumb/1782084120?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8312/1782084062/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5730",
+              "name": "Episode 57",
+              "description": "",
+              "duration": 2310733,
+              "seasonNumber": 1,
+              "episodeNumber": 57,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5730/thumb/1782084012?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8311/1782083947/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5732",
+              "name": "Episode 58",
+              "description": "",
+              "duration": 2347398,
+              "seasonNumber": 1,
+              "episodeNumber": 58,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5732/thumb/1782084389?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8313/1782084323/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5733",
+              "name": "Episode 59",
+              "description": "",
+              "duration": 2271747,
+              "seasonNumber": 1,
+              "episodeNumber": 59,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5733/thumb/1782084786?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8314/1782084056/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5734",
+              "name": "Episode 60",
+              "description": "",
+              "duration": 2511702,
+              "seasonNumber": 1,
+              "episodeNumber": 60,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5734/thumb/1782084996?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8315/1782084902/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5735",
+              "name": "Episode 61",
+              "description": "",
+              "duration": 2251221,
+              "seasonNumber": 1,
+              "episodeNumber": 61,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5735/thumb/1782084996?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8316/1782084930/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5736",
+              "name": "Episode 62",
+              "description": "",
+              "duration": 2288024,
+              "seasonNumber": 1,
+              "episodeNumber": 62,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5736/thumb/1782085214?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8317/1782085136/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5738",
+              "name": "Episode 63",
+              "description": "",
+              "duration": 2290346,
+              "seasonNumber": 1,
+              "episodeNumber": 63,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5738/thumb/1782086530?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8319/1782085275/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5737",
+              "name": "Episode 64",
+              "description": "",
+              "duration": 2297800,
+              "seasonNumber": 1,
+              "episodeNumber": 64,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5737/thumb/1782085341?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8318/1782085276/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5739",
+              "name": "Episode 65",
+              "description": "",
+              "duration": 3061922,
+              "seasonNumber": 1,
+              "episodeNumber": 65,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5739/thumb/1782086530?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8320/1782085322/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5740",
+              "name": "Episode 66",
+              "description": "",
+              "duration": 3062688,
+              "seasonNumber": 1,
+              "episodeNumber": 66,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5740/thumb/1782086837?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8321/1782086745/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5744",
+              "name": "Episode 67",
+              "description": "",
+              "duration": 3361483,
+              "seasonNumber": 1,
+              "episodeNumber": 67,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5744/thumb/1782087984?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8325/1782087917/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5742",
+              "name": "Episode 68",
+              "description": "",
+              "duration": 3354238,
+              "seasonNumber": 1,
+              "episodeNumber": 68,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5742/thumb/1782087384?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8323/1782087304/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5743",
+              "name": "Episode 69",
+              "description": "",
+              "duration": 3340167,
+              "seasonNumber": 1,
+              "episodeNumber": 69,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5743/thumb/1782087628?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8324/1782087563/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5741",
+              "name": "Episode 70",
+              "description": "",
+              "duration": 3370585,
+              "seasonNumber": 1,
+              "episodeNumber": 70,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5741/thumb/1782087226?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8322/1782087160/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5795",
+              "name": "Episode 111",
+              "description": "",
+              "duration": 2230912,
+              "seasonNumber": 1,
+              "episodeNumber": 111,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5795/thumb/1782170569?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8376/1782170458/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5796",
+              "name": "Episode 112",
+              "description": "",
+              "duration": 2219051,
+              "seasonNumber": 1,
+              "episodeNumber": 112,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5796/thumb/1782170569?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8377/1782170479/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5797",
+              "name": "Episode 113",
+              "description": "",
+              "duration": 2356480,
+              "seasonNumber": 1,
+              "episodeNumber": 113,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5797/thumb/1782170569?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8378/1782170501/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5798",
+              "name": "Episode 114",
+              "description": "",
+              "duration": 2494165,
+              "seasonNumber": 1,
+              "episodeNumber": 114,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5798/thumb/1782170569?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8379/1782150586/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5799",
+              "name": "Episode 115",
+              "description": "",
+              "duration": 2249216,
+              "seasonNumber": 1,
+              "episodeNumber": 115,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5799/thumb/1782170569?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8380/1782152983/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5800",
+              "name": "Episode 116",
+              "description": "",
+              "duration": 2286165,
+              "seasonNumber": 1,
+              "episodeNumber": 116,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5800/thumb/1782170569?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8381/1782170146/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            }
+          ]
+        }
+      ],
+      "totalSeasons": 1,
+      "totalEpisodes": 76
     },
     {
-      "id": "5463",
+      "id": "series_5463",
       "name": "غرفه لشخصين",
-      "title": "غرفه لشخصين",
-      "year": "2025",
-      "thumb": "http://192.168.1.100:32400/library/metadata/5463/thumb/1782009569?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
-      "poster": "http://192.168.1.100:32400/library/metadata/5463/thumb/1782009569?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+      "description": "Küçük yaşta ebeveynlerini kaybeden Nilüfer’in (Devrim Özkan) hayali, anne babasının yaptığı Lutesya Otel’de çalışmaktır. Otelin mirasçılarından Kaan (Ulaş Tuna Astepe), yıllardır üvey ablası Sevil’in (Gözde Seda Altuner) hüküm sürdüğü otele intikam almak için geri döner. Burada yolları kesişen Nilüfer ve Kaan için hiçbir şey eskisi gibi olmayacaktır.",
+      "category": "series",
+      "isSeries": true,
       "type": "series",
-      "sectionId": "18",
+      "thumb": "http://192.168.1.100:32400/library/metadata/5463/thumb/1782009569?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+      "art": "http://192.168.1.100:32400/library/metadata/5463/art/1782009569?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+      "year": 2025,
+      "ratingKey": "5463",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "yc-gXtUcHZo8w1rD8pHr",
-      "addedAt": 1782161193260
+      "seasons": [
+        {
+          "id": "5463_season_1",
+          "name": "Season 1",
+          "seasonNumber": 1,
+          "episodes": [
+            {
+              "id": "episode_5465",
+              "name": "Bölüm 1",
+              "description": "Saying goodbye to her ordinary life and stepping into the magnificent and intriguing world of the Lutesya Hotel, Nilüfer's dreams are turned upside down by the unexpected arrival of the hotel's mysterious heir, Kaan Tunca. The night of the grand launch, where a valuable jewel is stolen, leaves Nilüfer at the center of all suspicions. The power struggles between Kaan and his step-sister Sevil drag Kaan and Nilüfer into a common adventure that will unite their destinies.",
+              "duration": 1275843,
+              "seasonNumber": 1,
+              "episodeNumber": 1,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5465/thumb/1782009570?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8026/1781999004/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5466",
+              "name": "Bölüm 2",
+              "description": "After their unexpected encounter in the royal suite, Kaan and Nilüfer fight. When Nilüfer says she doesn't want to work with Kaan, Sevil threatens to have her thrown in jail. Nilüfer forcibly enters Kaan's life as the royal suite's servant. Nilüfer is torn between Kaan's orders and Sevil's threats. On the one hand, despite Kaan's harsh attitude, she feels an unexpected attraction towards him. This situation makes Nilüfer a part of a dangerous game.",
+              "duration": 2007388,
+              "seasonNumber": 1,
+              "episodeNumber": 2,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5466/thumb/1782009570?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8027/1781999272/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5467",
+              "name": "Bölüm 3",
+              "description": "Nilüfer has convinced Gamze that Kaan is in love with her. Kaan assigns Nilüfer the task of keeping Gamze away. However, Gamze takes advantage of every opportunity to get closer to Kaan. Meanwhile, Kaan announces that 50 employees at the hotel need to be laid off. Tensions rise between Sevil and Kaan. All the employees begin to hate Kaan. Nilüfer comes up with a plan to save the employees from being dismissed. But nothing goes as she planned.",
+              "duration": 2627593,
+              "seasonNumber": 1,
+              "episodeNumber": 3,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5467/thumb/1782009571?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8028/1781999650/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5468",
+              "name": "Bölüm 4",
+              "description": "Kaan gets closer to Nilüfer after his panic attack. He tries to stay away from her by running away from his feelings for her. When Nilüfer is chosen as the face of the hotel, she gets involved in Kaan's Bursa plans and they have to travel together. This journey drags them into adventures they never expected. In the meantime, Gamze, who thinks she will go to Bursa with Kaan, is after them.",
+              "duration": 2029633,
+              "seasonNumber": 1,
+              "episodeNumber": 4,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5468/thumb/1782009571?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8029/1781999707/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5469",
+              "name": "Bölüm 5",
+              "description": "Kaan taking Nilüfer instead of Gamze to the press conference leads to a jealousy crisis, and Gamze demands Nilüfer's dismissal. The tension between Kaan and Gamze escalates. As Kaan tries to rehire Nilüfer, a closeness develops between them. Nilüfer's unexpected encounter with Teoman adds a new dimension to the events.",
+              "duration": 3172565,
+              "seasonNumber": 1,
+              "episodeNumber": 5,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5469/thumb/1782009571?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8030/1781999840/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5470",
+              "name": "Bölüm 6",
+              "description": "Kaan tries to find out whether Nilüfer is engaged. Nilüfer, on the other hand, no longer wants to act as an informant for Sevil. A conflict arises between Sevil and Kaan that will determine their future at the hotel. Sevil threatens Nilüfer, demanding she get information from Kaan. As Nilüfer grows closer to Kaan, she begins to feel guilty. If she spies for Sevil, it will lead to Kaan’s downfall. Nilüfer is forced to choose between her feelings and her logic.",
+              "duration": 3203285,
+              "seasonNumber": 1,
+              "episodeNumber": 6,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5470/thumb/1782009571?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8031/1781999984/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5471",
+              "name": "Bölüm 7",
+              "description": "",
+              "duration": 2406748,
+              "seasonNumber": 1,
+              "episodeNumber": 7,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5471/thumb/1782009571?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8032/1782000110/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5472",
+              "name": "Bölüm 8",
+              "description": "",
+              "duration": 2249247,
+              "seasonNumber": 1,
+              "episodeNumber": 8,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5472/thumb/1782009571?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8033/1781999894/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5473",
+              "name": "Episode 9",
+              "description": "",
+              "duration": 2990846,
+              "seasonNumber": 1,
+              "episodeNumber": 9,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5473/thumb/1782005843?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8034/1782000174/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5474",
+              "name": "Episode 10",
+              "description": "",
+              "duration": 2563111,
+              "seasonNumber": 1,
+              "episodeNumber": 10,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5474/thumb/1782005843?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8035/1782000269/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5475",
+              "name": "Episode 11",
+              "description": "",
+              "duration": 2275393,
+              "seasonNumber": 1,
+              "episodeNumber": 11,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5475/thumb/1782005843?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8036/1782000310/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5476",
+              "name": "Episode 12",
+              "description": "",
+              "duration": 2701920,
+              "seasonNumber": 1,
+              "episodeNumber": 12,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5476/thumb/1782005843?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8037/1782000422/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5477",
+              "name": "Episode 13",
+              "description": "",
+              "duration": 2203109,
+              "seasonNumber": 1,
+              "episodeNumber": 13,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5477/thumb/1782005843?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8038/1782000486/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5478",
+              "name": "Episode 14",
+              "description": "",
+              "duration": 2459550,
+              "seasonNumber": 1,
+              "episodeNumber": 14,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5478/thumb/1782005843?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8039/1782000776/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5479",
+              "name": "Episode 15",
+              "description": "",
+              "duration": 2478962,
+              "seasonNumber": 1,
+              "episodeNumber": 15,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5479/thumb/1782005843?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8040/1782000803/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5480",
+              "name": "Episode 16",
+              "description": "",
+              "duration": 2518413,
+              "seasonNumber": 1,
+              "episodeNumber": 16,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5480/thumb/1782005843?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8041/1782000841/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5481",
+              "name": "Episode 17",
+              "description": "",
+              "duration": 2411531,
+              "seasonNumber": 1,
+              "episodeNumber": 17,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5481/thumb/1782005843?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8042/1782000962/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5482",
+              "name": "Episode 18",
+              "description": "",
+              "duration": 2455997,
+              "seasonNumber": 1,
+              "episodeNumber": 18,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5482/thumb/1782005843?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8043/1782001035/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5483",
+              "name": "Episode 19",
+              "description": "",
+              "duration": 2666765,
+              "seasonNumber": 1,
+              "episodeNumber": 19,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5483/thumb/1782005843?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8044/1782001174/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5484",
+              "name": "Episode 20",
+              "description": "",
+              "duration": 3357117,
+              "seasonNumber": 1,
+              "episodeNumber": 20,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5484/thumb/1782005843?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8045/1782001342/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5485",
+              "name": "Episode 21",
+              "description": "",
+              "duration": 2532948,
+              "seasonNumber": 1,
+              "episodeNumber": 21,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5485/thumb/1782005843?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8046/1782001341/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5486",
+              "name": "Episode 22",
+              "description": "",
+              "duration": 2454743,
+              "seasonNumber": 1,
+              "episodeNumber": 22,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5486/thumb/1782005843?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8047/1782001364/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            }
+          ]
+        }
+      ],
+      "totalSeasons": 1,
+      "totalEpisodes": 22
     },
     {
-      "id": "5624",
+      "id": "series_5624",
       "name": "كوما",
-      "title": "كوما",
-      "year": "2025",
-      "thumb": "http://192.168.1.100:32400/library/metadata/5624/thumb/1782009743?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
-      "poster": "http://192.168.1.100:32400/library/metadata/5624/thumb/1782009743?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+      "description": "Ceylan, nazik ve onurlu bir genç kızdır. Ancak ailesinin borçları yüzünden hayatı bir anda altüst olur. Babası onu ikinci eş olarak zorla evlendirmek ister. Bu korkunç kaderden kaçan Ceylan, yolda genç iş adamı Karan’la karşılaşır.  Zamanla birbirlerine âşık olan Ceylan ve Karan’ın hayatı, Ceylan’ın Karan’ın kardeşini öldürmekle suçlanmasıyla kabusa döner. Karan, intikam uğruna ağabeyinin dul eşiyle evlenir ve Ceylan’ı kendi kuması yapar. Aşkın yerini nefret aldığı bu evde, Ceylan artık bir yabancıdan farksızdır. Ceylan masumiyetini kanıtlamaya, Karan ise kalbinin karmaşasında yolunu bulmaya çalışırken, izleyici büyük bir vicdan ve sevda sınavına tanıklık edecek. İftiranın gölgesinde yeşeren bir aşk yeniden filizlenebilir mi?",
+      "category": "series",
+      "isSeries": true,
       "type": "series",
-      "sectionId": "18",
+      "thumb": "http://192.168.1.100:32400/library/metadata/5624/thumb/1782009743?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+      "art": "http://192.168.1.100:32400/library/metadata/5624/art/1782009743?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+      "year": 2025,
+      "ratingKey": "5624",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "yc-gXtUcHZo8w1rD8pHr",
-      "addedAt": 1782161193260
+      "seasons": [
+        {
+          "id": "5624_season_1",
+          "name": "Season 1",
+          "seasonNumber": 1,
+          "episodes": [
+            {
+              "id": "episode_5626",
+              "name": "Bölüm 1",
+              "description": "",
+              "duration": 9497720,
+              "seasonNumber": 1,
+              "episodeNumber": 1,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5626/thumb/1782009747?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8179/1781846905/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5627",
+              "name": "Bölüm 2",
+              "description": "",
+              "duration": 7307840,
+              "seasonNumber": 1,
+              "episodeNumber": 2,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5627/thumb/1782009748?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8180/1781847213/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5628",
+              "name": "Bölüm 3",
+              "description": "",
+              "duration": 3783714,
+              "seasonNumber": 1,
+              "episodeNumber": 3,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5628/thumb/1782009748?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8181/1781847369/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5629",
+              "name": "Bölüm 4",
+              "description": "",
+              "duration": 6851442,
+              "seasonNumber": 1,
+              "episodeNumber": 4,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5629/thumb/1782009748?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8182/1781847836/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5630",
+              "name": "Bölüm 5",
+              "description": "",
+              "duration": 6976760,
+              "seasonNumber": 1,
+              "episodeNumber": 5,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5630/thumb/1782009748?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8183/1781848183/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5631",
+              "name": "Bölüm 6",
+              "description": "",
+              "duration": 6328389,
+              "seasonNumber": 1,
+              "episodeNumber": 6,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5631/thumb/1782009748?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8184/1781848193/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5632",
+              "name": "Bölüm 7",
+              "description": "",
+              "duration": 6700675,
+              "seasonNumber": 1,
+              "episodeNumber": 7,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5632/thumb/1782009748?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8185/1781848396/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5633",
+              "name": "Bölüm 8",
+              "description": "",
+              "duration": 6542407,
+              "seasonNumber": 1,
+              "episodeNumber": 8,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5633/thumb/1782009748?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8186/1781848458/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5634",
+              "name": "Bölüm 9",
+              "description": "",
+              "duration": 6171283,
+              "seasonNumber": 1,
+              "episodeNumber": 9,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5634/thumb/1782009748?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8187/1781848788/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5635",
+              "name": "Bölüm 10",
+              "description": "",
+              "duration": 6882510,
+              "seasonNumber": 1,
+              "episodeNumber": 10,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5635/thumb/1782009748?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8188/1781849662/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5636",
+              "name": "Bölüm 11",
+              "description": "",
+              "duration": 6675226,
+              "seasonNumber": 1,
+              "episodeNumber": 11,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5636/thumb/1782009748?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8189/1781849819/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5637",
+              "name": "Bölüm 12",
+              "description": "",
+              "duration": 6277282,
+              "seasonNumber": 1,
+              "episodeNumber": 12,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5637/thumb/1782009748?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8190/1781849842/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5638",
+              "name": "Bölüm 13",
+              "description": "",
+              "duration": 6950638,
+              "seasonNumber": 1,
+              "episodeNumber": 13,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5638/thumb/1782009748?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8191/1781849873/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5639",
+              "name": "Bölüm 14",
+              "description": "",
+              "duration": 6249441,
+              "seasonNumber": 1,
+              "episodeNumber": 14,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5639/thumb/1782009748?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8192/1781849845/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5640",
+              "name": "Bölüm 15",
+              "description": "",
+              "duration": 6502237,
+              "seasonNumber": 1,
+              "episodeNumber": 15,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5640/thumb/1782009748?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8193/1781849625/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5641",
+              "name": "Bölüm 16",
+              "description": "",
+              "duration": 6639142,
+              "seasonNumber": 1,
+              "episodeNumber": 16,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5641/thumb/1782009749?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8194/1781857824/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5642",
+              "name": "Bölüm 17",
+              "description": "",
+              "duration": 6310510,
+              "seasonNumber": 1,
+              "episodeNumber": 17,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5642/thumb/1782009749?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8195/1781858452/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5643",
+              "name": "Bölüm 18",
+              "description": "",
+              "duration": 6406594,
+              "seasonNumber": 1,
+              "episodeNumber": 18,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5643/thumb/1782009749?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8196/1781858483/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5644",
+              "name": "Bölüm 19",
+              "description": "",
+              "duration": 6278629,
+              "seasonNumber": 1,
+              "episodeNumber": 19,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5644/thumb/1782009749?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8197/1781858768/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5645",
+              "name": "Bölüm 20",
+              "description": "",
+              "duration": 6301802,
+              "seasonNumber": 1,
+              "episodeNumber": 20,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5645/thumb/1782009749?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8198/1781858931/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5646",
+              "name": "Bölüm 21",
+              "description": "",
+              "duration": 6765133,
+              "seasonNumber": 1,
+              "episodeNumber": 21,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5646/thumb/1782009750?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8199/1781859120/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5647",
+              "name": "Bölüm 22",
+              "description": "",
+              "duration": 6567996,
+              "seasonNumber": 1,
+              "episodeNumber": 22,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5647/thumb/1782009750?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8200/1781859757/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5648",
+              "name": "Bölüm 23",
+              "description": "",
+              "duration": 6208760,
+              "seasonNumber": 1,
+              "episodeNumber": 23,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5648/thumb/1782009750?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8201/1781859886/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5649",
+              "name": "Bölüm 24",
+              "description": "",
+              "duration": 6266345,
+              "seasonNumber": 1,
+              "episodeNumber": 24,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5649/thumb/1782009750?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8202/1781860497/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5650",
+              "name": "Bölüm 25",
+              "description": "",
+              "duration": 6316919,
+              "seasonNumber": 1,
+              "episodeNumber": 25,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5650/thumb/1782009750?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8203/1781859759/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5651",
+              "name": "Bölüm 26",
+              "description": "",
+              "duration": 6254271,
+              "seasonNumber": 1,
+              "episodeNumber": 26,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5651/thumb/1782009750?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8204/1781861505/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5652",
+              "name": "Bölüm 27",
+              "description": "",
+              "duration": 6259681,
+              "seasonNumber": 1,
+              "episodeNumber": 27,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5652/thumb/1782009750?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8205/1781861304/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5653",
+              "name": "Bölüm 28",
+              "description": "",
+              "duration": 6307213,
+              "seasonNumber": 1,
+              "episodeNumber": 28,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5653/thumb/1782009750?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8206/1781863483/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5654",
+              "name": "Bölüm 29",
+              "description": "",
+              "duration": 6624351,
+              "seasonNumber": 1,
+              "episodeNumber": 29,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5654/thumb/1782009750?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8207/1781860877/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5655",
+              "name": "Bölüm 30",
+              "description": "",
+              "duration": 6494714,
+              "seasonNumber": 1,
+              "episodeNumber": 30,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5655/thumb/1782009750?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8208/1781861232/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5656",
+              "name": "Bölüm 31",
+              "description": "",
+              "duration": 6632037,
+              "seasonNumber": 1,
+              "episodeNumber": 31,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5656/thumb/1782009750?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8209/1781863570/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5657",
+              "name": "Bölüm 32",
+              "description": "",
+              "duration": 6557315,
+              "seasonNumber": 1,
+              "episodeNumber": 32,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5657/thumb/1782009751?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8210/1781864240/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5658",
+              "name": "Bölüm 33",
+              "description": "",
+              "duration": 6492760,
+              "seasonNumber": 1,
+              "episodeNumber": 33,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5658/thumb/1782009751?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8211/1781864423/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5659",
+              "name": "Bölüm 34",
+              "description": "",
+              "duration": 6503607,
+              "seasonNumber": 1,
+              "episodeNumber": 34,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5659/thumb/1782009751?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8212/1781915584/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5660",
+              "name": "Bölüm 35",
+              "description": "",
+              "duration": 6423707,
+              "seasonNumber": 1,
+              "episodeNumber": 35,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5660/thumb/1782009751?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8213/1781915752/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5661",
+              "name": "Bölüm 36",
+              "description": "",
+              "duration": 6294093,
+              "seasonNumber": 1,
+              "episodeNumber": 36,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5661/thumb/1782009751?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8214/1781915752/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5662",
+              "name": "Bölüm 37",
+              "description": "",
+              "duration": 6272034,
+              "seasonNumber": 1,
+              "episodeNumber": 37,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5662/thumb/1782009751?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8215/1781915313/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5663",
+              "name": "Bölüm 38",
+              "description": "",
+              "duration": 6241709,
+              "seasonNumber": 1,
+              "episodeNumber": 38,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5663/thumb/1782009751?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8216/1781916892/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5664",
+              "name": "Bölüm 39",
+              "description": "",
+              "duration": 6418274,
+              "seasonNumber": 1,
+              "episodeNumber": 39,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5664/thumb/1782009751?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8217/1781916963/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5665",
+              "name": "Bölüm 40",
+              "description": "",
+              "duration": 6464226,
+              "seasonNumber": 1,
+              "episodeNumber": 40,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5665/thumb/1782009751?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8218/1781916951/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5666",
+              "name": "Bölüm 41",
+              "description": "",
+              "duration": 6341114,
+              "seasonNumber": 1,
+              "episodeNumber": 41,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5666/thumb/1782009751?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8219/1781917872/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5667",
+              "name": "Bölüm 42",
+              "description": "",
+              "duration": 6269364,
+              "seasonNumber": 1,
+              "episodeNumber": 42,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5667/thumb/1782009751?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8220/1781917809/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5668",
+              "name": "Bölüm 43",
+              "description": "",
+              "duration": 6331431,
+              "seasonNumber": 1,
+              "episodeNumber": 43,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5668/thumb/1782009751?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8221/1781917832/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5669",
+              "name": "Bölüm 44",
+              "description": "",
+              "duration": 6402438,
+              "seasonNumber": 1,
+              "episodeNumber": 44,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5669/thumb/1782009751?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8222/1781919155/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5670",
+              "name": "Bölüm 45",
+              "description": "",
+              "duration": 6223551,
+              "seasonNumber": 1,
+              "episodeNumber": 45,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5670/thumb/1782009751?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8223/1781918777/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5671",
+              "name": "Bölüm 46",
+              "description": "",
+              "duration": 6322004,
+              "seasonNumber": 1,
+              "episodeNumber": 46,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5671/thumb/1782009751?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8224/1781918773/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5672",
+              "name": "Bölüm 47",
+              "description": "",
+              "duration": 6395402,
+              "seasonNumber": 1,
+              "episodeNumber": 47,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5672/thumb/1782009751?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8225/1781919807/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5673",
+              "name": "Bölüm 48",
+              "description": "",
+              "duration": 6211244,
+              "seasonNumber": 1,
+              "episodeNumber": 48,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5673/thumb/1782009751?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8226/1781919882/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5674",
+              "name": "Bölüm 49",
+              "description": "",
+              "duration": 6296717,
+              "seasonNumber": 1,
+              "episodeNumber": 49,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5674/thumb/1782009751?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8227/1781920656/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            },
+            {
+              "id": "episode_5675",
+              "name": "Bölüm 50",
+              "description": "",
+              "duration": 7211885,
+              "seasonNumber": 1,
+              "episodeNumber": 50,
+              "thumb": "http://192.168.1.100:32400/library/metadata/5675/thumb/1782009751?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "url": "http://192.168.1.100:32400/library/parts/8228/1781920689/file.mp4?X-Plex-Token=yc-gXtUcHZo8w1rD8pHr",
+              "plexToken": "yc-gXtUcHZo8w1rD8pHr"
+            }
+          ]
+        }
+      ],
+      "totalSeasons": 1,
+      "totalEpisodes": 50
     }
   ],
   "contentSources": [],
