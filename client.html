@@ -2713,8 +2713,24 @@
                         Remember me on this TV
                     </label>
                 </div>
-                
+
                 <button type="button" class="login-btn" id="loginBtn" onclick="window.loginBtnClick && window.loginBtnClick()">Login</button>
+
+                <!-- On-screen D-pad buttons (backup for boxes with non-standard remotes) -->
+                <div style="margin-top: 20px; text-align: center;">
+                    <p style="color: #888; font-size: 11px; margin-bottom: 8px;">On-Screen Navigation (Tap if remote doesn't work)</p>
+                    <div style="display: inline-grid; grid-template-columns: repeat(3, 36px); grid-template-rows: repeat(3, 36px); gap: 3px;">
+                        <div></div>
+                        <button onclick="tvRemote && tvRemote.moveFocus('up')" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; color: #fff; font-size: 18px; cursor: pointer;">▲</button>
+                        <div></div>
+                        <button onclick="tvRemote && tvRemote.moveFocus('left')" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; color: #fff; font-size: 18px; cursor: pointer;">◀</button>
+                        <button onclick="window.loginBtnClick && window.loginBtnClick()" style="background: rgba(102,126,234,0.6); border: 1px solid rgba(102,126,234,0.8); border-radius: 6px; color: #fff; font-size: 14px; cursor: pointer; font-weight: bold;">OK</button>
+                        <button onclick="tvRemote && tvRemote.moveFocus('right')" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; color: #fff; font-size: 18px; cursor: pointer;">▶</button>
+                        <div></div>
+                        <button onclick="tvRemote && tvRemote.moveFocus('down')" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; color: #fff; font-size: 18px; cursor: pointer;">▼</button>
+                        <div></div>
+                    </div>
+                </div>
             </form>
             
             <div class="error-message" id="errorMessage" style="display: none;">
@@ -9761,6 +9777,9 @@
             // Handle remote button press
             setupRemoteListeners() {
                 document.addEventListener('keydown', (e) => {
+                    // DEBUG: Log ALL key events to console - helps diagnose Mortal T1 and other Android boxes
+                    console.log('🔑 KEY: key=' + e.key + ' code=' + e.code + ' keyCode=' + e.keyCode + ' which=' + e.which);
+                    
                     // Ignore if typing in input - allow normal text editing including backspace
                     if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
                         // Only handle navigation keys in input fields, let all others (including Backspace) work normally
