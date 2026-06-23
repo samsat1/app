@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-23T03:23:17.864Z",
+  "exportDate": "2026-06-23T13:55:09.594Z",
   "customers": [
     {
       "id": "CUST_1782171417172",
@@ -29,34 +29,7 @@
       "createdAt": "2026-06-22T23:36:57.172Z"
     }
   ],
-  "clientAuthCustomers": [
-    {
-      "id": "CUST_1782171417172",
-      "username": "sam111",
-      "name": "samsat",
-      "phone": "789452",
-      "plan": "Basic TV Package, 2nd TV, 3rd TV",
-      "addons": "Sports Package, Sports Plus Package, Arabic Package, Movies Package, Series Package, Adult Content Package",
-      "monthlyPrice": 67,
-      "totalPrice": 603,
-      "expiryDate": "2027-03-23",
-      "password": "111111",
-      "macAddress": "",
-      "adultPassword": "112233",
-      "renewalMode": "manual",
-      "autoRenewalDuration": 0,
-      "autoRenewalEnabled": false,
-      "lastAutoRenewal": null,
-      "bindToRouter": false,
-      "authorizedRouterIP": "",
-      "authorizedMacAddress": "",
-      "authorizedSSID": "",
-      "status": "active",
-      "duration": "9 Months",
-      "durationMonths": 9,
-      "createdAt": "2026-06-22T23:36:57.172Z"
-    }
-  ],
+  "clientAuthCustomers": [],
   "packages": [
     {
       "name": "Basic",
@@ -10349,82 +10322,82 @@
   ],
   "plexSeriesCache": [
     {
-      "id": "5909",
+      "id": "7090",
       "name": "Çift Kişilik Oda",
       "title": "Çift Kişilik Oda",
       "year": "2025",
-      "thumb": "http://192.168.1.100:32400/library/metadata/5909/thumb/1782174856?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
-      "poster": "http://192.168.1.100:32400/library/metadata/5909/thumb/1782174856?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
+      "thumb": "http://192.168.1.100:32400/library/metadata/7090/thumb/1782222709?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
+      "poster": "http://192.168.1.100:32400/library/metadata/7090/thumb/1782222709?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
       "type": "series",
       "sectionId": "18",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "iJ6NiJyMHd8Zs9xjvcwP",
-      "addedAt": 1782184981269
+      "addedAt": 1782222884941
     },
     {
-      "id": "6109",
+      "id": "7033",
       "name": "Gülcemal",
       "title": "Gülcemal",
       "year": "2023",
-      "thumb": "http://192.168.1.100:32400/library/metadata/6109/thumb/1782174674?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
-      "poster": "http://192.168.1.100:32400/library/metadata/6109/thumb/1782174674?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
+      "thumb": "http://192.168.1.100:32400/library/metadata/7033/thumb/1782222701?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
+      "poster": "http://192.168.1.100:32400/library/metadata/7033/thumb/1782222701?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
       "type": "series",
       "sectionId": "18",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "iJ6NiJyMHd8Zs9xjvcwP",
-      "addedAt": 1782184981270
+      "addedAt": 1782222884941
     },
     {
-      "id": "5965",
+      "id": "6981",
       "name": "Kuma - The Other Wife",
       "title": "Kuma - The Other Wife",
       "year": "2025",
-      "thumb": "http://192.168.1.100:32400/library/metadata/5965/thumb/1782174663?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
-      "poster": "http://192.168.1.100:32400/library/metadata/5965/thumb/1782174663?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
+      "thumb": "http://192.168.1.100:32400/library/metadata/6981/thumb/1782222700?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
+      "poster": "http://192.168.1.100:32400/library/metadata/6981/thumb/1782222700?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
       "type": "series",
       "sectionId": "18",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "iJ6NiJyMHd8Zs9xjvcwP",
-      "addedAt": 1782184981270
+      "addedAt": 1782222884941
     },
     {
-      "id": "6017",
+      "id": "7050",
       "name": "Mr. Bean",
       "title": "Mr. Bean",
       "year": "1990",
-      "thumb": "http://192.168.1.100:32400/library/metadata/6017/thumb/1782175144?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
-      "poster": "http://192.168.1.100:32400/library/metadata/6017/thumb/1782175144?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
+      "thumb": "http://192.168.1.100:32400/library/metadata/7050/thumb/1782222702?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
+      "poster": "http://192.168.1.100:32400/library/metadata/7050/thumb/1782222702?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
       "type": "series",
       "sectionId": "18",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "iJ6NiJyMHd8Zs9xjvcwP",
-      "addedAt": 1782184981270
+      "addedAt": 1782222884941
     },
     {
-      "id": "6031",
+      "id": "6903",
       "name": "Yargı",
       "title": "Yargı",
       "year": "2021",
-      "thumb": "http://192.168.1.100:32400/library/metadata/6031/thumb/1782174884?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
-      "poster": "http://192.168.1.100:32400/library/metadata/6031/thumb/1782174884?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
+      "thumb": "http://192.168.1.100:32400/library/metadata/6903/thumb/1782222693?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
+      "poster": "http://192.168.1.100:32400/library/metadata/6903/thumb/1782222693?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
       "type": "series",
       "sectionId": "18",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "iJ6NiJyMHd8Zs9xjvcwP",
-      "addedAt": 1782184981270
+      "addedAt": 1782222884941
     },
     {
-      "id": "5933",
+      "id": "7054",
       "name": "الخربة",
       "title": "الخربة",
       "year": "2011",
-      "thumb": "http://192.168.1.100:32400/library/metadata/5933/thumb/1782184906?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
-      "poster": "http://192.168.1.100:32400/library/metadata/5933/thumb/1782184906?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
+      "thumb": "http://192.168.1.100:32400/library/metadata/7054/thumb/1782222706?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
+      "poster": "http://192.168.1.100:32400/library/metadata/7054/thumb/1782222706?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
       "type": "series",
       "sectionId": "18",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "iJ6NiJyMHd8Zs9xjvcwP",
-      "addedAt": 1782184981270
+      "addedAt": 1782222884941
     }
   ],
   "contentSources": [],
