@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-23T01:32:52.529Z",
+  "exportDate": "2026-06-23T03:17:13.205Z",
   "customers": [
     {
       "id": "CUST_1782171417172",
@@ -10349,75 +10349,6 @@
   ],
   "plexSeriesCache": [
     {
-      "id": "series_6021",
-      "name": "Cake Boss",
-      "description": "The staff of Carlo's Bakery in Hoboken, New Jersey, led by Buddy Valastro, shows how it prepares elaborate themed cakes for various occasions. Each episode typically features the preparation of two cakes for events including receptions, charity events and theme parties as well as weddings and birthdays.",
-      "category": "series",
-      "isSeries": true,
-      "type": "series",
-      "thumb": "http://192.168.1.100:32400/library/metadata/6021/thumb/1782174666?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
-      "art": "http://192.168.1.100:32400/library/metadata/6021/art/1782174666?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
-      "year": 2009,
-      "ratingKey": "6021",
-      "plexServer": "http://192.168.1.100:32400",
-      "plexToken": "iJ6NiJyMHd8Zs9xjvcwP",
-      "seasons": [
-        {
-          "id": "6021_season_1",
-          "name": "Season 1",
-          "seasonNumber": 1,
-          "episodes": [
-            {
-              "id": "episode_6023",
-              "name": "A Bride, a Boat, and Bamboozled!",
-              "description": "Meet award-winning pastry chef and cake decorator Buddy Valastro and his over-the-top family at Carlo's Bakery in Hoboken, New Jersey. After beginning a week completely jam-packed with cake orders, Buddy gets a call from a customer he cannot possibly turn down. Brides Magazine is offering Buddy an inside cover photo spread but he's going to have to create a cake unlike any he's ever done before. Between arguing with his family, producing the standard 300-plus cakes the bakery makes in any given week and running out of sugar, is there any way Buddy and Company are going to get this opportunity of a lifetime cake done in time? All the while Buddy's sisters are planning to throw their brother a surprise birthday party.",
-              "duration": 2701205,
-              "seasonNumber": 1,
-              "episodeNumber": 1,
-              "thumb": "http://192.168.1.100:32400/library/metadata/6023/thumb/1782174666?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
-              "url": "http://192.168.1.100:32400/library/parts/8683/1747063073/file.mp4?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
-              "plexToken": "iJ6NiJyMHd8Zs9xjvcwP"
-            },
-            {
-              "id": "episode_6024",
-              "name": "Bunny, Birthday, and Burnt Food",
-              "description": "It's one of the busiest weeks of the year at Carlo's Bakery with orders pouring in for Easter, and a last-minute Easter Bunny cake turns into more than the team bargained for. There are also three members of the family celebrating birthdays this week and Buddy's sister Grace, who's never cooked for the family before, decides she's going to make Easter dinner.",
-              "duration": 4703018,
-              "seasonNumber": 1,
-              "episodeNumber": 3,
-              "thumb": "http://192.168.1.100:32400/library/metadata/6024/thumb/1782174666?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
-              "url": "http://192.168.1.100:32400/library/parts/8686/1747207333/file.mp4?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
-              "plexToken": "iJ6NiJyMHd8Zs9xjvcwP"
-            },
-            {
-              "id": "episode_6025",
-              "name": "Chinese Culture and Cannolis",
-              "description": "The Carlo's team has a unique and challenging cake to make this week, a traditional Chinese dragon cake for a dragon boat racing team. It's also a big week at the bakery preparing hundreds of cannoli shells for the annual $.25 Throw Back Cannoli Day and on top of all that, Buddy and Lisa are celebrating their eighth wedding anniversary.",
-              "duration": 603436,
-              "seasonNumber": 1,
-              "episodeNumber": 10,
-              "thumb": "http://192.168.1.100:32400/library/metadata/6025/thumb/1782174666?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
-              "url": "http://192.168.1.100:32400/library/parts/8687/1747173763/file.mp4?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
-              "plexToken": "iJ6NiJyMHd8Zs9xjvcwP"
-            },
-            {
-              "id": "episode_6026",
-              "name": "Episode 16",
-              "description": "",
-              "duration": 402535,
-              "seasonNumber": 1,
-              "episodeNumber": 16,
-              "thumb": "http://192.168.1.100:32400/library/metadata/6026/thumb/1782174667?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
-              "url": "http://192.168.1.100:32400/library/parts/8688/1746799188/file.mp4?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
-              "plexToken": "iJ6NiJyMHd8Zs9xjvcwP"
-            }
-          ]
-        }
-      ],
-      "totalSeasons": 1,
-      "totalEpisodes": 4
-    },
-    {
       "id": "series_5909",
       "name": "Çift Kişilik Oda",
       "description": "Küçük yaşta ebeveynlerini kaybeden Nilüfer’in (Devrim Özkan) hayali, anne babasının yaptığı Lutesya Otel’de çalışmaktır. Otelin mirasçılarından Kaan (Ulaş Tuna Astepe), yıllardır üvey ablası Sevil’in (Gözde Seda Altuner) hüküm sürdüğü otele intikam almak için geri döner. Burada yolları kesişen Nilüfer ve Kaan için hiçbir şey eskisi gibi olmayacaktır.",
@@ -10916,14 +10847,14 @@
               "plexToken": "iJ6NiJyMHd8Zs9xjvcwP"
             },
             {
-              "id": "episode_5969",
+              "id": "episode_6884",
               "name": "Bölüm 3",
               "description": "",
-              "duration": 3783714,
+              "duration": 3783738,
               "seasonNumber": 1,
               "episodeNumber": 3,
-              "thumb": "http://192.168.1.100:32400/library/metadata/5969/thumb/1782174668?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
-              "url": "http://192.168.1.100:32400/library/parts/8633/1781847369/file.mp4?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
+              "thumb": "http://192.168.1.100:32400/library/metadata/6884/thumb/1782184490?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
+              "url": "http://192.168.1.100:32400/library/parts/10440/1781847369/file.mp4?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
               "plexToken": "iJ6NiJyMHd8Zs9xjvcwP"
             },
             {
@@ -12567,10 +12498,10 @@
               "id": "episode_5952",
               "name": "Episode 18",
               "description": "",
-              "duration": 2810984,
+              "duration": 2811008,
               "seasonNumber": 1,
               "episodeNumber": 18,
-              "thumb": "http://192.168.1.100:32400/library/metadata/5952/thumb/1782174897?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
+              "thumb": "http://192.168.1.100:32400/library/metadata/5952/thumb/1782174646?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
               "url": "http://192.168.1.100:32400/library/parts/8617/1781726443/file.mp4?X-Plex-Token=iJ6NiJyMHd8Zs9xjvcwP",
               "plexToken": "iJ6NiJyMHd8Zs9xjvcwP"
             },
