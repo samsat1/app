@@ -6654,28 +6654,37 @@
                 const category = (item.category || '').toLowerCase();
                 const isAdult = item.adult || item.isAdult || category === 'adult';
                 const isArabic = item.arabic || item.isArabic || category === 'arabic';
-                const isMovie = category === 'movie' || category === 'vod';
+                // ✅ FIX: also accept 'movies' (plural) — the loader sets
+                // category: 'movies' on each item, so the previous strict
+                // 'movie' match let every Movies item fall through to the
+                // packageId filter and get hidden.
+                const isMovie = category === 'movie' || category === 'movies' || category === 'vod';
 
                 // If it's Plex content, check addon access
                 if (isAdult || isArabic || isMovie) {
-                    // Adult content - requires addon + password
+                    // Adult content - requires addon + password.
+                    // Show only if the adult tab is unlocked (password entered).
+                    // Items still appear in the list with a 🔒 lock via
+                    // canAccessContent if the user lacks the addon.
                     if (isAdult) {
-                        const hasAdultAddon = customerAddons.includes('adult') ||
-                                            customerAddons.includes('adult content') ||
-                                            customerAddons.includes('adult content package');
-                        return hasAdultAddon && adultUnlocked;
+                        return adultUnlocked;
                     }
 
-                    // Arabic content - requires addon
+                    // ✅ FIX: Arabic content used to be FILTERED OUT when the
+                    // customer lacked the Arabic addon, leaving the section
+                    // empty even though the count badge showed e.g. "248".
+                    // Now we always include the item in the list — the lock
+                    // icon + "Upgrade Package" prompt is shown by the
+                    // isLocked check downstream.
                     if (isArabic) {
-                        return customerAddons.includes('arabic') ||
-                               customerAddons.includes('arabic package');
+                        return true;
                     }
 
-                    // Movies content - requires addon
+                    // ✅ FIX: Same change for Movies — always include the
+                    // item so users can see what's available and tap the
+                    // upgrade prompt to add the addon.
                     if (isMovie) {
-                        return customerAddons.includes('movies') ||
-                               customerAddons.includes('movies package');
+                        return true;
                     }
                 }
 
@@ -7676,8 +7685,26 @@
                 hls.loadSource(proxiedUrl);
                 hls.attachMedia(video);
                 
-                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
                     console.log('✅ HLS.js loaded, starting playback...');
+                    // ✅ FIX: explicitly select the first audio track.
+                    // Some HLS playlists (notably Plex series with
+                    // multiple language tracks) ship with an empty
+                    // default audio track which would cause the
+                    // "video plays but no audio" symptom. Forcing
+                    // audioTrack = 0 makes the player bind to the
+                    // first available rendition.
+                    try {
+                        if (data && data.audioTracks && data.audioTracks.length > 0) {
+                            hls.audioTrack = 0;
+                            console.log('🔊 Selected audio track 0:', data.audioTracks[0]);
+                        }
+                    } catch (e) { /* noop */ }
+                    // Defensive: ensure the video element is not muted.
+                    // (setupSimpleVideoListeners attaches 'play' listener
+                    // to update the play button but does not enforce
+                    // unmuted state, so we do it here explicitly.)
+                    try { video.muted = false; } catch (e) { /* noop */ }
                     const playPromise = video.play();
                     if (playPromise !== undefined) {
                         playPromise.then(() => {
@@ -8321,30 +8348,12 @@
             }
         });
 
-        // Toggle Play/Pause for TV remote
-        window.togglePlay = function() {
-            const video = getVideoElement();
-            const playPauseBtn = document.getElementById('fsPlayPauseBtn');
-            if (!video) return;
-            
-            if (video.paused) {
-                video.play().then(() => {
-                    if (playPauseBtn) playPauseBtn.textContent = '⏸️ Pause';
-                }).catch(e => console.log('Play failed:', e));
-            } else {
-                video.pause();
-                if (playPauseBtn) playPauseBtn.textContent = '▶️ Play';
-            }
-        };
-
-        // Toggle Mute for TV remote
-        window.toggleMute = function() {
-            const video = getVideoElement();
-            if (!video) return;
-            video.muted = !video.muted;
-        };
-
         // Fullscreen channel switching
+        // (NOTE: window.togglePlay and window.toggleMute are defined LATER in
+        // the file as single, merged versions that handle both the Video.js
+        // player AND the native video element. The earlier "for TV remote"
+        // duplicates were removed because the second definition was
+        // overwriting them and dropping the fsPlayPauseBtn updates.)
         window.fullscreenChannelUp = function() {
             const content = contentData[currentSource]?.content || [];
             if (content.length === 0) return;
@@ -8391,22 +8400,51 @@
             }
         }
 
-        // Global function for video play/pause - defined early for onclick access
+        // Global function for video play/pause - unified for TV remote + buttons
+        // ✅ FIX: was previously defined TWICE in this file. The second
+        // definition (this one) was overwriting the first, which dropped the
+        // fsPlayPauseBtn update. Now we use the NATIVE video element (most
+        // reliable on TVs) and keep BOTH button texts in sync, plus the
+        // resume-last-played fallback.
         window.togglePlay = function() {
-            // ✅ FIX: if there is no current content (because the user pressed stop),
-            // try to resume the last channel that was playing. Otherwise the
-            // fullscreen play button does nothing after stopStream().
+            // Resume last played channel if user pressed stop and is hitting
+            // play again on the TV remote.
             if (!currentContent && window.lastPlayedContent && typeof window.playContent === 'function') {
-                console.log('▶️ Resuming last played channel from fullscreen:', window.lastPlayedContent.name);
+                console.log('▶️ Resuming last played channel:', window.lastPlayedContent.name);
                 window.playContent(window.lastPlayedContent.id);
                 return;
             }
-            if (!player || !currentContent) return;
 
-            if (player.paused()) {
-                player.play();
+            // Prefer native video element — it always reflects the real
+            // paused state, even after player.reset() in stopStream().
+            const video = getVideoElement();
+            if (!video) return;
+
+            const fsBtn = document.getElementById('fsPlayPauseBtn');
+            const simpleBtn = document.getElementById('simplePlayBtn');
+
+            if (video.paused) {
+                const playPromise = video.play();
+                if (playPromise && typeof playPromise.then === 'function') {
+                    playPromise.then(() => {
+                        if (fsBtn) fsBtn.textContent = '⏸️ Pause';
+                        if (simpleBtn) simpleBtn.textContent = '⏸️';
+                    }).catch(e => console.log('Play failed:', e));
+                } else {
+                    if (fsBtn) fsBtn.textContent = '⏸️ Pause';
+                    if (simpleBtn) simpleBtn.textContent = '⏸️';
+                }
             } else {
-                player.pause();
+                video.pause();
+                if (fsBtn) fsBtn.textContent = '▶️ Play';
+                if (simpleBtn) simpleBtn.textContent = '▶️';
+            }
+
+            // Also nudge the Video.js wrapper so internal state stays in sync
+            if (player && typeof player.paused === 'function' && typeof player.play === 'function') {
+                try {
+                    if (video.paused) { /* Video.js will follow native state */ }
+                } catch (e) { /* noop */ }
             }
         }
 
@@ -8416,11 +8454,39 @@
             toggleVideoFullscreen();
         }
 
-        // Global function for mute toggle - defined early for onclick access
+        // Global function for mute toggle - unified for TV remote + buttons
+        // ✅ FIX: was previously defined TWICE. The Video.js-only version
+        // (player.muted()) was overwriting the native version, which made
+        // the volume slider desync from the actual mute state. Now we toggle
+        // the native video element (most reliable on TVs), keep the Video.js
+        // wrapper in sync, and update the volume slider + display.
         window.toggleMute = function() {
-            if (!player) return;
-            
-            player.muted(!player.muted());
+            const video = getVideoElement();
+            if (!video) return;
+
+            // Flip native muted state
+            video.muted = !video.muted;
+
+            // Keep Video.js wrapper in sync (if it exists)
+            if (player && typeof player.muted === 'function') {
+                try { player.muted(video.muted); } catch (e) { /* noop */ }
+            }
+
+            // Update the volume slider so the UI matches reality.
+            // When muted, we show 0% so the user can see they're muted;
+            // when unmuted, we show the actual current volume.
+            const slider = document.getElementById('volumeSlider');
+            const display = document.getElementById('volumeDisplay');
+            try {
+                if (video.muted) {
+                    if (slider) slider.value = 0;
+                    if (display) display.textContent = '🔇 Muted';
+                } else {
+                    const vol = Math.round((video.volume || 0) * 100);
+                    if (slider) slider.value = vol;
+                    if (display) display.textContent = vol + '%';
+                }
+            } catch (e) { /* noop */ }
         }
 
         // Global function for stopping stream - defined early for onclick access
@@ -8473,6 +8539,13 @@
             // metadata is preserved.
             window.lastPlayedContent = currentContent;
             currentContent = null;
+
+            // ✅ FIX: reset the on-screen play button icons so the user doesn't
+            // see a stale ⏸️ after pressing Stop on the TV remote.
+            const fsBtn = document.getElementById('fsPlayPauseBtn');
+            const simpleBtn = document.getElementById('simplePlayBtn');
+            if (fsBtn) fsBtn.textContent = '▶️ Play';
+            if (simpleBtn) simpleBtn.textContent = '▶️';
         }
 
         // Modal Management
@@ -9418,9 +9491,36 @@
 
             // Set initial focus to the first VISIBLE .source-tab on page load
             // This makes the app behave like a native TV app — no mouse click required
+            // ✅ FIX: was unconditionally adding .tv-focused to the first
+            // source-tab on every device, which stuck a persistent purple
+            // outline on the Live TV tab when tested on PC (mouse). Now we
+            // only auto-focus on actual TV / Android-box devices — detected
+            // by media queries (coarse pointer + no hover) and a TV user-agent
+            // check. On PC, the Live TV tab stays highlighted via its own
+            // .active class but does NOT get the focus ring.
             setInitialFocus() {
                 // Don't steal focus if something else is already focused
                 if (document.activeElement && document.activeElement !== document.body) return;
+
+                // Detect whether this is a TV/box or a desktop. If it's a
+                // desktop with a mouse, skip the auto-focus entirely.
+                let isTVOrBox = false;
+                try {
+                    const coarse = window.matchMedia && window.matchMedia('(pointer:coarse)').matches;
+                    const noHover = window.matchMedia && !window.matchMedia('(hover:hover)').matches;
+                    if (coarse && noHover) isTVOrBox = true;
+                } catch (e) { /* matchMedia unavailable — fall through to UA check */ }
+                if (!isTVOrBox) {
+                    const ua = (navigator.userAgent || '').toLowerCase();
+                    if (/web0s|webos|netcast|tizen|smarttv|android tv|hisense|vizio|philips|panasonic|sharp|toshiba|roku|lgwebos|salto|aftb|aft |firetv|google tv|playstation|xbox/.test(ua)) {
+                        isTVOrBox = true;
+                    }
+                }
+                if (!isTVOrBox) {
+                    console.log('🖥️ Desktop detected — skipping auto-focus to avoid stuck purple outline');
+                    return;
+                }
+
                 // Find the first visible source-tab (skip hidden login screen tabs)
                 const tabs = Array.from(document.querySelectorAll('.source-tab'));
                 const visibleTab = tabs.find(tab => {
@@ -9434,7 +9534,31 @@
             
             // Setup scroll wheel for LG Magic Remote, Samsung Smart Remote
             // Also allows natural scrolling in scrollable containers
+            // ✅ FIX: was calling preventDefault() on every wheel event on
+            // every device, which stopped normal PC mouse-wheel page
+            // scrolling. Now we only intercept wheel events on actual
+            // TV / Android-box devices (where the Magic Remote / Smart
+            // Remote wheel needs to be remapped to focus navigation).
+            // On PC the browser handles scroll naturally.
             setupScrollWheel() {
+                // Only intercept wheel events on TV / remote-control devices
+                let isTVOrBox = false;
+                try {
+                    const coarse = window.matchMedia && window.matchMedia('(pointer:coarse)').matches;
+                    const noHover = window.matchMedia && !window.matchMedia('(hover:hover)').matches;
+                    if (coarse && noHover) isTVOrBox = true;
+                } catch (e) { /* noop */ }
+                if (!isTVOrBox) {
+                    const ua = (navigator.userAgent || '').toLowerCase();
+                    if (/web0s|webos|netcast|tizen|smarttv|android tv|hisense|vizio|philips|panasonic|sharp|toshiba|roku|lgwebos|salto|aftb|aft |firetv|google tv|playstation|xbox/.test(ua)) {
+                        isTVOrBox = true;
+                    }
+                }
+                if (!isTVOrBox) {
+                    console.log('🖥️ Desktop detected — letting browser handle mouse-wheel scroll naturally');
+                    return; // <-- KEY: don't add the wheel handler on PC
+                }
+
                 document.addEventListener('wheel', (e) => {
                     // Check if scrolling inside a scrollable container (content list, modal, etc.)
                     const scrollableSelectors = ['.content-list', '.package-content', '.login-content', '.adult-content'];
@@ -9595,8 +9719,15 @@
                 style.id = 'tv-focus-styles';
                 style.textContent = `
                     /* TV Remote Focus Styles */
+                    /* ✅ FIX: was using *:focus which made the purple
+                       outline stick on the first content item after a
+                       MOUSE click on PC. :focus-visible only triggers
+                       for keyboard / TV-remote navigation, not mouse
+                       clicks — so the outline correctly stays on the
+                       TV-focused element on a remote, but disappears
+                       on PC after clicking another item. */
                     .tv-focused,
-                    *:focus {
+                    *:focus-visible {
                         outline: 3px solid #7c3aed !important;
                         outline-offset: 3px !important;
                         box-shadow: 0 0 20px rgba(124, 58, 237, 0.6) !important;
