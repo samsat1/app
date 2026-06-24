@@ -9413,7 +9413,23 @@
                 this.setupScrollWheel();
                 this.setupTouchpad();
                 this.addFocusStyles();
-                console.log('📺 TV Remote Control initialized (with scroll wheel support)');
+                this.setInitialFocus();
+            },
+
+            // Set initial focus to the first VISIBLE .source-tab on page load
+            // This makes the app behave like a native TV app — no mouse click required
+            setInitialFocus() {
+                // Don't steal focus if something else is already focused
+                if (document.activeElement && document.activeElement !== document.body) return;
+                // Find the first visible source-tab (skip hidden login screen tabs)
+                const tabs = Array.from(document.querySelectorAll('.source-tab'));
+                const visibleTab = tabs.find(tab => {
+                    const rect = tab.getBoundingClientRect();
+                    const style = window.getComputedStyle(tab);
+                    return rect.width > 0 && rect.height > 0 &&
+                           style.display !== 'none' && style.visibility !== 'hidden';
+                });
+                if (visibleTab) this.setFocus(visibleTab);
             },
             
             // Setup scroll wheel for LG Magic Remote, Samsung Smart Remote
@@ -9611,7 +9627,13 @@
                 this.updateFocusableElements();
                 if (this.focusableElements.length === 0) return;
 
-                const current = document.activeElement;
+                // Use the element with .tv-focused class as the "current" element.
+                // This is more reliable than document.activeElement because:
+                // 1. Plain divs without tabindex don't accept .focus() but can have .tv-focused
+                // 2. After setFocus(), the visual focus indicator is .tv-focused
+                let current = document.querySelector('.tv-focused');
+                if (!current) current = document.activeElement;
+                if (current === document.body) current = null;
                 const currentRect = current?.getBoundingClientRect();
 
                 // Rule: source-tab elements only respond to LEFT/RIGHT (horizontal navigation)
@@ -10323,112 +10345,6 @@
         
         // Initialize TV Remote after DOM ready
         setTimeout(() => tvRemote.init(), 500);
-        
-        // ============================================
-        // ON-SCREEN DIAGNOSTIC DASHBOARD
-        // Purpose: Show what keys the TVR 3 sends, on screen
-        // Safe: Does NOT call preventDefault, does NOT stop propagation
-        // ============================================
-        (function setupOnScreenDebug() {
-            // Create dashboard container
-            const dashboard = document.createElement('div');
-            dashboard.id = 'tv-debug-dashboard';
-            dashboard.style.cssText = 'position:fixed;top:10px;right:10px;width:380px;background:rgba(0,0,0,0.92);color:#00ff00;font-family:monospace;font-size:13px;padding:12px;border:2px solid #00ff00;border-radius:8px;z-index:999999;pointer-events:none;line-height:1.5;max-height:90vh;overflow-y:auto;';
-            dashboard.innerHTML = '<div style="color:#ffff00;font-weight:bold;font-size:15px;margin-bottom:8px;">🔧 TV REMOTE DIAGNOSTIC</div><div id="tv-debug-content">Initializing...</div>';
-            document.body.appendChild(dashboard);
-            
-            const content = document.getElementById('tv-debug-content');
-            let lastKeyInfo = 'None yet - press a key';
-            let lastSource = '-';
-            let keyCount = 0;
-            
-            function updateDashboard() {
-                const items = document.querySelectorAll('.content-item').length;
-                const focusedEls = document.querySelectorAll('.tv-focused').length;
-                const activeTag = document.activeElement?.tagName || 'NONE';
-                const activeClass = document.activeElement?.className?.toString().slice(0, 25) || 'none';
-                const focusables = tvRemote.focusableElements?.length || 0;
-                const isInit = typeof tvRemote !== 'undefined' ? 'YES' : 'NO';
-                
-                content.innerHTML = 
-                    '<div style="color:#00ffff;">tvRemote initialized: ' + isInit + '</div>' +
-                    '<div>Focusable elements: ' + focusables + '</div>' +
-                    '<div>Content items (.content-item): ' + items + '</div>' +
-                    '<div>Elements with .tv-focused: ' + focusedEls + '</div>' +
-                    '<div>document.activeElement: ' + activeTag + ' (' + activeClass + ')</div>' +
-                    '<div style="margin-top:8px;border-top:1px solid #444;padding-top:8px;color:#ffff00;">LAST KEY PRESSED:</div>' +
-                    '<div style="color:#ff8800;">Source: ' + lastSource + '</div>' +
-                    '<div>Key: ' + lastKeyInfo + '</div>' +
-                    '<div>Total keys pressed: ' + keyCount + '</div>' +
-                    '<div style="margin-top:8px;color:#888;font-size:11px;">Press arrow keys on TVR 3 remote</div>';
-            }
-            
-            function debugLogKey(e, source) {
-                const keyCode = e.keyCode || e.which;
-                lastSource = source;
-                lastKeyInfo = e.key + ' (code:' + keyCode + ')';
-                keyCount++;
-                updateDashboard();
-                if (typeof updateDemo === 'function') updateDemo();
-                console.log('🔍 [DEBUG-KEY]', source, 'key:', e.key, 'keyCode:', keyCode, 'target:', e.target.tagName);
-            }
-            
-            document.addEventListener('keydown', function(e) {
-                debugLogKey(e, 'document');
-            });
-            window.addEventListener('keydown', function(e) {
-                debugLogKey(e, 'window');
-            });
-            
-            // ============================================
-            // HUGE VERSION BANNER - if you see this, you have the latest
-            // ============================================
-            const versionBanner = document.createElement('div');
-            versionBanner.id = 'tv-version-banner';
-            versionBanner.style.cssText = 'position:fixed;top:0;left:0;width:100%;background:#ff0000;color:#ffff00;font-family:Arial,sans-serif;font-size:32px;font-weight:bold;padding:15px;text-align:center;z-index:9999999;pointer-events:none;border-bottom:5px solid yellow;';
-            versionBanner.innerHTML = '🚨 VERSION 10 - KEYBOARD UP/DOWN NAVIGATES OUT - BUILD ' + Date.now() + ' 🚨';
-            document.body.appendChild(versionBanner);
-            console.log('🚨 VERSION 10 LOADED - KEYBOARD UP/DOWN NAVIGATES OUT');
-            
-            // ============================================
-            // BIG VISIBLE NAVIGATION DEMO INDICATOR
-            // A large, brightly colored box that follows focus
-            // Impossible to miss - shows clearly if navigation works
-            // ============================================
-            const demo = document.createElement('div');
-            demo.id = 'tv-nav-demo';
-            demo.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);width:90%;max-width:900px;background:rgba(255,0,255,0.95);color:#000;font-family:Arial,sans-serif;font-size:24px;font-weight:bold;padding:20px 30px;border:5px solid #ffff00;border-radius:15px;z-index:999999;pointer-events:none;box-shadow:0 0 40px #ff00ff;text-align:center;';
-            demo.innerHTML = '<div style="font-size:14px;color:#000080;margin-bottom:8px;">📍 FOCUSED ELEMENT (Press arrows to move)</div><div id="tv-nav-demo-text">Initializing...</div>';
-            document.body.appendChild(demo);
-            
-            const demoText = document.getElementById('tv-nav-demo-text');
-            
-            function updateDemo() {
-                const focused = document.querySelector('.tv-focused');
-                if (focused) {
-                    const tag = focused.tagName;
-                    const cls = focused.className.toString().slice(0, 40);
-                    const txt = (focused.innerText || focused.value || focused.textContent || '').slice(0, 50).trim();
-                    demoText.innerHTML = tag + ' • ' + (cls || '(no class)') + ' • "' + (txt || '(no text)') + '"';
-                    demo.style.background = 'rgba(0,255,0,0.95)';
-                    demo.style.borderColor = '#ffff00';
-                } else {
-                    demoText.innerHTML = '⚠️ NO ELEMENT HAS .tv-focused CLASS';
-                    demo.style.background = 'rgba(255,0,0,0.95)';
-                    demo.style.borderColor = '#ffffff';
-                }
-            }
-            
-            // Update demo whenever a key is pressed
-            // (updateDemo is now called from debugLogKey)
-            
-            // Update dashboard every second to show fresh state
-            setInterval(function() { updateDashboard(); updateDemo(); }, 500);
-            setTimeout(function() { updateDashboard(); updateDemo(); }, 600);
-            setTimeout(function() { updateDashboard(); updateDemo(); }, 1500);
-            
-            console.log('🔍 [DEBUG] On-screen dashboard installed');
-        })();
         
         // Re-initialize when content changes
         const contentObserver = new MutationObserver(() => {
@@ -11404,5 +11320,4 @@ function initFloatingBall() {
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', initFloatingBall); 
 </script>
-</body>
 </html>
