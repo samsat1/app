@@ -6850,7 +6850,7 @@
                 const dblClickAction = isLocked ? '' : (item.type === 'package' ? '' : `handleDoubleClick('${item.id}')`);
                 
                 return `
-                    <div class="${className} ${isLocked ? 'locked-content' : ''}" tabindex="0" data-id="${item.id}" onclick="${clickAction}" ondblclick="${dblClickAction}" onkeydown="if(event.key==='Enter'){playContent('${item.id}')}">
+                    <div class="${className} ${isLocked ? 'locked-content' : ''}" tabindex="0" data-id="${item.id}" onclick="${clickAction}" ondblclick="${dblClickAction}" onkeydown="if(event.key==='Enter'){event.stopPropagation();playContent('${item.id}')}">
                         <div class="content-type-badge ${typeBadge}">${isAdult ? '🔞 ADULT' : contentType}</div>
                         ${isLocked ? '<div class="lock-overlay"><div class="lock-icon">🔒</div></div>' : ''}
                         <div class="content-header">
@@ -9610,52 +9610,102 @@
             moveFocus(direction) {
                 this.updateFocusableElements();
                 if (this.focusableElements.length === 0) return;
-                
+
                 const current = document.activeElement;
                 const currentRect = current?.getBoundingClientRect();
-                
+
+                // Rule: source-tab elements only respond to LEFT/RIGHT (horizontal navigation)
+                // UP/DOWN on a source-tab does nothing (user must use LEFT/RIGHT to change tabs)
+                if (current && current.classList && current.classList.contains('source-tab')) {
+                    if (direction === 'up' || direction === 'down') {
+                        return;
+                    }
+                }
+
+                // Also: don't navigate LEFT/RIGHT TO a source-tab from a different Y region
+                // This prevents the wrap from end-of-row to next-row issue
+
                 let bestElement = null;
                 let bestScore = Infinity;
-                
+
                 this.focusableElements.forEach(el => {
                     if (el === current) return;
-                    
+
+                    // Skip source-tabs for vertical navigation targets
+                    if ((direction === 'up' || direction === 'down') &&
+                        el.classList && el.classList.contains('source-tab')) {
+                        return;
+                    }
+                    // Skip source-tabs for horizontal navigation if they're in a different row
+                    if ((direction === 'left' || direction === 'right') &&
+                        el.classList && el.classList.contains('source-tab') && currentRect) {
+                        const elRect = el.getBoundingClientRect();
+                        const verticalOverlap = Math.min(elRect.bottom, currentRect.bottom) - Math.max(elRect.top, currentRect.top);
+                        const minHeight = Math.min(elRect.height, currentRect.height);
+                        const overlapRatio = minHeight > 0 ? verticalOverlap / minHeight : 0;
+                        if (overlapRatio < 0.5) return; // Different row - skip
+                    }
+
                     const rect = el.getBoundingClientRect();
                     let score = Infinity;
-                    
+
                     switch(direction) {
                         case 'up':
-                            if (rect.bottom <= currentRect?.top + 10) {
-                                score = (currentRect.top - rect.bottom) + 
-                                        Math.abs(rect.left - currentRect.left) * 0.5;
+                            // STRICT: element must be ABOVE, SAME COLUMN (overlap horizontally > 30%)
+                            if (rect.bottom <= currentRect?.top) {
+                                const horizontalOverlap = Math.min(rect.right, currentRect.right) - Math.max(rect.left, currentRect.left);
+                                const minWidth = Math.min(rect.width, currentRect.width);
+                                const overlapRatio = minWidth > 0 ? horizontalOverlap / minWidth : 0;
+                                if (overlapRatio > 0.3) {
+                                    score = (currentRect.top - rect.bottom) +
+                                            Math.abs(((rect.left + rect.right)/2) - ((currentRect.left + currentRect.right)/2)) * 0.1;
+                                }
                             }
                             break;
                         case 'down':
-                            if (rect.top >= currentRect?.bottom - 10) {
-                                score = (rect.top - currentRect.bottom) + 
-                                        Math.abs(rect.left - currentRect.left) * 0.5;
+                            // STRICT: element must be BELOW, SAME COLUMN (overlap horizontally > 30%)
+                            if (rect.top >= currentRect?.bottom) {
+                                const horizontalOverlap = Math.min(rect.right, currentRect.right) - Math.max(rect.left, currentRect.left);
+                                const minWidth = Math.min(rect.width, currentRect.width);
+                                const overlapRatio = minWidth > 0 ? horizontalOverlap / minWidth : 0;
+                                if (overlapRatio > 0.3) {
+                                    score = (rect.top - currentRect.bottom) +
+                                            Math.abs(((rect.left + rect.right)/2) - ((currentRect.left + currentRect.right)/2)) * 0.1;
+                                }
                             }
                             break;
                         case 'left':
-                            if (rect.right <= currentRect?.left + 10) {
-                                score = (currentRect.left - rect.right) + 
-                                        Math.abs(rect.top - currentRect.top) * 0.5;
+                            // STRICT: element must be to the LEFT, SAME ROW (overlap vertically > 50%)
+                            if (rect.right <= currentRect?.left) {
+                                const verticalOverlap = Math.min(rect.bottom, currentRect.bottom) - Math.max(rect.top, currentRect.top);
+                                const minHeight = Math.min(rect.height, currentRect.height);
+                                const overlapRatio = minHeight > 0 ? verticalOverlap / minHeight : 0;
+                                if (overlapRatio > 0.5) {
+                                    score = (currentRect.left - rect.right) +
+                                            Math.abs(((rect.top + rect.bottom)/2) - ((currentRect.top + currentRect.bottom)/2)) * 0.1;
+                                }
                             }
                             break;
                         case 'right':
-                            if (rect.left >= currentRect?.right - 10) {
-                                score = (rect.left - currentRect.right) + 
-                                        Math.abs(rect.top - currentRect.top) * 0.5;
+                            // STRICT: element must be to the RIGHT, SAME ROW (overlap vertically > 50%)
+                            if (rect.left >= currentRect?.right) {
+                                const verticalOverlap = Math.min(rect.bottom, currentRect.bottom) - Math.max(rect.top, currentRect.top);
+                                const minHeight = Math.min(rect.height, currentRect.height);
+                                const overlapRatio = minHeight > 0 ? verticalOverlap / minHeight : 0;
+                                if (overlapRatio > 0.5) {
+                                    score = (rect.left - currentRect.right) +
+                                            Math.abs(((rect.top + rect.bottom)/2) - ((currentRect.top + currentRect.bottom)/2)) * 0.1;
+                                }
                             }
                             break;
                     }
-                    
+
                     if (score < bestScore) {
                         bestScore = score;
                         bestElement = el;
                     }
                 });
-                
+
                 if (bestElement) {
                     this.setFocus(bestElement);
                 }
@@ -9675,36 +9725,153 @@
                 // Scroll into view
                 element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
             },
-            
+
+            // Find focusable element in a given direction from a specific rect
+            // Used for keyboard escape: when user presses UP/DOWN in an input,
+            // we use the INPUT's rect (not the activeElement rect after blur)
+            findFocusableInDirection(direction, fromRect) {
+                if (!this.focusableElements || this.focusableElements.length === 0) {
+                    this.updateFocusableElements();
+                }
+                if (this.focusableElements.length === 0 || !fromRect) return null;
+
+                let bestElement = null;
+                let bestScore = Infinity;
+
+                this.focusableElements.forEach(el => {
+                    // Skip inputs themselves (we want to LEAVE the input)
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') return;
+
+                    const rect = el.getBoundingClientRect();
+                    let score = Infinity;
+
+                    switch(direction) {
+                        case 'up':
+                            // Element must be ABOVE the input
+                            if (rect.bottom <= fromRect.top) {
+                                const hOverlap = Math.min(rect.right, fromRect.right) - Math.max(rect.left, fromRect.left);
+                                const minWidth = Math.min(rect.width, fromRect.width);
+                                const ratio = minWidth > 0 ? hOverlap / minWidth : 0;
+                                if (ratio > 0.2) {
+                                    score = (fromRect.top - rect.bottom) +
+                                            Math.abs(((rect.left + rect.right)/2) - ((fromRect.left + fromRect.right)/2)) * 0.1;
+                                }
+                            }
+                            break;
+                        case 'down':
+                            // Element must be BELOW the input
+                            if (rect.top >= fromRect.bottom) {
+                                const hOverlap = Math.min(rect.right, fromRect.right) - Math.max(rect.left, fromRect.left);
+                                const minWidth = Math.min(rect.width, fromRect.width);
+                                const ratio = minWidth > 0 ? hOverlap / minWidth : 0;
+                                if (ratio > 0.2) {
+                                    score = (rect.top - fromRect.bottom) +
+                                            Math.abs(((rect.left + rect.right)/2) - ((fromRect.left + fromRect.right)/2)) * 0.1;
+                                }
+                            }
+                            break;
+                        case 'left':
+                            // Element must be to the LEFT
+                            if (rect.right <= fromRect.left) {
+                                const vOverlap = Math.min(rect.bottom, fromRect.bottom) - Math.max(rect.top, fromRect.top);
+                                const minHeight = Math.min(rect.height, fromRect.height);
+                                const ratio = minHeight > 0 ? vOverlap / minHeight : 0;
+                                if (ratio > 0.3) {
+                                    score = (fromRect.left - rect.right) +
+                                            Math.abs(((rect.top + rect.bottom)/2) - ((fromRect.top + fromRect.bottom)/2)) * 0.1;
+                                }
+                            }
+                            break;
+                        case 'right':
+                            // Element must be to the RIGHT
+                            if (rect.left >= fromRect.right) {
+                                const vOverlap = Math.min(rect.bottom, fromRect.bottom) - Math.max(rect.top, fromRect.top);
+                                const minHeight = Math.min(rect.height, fromRect.height);
+                                const ratio = minHeight > 0 ? vOverlap / minHeight : 0;
+                                if (ratio > 0.3) {
+                                    score = (rect.left - fromRect.right) +
+                                            Math.abs(((rect.top + rect.bottom)/2) - ((fromRect.top + fromRect.bottom)/2)) * 0.1;
+                                }
+                            }
+                            break;
+                    }
+
+                    if (score < bestScore) {
+                        bestScore = score;
+                        bestElement = el;
+                    }
+                });
+
+                return bestElement;
+            },
+
             // Handle remote button press
             setupRemoteListeners() {
                 document.addEventListener('keydown', (e) => {
-                    // Ignore if typing in input - allow normal text editing including backspace
+                    // Handle keyboard escape: if user is in an input, ArrowUp/Down escape the keyboard
                     if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
-                        // Only handle navigation keys in input fields, let all others (including Backspace) work normally
-                        if (!['ArrowUp', 'ArrowDown', 'Escape'].includes(e.key)) {
-                            return; // Allow backspace, typing, arrow left/right for cursor movement
+                        // ArrowUp/Down = escape keyboard and move focus to nearest element in that direction
+                        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            const dir = e.key === 'ArrowUp' ? 'up' : 'down';
+
+                            // CRITICAL: Capture input position BEFORE blurring
+                            // (after blur, activeElement becomes BODY and we lose position context)
+                            const inputEl = document.activeElement;
+                            const inputRect = inputEl.getBoundingClientRect();
+
+                            // Find the focusable element in the given direction FROM THE INPUT'S POSITION
+                            this.updateFocusableElements();
+                            const target = this.findFocusableInDirection(dir, inputRect);
+
+                            // Blur the input to close keyboard
+                            inputEl.blur();
+
+                            if (target) {
+                                // Set focus on the target element
+                                document.querySelectorAll('.tv-focused').forEach(el => el.classList.remove('tv-focused'));
+                                target.classList.add('tv-focused');
+                                target.focus({ preventScroll: false });
+                                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                            return;
                         }
+                        // ArrowLeft/Right = move cursor inside input (let browser handle it)
+                        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                            return; // Allow normal cursor movement
+                        }
+                        // Escape = close keyboard by blurring
+                        if (e.key === 'Escape') {
+                            e.preventDefault();
+                            document.activeElement.blur();
+                            return;
+                        }
+                        // All other keys (typing, backspace, etc.) pass through
+                        return;
                     }
-                    
+
                     switch(e.key) {
                         // Navigation - Arrow Keys
                         case 'ArrowUp':
                             e.preventDefault();
-                            // Check if on control button - use general navigation
-                            if (document.activeElement?.classList.contains('control-btn')) {
+                            // FIX: Try content list first if content items exist
+                            if (document.querySelectorAll('.content-item').length > 0) {
+                                this.moveFocusInList('up');
+                            } else if (document.activeElement?.classList.contains('control-btn')) {
                                 this.moveFocus('up');
                             } else {
-                                this.moveFocusInList('up');
+                                this.moveFocus('up');
                             }
                             break;
                         case 'ArrowDown':
                             e.preventDefault();
-                            // Check if on control button - use general navigation
-                            if (document.activeElement?.classList.contains('control-btn')) {
+                            // FIX: Try content list first if content items exist
+                            if (document.querySelectorAll('.content-item').length > 0) {
+                                this.moveFocusInList('down');
+                            } else if (document.activeElement?.classList.contains('control-btn')) {
                                 this.moveFocus('down');
                             } else {
-                                this.moveFocusInList('down');
+                                this.moveFocus('down');
                             }
                             break;
                         case 'ArrowLeft':
@@ -9820,11 +9987,21 @@
                     switch(keyCode) {
                         case 19: // Android D-pad UP
                             e.preventDefault();
-                            this.moveFocusInList('up');
+                            // FIX: Use moveFocus if no content items
+                            if (document.querySelectorAll('.content-item').length > 0) {
+                                this.moveFocusInList('up');
+                            } else {
+                                this.moveFocus('up');
+                            }
                             break;
                         case 20: // Android D-pad DOWN
                             e.preventDefault();
-                            this.moveFocusInList('down');
+                            // FIX: Use moveFocus if no content items
+                            if (document.querySelectorAll('.content-item').length > 0) {
+                                this.moveFocusInList('down');
+                            } else {
+                                this.moveFocus('down');
+                            }
                             break;
                         case 21: // Android D-pad LEFT
                             e.preventDefault();
@@ -10147,11 +10324,243 @@
         // Initialize TV Remote after DOM ready
         setTimeout(() => tvRemote.init(), 500);
         
+        // ============================================
+        // ON-SCREEN DIAGNOSTIC DASHBOARD
+        // Purpose: Show what keys the TVR 3 sends, on screen
+        // Safe: Does NOT call preventDefault, does NOT stop propagation
+        // ============================================
+        (function setupOnScreenDebug() {
+            // Create dashboard container
+            const dashboard = document.createElement('div');
+            dashboard.id = 'tv-debug-dashboard';
+            dashboard.style.cssText = 'position:fixed;top:10px;right:10px;width:380px;background:rgba(0,0,0,0.92);color:#00ff00;font-family:monospace;font-size:13px;padding:12px;border:2px solid #00ff00;border-radius:8px;z-index:999999;pointer-events:none;line-height:1.5;max-height:90vh;overflow-y:auto;';
+            dashboard.innerHTML = '<div style="color:#ffff00;font-weight:bold;font-size:15px;margin-bottom:8px;">🔧 TV REMOTE DIAGNOSTIC</div><div id="tv-debug-content">Initializing...</div>';
+            document.body.appendChild(dashboard);
+            
+            const content = document.getElementById('tv-debug-content');
+            let lastKeyInfo = 'None yet - press a key';
+            let lastSource = '-';
+            let keyCount = 0;
+            
+            function updateDashboard() {
+                const items = document.querySelectorAll('.content-item').length;
+                const focusedEls = document.querySelectorAll('.tv-focused').length;
+                const activeTag = document.activeElement?.tagName || 'NONE';
+                const activeClass = document.activeElement?.className?.toString().slice(0, 25) || 'none';
+                const focusables = tvRemote.focusableElements?.length || 0;
+                const isInit = typeof tvRemote !== 'undefined' ? 'YES' : 'NO';
+                
+                content.innerHTML = 
+                    '<div style="color:#00ffff;">tvRemote initialized: ' + isInit + '</div>' +
+                    '<div>Focusable elements: ' + focusables + '</div>' +
+                    '<div>Content items (.content-item): ' + items + '</div>' +
+                    '<div>Elements with .tv-focused: ' + focusedEls + '</div>' +
+                    '<div>document.activeElement: ' + activeTag + ' (' + activeClass + ')</div>' +
+                    '<div style="margin-top:8px;border-top:1px solid #444;padding-top:8px;color:#ffff00;">LAST KEY PRESSED:</div>' +
+                    '<div style="color:#ff8800;">Source: ' + lastSource + '</div>' +
+                    '<div>Key: ' + lastKeyInfo + '</div>' +
+                    '<div>Total keys pressed: ' + keyCount + '</div>' +
+                    '<div style="margin-top:8px;color:#888;font-size:11px;">Press arrow keys on TVR 3 remote</div>';
+            }
+            
+            function debugLogKey(e, source) {
+                const keyCode = e.keyCode || e.which;
+                lastSource = source;
+                lastKeyInfo = e.key + ' (code:' + keyCode + ')';
+                keyCount++;
+                updateDashboard();
+                if (typeof updateDemo === 'function') updateDemo();
+                console.log('🔍 [DEBUG-KEY]', source, 'key:', e.key, 'keyCode:', keyCode, 'target:', e.target.tagName);
+            }
+            
+            document.addEventListener('keydown', function(e) {
+                debugLogKey(e, 'document');
+            });
+            window.addEventListener('keydown', function(e) {
+                debugLogKey(e, 'window');
+            });
+            
+            // ============================================
+            // HUGE VERSION BANNER - if you see this, you have the latest
+            // ============================================
+            const versionBanner = document.createElement('div');
+            versionBanner.id = 'tv-version-banner';
+            versionBanner.style.cssText = 'position:fixed;top:0;left:0;width:100%;background:#ff0000;color:#ffff00;font-family:Arial,sans-serif;font-size:32px;font-weight:bold;padding:15px;text-align:center;z-index:9999999;pointer-events:none;border-bottom:5px solid yellow;';
+            versionBanner.innerHTML = '🚨 VERSION 10 - KEYBOARD UP/DOWN NAVIGATES OUT - BUILD ' + Date.now() + ' 🚨';
+            document.body.appendChild(versionBanner);
+            console.log('🚨 VERSION 10 LOADED - KEYBOARD UP/DOWN NAVIGATES OUT');
+            
+            // ============================================
+            // BIG VISIBLE NAVIGATION DEMO INDICATOR
+            // A large, brightly colored box that follows focus
+            // Impossible to miss - shows clearly if navigation works
+            // ============================================
+            const demo = document.createElement('div');
+            demo.id = 'tv-nav-demo';
+            demo.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);width:90%;max-width:900px;background:rgba(255,0,255,0.95);color:#000;font-family:Arial,sans-serif;font-size:24px;font-weight:bold;padding:20px 30px;border:5px solid #ffff00;border-radius:15px;z-index:999999;pointer-events:none;box-shadow:0 0 40px #ff00ff;text-align:center;';
+            demo.innerHTML = '<div style="font-size:14px;color:#000080;margin-bottom:8px;">📍 FOCUSED ELEMENT (Press arrows to move)</div><div id="tv-nav-demo-text">Initializing...</div>';
+            document.body.appendChild(demo);
+            
+            const demoText = document.getElementById('tv-nav-demo-text');
+            
+            function updateDemo() {
+                const focused = document.querySelector('.tv-focused');
+                if (focused) {
+                    const tag = focused.tagName;
+                    const cls = focused.className.toString().slice(0, 40);
+                    const txt = (focused.innerText || focused.value || focused.textContent || '').slice(0, 50).trim();
+                    demoText.innerHTML = tag + ' • ' + (cls || '(no class)') + ' • "' + (txt || '(no text)') + '"';
+                    demo.style.background = 'rgba(0,255,0,0.95)';
+                    demo.style.borderColor = '#ffff00';
+                } else {
+                    demoText.innerHTML = '⚠️ NO ELEMENT HAS .tv-focused CLASS';
+                    demo.style.background = 'rgba(255,0,0,0.95)';
+                    demo.style.borderColor = '#ffffff';
+                }
+            }
+            
+            // Update demo whenever a key is pressed
+            // (updateDemo is now called from debugLogKey)
+            
+            // Update dashboard every second to show fresh state
+            setInterval(function() { updateDashboard(); updateDemo(); }, 500);
+            setTimeout(function() { updateDashboard(); updateDemo(); }, 600);
+            setTimeout(function() { updateDashboard(); updateDemo(); }, 1500);
+            
+            console.log('🔍 [DEBUG] On-screen dashboard installed');
+        })();
+        
         // Re-initialize when content changes
         const contentObserver = new MutationObserver(() => {
             tvRemote.updateFocusableElements();
         });
         contentObserver.observe(document.body, { childList: true, subtree: true });
+        
+        // ============================================
+        // SIMPLE OVERRIDE D-PAD (Bulletproof - runs after all other code)
+        // Uses .tv-focused class to track and move focus
+        // ============================================
+        (function simpleDPad() {
+            let currentIndex = 0;
+            
+            function getFocusableElements() {
+                return Array.from(document.querySelectorAll(
+                    '.source-tab, .content-item, .control-btn, .package-card, .video-card, button:not([disabled]), input:not([disabled])'
+                )).filter(el => {
+                    const rect = el.getBoundingClientRect();
+                    const style = window.getComputedStyle(el);
+                    return rect.width > 0 && rect.height > 0 && 
+                           style.display !== 'none' && 
+                           style.visibility !== 'hidden';
+                });
+            }
+            
+            function moveFocusSimple(direction) {
+                const elements = getFocusableElements();
+                if (elements.length === 0) return;
+                
+                // Find current focused element
+                let currentIdx = -1;
+                elements.forEach((el, i) => {
+                    if (el.classList.contains('tv-focused')) currentIdx = i;
+                });
+                
+                // If nothing focused, start at 0
+                if (currentIdx === -1) currentIdx = 0;
+                
+                let newIdx;
+                if (direction === 'up' || direction === 'left') {
+                    newIdx = currentIdx > 0 ? currentIdx - 1 : elements.length - 1;
+                } else {
+                    newIdx = currentIdx < elements.length - 1 ? currentIdx + 1 : 0;
+                }
+                
+                // Clear all tv-focused
+                elements.forEach(el => el.classList.remove('tv-focused'));
+                
+                // Set new focused
+                const target = elements[newIdx];
+                target.classList.add('tv-focused');
+                target.focus({ preventScroll: false });
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                console.log('🎯 SimpleD-Pad →', target.tagName, target.className.toString().slice(0, 30));
+            }
+            
+            // Listen on BOTH document and window
+            function handleSimpleDpad(e) {
+                const key = e.key;
+                const keyCode = e.keyCode || e.which;
+                
+                // Skip if typing in input
+                if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName) && 
+                    !['INPUT'].includes(document.activeElement?.tagName)) {
+                    return;
+                }
+                
+                switch(key) {
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        e.stopPropagation();
+                        moveFocusSimple('up');
+                        break;
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        e.stopPropagation();
+                        moveFocusSimple('down');
+                        break;
+                    case 'ArrowLeft':
+                        e.preventDefault();
+                        e.stopPropagation();
+                        moveFocusSimple('left');
+                        break;
+                    case 'ArrowRight':
+                        e.preventDefault();
+                        e.stopPropagation();
+                        moveFocusSimple('right');
+                        break;
+                    case 'Enter':
+                    case ' ':
+                        const focused = document.querySelector('.tv-focused') || document.activeElement;
+                        if (focused && focused !== document.body) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            focused.click();
+                        }
+                        break;
+                }
+                
+                // Android D-pad codes
+                switch(keyCode) {
+                    case 19: // Up
+                        e.preventDefault(); e.stopPropagation();
+                        moveFocusSimple('up'); break;
+                    case 20: // Down
+                        e.preventDefault(); e.stopPropagation();
+                        moveFocusSimple('down'); break;
+                    case 21: // Left
+                        e.preventDefault(); e.stopPropagation();
+                        moveFocusSimple('left'); break;
+                    case 22: // Right
+                        e.preventDefault(); e.stopPropagation();
+                        moveFocusSimple('right'); break;
+                    case 23: case 66: // OK/Enter
+                        const focusedA = document.querySelector('.tv-focused') || document.activeElement;
+                        if (focusedA && focusedA !== document.body) {
+                            e.preventDefault(); e.stopPropagation();
+                            focusedA.click();
+                        }
+                        break;
+                }
+            }
+            
+            // Attach listeners with capture:true so they fire BEFORE others
+            // DISABLED: This was overriding our main tvRemote handler and causing sideways navigation
+            // document.addEventListener('keydown', handleSimpleDpad, true);
+            // window.addEventListener('keydown', handleSimpleDpad, true);
+
+            console.log('✅ Simple Override D-Pad DISABLED - main tvRemote handler now active');
+        })();
         
         // ============================================
         // END TV REMOTE CONTROL SYSTEM
@@ -10726,29 +11135,12 @@
             console.log('✅ TV Remote enhancement active');
         }
         
-        // Focus management for TV
+        // Focus management for TV - DISABLED (was conflicting with SimpleD-Pad)
         function manageTVFocus() {
-            // Auto-focus first element on load
-            setTimeout(() => {
-                const firstInteractive = document.querySelector('.source-tab, .content-card, .package-card, button');
-                if (firstInteractive && document.activeElement === document.body) {
-                    firstInteractive.focus();
-                    firstInteractive.classList.add('tv-focused');
-                }
-            }, 1000);
-            
-            // Add focus styles
-            document.addEventListener('focusin', function(e) {
-                if (e.target.classList.contains('content-card') || 
-                    e.target.classList.contains('source-tab') ||
-                    e.target.classList.contains('package-card')) {
-                    e.target.classList.add('tv-focused');
-                }
-            });
-            
-            document.addEventListener('focusout', function(e) {
-                e.target.classList.remove('tv-focused');
-            });
+            // DISABLED: This function was removing tv-focused on focusout,
+            // which interfered with the SimpleD-Pad navigation system.
+            // The SimpleD-Pad now handles all focus management.
+            return;
         }
         
         // Initialize everything
