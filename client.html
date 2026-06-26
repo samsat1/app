@@ -2434,7 +2434,7 @@
         // ============================================
         (function autoUpdateCheck() {
             try {
-                const APP_VERSION = '7.10.5';
+                const APP_VERSION = '7.10.6';
                 const STORAGE_KEY = 'iwatch_app_version';
                 const lastSeen = localStorage.getItem(STORAGE_KEY);
                 if (lastSeen && lastSeen !== APP_VERSION) {
@@ -10705,13 +10705,27 @@
             function handleSimpleDpad(e) {
                 const key = e.key;
                 const keyCode = e.keyCode || e.which;
-                
+
                 // Skip if typing in input
-                if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName) && 
+                if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName) &&
                     !['INPUT'].includes(document.activeElement?.tagName)) {
                     return;
                 }
-                
+
+                // ✅ FIX: this handler used to fight with the main tvRemote
+                // handler — both fired on the same keydown event and BOTH
+                // tried to move focus, which caused the "down jumps to
+                // last video" / "up jumps to first" behaviour the user
+                // was seeing in Movies / Arabic. Now we ONLY let
+                // simpleDPad act when there are NO content items / cards
+                // on the page (e.g. login modal, dashboard, settings).
+                // When content items exist, tvRemote's moveFocusInList
+                // is the single source of truth.
+                const hasContentCards = document.querySelectorAll(
+                    '.content-item, .series-card, .season-card, .episode-card'
+                ).length > 0;
+                if (hasContentCards) return;
+
                 switch(key) {
                     case 'ArrowUp':
                         e.preventDefault();
@@ -10743,7 +10757,7 @@
                         }
                         break;
                 }
-                
+
                 // Android D-pad codes
                 switch(keyCode) {
                     case 19: // Up
