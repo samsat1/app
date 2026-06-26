@@ -9,7 +9,7 @@
     <meta name="description" content="Professional IPTV streaming service with live TV, movies, and sports content">
     <meta name="author" content="iWATCH TV">
     <!-- VERSION MARKER v7.9: aggressive adult unlock bypass in playContent -->
-    <meta name="iwatch-version" content="8.0.0-shaka-player">
+    <meta name="iwatch-version" content="8.0.1-fix-videojs-shim">
     <meta name="keywords" content="IPTV, streaming, live TV, movies, sports, entertainment">
     
     <!-- PWA Manifest for TV -->
@@ -2434,7 +2434,7 @@
         // ============================================
         (function autoUpdateCheck() {
             try {
-                const APP_VERSION = '8.0.0';
+                const APP_VERSION = '8.0.1';
                 const STORAGE_KEY = 'iwatch_app_version';
                 const lastSeen = localStorage.getItem(STORAGE_KEY);
                 if (lastSeen && lastSeen !== APP_VERSION) {
@@ -7165,31 +7165,43 @@
 
         // Video Player Functions
         function initializePlayer() {
-            // Check if already initialized
+            // ✅ v8.0.0: Was using videojs() which is no longer loaded.
+            // Shaka Player handles ALL video playback now. We just need to
+            // expose the native <video> element via the `player` global so
+            // legacy code that calls player.el().querySelector('video'),
+            // player.src(...), player.play() etc. still works without errors.
             if (player) {
                 console.log('Player already initialized');
                 return;
             }
-            
-            player = videojs('videoPlayer', {
-                controls: true,
-                responsive: true,
-                fluid: true,
-                bigPlayButton: false,
-                loadingSpinner: false,
-                errorDisplay: false,
-                poster: false,
-                textTrackDisplay: false,
-                playbackRates: [0.5, 1, 1.25, 1.5, 2],
-                sources: [],
-                html5: {
-                    vhs: {
-                        overrideNative: true
-                    },
-                    nativeAudioTracks: false,
-                    nativeVideoTracks: false
-                }
-            });
+            const videoEl = document.getElementById('videoPlayer');
+            if (!videoEl) {
+                console.error('❌ videoPlayer element not found');
+                return;
+            }
+            // Build a minimal shim that mimics the Video.js player API
+            // just enough to satisfy legacy callers. Shaka attaches to the
+            // real <video> element when playWithShaka() runs.
+            player = {
+                el: () => videoEl,
+                src: (srcObj) => {
+                    if (typeof srcObj === 'object' && srcObj.src) {
+                        videoEl.src = srcObj.src;
+                        if (srcObj.type) videoEl.type = srcObj.type;
+                    } else if (typeof srcObj === 'string') {
+                        videoEl.src = srcObj;
+                    }
+                    return player;
+                },
+                play: () => videoEl.play(),
+                pause: () => videoEl.pause(),
+                on: (event, handler) => videoEl.addEventListener(event, handler),
+                off: (event, handler) => videoEl.removeEventListener(event, handler),
+                reset: () => { videoEl.removeAttribute('src'); videoEl.load(); },
+                paused: () => videoEl.paused,
+                ready: (cb) => { if (videoEl.readyState >= 1) cb(); else videoEl.addEventListener('loadedmetadata', cb, { once: true }); }
+            };
+            console.log('✅ Player shim initialized (Shaka Player engine)');
             
             // IMMEDIATELY hide all Video.js generated elements
             setTimeout(function() {
@@ -11497,34 +11509,12 @@
         // Enhanced player initialization with HLS support
         window.initializePlayer = function() {
             console.log('🎬 Initializing enhanced player with HLS support...');
-            
-            // Initialize Video.js player if not already done (correct ID: videoPlayer)
-            if (typeof videojs !== 'undefined' && !player) {
-                const videoElement = document.getElementById('videoPlayer');
-                if (videoElement) {
-                    player = videojs(videoElement, {
-                        controls: true,
-                        autoplay: false,
-                        preload: 'auto',
-                        fluid: true,
-                        playbackRates: [0.5, 1, 1.5, 2],
-                        html5: {
-                            vhs: {
-                                overrideNative: true
-                            }
-                        }
-                    });
-                    
-                    player.on('error', function(e) {
-                        console.log('Player error:', e);
-                    });
-                    
-                    console.log('✅ Video.js player initialized');
-                }
-            }
-            
-            // Call original function if exists
-            if (originalInitializePlayer) {
+
+            // ✅ v8.0.0: Video.js is no longer loaded. The main
+            // initializePlayer() function (line 7167) already creates a
+            // shim that exposes the native <video> element via the
+            // `player` global. We just delegate to it here.
+            if (typeof originalInitializePlayer === 'function') {
                 originalInitializePlayer();
             }
         };
