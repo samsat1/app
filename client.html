@@ -6,14 +6,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iWATCH TV - Professional Streaming</title>
-    <!-- ✅ v8.0.3: Upgrade insecure (HTTP) requests to HTTPS where possible.
-         This helps with mixed-content blocking when the page is served
-         over HTTPS (GitHub Pages) but stream URLs are HTTP (Plex local).
-         On browsers that support it, this allows HTTP→HTTPS upgrades.
-         On local file:// or HTTP pages, this is a no-op. -->
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-    <!-- Allow inline styles and scripts from same-origin + shaka CDN -->
-    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net data: blob:">
+    <!-- NOTE: Do NOT add upgrade-insecure-requests here. It caused
+         ERR_CERT_COMMON_NAME_INVALID because Plex's self-signed cert
+         doesn't match the hostname. Plex URLs must stay HTTP. -->
     <meta name="description" content="Professional IPTV streaming service with live TV, movies, and sports content">
     <meta name="author" content="iWATCH TV">
     <!-- VERSION MARKER v7.9: aggressive adult unlock bypass in playContent -->
@@ -2442,7 +2437,7 @@
         // ============================================
         (function autoUpdateCheck() {
             try {
-                const APP_VERSION = '8.0.3';
+                const APP_VERSION = '8.0.4';
                 const STORAGE_KEY = 'iwatch_app_version';
                 const lastSeen = localStorage.getItem(STORAGE_KEY);
                 if (lastSeen && lastSeen !== APP_VERSION) {
@@ -2496,7 +2491,7 @@
                     console.log('✅ Loaded Plex settings from Firebase');
                     return true;
                 }
-            } catch(e) { console.log('Firebase load error:', e); }
+            } catch(e) { /* Firebase not used — silently skip */ }
             return false;
         }
         
@@ -2508,7 +2503,7 @@
                     localStorage.setItem('adminCustomers', JSON.stringify(doc.data().list));
                     console.log('✅ Loaded ' + doc.data().list.length + ' customers from Firebase');
                 }
-            } catch(e) { console.log('Firebase customers load error:', e); }
+            } catch(e) { /* Firebase not used — silently skip */ }
         }
         
         // Auto-load on page start
