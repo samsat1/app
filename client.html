@@ -9,7 +9,7 @@
     <meta name="description" content="Professional IPTV streaming service with live TV, movies, and sports content">
     <meta name="author" content="iWATCH TV">
     <!-- VERSION MARKER v7.9: aggressive adult unlock bypass in playContent -->
-    <meta name="iwatch-version" content="7.9-adult-bypass">
+    <meta name="iwatch-version" content="7.11.0-mp4-autoplay-fix">
     <meta name="keywords" content="IPTV, streaming, live TV, movies, sports, entertainment">
     
     <!-- PWA Manifest for TV -->
@@ -2434,7 +2434,7 @@
         // ============================================
         (function autoUpdateCheck() {
             try {
-                const APP_VERSION = '7.10.9';
+                const APP_VERSION = '7.11.0';
                 const STORAGE_KEY = 'iwatch_app_version';
                 const lastSeen = localStorage.getItem(STORAGE_KEY);
                 if (lastSeen && lastSeen !== APP_VERSION) {
@@ -2510,6 +2510,46 @@
 
 </head>
 <body onload="initApp()">
+    <!-- ✅ v7.11.0: DEBUG OVERLAY (only shown with ?debug=1 in URL) -->
+    <!-- Tiny on-screen console mirror so the user can see what's happening -->
+    <!-- without DevTools. Critical for debugging on TVR 3 (Android WebView). -->
+    <div id="iwatch-debug-overlay" style="
+        position: fixed; bottom: 10px; right: 10px; z-index: 999999;
+        background: rgba(0,0,0,0.85); color: #00ff88;
+        font-family: 'Courier New', monospace; font-size: 12px;
+        padding: 8px 12px; border-radius: 6px;
+        max-width: 380px; max-height: 220px; overflow: auto;
+        border: 1px solid #00ff88; line-height: 1.4;
+        display: none;
+    "></div>
+    <script>
+    // Debug overlay helpers - v7.11.0
+    window._iwatchDebugEnabled = /[?&]debug=1\b/.test(window.location.search);
+    function _setDebugOverlay(msg) {
+        try {
+            if (!window._iwatchDebugEnabled) return;
+            const el = document.getElementById('iwatch-debug-overlay');
+            if (!el) return;
+            el.style.display = 'block';
+            const t = new Date().toLocaleTimeString();
+            const line = document.createElement('div');
+            line.textContent = `[${t}] ${msg}`;
+            el.appendChild(line);
+            // keep only the last 12 lines
+            while (el.children.length > 12) el.removeChild(el.firstChild);
+            el.scrollTop = el.scrollHeight;
+        } catch (e) { /* noop */ }
+    }
+    function _clearDebugOverlay() {
+        try {
+            const el = document.getElementById('iwatch-debug-overlay');
+            if (el) el.innerHTML = '';
+        } catch (e) { /* noop */ }
+    }
+    if (window._iwatchDebugEnabled) {
+        console.log('🔍 Debug overlay ENABLED (v7.11.0)');
+    }
+    </script>
     <!-- INTERNET VERSION INDICATOR -->
     <!-- PRE-DEFINITION: Placeholder functions to prevent "not defined" errors -->
     <script>
@@ -3016,7 +3056,15 @@
         const contentData = {
             // Default streaming modes: only News (inside Live TV), Sports, and Sports Plus
             // are always-streaming. Everything else is on-demand to keep network traffic low.
-            live: { name: 'Live TV', content: [], streamingMode: 'on-demand' },
+            // ✅ FIX v7.11.0: Live TV is HLS from Nimble transcoder — it
+            // is ALWAYS streaming, not on-demand. Previously marked
+            // 'on-demand' which mis-classified the source and could
+            // affect any feature that branches on streamingMode.
+            // On-demand (play when user clicks, stop when done) is for
+            // local-library MP4 files: movies, arabic, adult, series,
+            // vod, basic, internet. Always-streaming (live, persistent)
+            // is for HLS via Nimble: live TV, news, sports, sportsPlus.
+            live: { name: 'Live TV', content: [], streamingMode: 'always-streaming' },
             'sports-live': { name: 'Sports TV', content: [], streamingMode: 'always-streaming' },
             'livetv-addon': { name: 'TV Addon', content: [], streamingMode: 'on-demand' },
             vod: { name: 'Video on Demand', content: [], streamingMode: 'on-demand' },
@@ -3035,6 +3083,7 @@
         let isFullscreenMode = false; // Track if VLC fullscreen is active
         let clickTimer = null; // For single/double click detection
         let clickDelay = 400; // ms to wait before treating as single click
+        let lastSingleClick = { id: null, time: 0 }; // v7.11.0: double-click memory for new handleSingleClick
         let adultTypingSequence = '';
         
         // WEBVIEW-COMPATIBLE: Direct login click handler (bypasses form submit issues)
@@ -3072,16 +3121,41 @@
         // Handle single click with delay (to detect double-click)
         window.handleSingleClick = function(contentId, event) {
             if (event) event.stopPropagation();
-            
-            // Clear any pending click
-            if (clickTimer) clearTimeout(clickTimer);
-            
-            // Wait to see if it's a double-click
+
+            // ✅ FIX v7.11.0: was using setTimeout(playContent, 400) to
+            // detect double-click. After the timeout, the user-gesture
+            // context is DEAD in Android WebView, so video.play() inside
+            // playContent would be rejected by autoplay policy. This is
+            // the root cause of "click on movie does nothing" on the stick.
+            // New behaviour:
+            //   1st click → play IMMEDIATELY (preserves user gesture)
+            //   2nd click on SAME id within 400ms → cancel play, go fullscreen
+            //   No 2nd click within 400ms → already playing, just remember
+            const now = Date.now();
+            if (lastSingleClick.id === contentId &&
+                lastSingleClick.time > 0 &&
+                (now - lastSingleClick.time) < 400) {
+                // Second click within 400ms = double click → fullscreen
+                if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+                lastSingleClick.id = null;
+                lastSingleClick.time = 0;
+                console.log('📺 Double click - going fullscreen:', contentId);
+                _setDebugOverlay('DoubleClick: ' + contentId);
+                if (typeof playFullscreen === 'function') playFullscreen(contentId);
+                return;
+            }
+            // First click — play right now
+            lastSingleClick.id = contentId;
+            lastSingleClick.time = now;
+            console.log('📺 Single click - playing:', contentId);
+            _setDebugOverlay('Click: ' + contentId);
+            playContent(contentId);
+            // Clear the double-click memory after 400ms
             clickTimer = setTimeout(() => {
-                console.log('📺 Single click - playing:', contentId);
-                playContent(contentId);
-                // Note: highlighting is done inside playContent via highlightNowPlaying
-            }, clickDelay);
+                lastSingleClick.id = null;
+                lastSingleClick.time = 0;
+                clickTimer = null;
+            }, 400);
         };
         
         // Handle double click - go fullscreen
@@ -5356,13 +5430,25 @@
         }
 
         // Content Data - update with functions (already declared earlier)
-        contentData.movies = { name: 'Movies', content: [], streamingMode: 'always-streaming' };
+        // ✅ FIX v7.11.0: This block was resetting contentData.movies
+        // back to streamingMode: 'always-streaming' AFTER the first
+        // (correct) declaration at line 3067 had marked it 'on-demand'.
+        // Two duplicate definitions = the LATER one wins, which silently
+        // undid the fix. Movies is local MP4 (on-demand), not HLS from
+        // Nimble (always-streaming). Also adding arabic, live, news,
+        // sports, sportsPlus here for symmetry — they were left
+        // implicit before, which made the data model fragile.
+        contentData.movies = { name: 'Movies', content: [], streamingMode: 'on-demand' };
         contentData.vod = { name: 'VOD Library', content: [], streamingMode: 'on-demand' };
         contentData.basic = { name: 'Basic Package', content: [], streamingMode: 'on-demand' };
         contentData.addon = { name: 'Add-on Packages', content: loadPackagesFromAdmin(), streamingMode: 'mixed' };
         contentData.adult = { name: 'Adult Content', content: loadAdultPackagesFromAdmin(), streamingMode: 'on-demand' };
         contentData.series = { name: 'TV Series', content: [], streamingMode: 'on-demand' };
-        // Note: arabic and internet already defined above
+        contentData.arabic = contentData.arabic || { name: 'Arabic Content', content: [], streamingMode: 'on-demand' };
+        contentData.live = contentData.live || { name: 'Live TV', content: [], streamingMode: 'always-streaming' };
+        contentData.news = contentData.news || { name: 'News', content: [], streamingMode: 'always-streaming' };
+        contentData.sports = contentData.sports || { name: 'Sports', content: [], streamingMode: 'always-streaming' };
+        contentData.sportsPlus = contentData.sportsPlus || { name: 'Sports Plus', content: [], streamingMode: 'always-streaming' };
 
         // Series Content Rendering Functions
         // ✅ FIX: added a re-entry guard so that if the MutationObserver
@@ -5496,6 +5582,27 @@
             // defaults to index 0 in the seasons list every time, even
             // though the user just clicked a non-first series.
             window._lastSelectedSeriesIndex = index;
+
+            // ✅ FIX v7.11.0: User said series are MP4 from their own
+            // library (no Plex seasons, no episode data). The old code
+            // always went to renderSeasonList, which showed a "no
+            // content" empty state because no seasons exist. Now:
+            //   - If the series already has seasons → show seasons view
+            //   - If no seasons BUT has a direct MP4 URL → play it
+            //   - If neither → show the friendly empty state
+            const hasSeasons = selectedSeries.seasons && selectedSeries.seasons.length > 0;
+            const hasDirectUrl = selectedSeries.url && /^https?:\/\//.test(selectedSeries.url);
+            if (!hasSeasons && hasDirectUrl) {
+                console.log('📺 Series has no seasons but has URL — playing directly:', selectedSeries.name);
+                _setDebugOverlay && _setDebugOverlay('Series → playing directly: ' + selectedSeries.name);
+                // Reset to list view so back navigation works
+                seriesViewState = 'list';
+                // Play using the normal flow
+                if (typeof playContent === 'function') {
+                    playContent(selectedSeries.id);
+                }
+                return;
+            }
 
             // If series has no seasons data, try to fetch from Plex on demand
             // ✅ FIX: Only try to fetch seasons if we have a VALID numeric Plex ratingKey.
@@ -7248,11 +7355,12 @@
         
         // Global function for playing content in PREVIEW (single-click)
         window.playContent = function(contentId) {
+            _setDebugOverlay && _setDebugOverlay('playContent: ' + contentId + ' src=' + currentSource);
             if (!isLoggedIn) {
                 showError('Please login to start watching');
                 return;
             }
-            
+
             console.log('📺 playContent called with ID:', contentId);
             console.log('📺 Current source:', currentSource);
             console.log('📺 Adult unlocked:', adultUnlocked);
@@ -7730,6 +7838,7 @@
         
         function handleHLSContent(content) {
             console.log('🎬 handleHLSContent called for:', content.name, content.url);
+            _setDebugOverlay && _setDebugOverlay('HLS: ' + (content.name || '?') + ' → ' + (content.url || '').substring(0, 50));
             
             // HIDE OVERLAY IMMEDIATELY
             const overlay = document.getElementById('videoOverlay');
@@ -8108,6 +8217,7 @@
         function handleMP4Content(content) {
             console.log('🎬 handleMP4Content called:', content.name);
             console.log('🎬 Content URL:', content.url);
+            _setDebugOverlay && _setDebugOverlay('MP4: ' + (content.name || '?') + ' → ' + (content.url || '').substring(0, 60));
             
             // HIDE OVERLAY IMMEDIATELY
             const overlay = document.getElementById('videoOverlay');
@@ -8184,30 +8294,51 @@
             // For TV browsers, use native playback directly on video element
             if (isTV) {
                 console.log('📺 TV detected - using native playback');
-                
+
                 // Show the video element
                 nativeVideo.style.display = 'block';
                 nativeVideo.style.visibility = 'visible';
-                
-                // Set source directly on native video element
+
+                // ✅ FIX v7.11.0: MUTE-BEFORE-PLAY for Android WebView
+                // Android WebView (TVR 3, Fire TV, generic Android boxes)
+                // strictly enforces autoplay policy: unmuted play() is
+                // rejected even within a user-gesture chain. The standard
+                // fix is: start muted (browsers always allow muted autoplay),
+                // then unmute once playback actually starts. This works
+                // because the unmuted audio becomes part of an active
+                // media element, which the browser considers user-initiated.
+                nativeVideo.muted = true;
                 nativeVideo.src = content.url;
                 nativeVideo.load();
-                
+                _setDebugOverlay(`MP4 set: ${(content.url || '').split('/').pop()}`);
+
                 // Add error listener
                 nativeVideo.onerror = function() {
                     console.error('❌ MP4 Video load error:', nativeVideo.error);
+                    _setDebugOverlay('MP4 LOAD ERROR: ' + (nativeVideo.error?.message || 'unknown'));
                     showError('Failed to load video. Please try again or contact support if the issue continues.');
                 };
-                
-                // Play immediately
+
+                // Play immediately (muted, which is always allowed)
                 const playPromise = nativeVideo.play();
                 if (playPromise !== undefined) {
                     playPromise.then(() => {
                         console.log('✅ TV Video playing in preview!');
+                        // Unmute AFTER playback has started — this is the
+                        // moment when the browser considers the user
+                        // actively engaged with the media.
+                        nativeVideo.muted = false;
+                        _setDebugOverlay('MP4 PLAYING: ' + (content.name || ''));
                     }).catch(e => {
-                        console.log('⚠️ TV play failed:', e.message);
+                        console.log('⚠️ TV play failed (even muted):', e.message);
+                        _setDebugOverlay('MP4 PLAY FAILED: ' + e.message);
+                        // Try to unmute anyway in case it helps on retry
+                        nativeVideo.muted = false;
                         showTVPlayPrompt(content);
                     });
+                } else {
+                    // No play promise (very old browser)
+                    showTVPlayPrompt(content);
                 }
             } else {
                 // Desktop browsers: use Video.js API
@@ -8215,13 +8346,19 @@
                     player.src({ type: 'video/mp4', src: content.url });
                     player.play().catch(e => {
                         console.log('⚠️ Video.js play failed:', e.message);
+                        _setDebugOverlay('Video.js play failed: ' + e.message);
                     });
                 } else {
-                    // Fallback to native video
+                    // Fallback to native video (also apply mute-before-play
+                    // since desktop can also be strict in some contexts)
+                    nativeVideo.muted = true;
                     nativeVideo.src = content.url;
                     nativeVideo.load();
-                    nativeVideo.play().catch(e => {
+                    nativeVideo.play().then(() => {
+                        nativeVideo.muted = false;
+                    }).catch(e => {
                         console.log('⚠️ Native play failed:', e.message);
+                        nativeVideo.muted = false;
                     });
                 }
             }
