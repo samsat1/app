@@ -2434,7 +2434,7 @@
         // ============================================
         (function autoUpdateCheck() {
             try {
-                const APP_VERSION = '7.10.7';
+                const APP_VERSION = '7.10.9';
                 const STORAGE_KEY = 'iwatch_app_version';
                 const lastSeen = localStorage.getItem(STORAGE_KEY);
                 if (lastSeen && lastSeen !== APP_VERSION) {
@@ -5365,16 +5365,28 @@
         // Note: arabic and internet already defined above
 
         // Series Content Rendering Functions
+        // ✅ FIX: added a re-entry guard so that if the MutationObserver
+        // (contentObserver) fires DURING a render, it won't queue up
+        // another focusable update that races with the in-flight render
+        // and causes transient DOM states where D-pad finds nothing.
+        // During render, mutations are coalesced into one final update.
+        let _renderSeriesInProgress = false;
+        let _renderSeriesPendingUpdate = false;
         function renderSeriesContent() {
+            if (_renderSeriesInProgress) {
+                _renderSeriesPendingUpdate = true;
+                return;
+            }
+            _renderSeriesInProgress = true;
             try {
                 const contentList = document.getElementById('contentList');
                 if (!contentList) {
                     console.error('❌ contentList element not found');
                     return;
                 }
-                
+
                 const seriesContent = contentData.series?.content || [];
-                
+
                 if (seriesViewState === 'list') {
                     // Show list of series
                     renderSeriesList(seriesContent, contentList);
@@ -5391,9 +5403,19 @@
                 if (contentList) {
                     contentList.innerHTML = '<div class="empty-message">Error loading series. Please try again.</div>';
                 }
+            } finally {
+                // ✅ FIX: release the re-entry guard. If a re-render was
+                // requested while we were busy, do exactly one more pass
+                // to pick up the new state (this is what coalesces the
+                // MutationObserver bursts into a single update).
+                _renderSeriesInProgress = false;
+                if (_renderSeriesPendingUpdate) {
+                    _renderSeriesPendingUpdate = false;
+                    setTimeout(renderSeriesContent, 0);
+                }
             }
         }
-        
+
         function renderSeriesList(seriesList, container) {
             try {
                 if (seriesList.length === 0) {
@@ -5430,7 +5452,7 @@
                         padding: 10px;
                     ">
                         ${seriesList.map((series, index) => `
-                            <div class="series-card" onclick="selectSeries(${index})" style="
+                            <div class="series-card${index === 0 ? ' tv-focused' : ''}" onclick="selectSeries(${index})" data-series-index="${index}" style="
                                 background: linear-gradient(135deg, #1e1e3f, #2d2d5a);
                                 border-radius: 12px;
                                 overflow: hidden;
@@ -5467,6 +5489,13 @@
         async function selectSeries(index) {
             selectedSeries = contentData.series.content[index];
             seriesViewState = 'seasons';
+
+            // ✅ FIX: remember which series the user clicked so that the
+            // next view can mark a default tv-focused element and D-pad
+            // navigation has a sensible starting point. Otherwise D-pad
+            // defaults to index 0 in the seasons list every time, even
+            // though the user just clicked a non-first series.
+            window._lastSelectedSeriesIndex = index;
 
             // If series has no seasons data, try to fetch from Plex on demand
             // ✅ FIX: Only try to fetch seasons if we have a VALID numeric Plex ratingKey.
@@ -5656,7 +5685,7 @@
                     padding: 10px;
                 ">
                     ${series.seasons.map((season, index) => `
-                        <div class="season-card" onclick="selectSeason(${index})" style="
+                        <div class="season-card${index === 0 ? ' tv-focused' : ''}" onclick="selectSeason(${index})" data-season-index="${index}" style="
                             background: linear-gradient(135deg, #1e1e3f, #2d2d5a);
                             border-radius: 12px;
                             padding: 20px;
@@ -5677,6 +5706,8 @@
         function selectSeason(index) {
             selectedSeason = selectedSeries.seasons[index];
             seriesViewState = 'episodes';
+            // ✅ FIX: remember clicked season index for tv-focused handoff
+            window._lastSelectedSeasonIndex = index;
             renderSeriesContent();
         }
         
@@ -5720,7 +5751,7 @@
                 </div>
                 <div class="episodes-list" style="padding: 10px;">
                     ${season.episodes.map((episode, index) => `
-                        <div class="episode-card" onclick="playEpisode(${index})" style="
+                        <div class="episode-card${index === 0 ? ' tv-focused' : ''}" onclick="playEpisode(${index})" data-episode-index="${index}" style="
                             background: linear-gradient(135deg, #1e1e3f, #2d2d5a);
                             border-radius: 12px;
                             margin-bottom: 15px;
@@ -9852,6 +9883,13 @@
             
             // Get all focusable elements in current view
             updateFocusableElements() {
+                // ✅ FIX: added .series-card, .season-card, .episode-card
+                // so that moveFocus (closest-element fallback) can find
+                // them too. Previously only .content-item was in this
+                // list, which meant when arrow keys fell through to
+                // moveFocus on the Series tab, the closest-element search
+                // would skip series-cards entirely and pick something
+                // unpredictable from elsewhere on the page.
                 const selectors = [
                     'button:not([disabled]):not([style*="display: none"])',
                     '.content-card',
@@ -9862,7 +9900,10 @@
                     '.control-btn',
                     'input:not([disabled])',
                     '.close-btn',
-                    '[tabindex]:not([tabindex="-1"])'
+                    '[tabindex]:not([tabindex="-1"])',
+                    '.series-card',
+                    '.season-card',
+                    '.episode-card'
                 ];
                 
                 this.focusableElements = Array.from(
@@ -10127,6 +10168,14 @@
             // Handle remote button press
             setupRemoteListeners() {
                 document.addEventListener('keydown', (e) => {
+                    // ✅ DEBUG: log every D-pad press with the path it took.
+                    // Compact, single-line log so the console isn't spammed.
+                    // Format: "📍 D-Pad {key} path={list|search|closest|fallback} cards={n}"
+                    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(e.key) ||
+                        [19, 20, 21, 22, 23, 66].includes(e.keyCode)) {
+                        // we'll fill in path/cards after the switch
+                        window._lastDpadEvent = { key: e.key, keyCode: e.keyCode, t: Date.now() };
+                    }
                     // Handle keyboard escape: if user is in an input, ArrowUp/Down escape the keyboard
                     if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
                         // ArrowUp/Down = escape keyboard and move focus to nearest element in that direction
@@ -10171,26 +10220,42 @@
 
                     switch(e.key) {
                         // Navigation - Arrow Keys
+                        // ✅ FIX: the .content-item check was missing the
+                        // .series-card / .season-card / .episode-card
+                        // selectors used by the Series tab, so arrows in
+                        // Series fell through to moveFocus (closest
+                        // element search) instead of moveFocusInList
+                        // (one-by-one). Use the full union selector.
                         case 'ArrowUp':
                             e.preventDefault();
-                            // FIX: Try content list first if content items exist
-                            if (document.querySelectorAll('.content-item').length > 0) {
-                                this.moveFocusInList('up');
-                            } else if (document.activeElement?.classList.contains('control-btn')) {
-                                this.moveFocus('up');
-                            } else {
-                                this.moveFocus('up');
+                            {
+                                const cardCount = document.querySelectorAll('.content-item, .series-card, .season-card, .episode-card').length;
+                                if (cardCount > 0) {
+                                    console.log(`📍 D-Pad UP  → list (cards=${cardCount})`);
+                                    this.moveFocusInList('up');
+                                } else if (document.activeElement?.classList.contains('control-btn')) {
+                                    console.log('📍 D-Pad UP  → closest (control-btn)');
+                                    this.moveFocus('up');
+                                } else {
+                                    console.log('📍 D-Pad UP  → closest (fallback)');
+                                    this.moveFocus('up');
+                                }
                             }
                             break;
                         case 'ArrowDown':
                             e.preventDefault();
-                            // FIX: Try content list first if content items exist
-                            if (document.querySelectorAll('.content-item').length > 0) {
-                                this.moveFocusInList('down');
-                            } else if (document.activeElement?.classList.contains('control-btn')) {
-                                this.moveFocus('down');
-                            } else {
-                                this.moveFocus('down');
+                            {
+                                const cardCount = document.querySelectorAll('.content-item, .series-card, .season-card, .episode-card').length;
+                                if (cardCount > 0) {
+                                    console.log(`📍 D-Pad DOWN → list (cards=${cardCount})`);
+                                    this.moveFocusInList('down');
+                                } else if (document.activeElement?.classList.contains('control-btn')) {
+                                    console.log('📍 D-Pad DOWN → closest (control-btn)');
+                                    this.moveFocus('down');
+                                } else {
+                                    console.log('📍 D-Pad DOWN → closest (fallback)');
+                                    this.moveFocus('down');
+                                }
                             }
                             break;
                         case 'ArrowLeft':
@@ -10203,12 +10268,15 @@
                             // Always allow navigation right (to control buttons)
                             this.moveFocus('right');
                             break;
-                            
+
                         // Select/OK - Enter key (with double-press for fullscreen)
                         case 'Enter':
                             e.preventDefault();
-                            // Find focused content item
-                            const focusedItem = document.querySelector('.content-item.tv-focused');
+                            // ✅ FIX: include series/season/episode cards too
+                            const focusedItem = document.querySelector('.content-item.tv-focused, .series-card.tv-focused, .season-card.tv-focused, .episode-card.tv-focused');
+                            if (!focusedItem) {
+                                console.log('📍 D-Pad ENTER → no tv-focused element, trying fallback click');
+                            }
                             if (focusedItem && focusedItem.dataset && focusedItem.dataset.id) {
                                 const cid = focusedItem.dataset.id;
                                 const now = Date.now();
@@ -10306,8 +10374,7 @@
                     switch(keyCode) {
                         case 19: // Android D-pad UP
                             e.preventDefault();
-                            // FIX: Use moveFocus if no content items
-                            if (document.querySelectorAll('.content-item').length > 0) {
+                            if (document.querySelectorAll('.content-item, .series-card, .season-card, .episode-card').length > 0) {
                                 this.moveFocusInList('up');
                             } else {
                                 this.moveFocus('up');
@@ -10315,8 +10382,7 @@
                             break;
                         case 20: // Android D-pad DOWN
                             e.preventDefault();
-                            // FIX: Use moveFocus if no content items
-                            if (document.querySelectorAll('.content-item').length > 0) {
+                            if (document.querySelectorAll('.content-item, .series-card, .season-card, .episode-card').length > 0) {
                                 this.moveFocusInList('down');
                             } else {
                                 this.moveFocus('down');
@@ -10333,7 +10399,10 @@
                         case 23: // Android D-pad CENTER/OK
                         case 66: // Android ENTER
                             e.preventDefault();
-                            const focusedItemAnd = document.querySelector('.content-item.tv-focused');
+                            // ✅ FIX: include series/season/episode cards too
+                            const focusedItemAnd = document.querySelector(
+                                '.content-item.tv-focused, .series-card.tv-focused, .season-card.tv-focused, .episode-card.tv-focused'
+                            );
                             if (focusedItemAnd && focusedItemAnd.dataset && focusedItemAnd.dataset.id) {
                                 const cidAnd = focusedItemAnd.dataset.id;
                                 const nowAnd = Date.now();
