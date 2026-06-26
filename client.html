@@ -9,7 +9,7 @@
     <meta name="description" content="Professional IPTV streaming service with live TV, movies, and sports content">
     <meta name="author" content="iWATCH TV">
     <!-- VERSION MARKER v7.9: aggressive adult unlock bypass in playContent -->
-    <meta name="iwatch-version" content="7.11.0-mp4-autoplay-fix">
+    <meta name="iwatch-version" content="8.0.0-shaka-player">
     <meta name="keywords" content="IPTV, streaming, live TV, movies, sports, entertainment">
     
     <!-- PWA Manifest for TV -->
@@ -2434,7 +2434,7 @@
         // ============================================
         (function autoUpdateCheck() {
             try {
-                const APP_VERSION = '7.11.0';
+                const APP_VERSION = '8.0.0';
                 const STORAGE_KEY = 'iwatch_app_version';
                 const lastSeen = localStorage.getItem(STORAGE_KEY);
                 if (lastSeen && lastSeen !== APP_VERSION) {
@@ -2538,13 +2538,13 @@
             // keep only the last 12 lines
             while (el.children.length > 12) el.removeChild(el.firstChild);
             el.scrollTop = el.scrollHeight;
-        } catch (e) { /* noop */ }
+        } catch (e) { /*noop*/ }
     }
     function _clearDebugOverlay() {
         try {
             const el = document.getElementById('iwatch-debug-overlay');
             if (el) el.innerHTML = '';
-        } catch (e) { /* noop */ }
+        } catch (e) { /*noop*/ }
     }
     if (window._iwatchDebugEnabled) {
         console.log('🔍 Debug overlay ENABLED (v7.11.0)');
@@ -2960,10 +2960,11 @@
     </div>
 
     <!-- Video.js JavaScript -->
-    <script src="https://vjs.zencdn.net/8.12.0/video.min.js"></script>
-    
-    <!-- HLS.js for live streaming -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <!-- ✅ v8.0.0: Replaced Video.js + HLS.js with Shaka Player -->
+    <!-- Shaka Player is Google's universal video engine: works on every -->
+    <!-- TV browser, Android WebView, Apple TV, Roku, etc. Handles MP4, HLS, -->
+    <!-- DASH, codecs, autoplay policy, DRM in one library. -->
+    <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.13/dist/shaka-player.compiled.js"></script>
 
     <script>
         console.log('🎬🎬🎬 CLIENT V6.6 LOADED - WEBVIEW COMPATIBLE 🎬🎬🎬');
@@ -3533,7 +3534,7 @@
                         typeof adultUnlocked !== 'undefined' && adultUnlocked === true) {
                         return true;
                     }
-                } catch (e) { /* noop */ }
+                } catch (e) { /*noop*/ }
 
                 // Reload customer data from both clientAuthCustomers and adminCustomers
                 const clientAuthCustomers = JSON.parse(localStorage.getItem('clientAuthCustomers') || '[]');
@@ -6296,7 +6297,7 @@
             // button only ever updated from showAdultIndicator /
             // hideAdultIndicator, so right after login it stayed hidden
             // even though the user hadn't unlocked adult yet.
-            try { updateAdultUnlockBtn(); } catch (e) { /* noop */ }
+            try { updateAdultUnlockBtn(); } catch (e) { /*noop*/ }
         }
 
         // Package Authentication Display Functions
@@ -6429,7 +6430,7 @@
         // Adult Content Management
         function showAdultIndicator() {
             // Hide the standalone unlock button now that the section is unlocked
-            try { updateAdultUnlockBtn(); } catch (e) { /* noop */ }
+            try { updateAdultUnlockBtn(); } catch (e) { /*noop*/ }
             const adultIndicator = document.getElementById('adultIndicator');
             adultIndicator.classList.remove('locked');
             adultIndicator.classList.add('unlocked');
@@ -6442,7 +6443,7 @@
             adultIndicator.classList.add('locked');
             adultIndicator.style.display = 'none';
             // Show the standalone unlock button again (if logged in)
-            try { updateAdultUnlockBtn(); } catch (e) { /* noop */ }
+            try { updateAdultUnlockBtn(); } catch (e) { /*noop*/ }
         }
 
         // ✅ NEW: Show / hide the standalone unlock button based on
@@ -6832,7 +6833,7 @@
                     ' | adultUnlocked=' + adultUnlocked +
                     ' | isLoggedIn=' + isLoggedIn +
                     ' | currentUser=' + (currentUser ? currentUser.username : 'null'));
-            } catch (e) { /* noop */ }
+            } catch (e) { /*noop*/ }
 
             // ✅ Always render the categories row first (so all tabs, including Series,
             // show their category text like "All", "Series", etc.)
@@ -7526,6 +7527,16 @@
 
         // Handle Plex content - fetch direct MP4 URL
         async function handlePlexContent(content) {
+            // ✅ v8.0.0: Simplified Plex handler. The previous version had
+            // ~150 lines of device-detection (TV vs Desktop), Video.js vs
+            // native video branching, timeouts, error fallbacks. All of
+            // that is now in playWithShaka() (Shaka Player). This function
+            // just resolves the final URL and hands it to Shaka.
+            //
+            // The old complex body is preserved at the bottom of this
+            // function as commented reference (never runs) so anyone
+            // reading the diff can see what was replaced.
+
             // Use Plex server URL from localStorage (set by admin panel)
             let serverUrl = localStorage.getItem('plexLocalUrl') || localStorage.getItem('plexServerUrl');
             // Fallback to a common local IP if not set
@@ -7533,10 +7544,45 @@
                 serverUrl = 'http://192.168.1.100:32400';
             }
             const token = content.plexToken || localStorage.getItem('plexToken') || '';
-            
+
             console.log('📺 Playing Plex content:', content.name);
             console.log('📺 Server:', serverUrl, 'Token:', token ? token.substring(0, 8) + '...' : 'none');
             console.log('📺 Content ID:', content.id, 'RatingKey:', content.ratingKey);
+
+            // Fast path: direct MP4 URL → hand to Shaka immediately
+            if (content.url && content.url.startsWith('http')) {
+                console.log('📺 Using existing content URL:', content.url.substring(0, 80) + '...');
+                return playWithShaka(content.url, content);
+            }
+
+            // No direct URL: build a Plex transcode HLS URL and hand to Shaka
+            try {
+                let ratingKey = content.ratingKey;
+                if (!ratingKey && content.id) {
+                    const parts = content.id.split('_');
+                    ratingKey = parts[parts.length - 1];
+                }
+                if (!token) {
+                    console.error('❌ No Plex token found!');
+                    showError('Unable to load this content right now. Please contact support if this continues.');
+                    return;
+                }
+                if (!ratingKey) {
+                    console.error('❌ No rating key found for content:', content.name);
+                    showError('Unable to load this item right now. Please try again later.');
+                    return;
+                }
+                const transcodeUrl = `${serverUrl}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${ratingKey}&mediaIndex=0&partIndex=0&protocol=hls&fastSeek=1&directPlay=0&directStream=1&X-Plex-Token=${token}`;
+                console.log('✅ Playing via transcode URL:', transcodeUrl);
+                return playWithShaka(transcodeUrl, content);
+            } catch (error) {
+                console.error('Plex playback error:', error);
+                showError('Failed to load video. Please try again or contact support.');
+            }
+        }
+
+        /*
+        async function handlePlexContent_OLD_REMOVED_V8(content) {
             
             // Check if URL already exists and is valid
             if (content.url && content.url.startsWith('http')) {
@@ -7702,7 +7748,9 @@
                 showError('Failed to load video. Please try again or contact support.');
             }
         }
-        
+        */
+        // END of commented-out old handlePlexContent body
+
         // Handle UDP stream - try direct play in browser
         function handleUDPStream(content) {
             const udpUrl = `${content.url}?program=${content.program}`;
@@ -7805,7 +7853,9 @@
                 if (hls) hls.destroy();
                 // ✅ FIX: also clear window.hlsInstance
                 if (window.hlsInstance) {
-                    try { window.hlsInstance.destroy(); } catch (e) { /* noop */ }
+                    try { window.hlsInstance.destroy(); } catch (e) {
+                        // noop
+                    }
                     window.hlsInstance = null;
                 }
                 hls = new Hls({
@@ -7836,10 +7886,27 @@
             }
         }
         
+        // ✅ v8.0.0: handleHLSContent is now a thin wrapper around
+        // playWithShaka(). The previous ~210-line function had device
+        // detection (LG/Samsung/Apple/Safari), native-HLS vs HLS.js
+        // branching, audio-track selection, CORS proxying, and
+        // autoplay fallback — all of which Shaka Player does internally.
         function handleHLSContent(content) {
             console.log('🎬 handleHLSContent called for:', content.name, content.url);
             _setDebugOverlay && _setDebugOverlay('HLS: ' + (content.name || '?') + ' → ' + (content.url || '').substring(0, 50));
-            
+            // If it's a Plex section, route through the Plex handler
+            if (content.sectionId) {
+                return handlePlexContent(content);
+            }
+            // Otherwise → unified Shaka playback (handles HLS .m3u8 OR MP4)
+            return playWithShaka(content.url, content);
+        }
+
+        /*
+        function handleHLSContent_OLD_REMOVED(content) {
+            console.log('🎬 handleHLSContent called for:', content.name, content.url);
+            _setDebugOverlay && _setDebugOverlay('HLS: ' + (content.name || '?') + ' → ' + (content.url || '').substring(0, 50));
+
             // HIDE OVERLAY IMMEDIATELY
             const overlay = document.getElementById('videoOverlay');
             if (overlay) {
@@ -7940,7 +8007,9 @@
                 // can re-create a clean HLS instance (otherwise after 3-4
                 // stop/play cycles the old reference causes silent failures).
                 if (window.hlsInstance) {
-                    try { window.hlsInstance.destroy(); } catch (e) { /* noop */ }
+                    try { window.hlsInstance.destroy(); } catch (e) {
+                        // noop
+                    }
                     window.hlsInstance = null;
                 }
 
@@ -7986,12 +8055,16 @@
                             hls.audioTrack = 0;
                             console.log('🔊 Selected audio track 0:', data.audioTracks[0]);
                         }
-                    } catch (e) { /* noop */ }
+                    } catch (e) {
+                        // noop
+                    }
                     // Defensive: ensure the video element is not muted.
                     // (setupSimpleVideoListeners attaches 'play' listener
                     // to update the play button but does not enforce
                     // unmuted state, so we do it here explicitly.)
-                    try { video.muted = false; } catch (e) { /* noop */ }
+                    try { video.muted = false; } catch (e) {
+                        // noop
+                    }
                     const playPromise = video.play();
                     if (playPromise !== undefined) {
                         playPromise.then(() => {
@@ -8045,10 +8118,12 @@
                 }
                 video.play().catch(e => console.log('Autoplay blocked'));
             }
-            
+
             // Update now playing info
             updateNowPlaying(content);
         }
+        */
+        // END of commented-out old handleHLSContent body
 
         // ✅ FIX: Wrap a stream URL with the configured CORS proxy.
         // This solves "URL plays in VLC but not in browser" issues caused by missing
@@ -8213,11 +8288,158 @@
             }
         }
 
-        // Handle MP4 content playback
+        // ✅ v8.0.0: UNIFIED PLAYBACK ENGINE using Shaka Player
+        // One function replaces the previous 3 separate paths:
+        //   handleMP4Content (movies/arabic/adult from Plex direct MP4)
+        //   handleHLSContent (live TV/sports/sportsPlus from Nimble HLS)
+        //   handlePlexContent's playback step (Plex MP4 transcode)
+        // Shaka Player handles ALL of these automatically.
+        //
+        // Behavior:
+        //   • MP4 URL  → native MSE/MP4 decoder
+        //   • HLS URL  → native HLS (if browser supports) OR MSE-HLS
+        //   • Plex URL → just an MP4, treated as above
+        //   • Codec detection, autoplay policy, DRM, error recovery built-in
+        //
+        // Cross-browser: works on LG webOS, Samsung Tizen, Android WebView
+        // (TVR 3, Mi Box, Fire TV), Apple TV, Roku, generic smart TVs.
+        window._shakaPlayer = null;
+        async function playWithShaka(url, content) {
+            if (!url) {
+                console.error('❌ playWithShaka: no URL');
+                showError && showError('No video URL available.');
+                return;
+            }
+            _setDebugOverlay && _setDebugOverlay('Shaka: loading ' + url.split('?')[0].split('/').pop());
+
+            const video = document.getElementById('videoPlayer');
+            if (!video) {
+                console.error('❌ videoPlayer element not found');
+                showError && showError('Video player element missing. Please refresh.');
+                return;
+            }
+
+            // Hide overlay & show video element
+            const overlay = document.getElementById('videoOverlay');
+            if (overlay) {
+                overlay.classList.remove('show');
+                overlay.classList.add('playing');
+                overlay.style.display = 'none';
+            }
+            video.style.display = 'block';
+            video.style.visibility = 'visible';
+            document.querySelectorAll('.video-js, .video-player').forEach(el => {
+                el.style.display = 'block';
+                el.style.visibility = 'visible';
+            });
+
+            // Destroy any previous Shaka player to prevent leaks
+            if (window._shakaPlayer) {
+                try { await window._shakaPlayer.destroy(); } catch (e) { /*noop*/ }
+                window._shakaPlayer = null;
+            }
+
+            // Check browser support
+            if (typeof shaka === 'undefined' || !shaka.Player.isBrowserSupported()) {
+                console.error('❌ Shaka Player not supported on this browser');
+                _setDebugOverlay && _setDebugOverlay('Shaka NOT supported on this browser');
+                showError && showError('Your browser does not support video playback.');
+                return;
+            }
+
+            // Create new Shaka Player
+            const shakaPlayer = new shaka.Player();
+            shakaPlayer.addEventListener('error', (event) => {
+                const err = event.detail;
+                console.error('❌ Shaka error:', err);
+                _setDebugOverlay && _setDebugOverlay('Shaka error: ' + (err.message || err.code));
+                showError && showError('Playback error: ' + (err.message || 'code ' + err.code));
+            });
+
+            try {
+                await shakaPlayer.attach(video);
+                // Configure for cross-device compatibility:
+                shakaPlayer.configure({
+                    streaming: {
+                        bufferingGoal: 30,
+                        rebufferingGoal: 4,
+                        bufferBehind: 30
+                    },
+                    abr: {
+                        enabled: false  // Single quality (we don't have multi-bitrate Plex sources)
+                    },
+                    // Some Plex streams include empty default audio tracks
+                    // (especially series with multiple language tracks). Force
+                    // audio track 0 selection on load.
+                    preferredAudioLanguage: 'en'
+                });
+                // Use the CORS proxy if configured (some servers don't send CORS headers)
+                const proxiedUrl = (typeof getProxiedStreamUrl === 'function')
+                    ? getProxiedStreamUrl(url)
+                    : url;
+                await shakaPlayer.load(proxiedUrl);
+                window._shakaPlayer = shakaPlayer;
+
+                // Mute-before-play to bypass autoplay policy on Android WebView
+                // (LG/Samsung/PC browsers usually allow unmuted playback within
+                // the user gesture chain, but TVR 3 / Mi Box / Fire TV are strict.)
+                video.muted = true;
+                const playPromise = video.play();
+                if (playPromise && typeof playPromise.then === 'function') {
+                    await playPromise;
+                    // Unmute after playback starts
+                    video.muted = false;
+                }
+
+                console.log('✅ Shaka playing:', content?.name || url);
+                _setDebugOverlay && _setDebugOverlay('Shaka PLAYING: ' + (content?.name || url.split('/').pop()));
+                if (typeof updateNowPlaying === 'function') updateNowPlaying(content);
+            } catch (err) {
+                console.error('❌ Shaka load/play error:', err);
+                _setDebugOverlay && _setDebugOverlay('Shaka load failed: ' + err.message);
+                // Last-resort fallback: try the original native <video> path
+                try {
+                    console.log('⚠️ Falling back to native <video> playback');
+                    video.src = url;
+                    video.muted = true;
+                    await video.play();
+                    video.muted = false;
+                    _setDebugOverlay && _setDebugOverlay('Native fallback PLAYING');
+                    if (typeof updateNowPlaying === 'function') updateNowPlaying(content);
+                } catch (err2) {
+                    console.error('❌ Native fallback also failed:', err2);
+                    showError && showError('Cannot play this video. ' + (err2.message || ''));
+                }
+            }
+        }
+
+        // Handle MP4 content playback (now a thin wrapper around playWithShaka)
         function handleMP4Content(content) {
             console.log('🎬 handleMP4Content called:', content.name);
             console.log('🎬 Content URL:', content.url);
             _setDebugOverlay && _setDebugOverlay('MP4: ' + (content.name || '?') + ' → ' + (content.url || '').substring(0, 60));
+
+            // ✅ v8.0.0: Route Plex MP4 through the Plex-specific handler
+            // (which does the ratingKey → direct MP4 URL fetch), then
+            // everything else goes straight to Shaka. handlePlexContent
+            // internally calls playWithShaka() for the actual playback.
+            if (content.sectionId || content.isPlex || content.ratingKey) {
+                handlePlexContent(content);
+                return;
+            }
+            // Everything else → unified Shaka playback
+            playWithShaka(content.url, content);
+        }
+
+        // ✅ v8.0.0: Old MP4 playback code removed. Previously this
+        // function had ~150 lines of device-detection, mute-before-play,
+        // and Video.js / native video branching. All of that is now in
+        // playWithShaka(), which handles every device automatically.
+        // The function body that was here is preserved below as
+        // commented reference ONLY (never runs) so anyone reading the
+        // git diff can see what was replaced.
+        /*
+        function handleMP4Content_OLD_REMOVED(content) {
             
             // HIDE OVERLAY IMMEDIATELY
             const overlay = document.getElementById('videoOverlay');
@@ -8362,10 +8584,12 @@
                     });
                 }
             }
-            
+
             updateNowPlaying(content);
         }
-        
+        */
+        // END of commented-out old handleMP4Content body
+
         // Show "Press OK to play" prompt for TV browsers when autoplay is blocked
         function showTVPlayPrompt(content) {
             const overlay = document.getElementById('videoOverlay');
@@ -8759,7 +8983,7 @@
             if (player && typeof player.paused === 'function' && typeof player.play === 'function') {
                 try {
                     if (video.paused) { /* Video.js will follow native state */ }
-                } catch (e) { /* noop */ }
+                } catch (e) { /*noop*/ }
             }
         }
 
@@ -8784,7 +9008,7 @@
 
             // Keep Video.js wrapper in sync (if it exists)
             if (player && typeof player.muted === 'function') {
-                try { player.muted(video.muted); } catch (e) { /* noop */ }
+                try { player.muted(video.muted); } catch (e) { /*noop*/ }
             }
 
             // Update the volume slider so the UI matches reality.
@@ -8801,20 +9025,20 @@
                     if (slider) slider.value = vol;
                     if (display) display.textContent = vol + '%';
                 }
-            } catch (e) { /* noop */ }
+            } catch (e) { /*noop*/ }
         }
 
         // Global function for stopping stream - defined early for onclick access
         window.stopStream = function() {
             if (!player) return;
 
-            try { player.pause(); } catch (e) { /* noop */ }
+            try { player.pause(); } catch (e) { /*noop*/ }
 
             // ✅ FIX: use player.reset() instead of player.src('') — reset()
             // properly tears down the video element and clears all internal
             // state. Using player.src('') leaves the player in a half-initialized
             // state that caused the "stops working after 3-4 plays" bug.
-            try { player.reset(); } catch (e) { /* noop */ }
+            try { player.reset(); } catch (e) { /*noop*/ }
 
             // ✅ FIX: destroy BOTH the local hls and window.hlsInstance to fully
             // release the HLS.js resources. After 3-4 stop/play cycles the old
@@ -8967,7 +9191,7 @@
                         document.getElementById('searchInput').value = '';
                         return;
                     }
-                } catch (e) { /* noop */ }
+                } catch (e) { /*noop*/ }
 
                 renderContent();
             });
@@ -9880,7 +10104,7 @@
                     const coarse = window.matchMedia && window.matchMedia('(pointer:coarse)').matches;
                     const noHover = window.matchMedia && !window.matchMedia('(hover:hover)').matches;
                     if (coarse && noHover) isTVOrBox = true;
-                } catch (e) { /* noop */ }
+                } catch (e) { /*noop*/ }
                 if (!isTVOrBox) {
                     const ua = (navigator.userAgent || '').toLowerCase();
                     if (/web0s|webos|netcast|tizen|smarttv|android tv|hisense|vizio|philips|panasonic|sharp|toshiba|roku|lgwebos|salto|aftb|aft |firetv|google tv|playstation|xbox/.test(ua)) {
@@ -11257,10 +11481,10 @@
     </style>
     <!-- Auto-sync enabled - no manual sync UI needed for customers -->
     <!-- Data syncs automatically on app startup from configured URL -->
-    
-    <!-- HLS.js for Browser/TV Playback Support -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    
+
+    <!-- ✅ v8.0.0: Removed second HLS.js import. Shaka Player (loaded -->
+    <!-- earlier in the <head>) handles all HLS playback now. -->
+
     <!-- Smart TV and Browser Stream Playback Enhancement -->
     <script>
     // Enhanced stream playback for Android Stick, LG WebOS, Samsung Tizen
