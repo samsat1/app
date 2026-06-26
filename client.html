@@ -2434,7 +2434,7 @@
         // ============================================
         (function autoUpdateCheck() {
             try {
-                const APP_VERSION = '7.10.6';
+                const APP_VERSION = '7.10.7';
                 const STORAGE_KEY = 'iwatch_app_version';
                 const lastSeen = localStorage.getItem(STORAGE_KEY);
                 if (lastSeen && lastSeen !== APP_VERSION) {
@@ -3096,20 +3096,27 @@
         
         // Highlight current channel in list - UNIFIED function (BORDER ONLY)
         // This is the ONLY function that should set highlights when playing
+        // ✅ FIX: was clearing tv-focused from the playing item, which
+        // made the next D-pad press jump to index 0 (first item) instead
+        // of the next one after the now-playing one. Now we keep
+        // tv-focused on the playing item so navigation continues from
+        // there. Visual "now-playing" border is applied via inline style.
         window.highlightCurrentChannel = function(contentId) {
             const contentItems = document.querySelectorAll('.content-item');
             // Clear ALL highlights from ALL items - including inline styles
             contentItems.forEach(item => {
-                item.classList.remove('tv-focused', 'active', 'now-playing');
+                item.classList.remove('active', 'now-playing');
                 item.style.border = '';
                 item.style.outline = '';
                 item.style.boxShadow = '';
             });
-            
+
             // Find and highlight ONLY this item (BORDER ONLY - no background)
             const targetItem = document.querySelector(`.content-item[data-id="${contentId}"]`);
             if (targetItem) {
                 targetItem.classList.add('now-playing');
+                // ✅ Keep tv-focused so D-pad navigation continues from this item
+                targetItem.classList.add('tv-focused');
                 // Store the currently playing ID for reference
                 window.currentlyPlayingId = contentId;
                 targetItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -5568,53 +5575,53 @@
             }
             
             if (!series.seasons || series.seasons.length === 0) {
-                // If this is a flat (episode-level) item from Plex with a URL, offer to play it directly
-                if (series.url) {
-                    container.innerHTML = `
-                        <div class="season-header" style="
-                            padding: 20px;
-                            background: linear-gradient(135deg, #1a1a2e, #16213e);
-                            margin: -20px -20px 20px -20px;
-                            border-bottom: 2px solid #7c3aed;
-                            display: flex;
-                            align-items: center;
-                            gap: 15px;
-                        ">
-                            <button onclick="backToSeriesList()" style="
-                                background: #7c3aed;
-                                color: white;
-                                border: none;
-                                padding: 10px 20px;
-                                border-radius: 8px;
-                                cursor: pointer;
-                                font-weight: bold;
-                            ">← Back</button>
-                            <div>
-                                <h2 style="color: #fff; margin: 0 0 5px 0;">${series.name}</h2>
-                                <p style="color: #aaa; margin: 0;">${series.description || ''}</p>
-                            </div>
+                // ✅ FIX: cleaner, more helpful empty state. Previously the
+                // "no seasons" message was confusing and the Back button
+                // was hidden in a tiny corner of the header. Now it's a
+                // big obvious button at the top center.
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px;">
+                        <button onclick="backToSeriesList()" class="focusable" tabindex="0"
+                            style="background: #7c3aed; color: white; border: none;
+                            padding: 14px 28px; border-radius: 10px; cursor: pointer;
+                            font-weight: bold; font-size: 15px; margin-bottom: 30px;
+                            outline: 3px solid transparent;">
+                            ← Back to Series
+                        </button>
+                        <div style="margin-bottom: 24px;">
+                            <div style="font-size: 48px; margin-bottom: 12px;">📺</div>
+                            <h2 style="color: #fff; margin: 0 0 8px 0; font-size: 20px;">
+                                ${series.name || 'This series'}
+                            </h2>
+                            <p style="color: #aaa; margin: 0; font-size: 13px;">
+                                ${series.description || ''}
+                            </p>
                         </div>
-                        <div style="padding: 20px; text-align: center;">
-                            <div class="empty-message" style="margin-bottom: 20px;">
-                                ⚠️ No seasons cached for this show.
-                                <br><br>
-                                Please try again later or contact support if this continues.
-                            </div>
-                            ${series.url ? `<button onclick="playContent('${series.id}')" style="
-                                background: linear-gradient(135deg, #7c3aed, #a855f7);
-                                color: white;
-                                border: none;
-                                padding: 15px 40px;
-                                border-radius: 8px;
-                                cursor: pointer;
-                                font-weight: bold;
-                                font-size: 16px;
-                            ">▶️ Play This Item</button>` : ''}
+                        <div class="empty-message" style="margin-bottom: 24px; max-width: 480px; margin-left: auto; margin-right: auto;">
+                            ⚠️ No episodes or seasons found for this show.<br>
+                            <span style="font-size: 12px; color: rgba(255,255,255,0.6);">
+                                The Plex server may still be scanning, or this series has no episodes configured.
+                            </span>
                         </div>
-                    `;
-                } else {
-                    container.innerHTML = '<div class="empty-message">No seasons available. Please try again later.</div>';
-                }
+                        ${series.url ? `
+                            <button onclick="playContent('${series.id}')" class="focusable" tabindex="0"
+                                style="background: linear-gradient(135deg, #7c3aed, #a855f7);
+                                color: white; border: none; padding: 16px 40px;
+                                border-radius: 10px; cursor: pointer; font-weight: bold;
+                                font-size: 16px; outline: 3px solid transparent;">
+                                ▶️ Play This Item Directly
+                            </button>
+                            <div style="color: #aaa; font-size: 11px; margin-top: 10px;">
+                                A direct playback URL is available for this series.
+                            </div>
+                        ` : `
+                            <div style="color: #ff9800; font-size: 13px;">
+                                ⚠️ No direct playback URL available.<br>
+                                <span style="font-size: 11px;">Please check Plex for this series.</span>
+                            </div>
+                        `}
+                    </div>
+                `;
                 return;
             }
             
