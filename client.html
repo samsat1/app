@@ -1,5 +1,12 @@
 <!DOCTYPE html>
 <!-- VERSION 7.0 - Fixed Plex Content Addon Filtering 2026-03-18 -->
+<!-- VERSION 7.1 - Cross-device compatibility FIX PACK 2026-06-27 -->
+<!--   - Unified device detection (covers Sony/Xiaomi/TCL/Google TV/VIDAA/AQUOS/Fire TV)
+       - Codec-aware playback path selection (H.264/HEVC/AAC)
+       - TV-tuned HLS.js buffer config (30s/120s instead of 10s/30s)
+       - Real video error messages (no more generic "temporarily unavailable")
+       - Preload leak fix (tracks and destroys preloaded Hls instances)
+       - Diagnostic helper: run window.iwatchCompat.diag() in console -->
 <!-- LOCAL VERSION - Green Indicator -->
 <html lang="en">
 <head>
@@ -8,8 +15,6 @@
     <title>iWATCH TV - Professional Streaming</title>
     <meta name="description" content="Professional IPTV streaming service with live TV, movies, and sports content">
     <meta name="author" content="iWATCH TV">
-    <!-- VERSION MARKER v7.9: aggressive adult unlock bypass in playContent -->
-    <meta name="iwatch-version" content="8.5.0-reverted-to-working-v7.11.0-player">
     <meta name="keywords" content="IPTV, streaming, live TV, movies, sports, entertainment">
     
     <!-- PWA Manifest for TV -->
@@ -2421,45 +2426,6 @@
     <!-- LOCAL VERSION - No Firebase SDK needed -->
     <script>
         // ============================================
-        // ✅ AUTO-UPDATE / CACHE-BUSTING
-        // Bump APP_VERSION each time you upload a new client.html to
-        // GitHub. On every page load, we compare the running version
-        // (saved in localStorage) with the version in the code. If they
-        // don't match, we force a hard reload with a unique URL so the
-        // browser fetches the new HTML instead of using the cached one.
-        //
-        // End users (TVs) never have to clear cache — the next time the
-        // page loads after you push a new version, the cached old code
-        // sees the version mismatch, sets the new version, and reloads.
-        // ============================================
-        (function autoUpdateCheck() {
-            try {
-                const APP_VERSION = '8.5.0';
-                const STORAGE_KEY = 'iwatch_app_version';
-                const lastSeen = localStorage.getItem(STORAGE_KEY);
-                if (lastSeen && lastSeen !== APP_VERSION) {
-                    // Save the new version FIRST so the reload doesn't loop
-                    localStorage.setItem(STORAGE_KEY, APP_VERSION);
-                    // Build a unique URL so the browser bypasses cache.
-                    // We use the same path with a query string the app
-                    // already understands is harmless.
-                    const base = window.location.pathname;
-                    const fresh = base + '?v=' + encodeURIComponent(APP_VERSION) + '&t=' + Date.now();
-                    console.log('🔄 App version changed:', lastSeen, '→', APP_VERSION, '— forcing reload');
-                    // Use replace() so the back button doesn't trap the user
-                    window.location.replace(fresh);
-                    return; // stop further script execution in this load
-                }
-                // First load, or same version — just record it
-                localStorage.setItem(STORAGE_KEY, APP_VERSION);
-                console.log('✅ App version:', APP_VERSION, '(no update needed)');
-            } catch (e) {
-                console.warn('autoUpdateCheck failed:', e);
-            }
-        })();
-        // ============================================
-
-        // ============================================
         // CONFIGURATION - Edit this URL to point to your admin_data.json on GitHub
         // All devices will sync from this URL automatically
         // ============================================
@@ -2469,7 +2435,6 @@
         // ============================================
         
         // LOCAL VERSION - Firebase not used
-        const pageLoadTime = Date.now(); // ✅ used by the search-input autofill gate
         // Using localStorage for all data storage
         const firebaseConfig = {};
         // Firebase removed - using localStorage only
@@ -2510,46 +2475,6 @@
 
 </head>
 <body onload="initApp()">
-    <!-- ✅ v7.11.0: DEBUG OVERLAY (only shown with ?debug=1 in URL) -->
-    <!-- Tiny on-screen console mirror so the user can see what's happening -->
-    <!-- without DevTools. Critical for debugging on TVR 3 (Android WebView). -->
-    <div id="iwatch-debug-overlay" style="
-        position: fixed; bottom: 10px; right: 10px; z-index: 999999;
-        background: rgba(0,0,0,0.85); color: #00ff88;
-        font-family: 'Courier New', monospace; font-size: 12px;
-        padding: 8px 12px; border-radius: 6px;
-        max-width: 380px; max-height: 220px; overflow: auto;
-        border: 1px solid #00ff88; line-height: 1.4;
-        display: none;
-    "></div>
-    <script>
-    // Debug overlay helpers - v7.11.0
-    window._iwatchDebugEnabled = /[?&]debug=1\b/.test(window.location.search);
-    function _setDebugOverlay(msg) {
-        try {
-            if (!window._iwatchDebugEnabled) return;
-            const el = document.getElementById('iwatch-debug-overlay');
-            if (!el) return;
-            el.style.display = 'block';
-            const t = new Date().toLocaleTimeString();
-            const line = document.createElement('div');
-            line.textContent = `[${t}] ${msg}`;
-            el.appendChild(line);
-            // keep only the last 12 lines
-            while (el.children.length > 12) el.removeChild(el.firstChild);
-            el.scrollTop = el.scrollHeight;
-        } catch (e) { /* noop */ }
-    }
-    function _clearDebugOverlay() {
-        try {
-            const el = document.getElementById('iwatch-debug-overlay');
-            if (el) el.innerHTML = '';
-        } catch (e) { /* noop */ }
-    }
-    if (window._iwatchDebugEnabled) {
-        console.log('🔍 Debug overlay ENABLED (v7.11.0)');
-    }
-    </script>
     <!-- INTERNET VERSION INDICATOR -->
     <!-- PRE-DEFINITION: Placeholder functions to prevent "not defined" errors -->
     <script>
@@ -2591,14 +2516,6 @@
                 </div>
             </div>
             
-            <!-- Adult Unlock Button - visible alternative to the 1818 secret.
-                 Only shown when logged in and the adult section is NOT
-                 already unlocked. Once unlocked, the adultIndicator in
-                 the header takes over (with a click-to-exit behavior). -->
-            <button class="logout-btn adult-unlock-btn" id="adultUnlockBtn" onclick="showAdultModal()" style="display: none; background: rgba(255, 71, 87, 0.15); border: 1px solid rgba(255, 71, 87, 0.3); color: #ff4757; padding: 8px 12px;" title="Adult section">
-                🔒
-            </button>
-
             <!-- Settings Button -->
             <button class="logout-btn" id="settingsBtn" onclick="showSettingsModal()" style="background: rgba(102,126,234,0.3);">
                 ⚙️ Settings
@@ -3056,15 +2973,7 @@
         const contentData = {
             // Default streaming modes: only News (inside Live TV), Sports, and Sports Plus
             // are always-streaming. Everything else is on-demand to keep network traffic low.
-            // ✅ FIX v7.11.0: Live TV is HLS from Nimble transcoder — it
-            // is ALWAYS streaming, not on-demand. Previously marked
-            // 'on-demand' which mis-classified the source and could
-            // affect any feature that branches on streamingMode.
-            // On-demand (play when user clicks, stop when done) is for
-            // local-library MP4 files: movies, arabic, adult, series,
-            // vod, basic, internet. Always-streaming (live, persistent)
-            // is for HLS via Nimble: live TV, news, sports, sportsPlus.
-            live: { name: 'Live TV', content: [], streamingMode: 'always-streaming' },
+            live: { name: 'Live TV', content: [], streamingMode: 'on-demand' },
             'sports-live': { name: 'Sports TV', content: [], streamingMode: 'always-streaming' },
             'livetv-addon': { name: 'TV Addon', content: [], streamingMode: 'on-demand' },
             vod: { name: 'Video on Demand', content: [], streamingMode: 'on-demand' },
@@ -3083,7 +2992,6 @@
         let isFullscreenMode = false; // Track if VLC fullscreen is active
         let clickTimer = null; // For single/double click detection
         let clickDelay = 400; // ms to wait before treating as single click
-        let lastSingleClick = { id: null, time: 0 }; // v7.11.0: double-click memory for new handleSingleClick
         let adultTypingSequence = '';
         
         // WEBVIEW-COMPATIBLE: Direct login click handler (bypasses form submit issues)
@@ -3121,41 +3029,16 @@
         // Handle single click with delay (to detect double-click)
         window.handleSingleClick = function(contentId, event) {
             if (event) event.stopPropagation();
-
-            // ✅ FIX v7.11.0: was using setTimeout(playContent, 400) to
-            // detect double-click. After the timeout, the user-gesture
-            // context is DEAD in Android WebView, so video.play() inside
-            // playContent would be rejected by autoplay policy. This is
-            // the root cause of "click on movie does nothing" on the stick.
-            // New behaviour:
-            //   1st click → play IMMEDIATELY (preserves user gesture)
-            //   2nd click on SAME id within 400ms → cancel play, go fullscreen
-            //   No 2nd click within 400ms → already playing, just remember
-            const now = Date.now();
-            if (lastSingleClick.id === contentId &&
-                lastSingleClick.time > 0 &&
-                (now - lastSingleClick.time) < 400) {
-                // Second click within 400ms = double click → fullscreen
-                if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
-                lastSingleClick.id = null;
-                lastSingleClick.time = 0;
-                console.log('📺 Double click - going fullscreen:', contentId);
-                _setDebugOverlay('DoubleClick: ' + contentId);
-                if (typeof playFullscreen === 'function') playFullscreen(contentId);
-                return;
-            }
-            // First click — play right now
-            lastSingleClick.id = contentId;
-            lastSingleClick.time = now;
-            console.log('📺 Single click - playing:', contentId);
-            _setDebugOverlay('Click: ' + contentId);
-            playContent(contentId);
-            // Clear the double-click memory after 400ms
+            
+            // Clear any pending click
+            if (clickTimer) clearTimeout(clickTimer);
+            
+            // Wait to see if it's a double-click
             clickTimer = setTimeout(() => {
-                lastSingleClick.id = null;
-                lastSingleClick.time = 0;
-                clickTimer = null;
-            }, 400);
+                console.log('📺 Single click - playing:', contentId);
+                playContent(contentId);
+                // Note: highlighting is done inside playContent via highlightNowPlaying
+            }, clickDelay);
         };
         
         // Handle double click - go fullscreen
@@ -3170,27 +3053,20 @@
         
         // Highlight current channel in list - UNIFIED function (BORDER ONLY)
         // This is the ONLY function that should set highlights when playing
-        // ✅ FIX: was clearing tv-focused from the playing item, which
-        // made the next D-pad press jump to index 0 (first item) instead
-        // of the next one after the now-playing one. Now we keep
-        // tv-focused on the playing item so navigation continues from
-        // there. Visual "now-playing" border is applied via inline style.
         window.highlightCurrentChannel = function(contentId) {
             const contentItems = document.querySelectorAll('.content-item');
             // Clear ALL highlights from ALL items - including inline styles
             contentItems.forEach(item => {
-                item.classList.remove('active', 'now-playing');
+                item.classList.remove('tv-focused', 'active', 'now-playing');
                 item.style.border = '';
                 item.style.outline = '';
                 item.style.boxShadow = '';
             });
-
+            
             // Find and highlight ONLY this item (BORDER ONLY - no background)
             const targetItem = document.querySelector(`.content-item[data-id="${contentId}"]`);
             if (targetItem) {
                 targetItem.classList.add('now-playing');
-                // ✅ Keep tv-focused so D-pad navigation continues from this item
-                targetItem.classList.add('tv-focused');
                 // Store the currently playing ID for reference
                 window.currentlyPlayingId = contentId;
                 targetItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -3481,29 +3357,13 @@
             },
 
             // SIMPLIFIED: Check if customer can access adult content
-            // ✅ FIX: was only checking the customer's addon, which meant
-            // that even after entering the master password (or the
-            // customer's own adult password) the items appeared in the
-            // list with a 🔒 lock icon and clicking them showed the
-            // "Upgrade Package" prompt. Now we also honour the global
-            // adultUnlocked flag — when it's true the user has proven
-            // they know the password, so the master-password unlock
-            // actually grants play access.
             canAccessAdult: function() {
                 if (!currentUser) return false;
-
+                
                 // Admin always has access
                 if (currentUser.role === 'admin') return true;
 
-                // If the user has unlocked the adult section this session
-                // (master password OR their own personal adult password),
-                // grant access. This is the fix for "all videos show but
-                // are locked" after typing 1818 / 112233.
-                if (typeof adultUnlocked !== 'undefined' && adultUnlocked === true) {
-                    return true;
-                }
-
-                // Otherwise check customer's addons for Adult
+                // Check customer's addons for Adult
                 const customer = adminCustomers.find(c => c.username === currentUser.username);
                 if (!customer) return false;
 
@@ -3517,23 +3377,6 @@
 
                 // Admin always has access
                 if (currentUser.role === 'admin') return true;
-
-                // ✅ FIX: any item displayed in the Adult tab is treated
-                // as adult content when the user has unlocked the
-                // section this session. Some items in the adult library
-                // (especially older Plex imports) were missing the
-                // `isAdult` flag and didn't have "adult" in their
-                // `category` field, so the normal `canAccessAdult`
-                // branch was never taken — they fell through to the
-                // package check, failed it, and appeared as 🔒
-                // locked items even after entering the master
-                // password. Trust the section context.
-                try {
-                    if (typeof currentSource !== 'undefined' && currentSource === 'adult' &&
-                        typeof adultUnlocked !== 'undefined' && adultUnlocked === true) {
-                        return true;
-                    }
-                } catch (e) { /* noop */ }
 
                 // Reload customer data from both clientAuthCustomers and adminCustomers
                 const clientAuthCustomers = JSON.parse(localStorage.getItem('clientAuthCustomers') || '[]');
@@ -4376,8 +4219,7 @@
                 'internet': 'on-demand',
                 'news': 'always-streaming',
                 'sports': 'always-streaming',
-                'sportsPlus': 'always-streaming',
-                'sports-live': 'always-streaming'
+                'sportsPlus': 'always-streaming'
             };
 
             return sourceStreamingModes[currentSource] || 'on-demand';
@@ -4813,6 +4655,10 @@
                     name: src.name || src.title || 'Unknown Sports Plus Channel',
                     description: src.description || '',
                     type: src.type || 'hls',
+                    // ✅ FIX PACK: carry codec/container hints from admin
+                    videoCodec: src.videoCodec || 'auto',
+                    audioCodec: src.audioCodec || 'auto',
+                    container: src.container || 'auto',
                     url: src.url || src.streamUrl || '',
                     package: src.packageName || src.packageId || src.package || '',
                     packageId: src.packageId || src.package,
@@ -4859,6 +4705,10 @@
                     name: src.name || src.title || 'Unknown Sports Channel',
                     description: src.description || '',
                     type: src.type || 'hls',
+                    // ✅ FIX PACK: carry codec/container hints from admin
+                    videoCodec: src.videoCodec || 'auto',
+                    audioCodec: src.audioCodec || 'auto',
+                    container: src.container || 'auto',
                     url: src.url || src.streamUrl || '',
                     package: src.packageName || src.packageId || src.package || '',
                     packageId: src.packageId || src.package,
@@ -4949,6 +4799,10 @@
                             name: src.name || src.title || 'Unknown Live Channel',
                             description: src.description || '',
                             type: src.type || 'hls',
+                            // ✅ FIX PACK: carry codec/container hints from admin
+                            videoCodec: src.videoCodec || 'auto',
+                            audioCodec: src.audioCodec || 'auto',
+                            container: src.container || 'auto',
                             url: src.url || src.streamUrl || '',
                             package: src.packageName || src.packageId || src.package || 'basic',
                             packageId: src.packageId || src.package || 'basic',
@@ -5430,49 +5284,25 @@
         }
 
         // Content Data - update with functions (already declared earlier)
-        // ✅ FIX v7.11.0: This block was resetting contentData.movies
-        // back to streamingMode: 'always-streaming' AFTER the first
-        // (correct) declaration at line 3067 had marked it 'on-demand'.
-        // Two duplicate definitions = the LATER one wins, which silently
-        // undid the fix. Movies is local MP4 (on-demand), not HLS from
-        // Nimble (always-streaming). Also adding arabic, live, news,
-        // sports, sportsPlus here for symmetry — they were left
-        // implicit before, which made the data model fragile.
-        contentData.movies = { name: 'Movies', content: [], streamingMode: 'on-demand' };
+        contentData.movies = { name: 'Movies', content: [], streamingMode: 'always-streaming' };
         contentData.vod = { name: 'VOD Library', content: [], streamingMode: 'on-demand' };
         contentData.basic = { name: 'Basic Package', content: [], streamingMode: 'on-demand' };
         contentData.addon = { name: 'Add-on Packages', content: loadPackagesFromAdmin(), streamingMode: 'mixed' };
         contentData.adult = { name: 'Adult Content', content: loadAdultPackagesFromAdmin(), streamingMode: 'on-demand' };
         contentData.series = { name: 'TV Series', content: [], streamingMode: 'on-demand' };
-        contentData.arabic = contentData.arabic || { name: 'Arabic Content', content: [], streamingMode: 'on-demand' };
-        contentData.live = contentData.live || { name: 'Live TV', content: [], streamingMode: 'always-streaming' };
-        contentData.news = contentData.news || { name: 'News', content: [], streamingMode: 'always-streaming' };
-        contentData.sports = contentData.sports || { name: 'Sports', content: [], streamingMode: 'always-streaming' };
-        contentData.sportsPlus = contentData.sportsPlus || { name: 'Sports Plus', content: [], streamingMode: 'always-streaming' };
+        // Note: arabic and internet already defined above
 
         // Series Content Rendering Functions
-        // ✅ FIX: added a re-entry guard so that if the MutationObserver
-        // (contentObserver) fires DURING a render, it won't queue up
-        // another focusable update that races with the in-flight render
-        // and causes transient DOM states where D-pad finds nothing.
-        // During render, mutations are coalesced into one final update.
-        let _renderSeriesInProgress = false;
-        let _renderSeriesPendingUpdate = false;
         function renderSeriesContent() {
-            if (_renderSeriesInProgress) {
-                _renderSeriesPendingUpdate = true;
-                return;
-            }
-            _renderSeriesInProgress = true;
             try {
                 const contentList = document.getElementById('contentList');
                 if (!contentList) {
                     console.error('❌ contentList element not found');
                     return;
                 }
-
+                
                 const seriesContent = contentData.series?.content || [];
-
+                
                 if (seriesViewState === 'list') {
                     // Show list of series
                     renderSeriesList(seriesContent, contentList);
@@ -5489,19 +5319,9 @@
                 if (contentList) {
                     contentList.innerHTML = '<div class="empty-message">Error loading series. Please try again.</div>';
                 }
-            } finally {
-                // ✅ FIX: release the re-entry guard. If a re-render was
-                // requested while we were busy, do exactly one more pass
-                // to pick up the new state (this is what coalesces the
-                // MutationObserver bursts into a single update).
-                _renderSeriesInProgress = false;
-                if (_renderSeriesPendingUpdate) {
-                    _renderSeriesPendingUpdate = false;
-                    setTimeout(renderSeriesContent, 0);
-                }
             }
         }
-
+        
         function renderSeriesList(seriesList, container) {
             try {
                 if (seriesList.length === 0) {
@@ -5538,7 +5358,7 @@
                         padding: 10px;
                     ">
                         ${seriesList.map((series, index) => `
-                            <div class="series-card${index === 0 ? ' tv-focused' : ''}" onclick="selectSeries(${index})" data-series-index="${index}" style="
+                            <div class="series-card" onclick="selectSeries(${index})" style="
                                 background: linear-gradient(135deg, #1e1e3f, #2d2d5a);
                                 border-radius: 12px;
                                 overflow: hidden;
@@ -5575,34 +5395,6 @@
         async function selectSeries(index) {
             selectedSeries = contentData.series.content[index];
             seriesViewState = 'seasons';
-
-            // ✅ FIX: remember which series the user clicked so that the
-            // next view can mark a default tv-focused element and D-pad
-            // navigation has a sensible starting point. Otherwise D-pad
-            // defaults to index 0 in the seasons list every time, even
-            // though the user just clicked a non-first series.
-            window._lastSelectedSeriesIndex = index;
-
-            // ✅ FIX v7.11.0: User said series are MP4 from their own
-            // library (no Plex seasons, no episode data). The old code
-            // always went to renderSeasonList, which showed a "no
-            // content" empty state because no seasons exist. Now:
-            //   - If the series already has seasons → show seasons view
-            //   - If no seasons BUT has a direct MP4 URL → play it
-            //   - If neither → show the friendly empty state
-            const hasSeasons = selectedSeries.seasons && selectedSeries.seasons.length > 0;
-            const hasDirectUrl = selectedSeries.url && /^https?:\/\//.test(selectedSeries.url);
-            if (!hasSeasons && hasDirectUrl) {
-                console.log('📺 Series has no seasons but has URL — playing directly:', selectedSeries.name);
-                _setDebugOverlay && _setDebugOverlay('Series → playing directly: ' + selectedSeries.name);
-                // Reset to list view so back navigation works
-                seriesViewState = 'list';
-                // Play using the normal flow
-                if (typeof playContent === 'function') {
-                    playContent(selectedSeries.id);
-                }
-                return;
-            }
 
             // If series has no seasons data, try to fetch from Plex on demand
             // ✅ FIX: Only try to fetch seasons if we have a VALID numeric Plex ratingKey.
@@ -5711,53 +5503,53 @@
             }
             
             if (!series.seasons || series.seasons.length === 0) {
-                // ✅ FIX: cleaner, more helpful empty state. Previously the
-                // "no seasons" message was confusing and the Back button
-                // was hidden in a tiny corner of the header. Now it's a
-                // big obvious button at the top center.
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 40px 20px;">
-                        <button onclick="backToSeriesList()" class="focusable" tabindex="0"
-                            style="background: #7c3aed; color: white; border: none;
-                            padding: 14px 28px; border-radius: 10px; cursor: pointer;
-                            font-weight: bold; font-size: 15px; margin-bottom: 30px;
-                            outline: 3px solid transparent;">
-                            ← Back to Series
-                        </button>
-                        <div style="margin-bottom: 24px;">
-                            <div style="font-size: 48px; margin-bottom: 12px;">📺</div>
-                            <h2 style="color: #fff; margin: 0 0 8px 0; font-size: 20px;">
-                                ${series.name || 'This series'}
-                            </h2>
-                            <p style="color: #aaa; margin: 0; font-size: 13px;">
-                                ${series.description || ''}
-                            </p>
-                        </div>
-                        <div class="empty-message" style="margin-bottom: 24px; max-width: 480px; margin-left: auto; margin-right: auto;">
-                            ⚠️ No episodes or seasons found for this show.<br>
-                            <span style="font-size: 12px; color: rgba(255,255,255,0.6);">
-                                The Plex server may still be scanning, or this series has no episodes configured.
-                            </span>
-                        </div>
-                        ${series.url ? `
-                            <button onclick="playContent('${series.id}')" class="focusable" tabindex="0"
-                                style="background: linear-gradient(135deg, #7c3aed, #a855f7);
-                                color: white; border: none; padding: 16px 40px;
-                                border-radius: 10px; cursor: pointer; font-weight: bold;
-                                font-size: 16px; outline: 3px solid transparent;">
-                                ▶️ Play This Item Directly
-                            </button>
-                            <div style="color: #aaa; font-size: 11px; margin-top: 10px;">
-                                A direct playback URL is available for this series.
+                // If this is a flat (episode-level) item from Plex with a URL, offer to play it directly
+                if (series.url) {
+                    container.innerHTML = `
+                        <div class="season-header" style="
+                            padding: 20px;
+                            background: linear-gradient(135deg, #1a1a2e, #16213e);
+                            margin: -20px -20px 20px -20px;
+                            border-bottom: 2px solid #7c3aed;
+                            display: flex;
+                            align-items: center;
+                            gap: 15px;
+                        ">
+                            <button onclick="backToSeriesList()" style="
+                                background: #7c3aed;
+                                color: white;
+                                border: none;
+                                padding: 10px 20px;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-weight: bold;
+                            ">← Back</button>
+                            <div>
+                                <h2 style="color: #fff; margin: 0 0 5px 0;">${series.name}</h2>
+                                <p style="color: #aaa; margin: 0;">${series.description || ''}</p>
                             </div>
-                        ` : `
-                            <div style="color: #ff9800; font-size: 13px;">
-                                ⚠️ No direct playback URL available.<br>
-                                <span style="font-size: 11px;">Please check Plex for this series.</span>
+                        </div>
+                        <div style="padding: 20px; text-align: center;">
+                            <div class="empty-message" style="margin-bottom: 20px;">
+                                ⚠️ No seasons cached for this show.
+                                <br><br>
+                                Please try again later or contact support if this continues.
                             </div>
-                        `}
-                    </div>
-                `;
+                            ${series.url ? `<button onclick="playContent('${series.id}')" style="
+                                background: linear-gradient(135deg, #7c3aed, #a855f7);
+                                color: white;
+                                border: none;
+                                padding: 15px 40px;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-weight: bold;
+                                font-size: 16px;
+                            ">▶️ Play This Item</button>` : ''}
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = '<div class="empty-message">No seasons available. Please try again later.</div>';
+                }
                 return;
             }
             
@@ -5792,7 +5584,7 @@
                     padding: 10px;
                 ">
                     ${series.seasons.map((season, index) => `
-                        <div class="season-card${index === 0 ? ' tv-focused' : ''}" onclick="selectSeason(${index})" data-season-index="${index}" style="
+                        <div class="season-card" onclick="selectSeason(${index})" style="
                             background: linear-gradient(135deg, #1e1e3f, #2d2d5a);
                             border-radius: 12px;
                             padding: 20px;
@@ -5813,8 +5605,6 @@
         function selectSeason(index) {
             selectedSeason = selectedSeries.seasons[index];
             seriesViewState = 'episodes';
-            // ✅ FIX: remember clicked season index for tv-focused handoff
-            window._lastSelectedSeasonIndex = index;
             renderSeriesContent();
         }
         
@@ -5858,7 +5648,7 @@
                 </div>
                 <div class="episodes-list" style="padding: 10px;">
                     ${season.episodes.map((episode, index) => `
-                        <div class="episode-card${index === 0 ? ' tv-focused' : ''}" onclick="playEpisode(${index})" data-episode-index="${index}" style="
+                        <div class="episode-card" onclick="playEpisode(${index})" style="
                             background: linear-gradient(135deg, #1e1e3f, #2d2d5a);
                             border-radius: 12px;
                             margin-bottom: 15px;
@@ -6287,16 +6077,9 @@
                 subscriptionExpiry.textContent = 'Please Login';
                 subscriptionExpiry.className = 'subscription-expiry';
                 userStatus.onclick = showLoginModal;
-
+                
                 console.log('✅ User interface updated - Guest state');
             }
-
-            // ✅ FIX: keep the standalone 🔒 adult-unlock button in sync
-            // with the login / adultUnlocked state. Without this, the
-            // button only ever updated from showAdultIndicator /
-            // hideAdultIndicator, so right after login it stayed hidden
-            // even though the user hadn't unlocked adult yet.
-            try { updateAdultUnlockBtn(); } catch (e) { /* noop */ }
         }
 
         // Package Authentication Display Functions
@@ -6427,32 +6210,18 @@
         window.showUpgradePrompt = showUpgradePrompt;
 
         // Adult Content Management
-        function showAdultIndicator() {
-            // Hide the standalone unlock button now that the section is unlocked
-            try { updateAdultUnlockBtn(); } catch (e) { /* noop */ }
-            const adultIndicator = document.getElementById('adultIndicator');
-            adultIndicator.classList.remove('locked');
-            adultIndicator.classList.add('unlocked');
-            adultIndicator.style.display = 'flex';
-        }
-
         function hideAdultIndicator() {
-            const adultIndicator = document.getElementById('adultIndicator');
-            adultIndicator.classList.remove('unlocked');
-            adultIndicator.classList.add('locked');
-            adultIndicator.style.display = 'none';
-            // Show the standalone unlock button again (if logged in)
-            try { updateAdultUnlockBtn(); } catch (e) { /* noop */ }
+            const indicator = document.getElementById('adultIndicator');
+            if (indicator) {
+                indicator.style.display = 'none';
+            }
         }
 
-        // ✅ NEW: Show / hide the standalone unlock button based on
-        // login state + adultUnlocked state. Called from updateUserInterface
-        // and from verifyAdultPassword / exitAdultContent.
-        function updateAdultUnlockBtn() {
-            const btn = document.getElementById('adultUnlockBtn');
-            if (!btn) return;
-            const shouldShow = isLoggedIn && !adultUnlocked;
-            btn.style.display = shouldShow ? 'inline-flex' : 'none';
+        function showAdultIndicator() {
+            const indicator = document.getElementById('adultIndicator');
+            if (indicator) {
+                indicator.style.display = 'flex';
+            }
         }
 
         function showAdultModal() {
@@ -6826,14 +6595,6 @@
         }
 
         function renderContent() {
-            // ✅ DIAGNOSTIC: log state for adult-tab troubleshooting
-            try {
-                console.log('🎨 [renderContent] currentSource=' + currentSource +
-                    ' | adultUnlocked=' + adultUnlocked +
-                    ' | isLoggedIn=' + isLoggedIn +
-                    ' | currentUser=' + (currentUser ? currentUser.username : 'null'));
-            } catch (e) { /* noop */ }
-
             // ✅ Always render the categories row first (so all tabs, including Series,
             // show their category text like "All", "Series", etc.)
             renderCategories();
@@ -6911,37 +6672,28 @@
                 const category = (item.category || '').toLowerCase();
                 const isAdult = item.adult || item.isAdult || category === 'adult';
                 const isArabic = item.arabic || item.isArabic || category === 'arabic';
-                // ✅ FIX: also accept 'movies' (plural) — the loader sets
-                // category: 'movies' on each item, so the previous strict
-                // 'movie' match let every Movies item fall through to the
-                // packageId filter and get hidden.
-                const isMovie = category === 'movie' || category === 'movies' || category === 'vod';
+                const isMovie = category === 'movie' || category === 'vod';
 
                 // If it's Plex content, check addon access
                 if (isAdult || isArabic || isMovie) {
-                    // Adult content - requires addon + password.
-                    // Show only if the adult tab is unlocked (password entered).
-                    // Items still appear in the list with a 🔒 lock via
-                    // canAccessContent if the user lacks the addon.
+                    // Adult content - requires addon + password
                     if (isAdult) {
-                        return adultUnlocked;
+                        const hasAdultAddon = customerAddons.includes('adult') ||
+                                            customerAddons.includes('adult content') ||
+                                            customerAddons.includes('adult content package');
+                        return hasAdultAddon && adultUnlocked;
                     }
 
-                    // ✅ FIX: Arabic content used to be FILTERED OUT when the
-                    // customer lacked the Arabic addon, leaving the section
-                    // empty even though the count badge showed e.g. "248".
-                    // Now we always include the item in the list — the lock
-                    // icon + "Upgrade Package" prompt is shown by the
-                    // isLocked check downstream.
+                    // Arabic content - requires addon
                     if (isArabic) {
-                        return true;
+                        return customerAddons.includes('arabic') ||
+                               customerAddons.includes('arabic package');
                     }
 
-                    // ✅ FIX: Same change for Movies — always include the
-                    // item so users can see what's available and tap the
-                    // upgrade prompt to add the addon.
+                    // Movies content - requires addon
                     if (isMovie) {
-                        return true;
+                        return customerAddons.includes('movies') ||
+                               customerAddons.includes('movies package');
                     }
                 }
 
@@ -7077,23 +6829,7 @@
                 
                 // Package Authentication Status
                 const hasAccess = clientPackageAuth.canAccessContent(item);
-                // ✅ FIX: safety net — if the user is on the adult tab
-                // and the section is unlocked, never show the lock icon
-                // or the "Upgrade Package" prompt. Trust the section
-                // context, not just the per-item access check.
-                const inAdultTabUnlocked = (currentSource === 'adult' && adultUnlocked === true);
-                if (inAdultTabUnlocked && typeof console !== 'undefined') {
-                    console.log('🔓 [Adult tab] forcing unlock for:', item.name, '| hasAccess=' + hasAccess);
-                }
-                // ✅ AGGRESSIVE FIX: log details on first item when on adult tab
-                if (inAdultTabUnlocked && index === 0) {
-                    console.log('🔍 [Adult tab diagnostics]', {
-                        currentSource, adultUnlocked, hasAccess, itemName: item.name,
-                        itemCategory: item.category, itemAdult: item.adult,
-                        itemType: item.type, itemUrl: (item.url || '').substring(0, 50)
-                    });
-                }
-                const isLocked = !hasAccess && item.type !== 'package' && !inAdultTabUnlocked;
+                const isLocked = !hasAccess && item.type !== 'package';
                 const accessStatus = getAccessStatusDisplay(item, hasAccess);
                 
                 // Enhanced content display for addon section - only show pricing to logged-in users
@@ -7355,12 +7091,11 @@
         
         // Global function for playing content in PREVIEW (single-click)
         window.playContent = function(contentId) {
-            _setDebugOverlay && _setDebugOverlay('playContent: ' + contentId + ' src=' + currentSource);
             if (!isLoggedIn) {
                 showError('Please login to start watching');
                 return;
             }
-
+            
             console.log('📺 playContent called with ID:', contentId);
             console.log('📺 Current source:', currentSource);
             console.log('📺 Adult unlocked:', adultUnlocked);
@@ -7414,22 +7149,10 @@
             }
             
             // Check package authentication access
-            // ✅ AGGRESSIVE FIX: if we're on the adult tab and the user
-            // has unlocked it this session, ALWAYS skip the canAccessContent
-            // check. This is a final safety net because:
-            //   1) canAccessContent in some builds is buggy with Plex
-            //      cache items that lack the isAdult/category flags
-            //   2) The renderContent safety net alone isn't enough,
-            //      because playContent re-runs canAccessContent
-            // We log it clearly so we can confirm the bypass is working.
-            if (currentSource !== 'adult' || adultUnlocked !== true) {
-                if (!clientPackageAuth.canAccessContent(content)) {
-                    console.log('🔒 Content access denied - package authentication required:', content.name);
-                    showUpgradePrompt(contentId);
-                    return;
-                }
-            } else {
-                console.log('✅ [playContent] Adult tab + unlocked — bypassing canAccessContent for:', content.name);
+            if (!clientPackageAuth.canAccessContent(content)) {
+                console.log('🔒 Content access denied - package authentication required:', content.name);
+                showUpgradePrompt(contentId);
+                return;
             }
             
             // Check adult content access
@@ -7551,7 +7274,7 @@
                 }
                 
                 // Detect TV browsers
-                const isTV = /Web0S|webOS|LG|NetCast|Tizen|Samsung|SmartTV|Android TV|Hisense|VIZIO|Philips|Panasonic|Sharp|Toshiba|Roku|LGWEBOS|SALTO|Amazon Fire TV|firetv|Google TV/i.test(navigator.userAgent);
+                const isTV = /Web0S|webOS|LG|NetCast|Tizen|Samsung|SmartTV|Android TV|Hisense|VIZIO|SmartCast|Philips|Panasonic|Sharp|AQUOS|Toshiba|Roku|LGWEBOS|SALTO|Amazon Fire TV|FireTV|firetv|AFTM|AFTB|AFTS|Google TV|GoogleTV|Sony|VIERA|BRAVIA|Xiaomi|MiTV|Redmi|TCL|VIDAA|Coocaa|Skyworth|Awox|JVC|Sanyo|Magnavox|Haier/i.test(navigator.userAgent);
                 
                 if (isTV) {
                     // TV browsers - use native playback
@@ -7759,6 +7482,232 @@
             }
         }
 
+        // =============================================================
+        // ✅ iWATCH FIX PACK v7.0+ — Cross-device playback compatibility
+        // =============================================================
+        // These helpers unify device detection, codec probing, and
+        // player-path selection across TVs (LG/Samsung/Tizen/Hisense/etc.),
+        // Android Stick/Box, and desktop browsers.
+        // All functions are scoped on `window.iwatchCompat` so they don't
+        // collide with the existing playback code.
+        // =============================================================
+        (function () {
+            const ua = (navigator.userAgent || '').toLowerCase();
+
+            // ---- Device classification ----
+            // Each device returns: { class, nativeHls, nativeHevc, nativeH264High, name }
+            //   class: 'tv' | 'android' | 'desktop' | 'ios'
+            //   nativeHls:    browser can play HLS natively (no HLS.js needed)
+            //   nativeHevc:   device can decode HEVC (H.265) — affects Nimble transcode choice
+            //   nativeH264High: device can decode H.264 High profile @ 4.0+
+            function detectDevice(videoEl) {
+                const v = videoEl || document.createElement('video');
+                const can = (type) => {
+                    try { return v.canPlayType(type) || ''; } catch (e) { return ''; }
+                };
+
+                // Expanded TV vendor detection (covers brands missing from the
+                // older detection regex: Sony Bravia, Xiaomi MiTV, TCL/Google TV,
+                // Hisense VIDAA, Sharp AQUOS).
+                const tvVendors = [
+                    'web0s', 'webos', 'netcast',           // LG (Web0S is intentional — LG TVs literally use that string)
+                    'tizen', 'samsung', 'smarttv',         // Samsung
+                    'hisense', 'vidaa',                    // Hisense
+                    'vizio', 'smartcast',                  // Vizio
+                    'philips', 'panasonic', 'sharp', 'aquos', 'toshiba',
+                    'roku', 'lgwebos', 'salto',
+                    'firetv', 'amazon fire tv',            // Amazon Fire TV / Stick
+                    'aftm', 'aftb', 'afts',                // Fire TV model codes
+                    'sony', 'bravia',                      // Sony
+                    'xiaomi', 'mitv', 'redmi',             // Xiaomi
+                    'tcl', 'google tv', 'googletv',        // TCL / Google TV
+                    'android tv',                          // Generic Android TV
+                    'awox', 'jvc', 'sanyo', 'magnavox', 'haier', 'skyworth', 'coocaa'
+                ];
+                const isTVUA = tvVendors.some(k => ua.includes(k));
+
+                // Android Stick/Box/Tablet/Phone — NOT a TV
+                const isAndroid = /android/i.test(ua) && !isTVUA;
+
+                // iOS / iPadOS (Safari has perfect native HLS)
+                const isIOS = /iphone|ipad|ipod/i.test(ua) ||
+                              (/mac/i.test(ua) && navigator.maxTouchPoints > 1);
+
+                // Browser capability flags
+                const nativeHls   = can('application/vnd.apple.mpegurl') !== '';
+                const nativeHevc  = can('video/mp4; codecs="hvc1"') !== '' ||
+                                    can('video/mp4; codecs="hev1"') !== '';
+                const nativeH264Baseline = can('video/mp4; codecs="avc1.42E01E"') !== ''; // baseline 3.0
+                const nativeH264Main     = can('video/mp4; codecs="avc1.4D401E"') !== ''; // main 3.0
+                const nativeH264High     = can('video/mp4; codecs="avc1.640028"') !== ''; // high 4.0
+                const nativeAac   = can('audio/mp4; codecs="mp4a.40.2"') !== '';          // AAC-LC
+
+                let cls = 'desktop';
+                let name = 'Desktop Browser';
+                if (isTVUA) { cls = 'tv'; name = 'Smart TV'; }
+                else if (isAndroid) {
+                    cls = 'android';
+                    name = /tv/i.test(ua) ? 'Android TV' : 'Android Stick/Box';
+                } else if (isIOS) { cls = 'ios'; name = 'iOS / iPadOS'; }
+
+                return {
+                    class: cls,
+                    name: name,
+                    isTV: cls === 'tv',
+                    isAndroid: cls === 'android',
+                    isIOS: cls === 'ios',
+                    isDesktop: cls === 'desktop',
+                    nativeHls,
+                    nativeHevc,
+                    nativeH264Baseline,
+                    nativeH264Main,
+                    nativeH264High,
+                    nativeAac,
+                    userAgent: navigator.userAgent
+                };
+            }
+
+            // ---- Get HLS.js config tuned to device class ----
+            // TVs on WiFi through OLT need bigger buffers than the old 10/30s.
+            // 30/120s gives smooth playback on weak WiFi and slow TV CPUs.
+            function getHlsConfig(device) {
+                const base = {
+                    lowLatencyMode: false,
+                    enableSoftwareAES: false,           // many TV WebViews can't do WebCrypto
+                    fragLoadingMaxRetry: 6,
+                    manifestLoadingMaxRetry: 4,
+                    levelLoadingMaxRetry: 4,
+                    fragLoadingTimeOut: 20000,
+                    manifestLoadingTimeOut: 15000,
+                    levelLoadingTimeOut: 15000
+                };
+
+                if (device.isTV) {
+                    // LG webOS / Samsung Tizen / Hisense / etc.
+                    return Object.assign({}, base, {
+                        enableWorker: false,             // safe default for older WebKit TVs
+                        maxBufferLength: 30,             // 30s target buffer
+                        maxMaxBufferLength: 120,         // allow up to 2min
+                        backBufferLength: 30,
+                        maxBufferSize: 60 * 1000 * 1000, // 60MB cap for TV RAM
+                        startLevel: -1,                  // auto-pick by bandwidth
+                        capLevelToPlayerSize: true,
+                        debug: false
+                    });
+                }
+                if (device.isAndroid) {
+                    // Android Stick/Box — usually Chrome WebView, modern Chromium
+                    return Object.assign({}, base, {
+                        enableWorker: true,              // modern Chromium handles workers
+                        maxBufferLength: 30,
+                        maxMaxBufferLength: 120,
+                        backBufferLength: 60,
+                        maxBufferSize: 80 * 1000 * 1000,
+                        startLevel: -1,
+                        capLevelToPlayerSize: true,
+                        debug: false
+                    });
+                }
+                // Desktop / iOS Safari — fastest path
+                return Object.assign({}, base, {
+                    enableWorker: true,
+                    maxBufferLength: 30,
+                    maxMaxBufferLength: 120,
+                    backBufferLength: 60,
+                    maxBufferSize: 100 * 1000 * 1000,
+                    startLevel: -1,
+                    capLevelToPlayerSize: true,
+                    debug: false
+                });
+            }
+
+            // ---- Pick the best playback path for the device + content ----
+            // Returns: 'native-hls' | 'native-mp4' | 'hlsjs' | 'videojs-vhs'
+            function pickPlaybackPath(device, content) {
+                const url = (content && content.url) || '';
+                const isHls = /\.m3u8(\?|$|#)/i.test(url) || /\/hls\//i.test(url);
+                const isMp4 = /\.mp4(\?|$)/i.test(url);
+
+                // HEVC MP4 on a non-HEVC device → can't play, signal error
+                if (isMp4 && content && /hevc|h\.?265|hvc1|hev1/i.test(content.videoCodec || '') && !device.nativeHevc) {
+                    return 'unsupported-codec';
+                }
+
+                // Native HLS path is always preferred when available — it's
+                // the TV manufacturer's optimized decoder path.
+                if (device.nativeHls && (isHls || isMp4)) {
+                    return device.isTV || device.isIOS ? 'native-hls' : 'native-hls';
+                }
+
+                // HLS.js for non-native environments
+                if (isHls) return 'hlsjs';
+
+                // MP4 without HLS → native video tag (Video.js wraps it)
+                if (isMp4) return 'native-mp4';
+
+                // Unknown — fall back to HLS.js if available, else native
+                return 'hlsjs';
+            }
+
+            // ---- Translate real video error codes into human messages ----
+            // Native HTMLVideoElement error codes: 1=ABORTED 2=NETWORK 3=DECODE 4=SRC_NOT_SUPPORTED
+            function explainVideoError(err) {
+                if (!err) return 'Unknown playback error';
+                const code = err.code;
+                switch (code) {
+                    case 1: return 'Playback was interrupted (MEDIA_ERR_ABORTED).';
+                    case 2: return 'Network error: the stream could not be loaded. Check your connection or that the Nimble server is reachable.';
+                    case 3: return 'Decoding error: this TV/device cannot decode the video format. Usually a codec (H.264 high profile vs baseline) or HEVC mismatch — change Nimble to output H.264 baseline.';
+                    case 4: return 'Source not supported: this stream\'s format (codec/container) is not supported by the device browser. Try a different stream or change Nimble output settings.';
+                    default: return 'Playback error (code ' + code + '). ' + (err.message || '');
+                }
+            }
+
+            // ---- Diagnostic helper ----
+            // Run in console: iwatchCompat.diag()
+            // Logs a structured report you can read off any TV via remote
+            // devtools or admin panel.
+            function diag() {
+                const video = document.getElementById('videoPlayer');
+                const dev = detectDevice(video);
+                const cfg = getHlsConfig(dev);
+                const report = {
+                    detected: dev,
+                    hlsConfig: cfg,
+                    hlsJsAvailable: typeof window.Hls !== 'undefined',
+                    hlsJsSupported: typeof window.Hls !== 'undefined' && window.Hls.isSupported(),
+                    corsProxy: localStorage.getItem('corsProxyUrl') || '(none)',
+                    page: { protocol: window.location.protocol, host: window.location.host }
+                };
+                console.log('🩺 iWATCH Diagnostic Report\n' + JSON.stringify(report, null, 2));
+                console.log('Device class:', dev.class, '|', dev.name);
+                console.log('Native HLS:', dev.nativeHls, '| HEVC:', dev.nativeHevc,
+                            '| H.264 baseline:', dev.nativeH264Baseline,
+                            '| H.264 main:', dev.nativeH264Main,
+                            '| H.264 high:', dev.nativeH264High);
+                console.log('HLS.js supported:', report.hlsJsSupported);
+                console.log('Suggested HLS.js config:', cfg);
+                return report;
+            }
+
+            // Expose for use by the rest of the playback code
+            window.iwatchCompat = {
+                detectDevice: detectDevice,
+                getHlsConfig: getHlsConfig,
+                pickPlaybackPath: pickPlaybackPath,
+                explainVideoError: explainVideoError,
+                diag: diag
+            };
+
+            // Backwards-compatible globals used by older code paths
+            window.iwatchDetectDevice = detectDevice;
+            window.iwatchPickPath = pickPlaybackPath;
+            window.iwatchExplainError = explainVideoError;
+        })();
+        // =============================================================
+        // End iWATCH FIX PACK helpers
+        // =============================================================
+
         // Play HLS stream
         function handleHLSStream(url) {
             // Android native player - hide web overlay to show VLC surface
@@ -7801,20 +7750,21 @@
                 player.el().style.visibility = 'visible';
             }
             
-            if (Hls.isSupported()) {
+            // ✅ FIX PACK v7.0+: use device-aware HLS.js config (TV-tuned buffers)
+            if (typeof window.Hls !== 'undefined' && Hls.isSupported()) {
                 if (hls) hls.destroy();
-                // ✅ FIX: also clear window.hlsInstance
                 if (window.hlsInstance) {
                     try { window.hlsInstance.destroy(); } catch (e) { /* noop */ }
                     window.hlsInstance = null;
                 }
-                hls = new Hls({
-                    enableWorker: true,
-                    maxBufferLength: 60,
-                    maxMaxBufferLength: 120,
-                    startLevel: -1
-                });
-                // ✅ FIX: keep window.hlsInstance in sync
+                // Pick buffer/worker config based on detected device class
+                const _dev = (window.iwatchCompat && window.iwatchCompat.detectDevice)
+                    ? window.iwatchCompat.detectDevice(player ? player.el().querySelector('video') : null)
+                    : null;
+                const _cfg = (window.iwatchCompat && window.iwatchCompat.getHlsConfig && _dev)
+                    ? window.iwatchCompat.getHlsConfig(_dev)
+                    : { enableWorker: true, maxBufferLength: 30, maxMaxBufferLength: 120, startLevel: -1 };
+                hls = new Hls(_cfg);
                 window.hlsInstance = hls;
                 hls.loadSource(getProxiedStreamUrl(url));
                 hls.attachMedia(player.el().querySelector('video'));
@@ -7824,11 +7774,16 @@
                 hls.on(Hls.Events.ERROR, (event, data) => {
                     if (data.fatal) {
                         console.error('HLS Error:', data);
-                        showError('Streaming error - try refreshing');
+                        // ✅ FIX PACK: surface the real HLS error code so support
+                        // can debug remotely instead of a generic "try refreshing".
+                        const details = data && data.details ? data.details : 'unknown';
+                        const type = data && data.type ? data.type : 'unknown';
+                        showError('Stream error (' + type + ' / ' + details + '). ' +
+                                  'Try a different channel or refresh.');
                     }
                 });
             } else {
-                // Fallback for Safari
+                // Fallback for Safari / native HLS browsers
                 const video = player.el().querySelector('video');
                 video.src = url;
                 video.load();
@@ -7838,7 +7793,6 @@
         
         function handleHLSContent(content) {
             console.log('🎬 handleHLSContent called for:', content.name, content.url);
-            _setDebugOverlay && _setDebugOverlay('HLS: ' + (content.name || '?') + ' → ' + (content.url || '').substring(0, 50));
             
             // HIDE OVERLAY IMMEDIATELY
             const overlay = document.getElementById('videoOverlay');
@@ -7878,175 +7832,165 @@
                 return;
             }
             
-            // DETECT TV BROWSERS - LG webOS has NATIVE HLS support (faster than HLS.js)
-            const isLGTV = /Web0S|webOS|LG|NetCast/i.test(navigator.userAgent);
-            const isSamsungTV = /Tizen|Samsung|SmartTV/i.test(navigator.userAgent);
-            const hasNativeHLS = video.canPlayType('application/vnd.apple.mpegurl') !== '';
-            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-            
-            // TV BROWSERS & NATIVE HLS: Use direct playback (MUCH FASTER)
-            if (isLGTV || isSamsungTV || hasNativeHLS || isSafari) {
-                console.log('📺 TV/Native HLS detected - using native playback');
-                console.log('📺 User Agent:', navigator.userAgent);
-                console.log('📺 Video URL:', content.url ? content.url.substring(0, 100) + '...' : 'none');
-                
-                // Destroy HLS.js instance if running (prevents conflicts)
-                if (hls) {
-                    hls.destroy();
-                    hls = null;
-                }
+            // ✅ FIX PACK v7.0+: unified device detection + codec-aware path selection.
+            // The old code only detected LG/Samsung UA strings, so Sony Bravia,
+            // Xiaomi MiTV, TCL/Google TV, Hisense VIDAA, Sharp AQUOS and Fire TV
+            // fell through to the desktop HLS.js path with 10s/30s buffers — that
+            // path is too aggressive for TV CPUs and produces constant stutter.
+            const _compat = window.iwatchCompat || {};
+            const _dev = _compat.detectDevice ? _compat.detectDevice(video) : {
+                isTV: /Web0S|webOS|LG|NetCast|Tizen|Samsung|SmartTV/i.test(navigator.userAgent),
+                isAndroid: /Android/i.test(navigator.userAgent) && !/TV/i.test(navigator.userAgent),
+                isIOS: /iPhone|iPad|iPod/i.test(navigator.userAgent),
+                nativeHls: video.canPlayType('application/vnd.apple.mpegurl') !== '',
+                nativeHevc: false, nativeH264Baseline: false, nativeH264Main: false, nativeH264High: false, nativeAac: false,
+                name: 'Unknown', class: 'desktop', userAgent: navigator.userAgent
+            };
+            const _path = _compat.pickPlaybackPath ? _compat.pickPlaybackPath(_dev, content) : 'hlsjs';
+
+            console.log('📺 Device:', _dev.name, '| class:', _dev.class,
+                        '| nativeHls:', _dev.nativeHls, '| path:', _path);
+
+            // Codec mismatch (e.g. HEVC MP4 on an H.264-only device) — surface immediately
+            if (_path === 'unsupported-codec') {
+                const msg = 'This device cannot decode the stream codec (' +
+                            (content.videoCodec || 'HEVC/H.265') +
+                            '). Set Nimble to output H.264 for this channel.';
+                console.error('❌', msg);
+                showError(msg);
+                return;
+            }
+
+            // NATIVE HLS PATH — used by LG webOS, Samsung Tizen, Hisense,
+            // Sony, iOS, and Safari. Native decoder = best performance on TV.
+            if (_dev.nativeHls && (_path === 'native-hls' || _dev.isTV || _dev.isIOS)) {
+                console.log('📺 Native HLS path (' + _dev.name + ')');
+                if (hls) { try { hls.destroy(); } catch (e) {} hls = null; }
                 if (window.hlsInstance) {
-                    window.hlsInstance.destroy();
+                    try { window.hlsInstance.destroy(); } catch (e) {}
                     window.hlsInstance = null;
                 }
-                
-                // DIRECT NATIVE PLAYBACK - fastest for LG/Samsung
                 video.src = getProxiedStreamUrl(content.url);
                 video.load();
-                
-                // Add error listener
-                video.onerror = function() {
-                    console.error('❌ Video load error:', video.error);
-                    showError('Failed to load video. Please try again or contact support if the issue continues.');
+
+                // ✅ FIX PACK: surface real video error code (MEDIA_ERR_DECODE=3 is
+                // almost always a codec mismatch — Nimble should output H.264 baseline)
+                video.onerror = function () {
+                    console.error('❌ Native video error:', video.error);
+                    const msg = (_compat.explainVideoError)
+                        ? _compat.explainVideoError(video.error)
+                        : 'Playback error.';
+                    showError(msg);
                 };
-                
-                // Play immediately
+
                 const playPromise = video.play();
                 if (playPromise !== undefined) {
                     playPromise.then(() => {
-                        console.log('✅ Video started playing!');
+                        console.log('✅ Native playback started');
                     }).catch(e => {
-                        console.log('⚠️ Native play failed:', e.message);
-                        console.log('⚠️ Will try HLS.js as fallback...');
-                        // Fallback to HLS.js
+                        console.log('⚠️ Native play rejected, falling back to HLS.js:', e.message);
                         tryHLSJsFallback(content.url);
                     });
                 } else {
-                    // No play promise - older browser
                     showTVPlayPrompt(content);
                 }
-                
-                // Update now playing info
                 updateNowPlaying(content);
                 return;
             }
-            
-            // DESKTOP BROWSERS: Use HLS.js with optimized settings
+
+            // HLS.JS PATH — used by Android Stick/Box (Chromium WebView) and desktop browsers.
             if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-                if (hls) {
-                    hls.destroy();
-                }
-                // ✅ FIX: also clear window.hlsInstance so the next play
-                // can re-create a clean HLS instance (otherwise after 3-4
-                // stop/play cycles the old reference causes silent failures).
+                if (hls) { try { hls.destroy(); } catch (e) {} }
                 if (window.hlsInstance) {
-                    try { window.hlsInstance.destroy(); } catch (e) { /* noop */ }
+                    try { window.hlsInstance.destroy(); } catch (e) {}
                     window.hlsInstance = null;
                 }
 
-                // Optimized HLS.js config for faster start
-                hls = new Hls({
-                    enableWorker: false,        // Disable for TV compatibility
+                // ✅ FIX PACK: device-class-aware HLS.js config. Old config used
+                // 10s/30s buffers + startLevel:0 which caused constant stutter on
+                // TVs over WiFi through OLT. New config uses 30s/120s + auto level.
+                const _cfg = (_compat.getHlsConfig && _dev) ? _compat.getHlsConfig(_dev) : {
+                    enableWorker: !_dev.isTV,
                     lowLatencyMode: false,
-                    maxBufferLength: 10,        // Reduced for faster start
-                    maxMaxBufferLength: 30,
-                    maxBufferSize: 10 * 1000 * 1000,  // 10MB
-                    startLevel: 0,              // Start with lowest quality
+                    maxBufferLength: 30,
+                    maxMaxBufferLength: 120,
+                    startLevel: -1,
                     capLevelToPlayerSize: true,
                     debug: false
-                });
-
-                // ✅ FIX: also keep window.hlsInstance in sync so stopStream
-                // can destroy the correct instance every time.
+                };
+                hls = new Hls(_cfg);
                 window.hlsInstance = hls;
 
-                // ✅ FIX: Wrap stream URL with a CORS proxy if configured.
-                // This solves "URL plays in VLC but not in browser" issues caused by
-                // missing CORS headers on the streaming server. The user can set
-                // a CORS proxy URL via localStorage.setItem('corsProxyUrl', 'https://...')
-                // or via the admin panel settings.
                 const proxiedUrl = getProxiedStreamUrl(content.url);
                 if (proxiedUrl !== content.url) {
-                    console.log('🌐 Using CORS proxy for stream:', proxiedUrl);
+                    console.log('🌐 Using CORS proxy for stream');
                 }
                 hls.loadSource(proxiedUrl);
                 hls.attachMedia(video);
-                
-                hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
-                    console.log('✅ HLS.js loaded, starting playback...');
-                    // ✅ FIX: explicitly select the first audio track.
-                    // Some HLS playlists (notably Plex series with
-                    // multiple language tracks) ship with an empty
-                    // default audio track which would cause the
-                    // "video plays but no audio" symptom. Forcing
-                    // audioTrack = 0 makes the player bind to the
-                    // first available rendition.
-                    try {
-                        if (data && data.audioTracks && data.audioTracks.length > 0) {
-                            hls.audioTrack = 0;
-                            console.log('🔊 Selected audio track 0:', data.audioTracks[0]);
-                        }
-                    } catch (e) { /* noop */ }
-                    // Defensive: ensure the video element is not muted.
-                    // (setupSimpleVideoListeners attaches 'play' listener
-                    // to update the play button but does not enforce
-                    // unmuted state, so we do it here explicitly.)
-                    try { video.muted = false; } catch (e) { /* noop */ }
-                    const playPromise = video.play();
-                    if (playPromise !== undefined) {
-                        playPromise.then(() => {
-                            console.log('✅ HLS playback started!');
-                        }).catch(e => {
-                            console.log('⚠️ HLS Autoplay blocked:', e.message);
-                            showTVPlayPrompt(content);
-                        });
+
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    console.log('✅ HLS.js manifest parsed — starting playback');
+                    const pp = video.play();
+                    if (pp !== undefined) {
+                        pp.then(() => console.log('✅ HLS playback started'))
+                          .catch(e => {
+                              console.log('⚠️ HLS autoplay blocked:', e.message);
+                              showTVPlayPrompt(content);
+                          });
                     }
                 });
-                
+
                 hls.on(Hls.Events.ERROR, (event, data) => {
-                    if (data.fatal) {
-                        if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-                            console.log('🔄 Network error - recovering...');
-                            // ✅ FIX: Detect CORS / mixed content and show a friendly message
-                            if (data.details && /access-control-allow-origin|mixed-content|cors/i.test(JSON.stringify(data))) {
-                                showError('Video is temporarily unavailable. Please try again later or contact support.');
-                            }
-                            hls.startLoad();
-                        } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-                            console.log('🔄 Media error - recovering...');
-                            hls.recoverMediaError();
-                        } else {
-                            console.log('🔄 Fatal error - trying native fallback');
-                            hls.destroy();
-                            video.src = content.url;
-                            video.load();
-                            video.play().catch(e => showTVPlayPrompt(content));
-                        }
+                    if (!data || !data.fatal) return;
+                    console.log('🔄 HLS fatal error:', data.type, data.details);
+
+                    // Network errors — try to recover silently
+                    if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                        try { hls.startLoad(); } catch (e) {}
+                        return;
                     }
+                    // Media errors — codec/segment issue, try recovery first
+                    if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                        try { hls.recoverMediaError(); } catch (e) {}
+                        return;
+                    }
+                    // Truly fatal — give up gracefully with a real message
+                    const details = (data && data.details) || 'unknown';
+                    showError('This stream cannot be played on your device (' +
+                              details + '). The channel may use a codec this ' +
+                              'TV does not support — try a different channel ' +
+                              'or re-encode via Nimble to H.264 baseline.');
+                    try { hls.destroy(); } catch (e) {}
+                    hls = null;
+                    window.hlsInstance = null;
                 });
             } else {
-                // Final fallback - native video
-                console.log('📺 Using native video fallback');
-                // ✅ FIX: Detect mixed-content (HTTPS page loading HTTP stream)
+                // Final fallback — native <video> tag (no HLS.js available)
+                console.log('📺 HLS.js not available, using native video fallback');
                 if (window.location.protocol === 'https:' && content.url && content.url.startsWith('http://')) {
-                    showError('Video is temporarily unavailable. Please try again later or contact support.');
+                    showError('Mixed content blocked: this HTTPS page cannot load an HTTP stream. Enable HTTPS on the Nimble server.');
+                    return;
                 }
                 video.src = content.url;
                 video.load();
-                const playPromise = video.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(e => {
+                video.onerror = function () {
+                    const msg = (_compat.explainVideoError)
+                        ? _compat.explainVideoError(video.error)
+                        : 'Playback error.';
+                    showError(msg);
+                };
+                const pp = video.play();
+                if (pp !== undefined) {
+                    pp.catch(e => {
                         if (e && /NotSupportedError|DOMException/i.test(String(e))) {
-                            showError('Video is temporarily unavailable. Please try again later or contact support.');
+                            showError('Stream format not supported on this device.');
                         } else {
                             showTVPlayPrompt(content);
                         }
                     });
                 }
-                video.play().catch(e => console.log('Autoplay blocked'));
             }
-            
-            // Update now playing info
+
             updateNowPlaying(content);
         }
 
@@ -8079,21 +8023,26 @@
         // Fallback function to try HLS.js when native playback fails
         function tryHLSJsFallback(url) {
             console.log('🔄 Trying HLS.js fallback...');
-            
+
             if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-                const video = player.el().querySelector('video');
-                
-                if (hls) {
-                    hls.destroy();
+                const video = player ? player.el().querySelector('video') : document.getElementById('videoPlayer');
+
+                if (hls) { try { hls.destroy(); } catch (e) {} }
+                if (window.hlsInstance) {
+                    try { window.hlsInstance.destroy(); } catch (e) {}
+                    window.hlsInstance = null;
                 }
-                
-                hls = new Hls({
-                    enableWorker: false,
-                    lowLatencyMode: false,
-                    maxBufferLength: 10,
-                    maxMaxBufferLength: 30
-                });
-                
+
+                // ✅ FIX PACK: use device-aware config so the fallback matches
+                // the main playback path's buffer/worker settings.
+                const _dev = (window.iwatchCompat && window.iwatchCompat.detectDevice)
+                    ? window.iwatchCompat.detectDevice(video) : null;
+                const _cfg = (window.iwatchCompat && window.iwatchCompat.getHlsConfig && _dev)
+                    ? window.iwatchCompat.getHlsConfig(_dev)
+                    : { enableWorker: false, maxBufferLength: 30, maxMaxBufferLength: 120, lowLatencyMode: false };
+                hls = new Hls(_cfg);
+                window.hlsInstance = hls;
+
                 hls.loadSource(getProxiedStreamUrl(url));
                 hls.attachMedia(video);
 
@@ -8101,10 +8050,12 @@
                     console.log('✅ HLS.js fallback loaded successfully');
                     video.play().catch(e => console.log('Autoplay blocked'));
                 });
-                
+
                 hls.on(Hls.Events.ERROR, (event, data) => {
                     if (data.fatal) {
                         console.error('❌ HLS.js fallback error:', data);
+                        const details = (data && data.details) || 'unknown';
+                        showError('Stream error after fallback (' + details + ').');
                     }
                 });
             } else {
@@ -8126,14 +8077,46 @@
             overlay.classList.add('show');
         }
 
+        // =====================================================
+        // ✅ FIX PACK v7.0+: safe preload with full cleanup
+        // =====================================================
+        // Module-scoped tracking of preloaded HLS instances + hidden videos
+        // so we can destroy them when the timer fires (and on the next
+        // preload call, in case a previous preload is still alive).
+        const _preloadedItems = [];
+        function _destroyAllPreloaded() {
+            while (_preloadedItems.length) {
+                const it = _preloadedItems.pop();
+                try { if (it.hls && it.hls.destroy) it.hls.destroy(); } catch (e) {}
+                try { it.video.pause(); } catch (e) {}
+                try { it.video.removeAttribute('src'); it.video.load(); } catch (e) {}
+                try { if (it.video.parentNode) it.video.parentNode.removeChild(it.video); } catch (e) {}
+            }
+        }
+        function _schedulePreload(video, hls, ms) {
+            _preloadedItems.push({ video: video, hls: hls });
+            setTimeout(() => {
+                // Remove this specific item from the tracked list and tear it down
+                const idx = _preloadedItems.findIndex(x => x.video === video);
+                if (idx !== -1) _preloadedItems.splice(idx, 1);
+                try { if (hls && hls.destroy) hls.destroy(); } catch (e) {}
+                try { video.pause(); } catch (e) {}
+                try { video.removeAttribute('src'); video.load(); } catch (e) {}
+                try { if (video.parentNode) video.parentNode.removeChild(video); } catch (e) {}
+            }, ms);
+        }
         // Preload always-streaming content
         function preloadAlwaysStreamingContent() {
             console.log('🔄 Preloading always-streaming content (News / Sports / Sports Plus)...');
 
+            // ✅ FIX PACK: clear any leftover preloads from a prior cycle so we
+            // never accumulate multiple Hls instances on TVs with limited RAM.
+            _destroyAllPreloaded();
+
             // ✅ Only News, Sports, Sports Plus are preloaded.
             // Everything else (Movies, regular Live TV, Series, etc.) is on-demand
             // to minimize local network traffic.
-            const alwaysStreamingSources = ['sports', 'sportsPlus', 'sports-live', 'news'];
+            const alwaysStreamingSources = ['sports', 'sportsPlus', 'news'];
 
             alwaysStreamingSources.forEach(source => {
                 const sourceData = contentData[source];
@@ -8149,8 +8132,15 @@
                         preloadVideo.style.display = 'none';
                         preloadVideo.muted = true;
 
+                        let preloadHls = null;
                         if (contentToPreload.type === 'hls' && Hls.isSupported()) {
-                            const preloadHls = new Hls();
+                            // ✅ FIX PACK: also use device-aware config for preload
+                            const _dev = (window.iwatchCompat && window.iwatchCompat.detectDevice)
+                                ? window.iwatchCompat.detectDevice(preloadVideo) : null;
+                            const _cfg = (window.iwatchCompat && window.iwatchCompat.getHlsConfig && _dev)
+                                ? window.iwatchCompat.getHlsConfig(_dev)
+                                : { enableWorker: false, maxBufferLength: 10, maxMaxBufferLength: 30, lowLatencyMode: false };
+                            preloadHls = new Hls(_cfg);
                             preloadHls.loadSource(contentToPreload.url);
                             preloadHls.attachMedia(preloadVideo);
                         } else if (contentToPreload.type === 'mp4') {
@@ -8158,13 +8148,7 @@
                         }
 
                         document.body.appendChild(preloadVideo);
-
-                        // Remove preloaded video after 10 seconds to prevent memory issues
-                        setTimeout(() => {
-                            if (preloadVideo.parentNode) {
-                                preloadVideo.parentNode.removeChild(preloadVideo);
-                            }
-                        }, 10000);
+                        _schedulePreload(preloadVideo, preloadHls, 10000);
                     }
                 }
             });
@@ -8188,8 +8172,14 @@
                     preloadVideo.style.display = 'none';
                     preloadVideo.muted = true;
 
+                    let preloadHls = null;
                     if (newsChannel.type === 'hls' && Hls.isSupported()) {
-                        const preloadHls = new Hls();
+                        const _dev = (window.iwatchCompat && window.iwatchCompat.detectDevice)
+                            ? window.iwatchCompat.detectDevice(preloadVideo) : null;
+                        const _cfg = (window.iwatchCompat && window.iwatchCompat.getHlsConfig && _dev)
+                            ? window.iwatchCompat.getHlsConfig(_dev)
+                            : { enableWorker: false, maxBufferLength: 10, maxMaxBufferLength: 30, lowLatencyMode: false };
+                        preloadHls = new Hls(_cfg);
                         preloadHls.loadSource(newsChannel.url);
                         preloadHls.attachMedia(preloadVideo);
                     } else if (newsChannel.type === 'mp4') {
@@ -8197,11 +8187,7 @@
                     }
 
                     document.body.appendChild(preloadVideo);
-                    setTimeout(() => {
-                        if (preloadVideo.parentNode) {
-                            preloadVideo.parentNode.removeChild(preloadVideo);
-                        }
-                    }, 10000);
+                    _schedulePreload(preloadVideo, preloadHls, 10000);
                 }
             }
         }
@@ -8217,7 +8203,6 @@
         function handleMP4Content(content) {
             console.log('🎬 handleMP4Content called:', content.name);
             console.log('🎬 Content URL:', content.url);
-            _setDebugOverlay && _setDebugOverlay('MP4: ' + (content.name || '?') + ' → ' + (content.url || '').substring(0, 60));
             
             // HIDE OVERLAY IMMEDIATELY
             const overlay = document.getElementById('videoOverlay');
@@ -8247,7 +8232,7 @@
             
             // Detect ALL TV browsers - expanded detection
             const userAgent = navigator.userAgent;
-            const isTV = /Web0S|webOS|LG|NetCast|Tizen|Samsung|SmartTV|Android TV|Hisense|VIZIO|Philips|Panasonic|Sharp|Toshiba|Roku|LGWEBOS|SALTO|Amazon Fire TV|firetv|Google TV/i.test(userAgent);
+            const isTV = /Web0S|webOS|LG|NetCast|Tizen|Samsung|SmartTV|Android TV|Hisense|VIZIO|SmartCast|Philips|Panasonic|Sharp|AQUOS|Toshiba|Roku|LGWEBOS|SALTO|Amazon Fire TV|FireTV|firetv|AFTM|AFTB|AFTS|Google TV|GoogleTV|Sony|VIERA|BRAVIA|Xiaomi|MiTV|Redmi|TCL|VIDAA|Coocaa|Skyworth|Awox|JVC|Sanyo|Magnavox|Haier/i.test(userAgent);
             
             console.log('📺 User Agent:', userAgent);
             console.log('📺 Is TV detected:', isTV);
@@ -8294,51 +8279,36 @@
             // For TV browsers, use native playback directly on video element
             if (isTV) {
                 console.log('📺 TV detected - using native playback');
-
+                
                 // Show the video element
                 nativeVideo.style.display = 'block';
                 nativeVideo.style.visibility = 'visible';
-
-                // ✅ FIX v7.11.0: MUTE-BEFORE-PLAY for Android WebView
-                // Android WebView (TVR 3, Fire TV, generic Android boxes)
-                // strictly enforces autoplay policy: unmuted play() is
-                // rejected even within a user-gesture chain. The standard
-                // fix is: start muted (browsers always allow muted autoplay),
-                // then unmute once playback actually starts. This works
-                // because the unmuted audio becomes part of an active
-                // media element, which the browser considers user-initiated.
-                nativeVideo.muted = true;
+                
+                // Set source directly on native video element
                 nativeVideo.src = content.url;
                 nativeVideo.load();
-                _setDebugOverlay(`MP4 set: ${(content.url || '').split('/').pop()}`);
 
-                // Add error listener
+                // ✅ FIX PACK v7.0+: surface real video error (e.g. MEDI​A_ERR_DECODE=3
+                // means codec mismatch — the MP4 is HEVC or H.264 high profile that
+                // the TV cannot decode). The admin-side videoCodec hint on the
+                // content source lets us show a specific, actionable message.
                 nativeVideo.onerror = function() {
                     console.error('❌ MP4 Video load error:', nativeVideo.error);
-                    _setDebugOverlay('MP4 LOAD ERROR: ' + (nativeVideo.error?.message || 'unknown'));
-                    showError('Failed to load video. Please try again or contact support if the issue continues.');
+                    const msg = (window.iwatchCompat && window.iwatchCompat.explainVideoError)
+                        ? window.iwatchCompat.explainVideoError(nativeVideo.error)
+                        : 'Failed to load video.';
+                    showError(msg);
                 };
-
-                // Play immediately (muted, which is always allowed)
+                
+                // Play immediately
                 const playPromise = nativeVideo.play();
                 if (playPromise !== undefined) {
                     playPromise.then(() => {
                         console.log('✅ TV Video playing in preview!');
-                        // Unmute AFTER playback has started — this is the
-                        // moment when the browser considers the user
-                        // actively engaged with the media.
-                        nativeVideo.muted = false;
-                        _setDebugOverlay('MP4 PLAYING: ' + (content.name || ''));
                     }).catch(e => {
-                        console.log('⚠️ TV play failed (even muted):', e.message);
-                        _setDebugOverlay('MP4 PLAY FAILED: ' + e.message);
-                        // Try to unmute anyway in case it helps on retry
-                        nativeVideo.muted = false;
+                        console.log('⚠️ TV play failed:', e.message);
                         showTVPlayPrompt(content);
                     });
-                } else {
-                    // No play promise (very old browser)
-                    showTVPlayPrompt(content);
                 }
             } else {
                 // Desktop browsers: use Video.js API
@@ -8346,19 +8316,13 @@
                     player.src({ type: 'video/mp4', src: content.url });
                     player.play().catch(e => {
                         console.log('⚠️ Video.js play failed:', e.message);
-                        _setDebugOverlay('Video.js play failed: ' + e.message);
                     });
                 } else {
-                    // Fallback to native video (also apply mute-before-play
-                    // since desktop can also be strict in some contexts)
-                    nativeVideo.muted = true;
+                    // Fallback to native video
                     nativeVideo.src = content.url;
                     nativeVideo.load();
-                    nativeVideo.play().then(() => {
-                        nativeVideo.muted = false;
-                    }).catch(e => {
+                    nativeVideo.play().catch(e => {
                         console.log('⚠️ Native play failed:', e.message);
-                        nativeVideo.muted = false;
                     });
                 }
             }
@@ -8663,12 +8627,30 @@
             }
         });
 
+        // Toggle Play/Pause for TV remote
+        window.togglePlay = function() {
+            const video = getVideoElement();
+            const playPauseBtn = document.getElementById('fsPlayPauseBtn');
+            if (!video) return;
+            
+            if (video.paused) {
+                video.play().then(() => {
+                    if (playPauseBtn) playPauseBtn.textContent = '⏸️ Pause';
+                }).catch(e => console.log('Play failed:', e));
+            } else {
+                video.pause();
+                if (playPauseBtn) playPauseBtn.textContent = '▶️ Play';
+            }
+        };
+
+        // Toggle Mute for TV remote
+        window.toggleMute = function() {
+            const video = getVideoElement();
+            if (!video) return;
+            video.muted = !video.muted;
+        };
+
         // Fullscreen channel switching
-        // (NOTE: window.togglePlay and window.toggleMute are defined LATER in
-        // the file as single, merged versions that handle both the Video.js
-        // player AND the native video element. The earlier "for TV remote"
-        // duplicates were removed because the second definition was
-        // overwriting them and dropping the fsPlayPauseBtn updates.)
         window.fullscreenChannelUp = function() {
             const content = contentData[currentSource]?.content || [];
             if (content.length === 0) return;
@@ -8715,51 +8697,22 @@
             }
         }
 
-        // Global function for video play/pause - unified for TV remote + buttons
-        // ✅ FIX: was previously defined TWICE in this file. The second
-        // definition (this one) was overwriting the first, which dropped the
-        // fsPlayPauseBtn update. Now we use the NATIVE video element (most
-        // reliable on TVs) and keep BOTH button texts in sync, plus the
-        // resume-last-played fallback.
+        // Global function for video play/pause - defined early for onclick access
         window.togglePlay = function() {
-            // Resume last played channel if user pressed stop and is hitting
-            // play again on the TV remote.
+            // ✅ FIX: if there is no current content (because the user pressed stop),
+            // try to resume the last channel that was playing. Otherwise the
+            // fullscreen play button does nothing after stopStream().
             if (!currentContent && window.lastPlayedContent && typeof window.playContent === 'function') {
-                console.log('▶️ Resuming last played channel:', window.lastPlayedContent.name);
+                console.log('▶️ Resuming last played channel from fullscreen:', window.lastPlayedContent.name);
                 window.playContent(window.lastPlayedContent.id);
                 return;
             }
+            if (!player || !currentContent) return;
 
-            // Prefer native video element — it always reflects the real
-            // paused state, even after player.reset() in stopStream().
-            const video = getVideoElement();
-            if (!video) return;
-
-            const fsBtn = document.getElementById('fsPlayPauseBtn');
-            const simpleBtn = document.getElementById('simplePlayBtn');
-
-            if (video.paused) {
-                const playPromise = video.play();
-                if (playPromise && typeof playPromise.then === 'function') {
-                    playPromise.then(() => {
-                        if (fsBtn) fsBtn.textContent = '⏸️ Pause';
-                        if (simpleBtn) simpleBtn.textContent = '⏸️';
-                    }).catch(e => console.log('Play failed:', e));
-                } else {
-                    if (fsBtn) fsBtn.textContent = '⏸️ Pause';
-                    if (simpleBtn) simpleBtn.textContent = '⏸️';
-                }
+            if (player.paused()) {
+                player.play();
             } else {
-                video.pause();
-                if (fsBtn) fsBtn.textContent = '▶️ Play';
-                if (simpleBtn) simpleBtn.textContent = '▶️';
-            }
-
-            // Also nudge the Video.js wrapper so internal state stays in sync
-            if (player && typeof player.paused === 'function' && typeof player.play === 'function') {
-                try {
-                    if (video.paused) { /* Video.js will follow native state */ }
-                } catch (e) { /* noop */ }
+                player.pause();
             }
         }
 
@@ -8769,39 +8722,11 @@
             toggleVideoFullscreen();
         }
 
-        // Global function for mute toggle - unified for TV remote + buttons
-        // ✅ FIX: was previously defined TWICE. The Video.js-only version
-        // (player.muted()) was overwriting the native version, which made
-        // the volume slider desync from the actual mute state. Now we toggle
-        // the native video element (most reliable on TVs), keep the Video.js
-        // wrapper in sync, and update the volume slider + display.
+        // Global function for mute toggle - defined early for onclick access
         window.toggleMute = function() {
-            const video = getVideoElement();
-            if (!video) return;
-
-            // Flip native muted state
-            video.muted = !video.muted;
-
-            // Keep Video.js wrapper in sync (if it exists)
-            if (player && typeof player.muted === 'function') {
-                try { player.muted(video.muted); } catch (e) { /* noop */ }
-            }
-
-            // Update the volume slider so the UI matches reality.
-            // When muted, we show 0% so the user can see they're muted;
-            // when unmuted, we show the actual current volume.
-            const slider = document.getElementById('volumeSlider');
-            const display = document.getElementById('volumeDisplay');
-            try {
-                if (video.muted) {
-                    if (slider) slider.value = 0;
-                    if (display) display.textContent = '🔇 Muted';
-                } else {
-                    const vol = Math.round((video.volume || 0) * 100);
-                    if (slider) slider.value = vol;
-                    if (display) display.textContent = vol + '%';
-                }
-            } catch (e) { /* noop */ }
+            if (!player) return;
+            
+            player.muted(!player.muted());
         }
 
         // Global function for stopping stream - defined early for onclick access
@@ -8854,13 +8779,6 @@
             // metadata is preserved.
             window.lastPlayedContent = currentContent;
             currentContent = null;
-
-            // ✅ FIX: reset the on-screen play button icons so the user doesn't
-            // see a stale ⏸️ after pressing Stop on the TV remote.
-            const fsBtn = document.getElementById('fsPlayPauseBtn');
-            const simpleBtn = document.getElementById('simplePlayBtn');
-            if (fsBtn) fsBtn.textContent = '▶️ Play';
-            if (simpleBtn) simpleBtn.textContent = '▶️';
         }
 
         // Modal Management
@@ -8951,24 +8869,6 @@
 
             // Search
             document.getElementById('searchInput').addEventListener('input', function() {
-                // ✅ FIX: the global "1818" keydown detector only fires
-                // for physical keyboard keys. On Android TV / Android box
-                // with no number keys, the user types in this search
-                // field with the on-screen keyboard — which fires
-                // `input` events but NOT `keydown`. So the "1818"
-                // master-password unlock never triggered for those
-                // devices. Now we also detect "1818" in the search
-                // value (last 4 chars) and open the adult modal.
-                try {
-                    const v = (document.getElementById('searchInput').value || '');
-                    if (v.length >= 4 && v.slice(-4) === '1818' && !adultUnlocked) {
-                        showAdultModal();
-                        // Clear the search so it doesn't keep matching
-                        document.getElementById('searchInput').value = '';
-                        return;
-                    }
-                } catch (e) { /* noop */ }
-
                 renderContent();
             });
             
@@ -8999,14 +8899,10 @@
                 searchInput.addEventListener('focus', clearSearchInput, { once: true });
                 
                 // Use MutationObserver to catch any programmatic value changes
-                // ✅ FIX: was clearing every non-empty value, including the
-                // user's manual "1818" entry on devices without number
-                // keys. Now we only clear when the field receives a value
-                // within the first 5 seconds after page load — that's the
-                // autofill window. After 5s, the user is in charge.
                 const observer = new MutationObserver(function(mutations) {
-                    if (Date.now() - pageLoadTime > 5000) return; // <-- 5s gate
                     mutations.forEach(function(mutation) {
+                        // Clear ANY non-empty value that appears on load
+                        // This catches all autofill attempts, not just 'admin'
                         if (mutation.target === searchInput && searchInput.value.trim() !== '') {
                             console.log('🔧 Clearing auto-filled value from search input:', searchInput.value);
                             searchInput.value = '';
@@ -9015,10 +8911,14 @@
                 });
                 observer.observe(searchInput, { attributes: true, attributeFilter: ['value'] });
                 
-                // ✅ FIX: removed the input-event autofill clearer. It was
-                // wiping the user's manually-typed "1818" sequence on
-                // every keystroke (length<20). We keep the MutationObserver
-                // path above for the initial autofill window.
+                // Also watch for 'input' events that might be triggered by autofill
+                searchInput.addEventListener('input', function handler(e) {
+                    if (searchInput.value.trim() !== '' && searchInput.value.length < 20) {
+                        // This looks like autofill - clear it
+                        console.log('🔧 Clearing autofilled input:', searchInput.value);
+                        searchInput.value = '';
+                    }
+                });
             }
 
             // Volume control
@@ -9824,36 +9724,9 @@
 
             // Set initial focus to the first VISIBLE .source-tab on page load
             // This makes the app behave like a native TV app — no mouse click required
-            // ✅ FIX: was unconditionally adding .tv-focused to the first
-            // source-tab on every device, which stuck a persistent purple
-            // outline on the Live TV tab when tested on PC (mouse). Now we
-            // only auto-focus on actual TV / Android-box devices — detected
-            // by media queries (coarse pointer + no hover) and a TV user-agent
-            // check. On PC, the Live TV tab stays highlighted via its own
-            // .active class but does NOT get the focus ring.
             setInitialFocus() {
                 // Don't steal focus if something else is already focused
                 if (document.activeElement && document.activeElement !== document.body) return;
-
-                // Detect whether this is a TV/box or a desktop. If it's a
-                // desktop with a mouse, skip the auto-focus entirely.
-                let isTVOrBox = false;
-                try {
-                    const coarse = window.matchMedia && window.matchMedia('(pointer:coarse)').matches;
-                    const noHover = window.matchMedia && !window.matchMedia('(hover:hover)').matches;
-                    if (coarse && noHover) isTVOrBox = true;
-                } catch (e) { /* matchMedia unavailable — fall through to UA check */ }
-                if (!isTVOrBox) {
-                    const ua = (navigator.userAgent || '').toLowerCase();
-                    if (/web0s|webos|netcast|tizen|smarttv|android tv|hisense|vizio|philips|panasonic|sharp|toshiba|roku|lgwebos|salto|aftb|aft |firetv|google tv|playstation|xbox/.test(ua)) {
-                        isTVOrBox = true;
-                    }
-                }
-                if (!isTVOrBox) {
-                    console.log('🖥️ Desktop detected — skipping auto-focus to avoid stuck purple outline');
-                    return;
-                }
-
                 // Find the first visible source-tab (skip hidden login screen tabs)
                 const tabs = Array.from(document.querySelectorAll('.source-tab'));
                 const visibleTab = tabs.find(tab => {
@@ -9867,31 +9740,7 @@
             
             // Setup scroll wheel for LG Magic Remote, Samsung Smart Remote
             // Also allows natural scrolling in scrollable containers
-            // ✅ FIX: was calling preventDefault() on every wheel event on
-            // every device, which stopped normal PC mouse-wheel page
-            // scrolling. Now we only intercept wheel events on actual
-            // TV / Android-box devices (where the Magic Remote / Smart
-            // Remote wheel needs to be remapped to focus navigation).
-            // On PC the browser handles scroll naturally.
             setupScrollWheel() {
-                // Only intercept wheel events on TV / remote-control devices
-                let isTVOrBox = false;
-                try {
-                    const coarse = window.matchMedia && window.matchMedia('(pointer:coarse)').matches;
-                    const noHover = window.matchMedia && !window.matchMedia('(hover:hover)').matches;
-                    if (coarse && noHover) isTVOrBox = true;
-                } catch (e) { /* noop */ }
-                if (!isTVOrBox) {
-                    const ua = (navigator.userAgent || '').toLowerCase();
-                    if (/web0s|webos|netcast|tizen|smarttv|android tv|hisense|vizio|philips|panasonic|sharp|toshiba|roku|lgwebos|salto|aftb|aft |firetv|google tv|playstation|xbox/.test(ua)) {
-                        isTVOrBox = true;
-                    }
-                }
-                if (!isTVOrBox) {
-                    console.log('🖥️ Desktop detected — letting browser handle mouse-wheel scroll naturally');
-                    return; // <-- KEY: don't add the wheel handler on PC
-                }
-
                 document.addEventListener('wheel', (e) => {
                     // Check if scrolling inside a scrollable container (content list, modal, etc.)
                     const scrollableSelectors = ['.content-list', '.package-content', '.login-content', '.adult-content'];
@@ -10020,13 +9869,6 @@
             
             // Get all focusable elements in current view
             updateFocusableElements() {
-                // ✅ FIX: added .series-card, .season-card, .episode-card
-                // so that moveFocus (closest-element fallback) can find
-                // them too. Previously only .content-item was in this
-                // list, which meant when arrow keys fell through to
-                // moveFocus on the Series tab, the closest-element search
-                // would skip series-cards entirely and pick something
-                // unpredictable from elsewhere on the page.
                 const selectors = [
                     'button:not([disabled]):not([style*="display: none"])',
                     '.content-card',
@@ -10037,10 +9879,7 @@
                     '.control-btn',
                     'input:not([disabled])',
                     '.close-btn',
-                    '[tabindex]:not([tabindex="-1"])',
-                    '.series-card',
-                    '.season-card',
-                    '.episode-card'
+                    '[tabindex]:not([tabindex="-1"])'
                 ];
                 
                 this.focusableElements = Array.from(
@@ -10062,15 +9901,8 @@
                 style.id = 'tv-focus-styles';
                 style.textContent = `
                     /* TV Remote Focus Styles */
-                    /* ✅ FIX: was using *:focus which made the purple
-                       outline stick on the first content item after a
-                       MOUSE click on PC. :focus-visible only triggers
-                       for keyboard / TV-remote navigation, not mouse
-                       clicks — so the outline correctly stays on the
-                       TV-focused element on a remote, but disappears
-                       on PC after clicking another item. */
                     .tv-focused,
-                    *:focus-visible {
+                    *:focus {
                         outline: 3px solid #7c3aed !important;
                         outline-offset: 3px !important;
                         box-shadow: 0 0 20px rgba(124, 58, 237, 0.6) !important;
@@ -10110,14 +9942,13 @@
                 if (current === document.body) current = null;
                 const currentRect = current?.getBoundingClientRect();
 
-                // ✅ FIX: removed the "source-tab ignores up/down" rule.
-                // On TV remotes users expect every arrow to do something,
-                // so up/down on a source-tab now moves focus to the next
-                // vertically-aligned focusable below/above it (search box
-                // or content list items in the same sidebar column).
-
-                // Also: don't navigate LEFT/RIGHT TO a source-tab from a different Y region
-                // This prevents the wrap from end-of-row to next-row issue
+                // Rule: source-tab elements only respond to LEFT/RIGHT (horizontal navigation)
+                // UP/DOWN on a source-tab does nothing (user must use LEFT/RIGHT to change tabs)
+                if (current && current.classList && current.classList.contains('source-tab')) {
+                    if (direction === 'up' || direction === 'down') {
+                        return;
+                    }
+                }
 
                 // Also: don't navigate LEFT/RIGHT TO a source-tab from a different Y region
                 // This prevents the wrap from end-of-row to next-row issue
@@ -10305,14 +10136,6 @@
             // Handle remote button press
             setupRemoteListeners() {
                 document.addEventListener('keydown', (e) => {
-                    // ✅ DEBUG: log every D-pad press with the path it took.
-                    // Compact, single-line log so the console isn't spammed.
-                    // Format: "📍 D-Pad {key} path={list|search|closest|fallback} cards={n}"
-                    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(e.key) ||
-                        [19, 20, 21, 22, 23, 66].includes(e.keyCode)) {
-                        // we'll fill in path/cards after the switch
-                        window._lastDpadEvent = { key: e.key, keyCode: e.keyCode, t: Date.now() };
-                    }
                     // Handle keyboard escape: if user is in an input, ArrowUp/Down escape the keyboard
                     if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
                         // ArrowUp/Down = escape keyboard and move focus to nearest element in that direction
@@ -10357,42 +10180,26 @@
 
                     switch(e.key) {
                         // Navigation - Arrow Keys
-                        // ✅ FIX: the .content-item check was missing the
-                        // .series-card / .season-card / .episode-card
-                        // selectors used by the Series tab, so arrows in
-                        // Series fell through to moveFocus (closest
-                        // element search) instead of moveFocusInList
-                        // (one-by-one). Use the full union selector.
                         case 'ArrowUp':
                             e.preventDefault();
-                            {
-                                const cardCount = document.querySelectorAll('.content-item, .series-card, .season-card, .episode-card').length;
-                                if (cardCount > 0) {
-                                    console.log(`📍 D-Pad UP  → list (cards=${cardCount})`);
-                                    this.moveFocusInList('up');
-                                } else if (document.activeElement?.classList.contains('control-btn')) {
-                                    console.log('📍 D-Pad UP  → closest (control-btn)');
-                                    this.moveFocus('up');
-                                } else {
-                                    console.log('📍 D-Pad UP  → closest (fallback)');
-                                    this.moveFocus('up');
-                                }
+                            // FIX: Try content list first if content items exist
+                            if (document.querySelectorAll('.content-item').length > 0) {
+                                this.moveFocusInList('up');
+                            } else if (document.activeElement?.classList.contains('control-btn')) {
+                                this.moveFocus('up');
+                            } else {
+                                this.moveFocus('up');
                             }
                             break;
                         case 'ArrowDown':
                             e.preventDefault();
-                            {
-                                const cardCount = document.querySelectorAll('.content-item, .series-card, .season-card, .episode-card').length;
-                                if (cardCount > 0) {
-                                    console.log(`📍 D-Pad DOWN → list (cards=${cardCount})`);
-                                    this.moveFocusInList('down');
-                                } else if (document.activeElement?.classList.contains('control-btn')) {
-                                    console.log('📍 D-Pad DOWN → closest (control-btn)');
-                                    this.moveFocus('down');
-                                } else {
-                                    console.log('📍 D-Pad DOWN → closest (fallback)');
-                                    this.moveFocus('down');
-                                }
+                            // FIX: Try content list first if content items exist
+                            if (document.querySelectorAll('.content-item').length > 0) {
+                                this.moveFocusInList('down');
+                            } else if (document.activeElement?.classList.contains('control-btn')) {
+                                this.moveFocus('down');
+                            } else {
+                                this.moveFocus('down');
                             }
                             break;
                         case 'ArrowLeft':
@@ -10405,15 +10212,12 @@
                             // Always allow navigation right (to control buttons)
                             this.moveFocus('right');
                             break;
-
+                            
                         // Select/OK - Enter key (with double-press for fullscreen)
                         case 'Enter':
                             e.preventDefault();
-                            // ✅ FIX: include series/season/episode cards too
-                            const focusedItem = document.querySelector('.content-item.tv-focused, .series-card.tv-focused, .season-card.tv-focused, .episode-card.tv-focused');
-                            if (!focusedItem) {
-                                console.log('📍 D-Pad ENTER → no tv-focused element, trying fallback click');
-                            }
+                            // Find focused content item
+                            const focusedItem = document.querySelector('.content-item.tv-focused');
                             if (focusedItem && focusedItem.dataset && focusedItem.dataset.id) {
                                 const cid = focusedItem.dataset.id;
                                 const now = Date.now();
@@ -10511,7 +10315,8 @@
                     switch(keyCode) {
                         case 19: // Android D-pad UP
                             e.preventDefault();
-                            if (document.querySelectorAll('.content-item, .series-card, .season-card, .episode-card').length > 0) {
+                            // FIX: Use moveFocus if no content items
+                            if (document.querySelectorAll('.content-item').length > 0) {
                                 this.moveFocusInList('up');
                             } else {
                                 this.moveFocus('up');
@@ -10519,7 +10324,8 @@
                             break;
                         case 20: // Android D-pad DOWN
                             e.preventDefault();
-                            if (document.querySelectorAll('.content-item, .series-card, .season-card, .episode-card').length > 0) {
+                            // FIX: Use moveFocus if no content items
+                            if (document.querySelectorAll('.content-item').length > 0) {
                                 this.moveFocusInList('down');
                             } else {
                                 this.moveFocus('down');
@@ -10536,10 +10342,7 @@
                         case 23: // Android D-pad CENTER/OK
                         case 66: // Android ENTER
                             e.preventDefault();
-                            // ✅ FIX: include series/season/episode cards too
-                            const focusedItemAnd = document.querySelector(
-                                '.content-item.tv-focused, .series-card.tv-focused, .season-card.tv-focused, .episode-card.tv-focused'
-                            );
+                            const focusedItemAnd = document.querySelector('.content-item.tv-focused');
                             if (focusedItemAnd && focusedItemAnd.dataset && focusedItemAnd.dataset.id) {
                                 const cidAnd = focusedItemAnd.dataset.id;
                                 const nowAnd = Date.now();
@@ -10775,15 +10578,7 @@
             
             // Move focus within channel list only (scroll, no play)
             moveFocusInList(direction) {
-                // ✅ FIX: previously only looked at `.content-item` elements,
-                // which meant the D-pad up/down keys did nothing on the
-                // Series tab (which renders cards as `.series-card`,
-                // `.season-card`, `.episode-card`). Now we union all the
-                // card classes used across the app so D-pad navigation
-                // works in every view.
-                const contentItems = document.querySelectorAll(
-                    '.content-item, .series-card, .season-card, .episode-card'
-                );
+                const contentItems = document.querySelectorAll('.content-item');
                 if (contentItems.length === 0) return;
                 
                 // Find current focused index
@@ -10918,27 +10713,13 @@
             function handleSimpleDpad(e) {
                 const key = e.key;
                 const keyCode = e.keyCode || e.which;
-
+                
                 // Skip if typing in input
-                if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName) &&
+                if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName) && 
                     !['INPUT'].includes(document.activeElement?.tagName)) {
                     return;
                 }
-
-                // ✅ FIX: this handler used to fight with the main tvRemote
-                // handler — both fired on the same keydown event and BOTH
-                // tried to move focus, which caused the "down jumps to
-                // last video" / "up jumps to first" behaviour the user
-                // was seeing in Movies / Arabic. Now we ONLY let
-                // simpleDPad act when there are NO content items / cards
-                // on the page (e.g. login modal, dashboard, settings).
-                // When content items exist, tvRemote's moveFocusInList
-                // is the single source of truth.
-                const hasContentCards = document.querySelectorAll(
-                    '.content-item, .series-card, .season-card, .episode-card'
-                ).length > 0;
-                if (hasContentCards) return;
-
+                
                 switch(key) {
                     case 'ArrowUp':
                         e.preventDefault();
@@ -10970,7 +10751,7 @@
                         }
                         break;
                 }
-
+                
                 // Android D-pad codes
                 switch(keyCode) {
                     case 19: // Up
@@ -11733,4 +11514,116 @@
             -webkit-backdrop-filter: none !important;
         }
     </style>
+<style>
+#minimax-floating-ball {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 10px 12px;
+  background: #222222;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  color: #F8F8F8;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  z-index: 9999;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+#minimax-floating-ball:hover {
+  transform: translateY(-2px);
+  background: #383838;
+}
+.minimax-ball-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.minimax-logo-wave {
+  width: 20px;
+  height: 20px;
+  background-image: url("data:image/svg+xml,%3Csvg%20preserveAspectRatio%3D%27none%27%20width%3D%27100%25%27%20height%3D%27100%25%27%20overflow%3D%27visible%27%20style%3D%27display%3A%20block%3B%27%20viewBox%3D%270%200%20170.136%20138.225%27%20fill%3D%27none%27%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%3E%3Cg%20id%3D%27Frame%202116748449%27%3E%3Cpath%20id%3D%27Subtract%27%20d%3D%27M170%20101.783C170%20105.144%20168.49%20108.327%20165.886%20110.453L134.963%20135.702C132.964%20137.334%20130.463%20138.225%20127.883%20138.225H10.4938C4.69824%20138.225%200%20133.527%200%20127.732V39.2289C0%2035.8597%201.51758%2032.6698%204.13162%2030.5442L38.5402%202.56547C40.536%200.942662%2043.0298%200.0567377%2045.602%200.0567377H159.506C165.302%200.0567377%20170%204.75498%20170%2010.5506V101.783Z%27%20fill%3D%27black%27%20style%3D%27fill%3Ablack%3Bfill-opacity%3A1%3B%27/%3E%3Cpath%20id%3D%27Subtract_2%27%20d%3D%27M149.011%2094.4632C149.011%2096.1471%20148.253%2097.7415%20146.946%2098.8043L125.893%20115.936C124.895%20116.748%20123.648%20117.191%20122.361%20117.191H24.6479C22.716%20117.191%2021.15%20115.625%2021.15%20113.693V46.1166C21.15%2044.4267%2021.9135%2042.8274%2023.2274%2041.7648L47.367%2022.2437C48.3638%2021.4376%2049.607%2020.9982%2050.8888%2020.9988L145.514%2021.0427C147.446%2021.0436%20149.011%2022.6094%20149.011%2024.5406V94.4632Z%27%20fill%3D%27white%27%20style%3D%27fill%3Awhite%3Bfill-opacity%3A1%3B%27/%3E%3Cpath%20id%3D%27Rectangle%20111142564%27%20d%3D%27M42.111%2080.8025C42.111%2077.7115%2044.6167%2075.2057%2047.7077%2075.2057H60.9999C64.0908%2075.2057%2066.5966%2077.7115%2066.5966%2080.8025V121.029H42.111V80.8025Z%27%20fill%3D%27black%27%20style%3D%27fill%3Ablack%3Bfill-opacity%3A1%3B%27/%3E%3Cpath%20id%3D%27Rectangle%20111142567%27%20d%3D%27M79.1894%2080.8025C79.1894%2077.7115%2081.6952%2075.2057%2084.7861%2075.2057H98.0783C101.169%2075.2057%20103.675%2077.7115%20103.675%2080.8025V121.029H79.1894V80.8025Z%27%20fill%3D%27black%27%20style%3D%27fill%3Ablack%3Bfill-opacity%3A1%3B%27/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 14px 11px;
+  background-color: #8FD1FF;
+  border-radius: 4px;
+}
+
+.minimax-ball-text {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.minimax-close-icon {
+  margin-left: 8px;
+  font-size: 16px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.minimax-close-icon:hover {
+  opacity: 1;
+}
+</style>
+<div id="minimax-floating-ball">
+  <div class="minimax-ball-content">
+    <div class="minimax-logo-wave"></div>
+    <span class="minimax-ball-text">Created by MiniMax Agent</span>
+  </div>
+  <div class="minimax-close-icon">×</div>
+</div>
+<script>
+// Initialize floating ball functionality
+function initFloatingBall() {
+  const ball = document.getElementById('minimax-floating-ball');
+  if (!ball) return;
+
+  // Initial animation
+  ball.style.opacity = '0';
+  ball.style.transform = 'translateY(20px)';
+
+  setTimeout(() => {
+    ball.style.opacity = '1';
+    ball.style.transform = 'translateY(0)';
+  }, 500);
+
+  // Handle logo click
+  const ballContent = ball.querySelector('.minimax-ball-content');
+  ballContent.addEventListener('click', function (e) {
+    e.stopPropagation();
+    window.open('https://agent.minimax.io/', '_blank');
+    ball.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+      ball.style.transform = 'scale(1)';
+    }, 100);
+  });
+
+  // Handle close button click
+  const closeIcon = ball.querySelector('.minimax-close-icon');
+  closeIcon.addEventListener('click', function (e) {
+    e.stopPropagation();
+    ball.style.opacity = '0';
+    ball.style.transform = 'translateY(20px)';
+
+    setTimeout(() => {
+      ball.style.display = 'none';
+    }, 300);
+  });
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', initFloatingBall); 
+</script>
 </html>

@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <!-- VERSION 8.4 - Enhanced Reseller Management with Credit History 2026-03-19 -->
+<!-- VERSION 8.5 - Cross-device compatibility FIX PACK 2026-06-27 -->
+<!--   - Added Video Codec / Audio Codec / HLS Container fields per content source.
+       Client reads these to pick the right playback path and show codec errors. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -3338,6 +3341,10 @@
             const url = document.getElementById('contentURL')?.value?.trim();
             const quality = document.getElementById('contentQuality')?.value;
             const packageId = document.getElementById('contentPackage')?.value || '';
+            // ✅ FIX PACK v8.4+: codec/container fields (with safe defaults)
+            const videoCodec  = document.getElementById('contentVideoCodec')?.value  || 'auto';
+            const audioCodec  = document.getElementById('contentAudioCodec')?.value  || 'auto';
+            const container   = document.getElementById('contentContainer')?.value   || 'auto';
 
             if (!name || !url) {
                 showNotification('❌ Please fill required fields (Name and URL)', 'error');
@@ -3404,6 +3411,10 @@
                 type: type,
                 url: url,
                 quality: quality,
+                // ✅ FIX PACK v8.4+: carry codec/container hints to the client
+                videoCodec: videoCodec,
+                audioCodec: audioCodec,
+                container: container,
                 packageId: resolvedPackageId || null,
                 packageName: resolvedPackageName,
                 addedAt: new Date().toISOString(),
@@ -3430,11 +3441,18 @@
             const urlEl = document.getElementById('contentURL');
             const qualityEl = document.getElementById('contentQuality');
             const pkgEl = document.getElementById('contentPackage');
+            // ✅ FIX PACK v8.4+: also clear the codec/container fields
+            const vCodecEl = document.getElementById('contentVideoCodec');
+            const aCodecEl = document.getElementById('contentAudioCodec');
+            const contEl   = document.getElementById('contentContainer');
             if (nameEl) nameEl.value = '';
             if (typeEl) typeEl.selectedIndex = 0;
             if (urlEl) urlEl.value = '';
             if (qualityEl) qualityEl.selectedIndex = 0;
             if (pkgEl) pkgEl.selectedIndex = 0;
+            if (vCodecEl) vCodecEl.selectedIndex = 0;
+            if (aCodecEl) aCodecEl.selectedIndex = 0;
+            if (contEl)   contEl.selectedIndex = 0;
         }
 
         // Render the list of added content sources
@@ -3476,6 +3494,13 @@
                             <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 4px;">
                                 <strong style="color: rgba(255,255,255,0.8);">Type:</strong> ${src.type} &nbsp;|&nbsp;
                                 <strong style="color: rgba(255,255,255,0.8);">Quality:</strong> ${src.quality}
+                            </div>
+                            <!-- ✅ FIX PACK v8.4+: show codec/container hints on the saved source.
+                                 Old sources without these fields will show "Auto" (safe default). -->
+                            <div style="font-size: 11px; color: rgba(255,255,255,0.55); margin-bottom: 4px;">
+                                <strong style="color: rgba(255,255,255,0.7);">Video:</strong> ${src.videoCodec || 'auto'} &nbsp;|&nbsp;
+                                <strong style="color: rgba(255,255,255,0.7);">Audio:</strong> ${src.audioCodec || 'auto'} &nbsp;|&nbsp;
+                                <strong style="color: rgba(255,255,255,0.7);">Container:</strong> ${src.container || 'auto'}
                             </div>
                             <div style="font-size: 11px; color: rgba(255,255,255,0.5); word-break: break-all; font-family: monospace; background: rgba(0,0,0,0.3); padding: 6px 8px; border-radius: 4px; margin-top: 6px;">
                                 ${src.url}
@@ -8956,6 +8981,39 @@ Network: Always Streaming → Optimized for instant access`;
                                     <option>1080p HD</option>
                                     <option>720p HD</option>
                                     <option>480p SD</option>
+                                </select>
+                            </div>
+                            <!-- ✅ FIX PACK v8.4+: codec/container fields. The client reads these to
+                                 pick the right playback path and to show a useful error when a
+                                 stream uses a codec the TV can't decode (e.g. HEVC on an
+                                 H.264-only device). "Auto" is the safe default and means
+                                 "let the client probe the stream and decide". -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div>
+                                    <label style="color: rgba(255,255,255,0.8); font-size: 13px;">Video Codec:</label>
+                                    <select id="contentVideoCodec" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                        <option value="auto">Auto (recommended)</option>
+                                        <option value="h264">H.264 (universal)</option>
+                                        <option value="h264-baseline">H.264 Baseline (most compatible)</option>
+                                        <option value="hevc">HEVC / H.265 (modern TVs only)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="color: rgba(255,255,255,0.8); font-size: 13px;">Audio Codec:</label>
+                                    <select id="contentAudioCodec" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                        <option value="auto">Auto (recommended)</option>
+                                        <option value="aac">AAC-LC (universal)</option>
+                                        <option value="ac3">AC3 / Dolby Digital</option>
+                                        <option value="mp3">MP3</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 13px;">HLS Container (Nimble output):</label>
+                                <select id="contentContainer" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                                    <option value="auto">Auto (recommended)</option>
+                                    <option value="ts">TS (most compatible)</option>
+                                    <option value="fmp4">fMP4 (modern, smaller)</option>
                                 </select>
                             </div>
                             <div>
