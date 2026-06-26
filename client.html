@@ -8,8 +8,6 @@
     <title>iWATCH TV - Professional Streaming</title>
     <meta name="description" content="Professional IPTV streaming service with live TV, movies, and sports content">
     <meta name="author" content="iWATCH TV">
-    <!-- VERSION MARKER v7.9: aggressive adult unlock bypass in playContent -->
-    <meta name="iwatch-version" content="7.9-adult-bypass">
     <meta name="keywords" content="IPTV, streaming, live TV, movies, sports, entertainment">
     
     <!-- PWA Manifest for TV -->
@@ -2421,45 +2419,6 @@
     <!-- LOCAL VERSION - No Firebase SDK needed -->
     <script>
         // ============================================
-        // ✅ AUTO-UPDATE / CACHE-BUSTING
-        // Bump APP_VERSION each time you upload a new client.html to
-        // GitHub. On every page load, we compare the running version
-        // (saved in localStorage) with the version in the code. If they
-        // don't match, we force a hard reload with a unique URL so the
-        // browser fetches the new HTML instead of using the cached one.
-        //
-        // End users (TVs) never have to clear cache — the next time the
-        // page loads after you push a new version, the cached old code
-        // sees the version mismatch, sets the new version, and reloads.
-        // ============================================
-        (function autoUpdateCheck() {
-            try {
-                const APP_VERSION = '7.10.5';
-                const STORAGE_KEY = 'iwatch_app_version';
-                const lastSeen = localStorage.getItem(STORAGE_KEY);
-                if (lastSeen && lastSeen !== APP_VERSION) {
-                    // Save the new version FIRST so the reload doesn't loop
-                    localStorage.setItem(STORAGE_KEY, APP_VERSION);
-                    // Build a unique URL so the browser bypasses cache.
-                    // We use the same path with a query string the app
-                    // already understands is harmless.
-                    const base = window.location.pathname;
-                    const fresh = base + '?v=' + encodeURIComponent(APP_VERSION) + '&t=' + Date.now();
-                    console.log('🔄 App version changed:', lastSeen, '→', APP_VERSION, '— forcing reload');
-                    // Use replace() so the back button doesn't trap the user
-                    window.location.replace(fresh);
-                    return; // stop further script execution in this load
-                }
-                // First load, or same version — just record it
-                localStorage.setItem(STORAGE_KEY, APP_VERSION);
-                console.log('✅ App version:', APP_VERSION, '(no update needed)');
-            } catch (e) {
-                console.warn('autoUpdateCheck failed:', e);
-            }
-        })();
-        // ============================================
-
-        // ============================================
         // CONFIGURATION - Edit this URL to point to your admin_data.json on GitHub
         // All devices will sync from this URL automatically
         // ============================================
@@ -2469,7 +2428,6 @@
         // ============================================
         
         // LOCAL VERSION - Firebase not used
-        const pageLoadTime = Date.now(); // ✅ used by the search-input autofill gate
         // Using localStorage for all data storage
         const firebaseConfig = {};
         // Firebase removed - using localStorage only
@@ -2551,14 +2509,6 @@
                 </div>
             </div>
             
-            <!-- Adult Unlock Button - visible alternative to the 1818 secret.
-                 Only shown when logged in and the adult section is NOT
-                 already unlocked. Once unlocked, the adultIndicator in
-                 the header takes over (with a click-to-exit behavior). -->
-            <button class="logout-btn adult-unlock-btn" id="adultUnlockBtn" onclick="showAdultModal()" style="display: none; background: rgba(255, 71, 87, 0.15); border: 1px solid rgba(255, 71, 87, 0.3); color: #ff4757; padding: 8px 12px;" title="Adult section">
-                🔒
-            </button>
-
             <!-- Settings Button -->
             <button class="logout-btn" id="settingsBtn" onclick="showSettingsModal()" style="background: rgba(102,126,234,0.3);">
                 ⚙️ Settings
@@ -3400,29 +3350,13 @@
             },
 
             // SIMPLIFIED: Check if customer can access adult content
-            // ✅ FIX: was only checking the customer's addon, which meant
-            // that even after entering the master password (or the
-            // customer's own adult password) the items appeared in the
-            // list with a 🔒 lock icon and clicking them showed the
-            // "Upgrade Package" prompt. Now we also honour the global
-            // adultUnlocked flag — when it's true the user has proven
-            // they know the password, so the master-password unlock
-            // actually grants play access.
             canAccessAdult: function() {
                 if (!currentUser) return false;
-
+                
                 // Admin always has access
                 if (currentUser.role === 'admin') return true;
 
-                // If the user has unlocked the adult section this session
-                // (master password OR their own personal adult password),
-                // grant access. This is the fix for "all videos show but
-                // are locked" after typing 1818 / 112233.
-                if (typeof adultUnlocked !== 'undefined' && adultUnlocked === true) {
-                    return true;
-                }
-
-                // Otherwise check customer's addons for Adult
+                // Check customer's addons for Adult
                 const customer = adminCustomers.find(c => c.username === currentUser.username);
                 if (!customer) return false;
 
@@ -3436,23 +3370,6 @@
 
                 // Admin always has access
                 if (currentUser.role === 'admin') return true;
-
-                // ✅ FIX: any item displayed in the Adult tab is treated
-                // as adult content when the user has unlocked the
-                // section this session. Some items in the adult library
-                // (especially older Plex imports) were missing the
-                // `isAdult` flag and didn't have "adult" in their
-                // `category` field, so the normal `canAccessAdult`
-                // branch was never taken — they fell through to the
-                // package check, failed it, and appeared as 🔒
-                // locked items even after entering the master
-                // password. Trust the section context.
-                try {
-                    if (typeof currentSource !== 'undefined' && currentSource === 'adult' &&
-                        typeof adultUnlocked !== 'undefined' && adultUnlocked === true) {
-                        return true;
-                    }
-                } catch (e) { /* noop */ }
 
                 // Reload customer data from both clientAuthCustomers and adminCustomers
                 const clientAuthCustomers = JSON.parse(localStorage.getItem('clientAuthCustomers') || '[]');
@@ -6142,16 +6059,9 @@
                 subscriptionExpiry.textContent = 'Please Login';
                 subscriptionExpiry.className = 'subscription-expiry';
                 userStatus.onclick = showLoginModal;
-
+                
                 console.log('✅ User interface updated - Guest state');
             }
-
-            // ✅ FIX: keep the standalone 🔒 adult-unlock button in sync
-            // with the login / adultUnlocked state. Without this, the
-            // button only ever updated from showAdultIndicator /
-            // hideAdultIndicator, so right after login it stayed hidden
-            // even though the user hadn't unlocked adult yet.
-            try { updateAdultUnlockBtn(); } catch (e) { /* noop */ }
         }
 
         // Package Authentication Display Functions
@@ -6282,32 +6192,18 @@
         window.showUpgradePrompt = showUpgradePrompt;
 
         // Adult Content Management
-        function showAdultIndicator() {
-            // Hide the standalone unlock button now that the section is unlocked
-            try { updateAdultUnlockBtn(); } catch (e) { /* noop */ }
-            const adultIndicator = document.getElementById('adultIndicator');
-            adultIndicator.classList.remove('locked');
-            adultIndicator.classList.add('unlocked');
-            adultIndicator.style.display = 'flex';
-        }
-
         function hideAdultIndicator() {
-            const adultIndicator = document.getElementById('adultIndicator');
-            adultIndicator.classList.remove('unlocked');
-            adultIndicator.classList.add('locked');
-            adultIndicator.style.display = 'none';
-            // Show the standalone unlock button again (if logged in)
-            try { updateAdultUnlockBtn(); } catch (e) { /* noop */ }
+            const indicator = document.getElementById('adultIndicator');
+            if (indicator) {
+                indicator.style.display = 'none';
+            }
         }
 
-        // ✅ NEW: Show / hide the standalone unlock button based on
-        // login state + adultUnlocked state. Called from updateUserInterface
-        // and from verifyAdultPassword / exitAdultContent.
-        function updateAdultUnlockBtn() {
-            const btn = document.getElementById('adultUnlockBtn');
-            if (!btn) return;
-            const shouldShow = isLoggedIn && !adultUnlocked;
-            btn.style.display = shouldShow ? 'inline-flex' : 'none';
+        function showAdultIndicator() {
+            const indicator = document.getElementById('adultIndicator');
+            if (indicator) {
+                indicator.style.display = 'flex';
+            }
         }
 
         function showAdultModal() {
@@ -6681,14 +6577,6 @@
         }
 
         function renderContent() {
-            // ✅ DIAGNOSTIC: log state for adult-tab troubleshooting
-            try {
-                console.log('🎨 [renderContent] currentSource=' + currentSource +
-                    ' | adultUnlocked=' + adultUnlocked +
-                    ' | isLoggedIn=' + isLoggedIn +
-                    ' | currentUser=' + (currentUser ? currentUser.username : 'null'));
-            } catch (e) { /* noop */ }
-
             // ✅ Always render the categories row first (so all tabs, including Series,
             // show their category text like "All", "Series", etc.)
             renderCategories();
@@ -6932,23 +6820,7 @@
                 
                 // Package Authentication Status
                 const hasAccess = clientPackageAuth.canAccessContent(item);
-                // ✅ FIX: safety net — if the user is on the adult tab
-                // and the section is unlocked, never show the lock icon
-                // or the "Upgrade Package" prompt. Trust the section
-                // context, not just the per-item access check.
-                const inAdultTabUnlocked = (currentSource === 'adult' && adultUnlocked === true);
-                if (inAdultTabUnlocked && typeof console !== 'undefined') {
-                    console.log('🔓 [Adult tab] forcing unlock for:', item.name, '| hasAccess=' + hasAccess);
-                }
-                // ✅ AGGRESSIVE FIX: log details on first item when on adult tab
-                if (inAdultTabUnlocked && index === 0) {
-                    console.log('🔍 [Adult tab diagnostics]', {
-                        currentSource, adultUnlocked, hasAccess, itemName: item.name,
-                        itemCategory: item.category, itemAdult: item.adult,
-                        itemType: item.type, itemUrl: (item.url || '').substring(0, 50)
-                    });
-                }
-                const isLocked = !hasAccess && item.type !== 'package' && !inAdultTabUnlocked;
+                const isLocked = !hasAccess && item.type !== 'package';
                 const accessStatus = getAccessStatusDisplay(item, hasAccess);
                 
                 // Enhanced content display for addon section - only show pricing to logged-in users
@@ -7268,22 +7140,10 @@
             }
             
             // Check package authentication access
-            // ✅ AGGRESSIVE FIX: if we're on the adult tab and the user
-            // has unlocked it this session, ALWAYS skip the canAccessContent
-            // check. This is a final safety net because:
-            //   1) canAccessContent in some builds is buggy with Plex
-            //      cache items that lack the isAdult/category flags
-            //   2) The renderContent safety net alone isn't enough,
-            //      because playContent re-runs canAccessContent
-            // We log it clearly so we can confirm the bypass is working.
-            if (currentSource !== 'adult' || adultUnlocked !== true) {
-                if (!clientPackageAuth.canAccessContent(content)) {
-                    console.log('🔒 Content access denied - package authentication required:', content.name);
-                    showUpgradePrompt(contentId);
-                    return;
-                }
-            } else {
-                console.log('✅ [playContent] Adult tab + unlocked — bypassing canAccessContent for:', content.name);
+            if (!clientPackageAuth.canAccessContent(content)) {
+                console.log('🔒 Content access denied - package authentication required:', content.name);
+                showUpgradePrompt(contentId);
+                return;
             }
             
             // Check adult content access
@@ -8776,24 +8636,6 @@
 
             // Search
             document.getElementById('searchInput').addEventListener('input', function() {
-                // ✅ FIX: the global "1818" keydown detector only fires
-                // for physical keyboard keys. On Android TV / Android box
-                // with no number keys, the user types in this search
-                // field with the on-screen keyboard — which fires
-                // `input` events but NOT `keydown`. So the "1818"
-                // master-password unlock never triggered for those
-                // devices. Now we also detect "1818" in the search
-                // value (last 4 chars) and open the adult modal.
-                try {
-                    const v = (document.getElementById('searchInput').value || '');
-                    if (v.length >= 4 && v.slice(-4) === '1818' && !adultUnlocked) {
-                        showAdultModal();
-                        // Clear the search so it doesn't keep matching
-                        document.getElementById('searchInput').value = '';
-                        return;
-                    }
-                } catch (e) { /* noop */ }
-
                 renderContent();
             });
             
@@ -8824,14 +8666,10 @@
                 searchInput.addEventListener('focus', clearSearchInput, { once: true });
                 
                 // Use MutationObserver to catch any programmatic value changes
-                // ✅ FIX: was clearing every non-empty value, including the
-                // user's manual "1818" entry on devices without number
-                // keys. Now we only clear when the field receives a value
-                // within the first 5 seconds after page load — that's the
-                // autofill window. After 5s, the user is in charge.
                 const observer = new MutationObserver(function(mutations) {
-                    if (Date.now() - pageLoadTime > 5000) return; // <-- 5s gate
                     mutations.forEach(function(mutation) {
+                        // Clear ANY non-empty value that appears on load
+                        // This catches all autofill attempts, not just 'admin'
                         if (mutation.target === searchInput && searchInput.value.trim() !== '') {
                             console.log('🔧 Clearing auto-filled value from search input:', searchInput.value);
                             searchInput.value = '';
@@ -8840,10 +8678,14 @@
                 });
                 observer.observe(searchInput, { attributes: true, attributeFilter: ['value'] });
                 
-                // ✅ FIX: removed the input-event autofill clearer. It was
-                // wiping the user's manually-typed "1818" sequence on
-                // every keystroke (length<20). We keep the MutationObserver
-                // path above for the initial autofill window.
+                // Also watch for 'input' events that might be triggered by autofill
+                searchInput.addEventListener('input', function handler(e) {
+                    if (searchInput.value.trim() !== '' && searchInput.value.length < 20) {
+                        // This looks like autofill - clear it
+                        console.log('🔧 Clearing autofilled input:', searchInput.value);
+                        searchInput.value = '';
+                    }
+                });
             }
 
             // Volume control
@@ -9925,14 +9767,13 @@
                 if (current === document.body) current = null;
                 const currentRect = current?.getBoundingClientRect();
 
-                // ✅ FIX: removed the "source-tab ignores up/down" rule.
-                // On TV remotes users expect every arrow to do something,
-                // so up/down on a source-tab now moves focus to the next
-                // vertically-aligned focusable below/above it (search box
-                // or content list items in the same sidebar column).
-
-                // Also: don't navigate LEFT/RIGHT TO a source-tab from a different Y region
-                // This prevents the wrap from end-of-row to next-row issue
+                // Rule: source-tab elements only respond to LEFT/RIGHT (horizontal navigation)
+                // UP/DOWN on a source-tab does nothing (user must use LEFT/RIGHT to change tabs)
+                if (current && current.classList && current.classList.contains('source-tab')) {
+                    if (direction === 'up' || direction === 'down') {
+                        return;
+                    }
+                }
 
                 // Also: don't navigate LEFT/RIGHT TO a source-tab from a different Y region
                 // This prevents the wrap from end-of-row to next-row issue
@@ -10562,15 +10403,7 @@
             
             // Move focus within channel list only (scroll, no play)
             moveFocusInList(direction) {
-                // ✅ FIX: previously only looked at `.content-item` elements,
-                // which meant the D-pad up/down keys did nothing on the
-                // Series tab (which renders cards as `.series-card`,
-                // `.season-card`, `.episode-card`). Now we union all the
-                // card classes used across the app so D-pad navigation
-                // works in every view.
-                const contentItems = document.querySelectorAll(
-                    '.content-item, .series-card, .season-card, .episode-card'
-                );
+                const contentItems = document.querySelectorAll('.content-item');
                 if (contentItems.length === 0) return;
                 
                 // Find current focused index
@@ -11506,4 +11339,116 @@
             -webkit-backdrop-filter: none !important;
         }
     </style>
+<style>
+#minimax-floating-ball {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 10px 12px;
+  background: #222222;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  color: #F8F8F8;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  z-index: 9999;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+#minimax-floating-ball:hover {
+  transform: translateY(-2px);
+  background: #383838;
+}
+.minimax-ball-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.minimax-logo-wave {
+  width: 20px;
+  height: 20px;
+  background-image: url("data:image/svg+xml,%3Csvg%20preserveAspectRatio%3D%27none%27%20width%3D%27100%25%27%20height%3D%27100%25%27%20overflow%3D%27visible%27%20style%3D%27display%3A%20block%3B%27%20viewBox%3D%270%200%20170.136%20138.225%27%20fill%3D%27none%27%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%3E%3Cg%20id%3D%27Frame%202116748449%27%3E%3Cpath%20id%3D%27Subtract%27%20d%3D%27M170%20101.783C170%20105.144%20168.49%20108.327%20165.886%20110.453L134.963%20135.702C132.964%20137.334%20130.463%20138.225%20127.883%20138.225H10.4938C4.69824%20138.225%200%20133.527%200%20127.732V39.2289C0%2035.8597%201.51758%2032.6698%204.13162%2030.5442L38.5402%202.56547C40.536%200.942662%2043.0298%200.0567377%2045.602%200.0567377H159.506C165.302%200.0567377%20170%204.75498%20170%2010.5506V101.783Z%27%20fill%3D%27black%27%20style%3D%27fill%3Ablack%3Bfill-opacity%3A1%3B%27/%3E%3Cpath%20id%3D%27Subtract_2%27%20d%3D%27M149.011%2094.4632C149.011%2096.1471%20148.253%2097.7415%20146.946%2098.8043L125.893%20115.936C124.895%20116.748%20123.648%20117.191%20122.361%20117.191H24.6479C22.716%20117.191%2021.15%20115.625%2021.15%20113.693V46.1166C21.15%2044.4267%2021.9135%2042.8274%2023.2274%2041.7648L47.367%2022.2437C48.3638%2021.4376%2049.607%2020.9982%2050.8888%2020.9988L145.514%2021.0427C147.446%2021.0436%20149.011%2022.6094%20149.011%2024.5406V94.4632Z%27%20fill%3D%27white%27%20style%3D%27fill%3Awhite%3Bfill-opacity%3A1%3B%27/%3E%3Cpath%20id%3D%27Rectangle%20111142564%27%20d%3D%27M42.111%2080.8025C42.111%2077.7115%2044.6167%2075.2057%2047.7077%2075.2057H60.9999C64.0908%2075.2057%2066.5966%2077.7115%2066.5966%2080.8025V121.029H42.111V80.8025Z%27%20fill%3D%27black%27%20style%3D%27fill%3Ablack%3Bfill-opacity%3A1%3B%27/%3E%3Cpath%20id%3D%27Rectangle%20111142567%27%20d%3D%27M79.1894%2080.8025C79.1894%2077.7115%2081.6952%2075.2057%2084.7861%2075.2057H98.0783C101.169%2075.2057%20103.675%2077.7115%20103.675%2080.8025V121.029H79.1894V80.8025Z%27%20fill%3D%27black%27%20style%3D%27fill%3Ablack%3Bfill-opacity%3A1%3B%27/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 14px 11px;
+  background-color: #8FD1FF;
+  border-radius: 4px;
+}
+
+.minimax-ball-text {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.minimax-close-icon {
+  margin-left: 8px;
+  font-size: 16px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.minimax-close-icon:hover {
+  opacity: 1;
+}
+</style>
+<div id="minimax-floating-ball">
+  <div class="minimax-ball-content">
+    <div class="minimax-logo-wave"></div>
+    <span class="minimax-ball-text">Created by MiniMax Agent</span>
+  </div>
+  <div class="minimax-close-icon">×</div>
+</div>
+<script>
+// Initialize floating ball functionality
+function initFloatingBall() {
+  const ball = document.getElementById('minimax-floating-ball');
+  if (!ball) return;
+
+  // Initial animation
+  ball.style.opacity = '0';
+  ball.style.transform = 'translateY(20px)';
+
+  setTimeout(() => {
+    ball.style.opacity = '1';
+    ball.style.transform = 'translateY(0)';
+  }, 500);
+
+  // Handle logo click
+  const ballContent = ball.querySelector('.minimax-ball-content');
+  ballContent.addEventListener('click', function (e) {
+    e.stopPropagation();
+    window.open('https://agent.minimax.io/', '_blank');
+    ball.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+      ball.style.transform = 'scale(1)';
+    }, 100);
+  });
+
+  // Handle close button click
+  const closeIcon = ball.querySelector('.minimax-close-icon');
+  closeIcon.addEventListener('click', function (e) {
+    e.stopPropagation();
+    ball.style.opacity = '0';
+    ball.style.transform = 'translateY(20px)';
+
+    setTimeout(() => {
+      ball.style.display = 'none';
+    }, 300);
+  });
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', initFloatingBall); 
+</script>
 </html>
