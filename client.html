@@ -9,7 +9,7 @@
     <meta name="description" content="Professional IPTV streaming service with live TV, movies, and sports content">
     <meta name="author" content="iWATCH TV">
     <!-- VERSION MARKER v7.9: aggressive adult unlock bypass in playContent -->
-    <meta name="iwatch-version" content="8.0.1-fix-videojs-shim">
+    <meta name="iwatch-version" content="8.0.2-mp4-native-series-fetch">
     <meta name="keywords" content="IPTV, streaming, live TV, movies, sports, entertainment">
     
     <!-- PWA Manifest for TV -->
@@ -2434,7 +2434,7 @@
         // ============================================
         (function autoUpdateCheck() {
             try {
-                const APP_VERSION = '8.0.1';
+                const APP_VERSION = '8.0.2';
                 const STORAGE_KEY = 'iwatch_app_version';
                 const lastSeen = localStorage.getItem(STORAGE_KEY);
                 if (lastSeen && lastSeen !== APP_VERSION) {
@@ -5633,6 +5633,41 @@
                             selectedSeries.seasons = seasons;
                             selectedSeries.totalSeasons = seasons.length;
                             selectedSeries.totalEpisodes = seasons.reduce((sum, s) => sum + (s.episodes?.length || 0), 0);
+                        } else {
+                            // ✅ FIX v8.0.2: seasons fetch returned empty. Try
+                            // to fetch the FIRST playable item from Plex and
+                            // play it directly. This handles the "Plex hasn't
+                            // finished scanning" case — even partial metadata
+                            // has at least one playable item.
+                            console.log('📺 Seasons empty, trying to fetch first playable item...');
+                            _setDebugOverlay && _setDebugOverlay('Seasons empty → fetching first episode');
+                            const firstEp = await fetchFirstPlayableEpisode(serverUrl, token, extractedRatingKey);
+                            if (firstEp && firstEp.url) {
+                                console.log('✅ Got first episode URL, playing directly');
+                                _setDebugOverlay && _setDebugOverlay('Playing first episode: ' + (firstEp.title || ''));
+                                // Create a content entry and play it
+                                if (!contentData.series.content) contentData.series.content = [];
+                                const epId = 'series_' + (firstEp.ratingKey || extractedRatingKey) + '_ep0';
+                                if (!contentData.series.content.find(c => String(c.id) === epId)) {
+                                    contentData.series.content.push({
+                                        id: epId,
+                                        name: firstEp.title || selectedSeries.name,
+                                        description: firstEp.summary || selectedSeries.description || '',
+                                        url: firstEp.url,
+                                        type: 'mp4',
+                                        category: 'series',
+                                        sectionId: selectedSeries.sectionId || '',
+                                        isPlex: true,
+                                        thumb: firstEp.thumb || '',
+                                        plexToken: token,
+                                        plexServer: serverUrl,
+                                        ratingKey: firstEp.ratingKey
+                                    });
+                                }
+                                seriesViewState = 'list';
+                                playContent(epId);
+                                return;
+                            }
                         }
                     } catch (e) {
                         console.error('Failed to fetch seasons:', e);
@@ -5641,6 +5676,58 @@
             }
 
             renderSeriesContent();
+        }
+
+        // ✅ FIX v8.0.2: Fetch the first playable episode (or movie) from a
+        // Plex show when seasons fetch returns empty. Used as a fallback
+        // for "Plex hasn't finished scanning yet" cases.
+        async function fetchFirstPlayableEpisode(serverUrl, token, showRatingKey) {
+            try {
+                // Try the show's metadata first — Plex returns one item
+                const showUrl = `${serverUrl}/library/metadata/${showRatingKey}?X-Plex-Token=${token}`;
+                const showResp = await fetch(showUrl);
+                if (!showResp.ok) return null;
+                const showXml = await showResp.text();
+                const showDoc = new DOMParser().parseFromString(showXml, 'text/xml');
+                // Try to find a playable child directly
+                const playableVideo = showDoc.querySelector('Video[ratingKey]');
+                if (playableVideo) {
+                    const partKey = playableVideo.querySelector('Part')?.getAttribute('key');
+                    if (partKey) {
+                        return {
+                            ratingKey: playableVideo.getAttribute('ratingKey'),
+                            title: playableVideo.getAttribute('title') || 'Episode 1',
+                            summary: playableVideo.getAttribute('summary') || '',
+                            thumb: playableVideo.getAttribute('thumb') ? `${serverUrl}${playableVideo.getAttribute('thumb')}?X-Plex-Token=${token}` : '',
+                            url: `${serverUrl}${partKey}?X-Plex-Token=${token}`
+                        };
+                    }
+                }
+                // If show metadata didn't include a playable child, try
+                // the allLeaves endpoint and grab the first one
+                const leavesUrl = `${serverUrl}/library/metadata/${showRatingKey}/allLeaves?X-Plex-Token=${token}`;
+                const leavesResp = await fetch(leavesUrl);
+                if (!leavesResp.ok) return null;
+                const leavesXml = await leavesResp.text();
+                const leavesDoc = new DOMParser().parseFromString(leavesXml, 'text/xml');
+                const firstVideo = leavesDoc.querySelector('Video[ratingKey]');
+                if (firstVideo) {
+                    const partKey = firstVideo.querySelector('Part')?.getAttribute('key');
+                    if (partKey) {
+                        return {
+                            ratingKey: firstVideo.getAttribute('ratingKey'),
+                            title: firstVideo.getAttribute('title') || 'Episode 1',
+                            summary: firstVideo.getAttribute('summary') || '',
+                            thumb: firstVideo.getAttribute('thumb') ? `${serverUrl}${firstVideo.getAttribute('thumb')}?X-Plex-Token=${token}` : '',
+                            url: `${serverUrl}${partKey}?X-Plex-Token=${token}`
+                        };
+                    }
+                }
+                return null;
+            } catch (e) {
+                console.error('fetchFirstPlayableEpisode failed:', e);
+                return null;
+            }
         }
         
         // Fetch seasons and episodes for a specific show from Plex
@@ -8369,6 +8456,39 @@
             });
 
             try {
+                // ✅ FIX v8.0.2: detect direct MP4 URL and use NATIVE <video>
+                // instead of Shaka. Shaka uses MSE which strictly requires
+                // CORS-compliant responses. Plex direct-play URLs
+                // (/library/parts/...) often don't send CORS headers,
+                // causing Shaka error 3016 on Android WebView (TVR 3).
+                // Native <video> is more lenient and works everywhere.
+                const isDirectMp4 = /\.(mp4|m4v)(\?|$)/i.test(url) ||
+                                     (url.includes('/library/parts/') && !url.includes('.m3u8'));
+
+                if (isDirectMp4) {
+                    console.log('📺 Direct MP4 detected — using native <video> (CORS-safe)');
+                    _setDebugOverlay && _setDebugOverlay('Native MP4: ' + url.split('/').pop());
+                    // Wrap URL in CORS proxy if configured (still useful for some servers)
+                    const proxiedUrl = (typeof getProxiedStreamUrl === 'function')
+                        ? getProxiedStreamUrl(url)
+                        : url;
+                    video.muted = true;  // bypass autoplay policy
+                    video.src = proxiedUrl;
+                    video.load();
+                    try {
+                        await video.play();
+                        video.muted = false;
+                        console.log('✅ Native MP4 playing:', content?.name || url);
+                        _setDebugOverlay && _setDebugOverlay('Native MP4 PLAYING: ' + (content?.name || url.split('/').pop()));
+                        if (typeof updateNowPlaying === 'function') updateNowPlaying(content);
+                        return;
+                    } catch (mp4Err) {
+                        console.warn('⚠️ Native MP4 play failed, trying Shaka:', mp4Err.message);
+                        _setDebugOverlay && _setDebugOverlay('Native MP4 failed: ' + mp4Err.message + ' → trying Shaka');
+                        // Fall through to Shaka attempt below
+                    }
+                }
+
                 await shakaPlayer.attach(video);
                 // Configure for cross-device compatibility:
                 shakaPlayer.configure({
