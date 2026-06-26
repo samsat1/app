@@ -6,10 +6,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iWATCH TV - Professional Streaming</title>
+    <!-- ✅ v8.0.3: Upgrade insecure (HTTP) requests to HTTPS where possible.
+         This helps with mixed-content blocking when the page is served
+         over HTTPS (GitHub Pages) but stream URLs are HTTP (Plex local).
+         On browsers that support it, this allows HTTP→HTTPS upgrades.
+         On local file:// or HTTP pages, this is a no-op. -->
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <!-- Allow inline styles and scripts from same-origin + shaka CDN -->
+    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net data: blob:">
     <meta name="description" content="Professional IPTV streaming service with live TV, movies, and sports content">
     <meta name="author" content="iWATCH TV">
     <!-- VERSION MARKER v7.9: aggressive adult unlock bypass in playContent -->
-    <meta name="iwatch-version" content="8.0.2-mp4-native-series-fetch">
+    <meta name="iwatch-version" content="8.0.3-visible-errors-no-fallback">
     <meta name="keywords" content="IPTV, streaming, live TV, movies, sports, entertainment">
     
     <!-- PWA Manifest for TV -->
@@ -2434,7 +2442,7 @@
         // ============================================
         (function autoUpdateCheck() {
             try {
-                const APP_VERSION = '8.0.2';
+                const APP_VERSION = '8.0.3';
                 const STORAGE_KEY = 'iwatch_app_version';
                 const lastSeen = localStorage.getItem(STORAGE_KEY);
                 if (lastSeen && lastSeen !== APP_VERSION) {
@@ -8483,9 +8491,29 @@
                         if (typeof updateNowPlaying === 'function') updateNowPlaying(content);
                         return;
                     } catch (mp4Err) {
-                        console.warn('⚠️ Native MP4 play failed, trying Shaka:', mp4Err.message);
-                        _setDebugOverlay && _setDebugOverlay('Native MP4 failed: ' + mp4Err.message + ' → trying Shaka');
-                        // Fall through to Shaka attempt below
+                        // ✅ v8.0.3: STOP retrying via Shaka here. Shaka
+                        // fails with 3016 on Android WebView due to CORS,
+                        // so retrying just produces the same error twice.
+                        // Show a clear visible error instead and return.
+                        console.error('❌ Native MP4 play failed:', mp4Err.message);
+                        _setDebugOverlay && _setDebugOverlay('MP4 FAILED: ' + mp4Err.message);
+                        // Show a visible on-screen error
+                        const errMsg = 'Cannot play this video.\n\n' +
+                                       'Reason: ' + mp4Err.message + '\n\n' +
+                                       'Common causes:\n' +
+                                       '• Mixed-content blocking (HTTPS page → HTTP stream)\n' +
+                                       '• Network unreachable from this device\n' +
+                                       '• Plex server is offline or firewall blocking\n\n' +
+                                       'Try:\n' +
+                                       '• Open from file:// or HTTP (not HTTPS)\n' +
+                                       '• Configure Plex for HTTPS access\n' +
+                                       '• Check TV/stick is on same network as Plex';
+                        if (typeof showError === 'function') {
+                            showError(errMsg);
+                        } else {
+                            alert(errMsg);
+                        }
+                        return;
                     }
                 }
 
@@ -8540,7 +8568,25 @@
                     if (typeof updateNowPlaying === 'function') updateNowPlaying(content);
                 } catch (err2) {
                     console.error('❌ Native fallback also failed:', err2);
-                    showError && showError('Cannot play this video. ' + (err2.message || ''));
+                    _setDebugOverlay && _setDebugOverlay('Cannot play: ' + (err2.message || err.message || 'unknown'));
+                    // Show a clear, visible on-screen error with helpful
+                    // guidance instead of just a console line that the
+                    // user can't see on a TV.
+                    const errMsg = '⚠️ Cannot play this video\n\n' +
+                                   'Error: ' + (err2.message || err.message || 'unknown') + '\n\n' +
+                                   'Common causes:\n' +
+                                   '• Mixed-content (HTTPS page → HTTP stream blocked)\n' +
+                                   '• Plex server unreachable from this device\n' +
+                                   '• Codec unsupported (HEVC/H.265 on older devices)\n\n' +
+                                   'Try opening from HTTP URL instead of HTTPS,\n' +
+                                   'or enable "Insecure content" in browser settings.';
+                    if (typeof showError === 'function') {
+                        showError(errMsg);
+                    } else if (typeof showNotification === 'function') {
+                        showNotification('Playback failed: ' + (err2.message || err.message), 'error');
+                    } else {
+                        alert(errMsg);
+                    }
                 }
             }
         }
