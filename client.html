@@ -1,9 +1,5 @@
 <!DOCTYPE html>
 <!-- VERSION 7.0 - Fixed Plex Content Addon Filtering 2026-03-18 -->
-<!-- VERSION 7.2 - Plex playback fix 2026-06-27 -->
-<!--   - Force Plex HLS transcode on TV/Android Stick/Box/iOS in handlePlexContent.
-       Direct MP4 part URLs caused black screen on Movies/Arabic/Series episodes
-       because Android Stick WebViews can't decode HEVC/AC3/H.264-High reliably. -->
 <!-- VERSION 7.1 - Cross-device compatibility FIX PACK 2026-06-27 -->
 <!--   - Unified device detection (covers Sony/Xiaomi/TCL/Google TV/VIDAA/AQUOS/Fire TV)
        - Codec-aware playback path selection (H.264/HEVC/AAC)
@@ -7261,59 +7257,12 @@
             }
             const token = content.plexToken || localStorage.getItem('plexToken') || '';
 
-            // ✅ FIX PACK v7.1+: device-aware URL routing.
-            // On TV / Android Stick / Android Box / iOS we MUST go through Plex HLS
-            // transcode because direct MP4 part URLs may carry HEVC, AC3, or H.264
-            // High profile which the device browser WebView cannot decode (black screen).
-            // Desktop browsers have every codec, so they keep the direct MP4 path.
-            const _compatForPlex = window.iwatchCompat || {};
-            const _devForPlex = _compatForPlex.detectDevice
-                ? _compatForPlex.detectDevice()
-                : { class: 'desktop', isTV: false, isAndroid: false, isIOS: false };
-            const _isMobileDevice = _devForPlex.isTV || _devForPlex.isAndroid || _devForPlex.isIOS;
-
             console.log('📺 Playing Plex content:', content.name);
             console.log('📺 Server:', serverUrl, 'Token:', token ? token.substring(0, 8) + '...' : 'none');
             console.log('📺 Content ID:', content.id, 'RatingKey:', content.ratingKey);
-            console.log('📺 Device class:', _devForPlex.class, '| useHlsTranscode:', _isMobileDevice);
-
-            // ✅ FIX PACK: build the Plex HLS transcode URL for mobile/TV devices
-            // (used when the content has a direct MP4 part URL but the device cannot
-            // decode it natively).
-            function _buildPlexHlsTranscodeUrl(directMp4Url) {
-                try {
-                    const basePartUrl = directMp4Url.split('?')[0];
-                    const encodedPath = encodeURIComponent(basePartUrl);
-                    return `${serverUrl}/video/:/transcode/universal/start.m3u8` +
-                           `?X-Plex-Token=${token}` +
-                           `&X-Plex-Product=Plex+Web` +
-                           `&X-Plex-Platform=Web` +
-                           `&protocol=hls` +
-                           `&directStreamAudio=1` +
-                           `&directPlayVideo=0` +
-                           `&videoQuality=100` +
-                           `&path=${encodedPath}`;
-                } catch (e) {
-                    return null;
-                }
-            }
 
             // Check if URL already exists and is valid
             if (content.url && content.url.startsWith('http')) {
-                // ✅ FIX PACK v7.1+: on TV/Android/iOS, route through Plex HLS transcode
-                // immediately so codec mismatches cannot cause a black screen.
-                if (_isMobileDevice) {
-                    const hlsUrl = _buildPlexHlsTranscodeUrl(content.url);
-                    if (hlsUrl) {
-                        console.log('📺 Routing to Plex HLS transcode for', _devForPlex.class, ':', hlsUrl.substring(0, 100) + '...');
-                        handleHLSStream(hlsUrl);
-                        return;
-                    }
-                    // If URL build failed, fall through to the existing direct-MP4 path
-                    // and let the device's error handling take over.
-                    console.warn('⚠️ Could not build Plex HLS transcode URL, falling back to direct MP4');
-                }
-
                 console.log('📺 Using existing content URL:', content.url.substring(0, 80) + '...');
 
                 // Get video element
