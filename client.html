@@ -5730,7 +5730,15 @@
 
         function renderSeasonList(series, container) {
             if (!series) {
-                container.innerHTML = '<div class="empty-message">❌ Series not found.</div>';
+                container.innerHTML = `
+                    <div style="padding: 20px;">
+                        <button onclick="backToSeriesList()" style="
+                            background: #7c3aed; color: white; border: none;
+                            padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;
+                        ">← Back to Series</button>
+                        <div class="empty-message" style="margin-top: 20px;">❌ Series not found.</div>
+                    </div>
+                `;
                 return;
             }
 
@@ -5780,7 +5788,34 @@
                         </div>
                     `;
                 } else {
-                    container.innerHTML = '<div class="empty-message">No seasons available. Please try again later.</div>';
+                    // ✅ FIX v7.2 — always provide a back-to-shows button, even in the
+                    // "no seasons" empty state, so users on TV remotes / Android boxes
+                    // can recover without D-Pad gymnastics.
+                    container.innerHTML = `
+                        <div class="season-header" style="
+                            padding: 20px;
+                            background: linear-gradient(135deg, #1a1a2e, #16213e);
+                            margin: -20px -20px 20px -20px;
+                            border-bottom: 2px solid #7c3aed;
+                            display: flex;
+                            align-items: center;
+                            gap: 15px;
+                        ">
+                            <button onclick="backToSeriesList()" style="
+                                background: #7c3aed; color: white; border: none;
+                                padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;
+                            ">← Back to Series</button>
+                            <div>
+                                <h2 style="color: #fff; margin: 0 0 5px 0;">${series.name}</h2>
+                                <p style="color: #aaa; margin: 0;">No seasons found in Plex for this show</p>
+                            </div>
+                        </div>
+                        <div class="empty-message" style="margin: 20px 0;">
+                            ⚠️ No seasons available for this show.<br>
+                            Make sure "Series Section ID" is set in <strong>Admin → Plex Management</strong>,
+                            and that this show's library has been imported.
+                        </div>
+                    `;
                 }
                 return;
             }
@@ -6721,6 +6756,16 @@
 
             currentSource = source;
             currentCategory = 'all';
+
+            // ✅ FIX v7.2 — reset Series browsing state when entering the Series tab.
+            // Without this, if you were in the middle of a show (seasons/episodes view)
+            // and switched away, then came back to Series, you'd see the OLD show's
+            // empty/error page instead of the show list — looking like "Series disappeared".
+            if (source === 'series') {
+                if (typeof seriesViewState !== 'undefined') seriesViewState = 'list';
+                if (typeof selectedSeries !== 'undefined') selectedSeries = null;
+                if (typeof selectedSeason !== 'undefined') selectedSeason = null;
+            }
 
             // Update tab active state
             document.querySelectorAll('.source-tab').forEach(tab => {
@@ -11072,6 +11117,386 @@
             // DOM is already loaded
             setTimeout(initApp, 100);
         }
+    </script>
+
+    <!-- ============================================================
+         iWATCH v7.2 — BULLETPROOF D-PAD + DIAGNOSTIC OVERLAY
+         This block runs AFTER all other scripts so it can see them
+         but is self-contained — it does not depend on tvRemote being
+         initialized or any specific function being present. If the
+         existing tvRemote handler is broken on a particular device
+         (Mortal T1, some LG webOS builds, custom OEM WebViews),
+         THIS one will still work.
+         ============================================================ -->
+    <script>
+    (function iwatchBulletproofDPad() {
+        // -------- Diagnostic state --------
+        const diag = {
+            lastKeys: [],
+            lastErrors: [],
+            showOverlay: false
+        };
+        window.addEventListener('error', (e) => {
+            diag.lastErrors.push({
+                msg: e.message || String(e),
+                src: (e.filename || '').split('/').pop() || '',
+                line: e.lineno || 0,
+                t: Date.now()
+            });
+            if (diag.lastErrors.length > 20) diag.lastErrors.shift();
+        });
+
+        // -------- Helper: is the user typing? --------
+        function isTyping() {
+            const el = document.activeElement;
+            if (!el) return false;
+            const tag = el.tagName;
+            return tag === 'INPUT' || tag === 'TEXTAREA' || el.isContentEditable;
+        }
+
+        // -------- Helper: get all visible focusable elements --------
+        function getFocusables() {
+            const sels = [
+                '.source-tab',
+                '.content-item[data-id]',
+                '.series-card',
+                '.season-card',
+                '.episode-card',
+                '.control-btn',
+                '.package-card',
+                '.video-card',
+                '.category-btn',
+                'button:not([disabled])',
+                '.simple-btn',
+                '.adult-btn',
+                '.login-btn',
+                '.pkg-btn',
+                '.feature-item',
+                '[tabindex]:not([tabindex="-1"])'
+            ];
+            return Array.from(document.querySelectorAll(sels.join(','))).filter(el => {
+                try {
+                    const r = el.getBoundingClientRect();
+                    const s = window.getComputedStyle(el);
+                    return r.width > 0 && r.height > 0 &&
+                           s.display !== 'none' && s.visibility !== 'hidden' && s.opacity !== '0';
+                } catch (e) { return false; }
+            });
+        }
+
+        // -------- Helper: find current focused element --------
+        function getCurrentFocused(elements) {
+            // Prefer element with .tv-focused class (matches existing system)
+            const tv = document.querySelector('.tv-focused');
+            if (tv && elements.includes(tv)) return tv;
+            const ae = document.activeElement;
+            if (ae && ae !== document.body && elements.includes(ae)) return ae;
+            return null;
+        }
+
+        // -------- Helper: set focus to an element --------
+        function setFocusTo(el) {
+            if (!el) return;
+            document.querySelectorAll('.tv-focused').forEach(n => n.classList.remove('tv-focused'));
+            el.classList.add('tv-focused');
+            try { el.focus({ preventScroll: false }); } catch (e) {}
+            // Try to scroll into view inside the content list, not the whole page
+            try {
+                const list = el.closest('.content-list');
+                if (list && el.offsetTop !== undefined) {
+                    const target = el.offsetTop - (list.clientHeight / 2) + (el.offsetHeight / 2);
+                    list.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+                } else {
+                    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                }
+            } catch (e) {}
+        }
+
+        // -------- Direction-based navigation --------
+        function navigate(direction) {
+            const elements = getFocusables();
+            if (elements.length === 0) return;
+            const current = getCurrentFocused(elements);
+
+            // If nothing focused, focus the first visible item
+            if (!current) {
+                if (direction === 'left' || direction === 'up') {
+                    setFocusTo(elements[elements.length - 1]);
+                } else {
+                    setFocusTo(elements[0]);
+                }
+                return;
+            }
+
+            // Tabs (source-tabs) only respond to LEFT/RIGHT
+            const isCurrentTab = current.classList.contains('source-tab');
+            if (isCurrentTab && (direction === 'up' || direction === 'down')) {
+                // From a tab, DOWN should jump to first content item
+                const firstContent = elements.find(el => !el.classList.contains('source-tab'));
+                if (firstContent) setFocusTo(firstContent);
+                return;
+            }
+
+            const currentRect = current.getBoundingClientRect();
+            const currentCenterX = currentRect.left + currentRect.width / 2;
+            const currentCenterY = currentRect.top + currentRect.height / 2;
+
+            let best = null;
+            let bestScore = Infinity;
+
+            elements.forEach(el => {
+                if (el === current) return;
+                const rect = el.getBoundingClientRect();
+                const cx = rect.left + rect.width / 2;
+                const cy = rect.top + rect.height / 2;
+                const dx = cx - currentCenterX;
+                const dy = cy - currentCenterY;
+
+                let score = Infinity;
+                switch (direction) {
+                    case 'up':
+                        if (dy < -5) {
+                            // Same column-ish (some horizontal overlap)
+                            const xOverlap = Math.min(rect.right, currentRect.right) - Math.max(rect.left, currentRect.left);
+                            if (xOverlap > Math.min(rect.width, currentRect.width) * 0.25) {
+                                score = -dy + Math.abs(dx) * 0.5;
+                            }
+                        }
+                        break;
+                    case 'down':
+                        if (dy > 5) {
+                            const xOverlap = Math.min(rect.right, currentRect.right) - Math.max(rect.left, currentRect.left);
+                            if (xOverlap > Math.min(rect.width, currentRect.width) * 0.25) {
+                                score = dy + Math.abs(dx) * 0.5;
+                            }
+                        }
+                        break;
+                    case 'left':
+                        if (dx < -5) {
+                            const yOverlap = Math.min(rect.bottom, currentRect.bottom) - Math.max(rect.top, currentRect.top);
+                            if (yOverlap > Math.min(rect.height, currentRect.height) * 0.3) {
+                                score = -dx + Math.abs(dy) * 0.5;
+                            }
+                        }
+                        break;
+                    case 'right':
+                        if (dx > 5) {
+                            const yOverlap = Math.min(rect.bottom, currentRect.bottom) - Math.max(rect.top, currentRect.top);
+                            if (yOverlap > Math.min(rect.height, currentRect.height) * 0.3) {
+                                score = dx + Math.abs(dy) * 0.5;
+                            }
+                        }
+                        break;
+                }
+                if (score < bestScore) {
+                    bestScore = score;
+                    best = el;
+                }
+            });
+
+            if (best) setFocusTo(best);
+        }
+
+        // -------- Activate the focused element --------
+        function activate() {
+            const el = document.querySelector('.tv-focused') || document.activeElement;
+            if (!el || el === document.body) return;
+            try { el.click(); } catch (e) {}
+            // Special: if it's a series/season/episode card with onclick attribute, click it
+            const onclick = el.getAttribute && el.getAttribute('onclick');
+            if (onclick) {
+                try { (function(attr){ eval(attr); })(onclick); } catch (e) {}
+            }
+        }
+
+        // -------- Back action --------
+        function goBack() {
+            // Series: episodes → seasons → list
+            if (typeof seriesViewState !== 'undefined' && typeof currentSource !== 'undefined' && currentSource === 'series') {
+                if (seriesViewState === 'episodes' && typeof backToSeasons === 'function') {
+                    backToSeasons(); return;
+                }
+                if (seriesViewState === 'seasons' && typeof backToSeriesList === 'function') {
+                    backToSeriesList(); return;
+                }
+            }
+            // Otherwise: close any open modal
+            document.querySelectorAll('.modal.show, .package-modal.show, .adult-modal.show, .login-modal.show').forEach(m => {
+                m.classList.remove('show');
+            });
+        }
+
+        // -------- Toggle diagnostic overlay --------
+        function toggleDiagOverlay() {
+            diag.showOverlay = !diag.showOverlay;
+            const overlay = document.getElementById('iwatch-diag-overlay');
+            if (overlay) overlay.style.display = diag.showOverlay ? 'block' : 'none';
+            if (diag.showOverlay) renderDiagOverlay();
+        }
+
+        function renderDiagOverlay() {
+            let overlay = document.getElementById('iwatch-diag-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'iwatch-diag-overlay';
+                overlay.style.cssText = `
+                    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                    background: rgba(0,0,0,0.96); color: #00ff88;
+                    font-family: monospace; font-size: 13px; padding: 30px;
+                    z-index: 999999; overflow-y: auto; white-space: pre-wrap;
+                    line-height: 1.5;
+                `;
+                document.body.appendChild(overlay);
+            }
+            const lines = [];
+            lines.push('🩺 iWATCH DIAGNOSTIC OVERLAY v7.2');
+            lines.push('Press 1-2-3-OK again to hide');
+            lines.push('');
+            if (window.iwatchDiag && window.iwatchDiag.deviceReport) {
+                try {
+                    const r = window.iwatchDiag.deviceReport();
+                    Object.keys(r).forEach(k => {
+                        const v = typeof r[k] === 'object' ? JSON.stringify(r[k]) : String(r[k]);
+                        lines.push(k + ': ' + v);
+                    });
+                } catch (e) { lines.push('deviceReport error: ' + e.message); }
+            }
+            lines.push('');
+            lines.push('— Last errors —');
+            (diag.lastErrors.slice().reverse()).forEach(e => {
+                lines.push('  [' + new Date(e.t).toLocaleTimeString() + '] ' + e.msg + ' (' + e.src + ':' + e.line + ')');
+            });
+            lines.push('');
+            lines.push('— Last ' + diag.lastKeys.length + ' keys —');
+            diag.lastKeys.slice().reverse().forEach(k => {
+                lines.push('  ' + k.key + ' (code=' + k.code + ', keyCode=' + k.keyCode + ') target=' + k.target);
+            });
+            lines.push('');
+            lines.push('currentSource: ' + (typeof currentSource !== 'undefined' ? currentSource : '?'));
+            if (typeof seriesViewState !== 'undefined') lines.push('seriesViewState: ' + seriesViewState);
+            if (typeof selectedSeries !== 'undefined' && selectedSeries) lines.push('selectedSeries: ' + selectedSeries.name);
+            overlay.textContent = lines.join('\n');
+        }
+
+        // -------- Key handler --------
+        // Hidden diagnostic trigger: press 1-2-3-OK in sequence
+        const diagSeq = [];
+        const DIAG_SEQ_LEN = 4;
+
+        function recordKey(e) {
+            diag.lastKeys.push({
+                key: e.key,
+                code: e.code,
+                keyCode: e.keyCode,
+                target: (e.target && e.target.tagName) || '?',
+                t: Date.now()
+            });
+            if (diag.lastKeys.length > 30) diag.lastKeys.shift();
+        }
+
+        function handleKey(e) {
+            recordKey(e);
+            if (diag.showOverlay) { e.preventDefault(); return; } // overlay eats keys
+
+            // Diagnostic hidden sequence: 1, 2, 3, Enter
+            diagSeq.push({ key: e.key, t: Date.now() });
+            if (diagSeq.length > DIAG_SEQ_LEN) diagSeq.shift();
+            if (diagSeq.length === DIAG_SEQ_LEN) {
+                const last4 = diagSeq.map(x => x.key).join(',');
+                if (last4 === '1,2,3,Enter') {
+                    e.preventDefault(); e.stopPropagation();
+                    toggleDiagOverlay();
+                    diagSeq.length = 0;
+                    return;
+                }
+                // Also accept ArrowUp, ArrowDown, ArrowLeft, ArrowRight as the last key (some remotes send OK as one of these)
+                if (last4 === '1,2,3,ArrowUp' || last4 === '1,2,3,ArrowDown' ||
+                    last4 === '1,2,3,ArrowLeft' || last4 === '1,2,3,ArrowRight') {
+                    e.preventDefault(); e.stopPropagation();
+                    toggleDiagOverlay();
+                    diagSeq.length = 0;
+                    return;
+                }
+            }
+            // Reset sequence after 2 seconds of inactivity
+            if (diagSeq.length && Date.now() - diagSeq[diagSeq.length - 1].t > 2000) diagSeq.length = 0;
+
+            // Skip if typing
+            if (isTyping()) return;
+
+            const key = e.key;
+            const code = e.keyCode || e.which;
+
+            // Navigation keys — arrow keys OR Android D-pad codes
+            switch (key) {
+                case 'ArrowUp':
+                    e.preventDefault(); e.stopPropagation();
+                    navigate('up'); return;
+                case 'ArrowDown':
+                    e.preventDefault(); e.stopPropagation();
+                    navigate('down'); return;
+                case 'ArrowLeft':
+                    e.preventDefault(); e.stopPropagation();
+                    navigate('left'); return;
+                case 'ArrowRight':
+                    e.preventDefault(); e.stopPropagation();
+                    navigate('right'); return;
+                case 'Enter':
+                    e.preventDefault(); e.stopPropagation();
+                    activate(); return;
+                case 'Backspace':
+                case 'Escape':
+                case 'GoBack':
+                    e.preventDefault(); e.stopPropagation();
+                    goBack(); return;
+            }
+            // Android D-pad key codes (19-23)
+            switch (code) {
+                case 19: // Up
+                    e.preventDefault(); e.stopPropagation(); navigate('up'); return;
+                case 20: // Down
+                    e.preventDefault(); e.stopPropagation(); navigate('down'); return;
+                case 21: // Left
+                    e.preventDefault(); e.stopPropagation(); navigate('left'); return;
+                case 22: // Right
+                    e.preventDefault(); e.stopPropagation(); navigate('right'); return;
+                case 23: // OK / Center
+                case 66: // Some devices: hardware Enter
+                    e.preventDefault(); e.stopPropagation(); activate(); return;
+                case 4: // Back
+                    e.preventDefault(); e.stopPropagation(); goBack(); return;
+            }
+        }
+
+        // -------- Attach handlers — fire BEFORE any other listener --------
+        // (capture phase so we always see the event first)
+        document.addEventListener('keydown', handleKey, true);
+        window.addEventListener('keydown', handleKey, true);
+
+        // Also handle mouse wheel as navigation (for LG Magic Remote)
+        let wheelAcc = 0;
+        let lastWheel = 0;
+        document.addEventListener('wheel', (e) => {
+            if (diag.showOverlay) { e.preventDefault(); return; }
+            if (isTyping()) return;
+            // Allow natural scroll inside scrollable containers
+            const scrollable = e.target.closest('.content-list, .package-content, .login-content, .adult-content');
+            if (scrollable) {
+                const canDown = scrollable.scrollTop < (scrollable.scrollHeight - scrollable.clientHeight - 5);
+                const canUp = scrollable.scrollTop > 5;
+                if ((e.deltaY > 0 && canDown) || (e.deltaY < 0 && canUp)) return;
+            }
+            e.preventDefault();
+            const now = Date.now();
+            if (now - lastWheel > 300) wheelAcc = 0;
+            lastWheel = now;
+            wheelAcc += e.deltaY;
+            if (wheelAcc > 50) { navigate('down'); wheelAcc = 0; }
+            else if (wheelAcc < -50) { navigate('up'); wheelAcc = 0; }
+        }, { passive: false });
+
+        console.log('🎮 iWATCH Bulletproof D-Pad ready — press 1-2-3-OK on remote to toggle diagnostic overlay');
+    })();
     </script>
 
     <!-- OVERRIDE SCRIPT - Fix showPackageDetails subscription check -->
