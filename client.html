@@ -2800,12 +2800,12 @@
             <form class="login-form" id="loginForm" autocomplete="off">
                 <div class="form-group">
                     <label class="form-label">Username</label>
-                    <input type="text" class="form-input" id="username" required autocomplete="off">
+                    <input type="text" class="form-input" id="username" required autocomplete="off" tabindex="1" enterkeyhint="go">
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Password</label>
-                    <input type="password" class="form-input" id="password" required autocomplete="off">
+                    <input type="password" class="form-input" id="password" required autocomplete="off" tabindex="2" enterkeyhint="done" onkeydown="if(event.key==='Enter'){event.preventDefault();window.iwatchDoLogin&&window.iwatchDoLogin();}">
                 </div>
 
                 <div class="form-group">
@@ -2816,7 +2816,7 @@
                     </label>
                 </div>
 
-                <button type="submit" class="login-btn" id="loginBtn">Login</button>
+                <button type="button" class="login-btn" id="loginBtn" onclick="iwatchDoLogin()" tabindex="3">Login</button>
             </form>
 
             <div class="error-message" id="errorMessage" style="display: none;">
@@ -9089,10 +9089,56 @@
                 document.getElementById('loginModal').classList.add('show');
                 // Small delay to ensure fields are cleared before focus
                 setTimeout(() => {
-                    if (usernameField) usernameField.focus();
+                    if (usernameField) {
+                        usernameField.focus();
+                        // Force cursor to end so the user can type immediately
+                        try {
+                            const v = usernameField.value;
+                            usernameField.setSelectionRange(v.length, v.length);
+                        } catch (e) {}
+                    }
                 }, 50);
             }
         }
+
+        // ✅ FIX v7.3 — bulletproof login submit.
+        // On some Android TV boxes (Mortal T1, Tivo Stream), clicking the Login button
+        // doesn't always trigger form submit because of WebView quirks. Also, Enter
+        // from the remote sometimes doesn't reach the input's keypress handler.
+        // This function does the login directly and is called from multiple places:
+        //  - onclick attribute on the Login button itself
+        //  - Enter key listener on username/password fields
+        //  - Global Enter key listener when login modal is open
+        //  - Form submit handler (existing)
+        window.iwatchDoLogin = async function() {
+            const username = document.getElementById('username');
+            const password = document.getElementById('password');
+            const loginBtn = document.getElementById('loginBtn');
+            if (!username || !password || !loginBtn) return;
+            const u = (username.value || '').trim();
+            const p = (password.value || '').trim();
+            if (!u || !p) {
+                if (typeof showNotification === 'function') showNotification('Please enter username and password', 'error');
+                else alert('Please enter username and password');
+                return;
+            }
+            if (loginBtn.disabled) return;
+            loginBtn.disabled = true;
+            const oldText = loginBtn.textContent;
+            loginBtn.textContent = 'Logging in...';
+            try {
+                const ok = await loginUser(u, p);
+                if (ok) {
+                    if (username) username.value = '';
+                    if (password) password.value = '';
+                }
+            } catch (e) {
+                console.error('iwatchDoLogin error:', e);
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = oldText || 'Login';
+            }
+        };
 
         function hideLoginModal() {
             document.getElementById('loginModal').classList.remove('show');
@@ -11154,6 +11200,14 @@
             return tag === 'INPUT' || tag === 'TEXTAREA' || el.isContentEditable;
         }
 
+        // ✅ FIX v7.3 — typing-mode detection that respects short navigation bursts
+        // from the remote. The old "always skip when in input" caused Mortal T1 users
+        // to get stuck because arrows never moved them between fields.
+        let lastTypingNav = 0;
+        function recentlyNavigatedFromInput() {
+            return Date.now() - lastTypingNav < 1500;
+        }
+
         // -------- Helper: get all visible focusable elements --------
         function getFocusables() {
             const sels = [
@@ -11172,6 +11226,15 @@
                 '.login-btn',
                 '.pkg-btn',
                 '.feature-item',
+                // ✅ FIX v7.3 — inputs are focusable too (login, search, etc.)
+                'input:not([disabled]):not([type="hidden"])',
+                // ✅ FIX v7.3 — user-status pill in header (opens login)
+                '.user-status',
+                // ✅ FIX v7.3 — logout / settings buttons
+                '.logout-btn',
+                // ✅ FIX v7.3 — close-modal buttons
+                '.package-close',
+                '.modal-close',
                 '[tabindex]:not([tabindex="-1"])'
             ];
             return Array.from(document.querySelectorAll(sels.join(','))).filter(el => {
@@ -11421,8 +11484,47 @@
             // Reset sequence after 2 seconds of inactivity
             if (diagSeq.length && Date.now() - diagSeq[diagSeq.length - 1].t > 2000) diagSeq.length = 0;
 
-            // Skip if typing
-            if (isTyping()) return;
+            // Skip if typing in input — but ONLY for printable keys.
+            // Navigation keys (arrows, OK, Back, Tab) should still work so the user
+            // can move between the username field, password field, and Login button.
+            if (isTyping()) {
+                const k = e.key;
+                const isPrintable = k && k.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey;
+                const isNav = ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter','Backspace','Escape','Tab'].includes(k);
+                if (isPrintable && !isNav) return; // let typing happen
+                // For nav keys from inside an input, we still handle them so user can tab between fields.
+            }
+
+            // ✅ FIX v7.3 — Enter from anywhere while login modal is open = submit login.
+            // This is the Mortal T1 / generic Android TV fix: even if focus is wrong,
+            // even if click doesn't fire, pressing OK / Enter while the modal is showing
+            // will sign the user in.
+            if (e.key === 'Enter') {
+                const modal = document.getElementById('loginModal');
+                if (modal && modal.classList.contains('show') && typeof window.iwatchDoLogin === 'function') {
+                    e.preventDefault(); e.stopPropagation();
+                    window.iwatchDoLogin();
+                    return;
+                }
+            }
+
+            // ✅ FIX v7.3 — Tab inside login modal cycles username → password → login → username
+            if (e.key === 'Tab') {
+                const modal = document.getElementById('loginModal');
+                if (modal && modal.classList.contains('show')) {
+                    e.preventDefault();
+                    const order = ['username', 'password', 'loginBtn'];
+                    const ae = document.activeElement;
+                    const curIdx = order.indexOf(ae && ae.id);
+                    const nextIdx = (curIdx === -1) ? 0 : (curIdx + (e.shiftKey ? -1 : 1) + order.length) % order.length;
+                    const target = document.getElementById(order[nextIdx]);
+                    if (target) {
+                        target.focus();
+                        if (target.select) try { target.select(); } catch(e){}
+                    }
+                    return;
+                }
+            }
 
             const key = e.key;
             const code = e.keyCode || e.which;
