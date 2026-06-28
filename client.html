@@ -7421,8 +7421,19 @@
                 if (_isMobileDevice) {
                     const hlsUrl = _buildPlexHlsTranscodeUrl(content.url);
                     if (hlsUrl) {
-                        console.log('📺 Routing to Plex HLS transcode for', _devForPlex.class, ':', hlsUrl.substring(0, 100) + '...');
-                        handleHLSStream(hlsUrl);
+                        // ✅ FIX PACK (Plex TV playback v2): wrap the transcode URL
+                        // through the CORS proxy at build time too. handleHLSStream
+                        // already wraps inside, but doing it here ensures the URL
+                        // passed to HLS.js is the proxied one even if a future
+                        // handleHLSStream change forgets to wrap. Belt + suspenders.
+                        const proxiedHlsUrl = (typeof getProxiedStreamUrl === 'function')
+                            ? getProxiedStreamUrl(hlsUrl)
+                            : hlsUrl;
+                        const proxyActive = proxiedHlsUrl !== hlsUrl;
+                        console.log('📺 Routing to Plex HLS transcode for', _devForPlex.class, ':',
+                                    proxiedHlsUrl.substring(0, 100) + '...',
+                                    proxyActive ? '(via CORS proxy)' : '(no proxy)');
+                        handleHLSStream(proxiedHlsUrl);
                         return;
                     }
                     // If URL build failed, fall through to the existing direct-MP4 path
