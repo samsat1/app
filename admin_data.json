@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-06-30T02:14:48.829Z",
+  "exportDate": "2026-06-30T02:29:35.853Z",
   "customers": [
     {
       "id": "CUST_1782171417172",
@@ -183,7 +183,7 @@
   "creditTransfers": [],
   "resellerTransactions": [],
   "plexServerUrl": "http://192.168.1.100:32400",
-  "plexLocalUrl": "http://192.168.1.100:32400",
+  "plexLocalUrl": "http://127.0.0.1:32400",
   "plexToken": "42tNWV3_Fjfp7UaDN2vV",
   "plexMoviesSection": "5",
   "plexAdultSection": "4",
@@ -10217,78 +10217,78 @@
       "name": "Çift Kişilik Oda",
       "title": "Çift Kişilik Oda",
       "year": "2025",
-      "thumb": "http://192.168.1.100:32400/library/metadata/7090/thumb/1782222709?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
-      "poster": "http://192.168.1.100:32400/library/metadata/7090/thumb/1782222709?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
+      "thumb": "http://127.0.0.1:32400/library/metadata/7090/thumb/1782222709?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
+      "poster": "http://127.0.0.1:32400/library/metadata/7090/thumb/1782222709?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
       "type": "series",
       "sectionId": "18",
-      "plexServer": "http://192.168.1.100:32400",
+      "plexServer": "http://127.0.0.1:32400",
       "plexToken": "42tNWV3_Fjfp7UaDN2vV",
-      "addedAt": 1782785678710
+      "addedAt": 1782786565591
     },
     {
       "id": "7033",
       "name": "Gülcemal",
       "title": "Gülcemal",
       "year": "2023",
-      "thumb": "http://192.168.1.100:32400/library/metadata/7033/thumb/1782222701?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
-      "poster": "http://192.168.1.100:32400/library/metadata/7033/thumb/1782222701?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
+      "thumb": "http://127.0.0.1:32400/library/metadata/7033/thumb/1782222701?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
+      "poster": "http://127.0.0.1:32400/library/metadata/7033/thumb/1782222701?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
       "type": "series",
       "sectionId": "18",
-      "plexServer": "http://192.168.1.100:32400",
+      "plexServer": "http://127.0.0.1:32400",
       "plexToken": "42tNWV3_Fjfp7UaDN2vV",
-      "addedAt": 1782785678710
+      "addedAt": 1782786565591
     },
     {
       "id": "6981",
       "name": "Kuma - The Other Wife",
       "title": "Kuma - The Other Wife",
       "year": "2025",
-      "thumb": "http://192.168.1.100:32400/library/metadata/6981/thumb/1782222700?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
-      "poster": "http://192.168.1.100:32400/library/metadata/6981/thumb/1782222700?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
+      "thumb": "http://127.0.0.1:32400/library/metadata/6981/thumb/1782222700?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
+      "poster": "http://127.0.0.1:32400/library/metadata/6981/thumb/1782222700?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
       "type": "series",
       "sectionId": "18",
-      "plexServer": "http://192.168.1.100:32400",
+      "plexServer": "http://127.0.0.1:32400",
       "plexToken": "42tNWV3_Fjfp7UaDN2vV",
-      "addedAt": 1782785678710
+      "addedAt": 1782786565591
     },
     {
       "id": "7050",
       "name": "Mr. Bean",
       "title": "Mr. Bean",
       "year": "1990",
-      "thumb": "http://192.168.1.100:32400/library/metadata/7050/thumb/1782222702?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
-      "poster": "http://192.168.1.100:32400/library/metadata/7050/thumb/1782222702?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
+      "thumb": "http://127.0.0.1:32400/library/metadata/7050/thumb/1782222702?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
+      "poster": "http://127.0.0.1:32400/library/metadata/7050/thumb/1782222702?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
       "type": "series",
       "sectionId": "18",
-      "plexServer": "http://192.168.1.100:32400",
+      "plexServer": "http://127.0.0.1:32400",
       "plexToken": "42tNWV3_Fjfp7UaDN2vV",
-      "addedAt": 1782785678710
+      "addedAt": 1782786565591
     },
     {
       "id": "6903",
       "name": "Yargı",
       "title": "Yargı",
       "year": "2021",
-      "thumb": "http://192.168.1.100:32400/library/metadata/6903/thumb/1782222693?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
-      "poster": "http://192.168.1.100:32400/library/metadata/6903/thumb/1782222693?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
+      "thumb": "http://127.0.0.1:32400/library/metadata/6903/thumb/1782222693?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
+      "poster": "http://127.0.0.1:32400/library/metadata/6903/thumb/1782222693?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
       "type": "series",
       "sectionId": "18",
-      "plexServer": "http://192.168.1.100:32400",
+      "plexServer": "http://127.0.0.1:32400",
       "plexToken": "42tNWV3_Fjfp7UaDN2vV",
-      "addedAt": 1782785678710
+      "addedAt": 1782786565591
     },
     {
       "id": "7054",
       "name": "الخربة",
       "title": "الخربة",
       "year": "2011",
-      "thumb": "http://192.168.1.100:32400/library/metadata/7054/thumb/1782222706?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
-      "poster": "http://192.168.1.100:32400/library/metadata/7054/thumb/1782222706?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
+      "thumb": "http://127.0.0.1:32400/library/metadata/7054/thumb/1782222706?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
+      "poster": "http://127.0.0.1:32400/library/metadata/7054/thumb/1782222706?X-Plex-Token=42tNWV3_Fjfp7UaDN2vV",
       "type": "series",
       "sectionId": "18",
-      "plexServer": "http://192.168.1.100:32400",
+      "plexServer": "http://127.0.0.1:32400",
       "plexToken": "42tNWV3_Fjfp7UaDN2vV",
-      "addedAt": 1782785678710
+      "addedAt": 1782786565591
     }
   ],
   "contentSources": [],
