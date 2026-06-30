@@ -5298,6 +5298,49 @@
             return currentUser.permissions.includes(addonName) || currentUser.permissions.includes('full_access');
         }
 
+        // ✅ FIX PACK (Auto-refresh on login v2): force a hard-reload of the app
+        // a couple seconds after successful login so every customer always gets the
+        // latest HTML/JS from GitHub Pages. Adds a timestamp query param so the
+        // browser treats it as a new URL and bypasses the local cache. This fixes
+        // the recurring "TV is running old cached code" issue once and for all.
+        //
+        // Cooldown: a 30-minute minimum between refreshes prevents an infinite
+        // reload loop on TV cold-boot auto-login (cold boot → auto-login →
+        // schedule reload → flag set → reload → auto-login again → flag still
+        // set → skip). The user-triggered logout + login path resets cleanly
+        // because the timestamp is checked against the stored value.
+        const _IWT_RELOAD_KEY = '_iwatchLastFreshReload';
+        const _IWT_RELOAD_COOLDOWN_MS = 30 * 60 * 1000;
+        function _scheduleFreshAppReload() {
+            try {
+                if (window._iwatchReloadScheduled) return;
+                window._iwatchReloadScheduled = true;
+                const now = Date.now();
+                const last = parseInt(localStorage.getItem(_IWT_RELOAD_KEY) || '0', 10);
+                if (last && (now - last) < _IWT_RELOAD_COOLDOWN_MS) {
+                    console.log('🔄 [Auto-refresh] Skipped (last refresh was ' +
+                        Math.round((now - last) / 60000) + ' min ago, cooldown 30 min)');
+                    window._iwatchReloadScheduled = false;
+                    return;
+                }
+                localStorage.setItem(_IWT_RELOAD_KEY, now.toString());
+                console.log('🔄 [Auto-refresh] Scheduling fresh-app reload in 2s');
+                setTimeout(() => {
+                    try {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('_t', now.toString());
+                        console.log('🔄 [Auto-refresh] Reloading with fresh URL');
+                        window.location.replace(url.toString());
+                    } catch (e) {
+                        console.warn('🔄 [Auto-refresh] URL parse failed, using reload():', e);
+                        window.location.reload();
+                    }
+                }, 2000);
+            } catch (e) {
+                console.warn('🔄 [Auto-refresh] schedule failed:', e);
+            }
+        }
+
         async function loginUser(username, password) {
             // LOCAL VERSION - Use localStorage instead of Firebase
             try {
@@ -5306,12 +5349,12 @@
                 if (clientAuthCustomersRaw) {
                     const customers = JSON.parse(clientAuthCustomersRaw);
                     const user = customers.find(c => c.username === username && c.password === password);
-                    
+
                     if (user) {
                         isLoggedIn = true;
                         currentUser = user;
                         adminCustomers = customers;
-                        
+
                         console.log('✅ Login successful (clientAuth):', user.username);
                         console.log('📅 Expiry date:', user.expiryDate);
                         updateUserInterface();
@@ -5321,21 +5364,23 @@
                         storeCredentials(username, password, user.expiryDate, rememberMe);
                         // Load content from localStorage
                         loadPlexLibraryContent();
+                        // ✅ FIX PACK (Auto-refresh v2): schedule a fresh-app reload
+                        _scheduleFreshAppReload();
                         return true;
                     }
                 }
-                
+
                 // Fallback to adminCustomers for backward compatibility
                 const adminCustomersRaw = localStorage.getItem('adminCustomers');
                 if (adminCustomersRaw) {
                     const customers = JSON.parse(adminCustomersRaw);
                     const user = customers.find(c => c.username === username && c.password === password);
-                    
+
                     if (user) {
                         isLoggedIn = true;
                         currentUser = user;
                         adminCustomers = customers;
-                        
+
                         console.log('✅ Login successful (admin fallback):', user.username);
                         console.log('📅 Expiry date:', user.expiryDate);
                         updateUserInterface();
@@ -5345,13 +5390,15 @@
                         storeCredentials(username, password, user.expiryDate, rememberMe);
                         // Load content from localStorage
                         loadPlexLibraryContent();
+                        // ✅ FIX PACK (Auto-refresh v2): schedule a fresh-app reload
+                        _scheduleFreshAppReload();
                         return true;
                     }
                 }
             } catch(e) {
                 console.log('Local login failed:', e.message);
             }
-            
+
             showNotification('Invalid username or password', 'error');
             return false;
         }
