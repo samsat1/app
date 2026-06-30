@@ -795,6 +795,33 @@
             margin-top: 2px;
         }
 
+        /* ✅ FIX PACK (Tab layout v2): force count to render UNDER the label.
+           Old CSS left .tab-label and .tab-count as inline spans, which on
+           some TV WebViews (older LG webOS, Samsung Tizen) collapsed them
+           onto the same line even though the parent has flex-direction:column.
+           These two rules force block-level layout for the two child spans so
+           the count always sits below the label, on every device. */
+        .source-tab .tab-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 1.1;
+        }
+        .source-tab .tab-count {
+            display: block;
+            font-size: 10px;
+            opacity: 0.85;
+            margin-top: 3px;
+            padding: 1px 6px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.12);
+            min-width: 18px;
+            text-align: center;
+        }
+        .source-tab.active .tab-count {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
         .source-tab.active {
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
             color: white;
@@ -5172,11 +5199,11 @@
                 showError('No video URL available for this episode.');
                 return;
             }
-            
+
             // Add the episode to a flat content list so playContent can find it by ID
             // This way playContent's authentication/package checks still apply
             if (!contentData.series.content) contentData.series.content = [];
-            
+
             // Check if this episode is already in the flat list
             const existingIndex = contentData.series.content.findIndex(c => String(c.id) === String(episode.id));
             if (existingIndex === -1) {
@@ -5185,13 +5212,24 @@
                     name: episode.name,
                     description: episode.description || '',
                     url: episode.url,
-                    type: 'series',
+                    // ✅ FIX PACK (Series playback v2): set type:'mp4', sectionId, and isPlex
+                    // so the playContent router treats episodes like Movies. Previously
+                    // type was 'series' with no sectionId/isPlex, which made the isPlexContent
+                    // check fire only via the generic "url starts with http && type !== hls/mp4"
+                    // fallback, then handlePlexContent's TV path set video.src without a CORS
+                    // proxy, triggering the "Failed to load video. Please check Plex server
+                    // connection." error. Adding sectionId + isPlex + type:'mp4' routes the
+                    // episode through the same code path that successfully plays Movies/Arabic.
+                    type: 'mp4',
                     category: 'series',
+                    sectionId: 'series',
+                    isPlex: true,
                     thumb: episode.thumb || '',
-                    plexToken: episode.plexToken || ''
+                    plexToken: episode.plexToken || '',
+                    ratingKey: episode.ratingKey || ''
                 });
             }
-            
+
             // Now call playContent with the episode ID (it will find it in contentData.series.content)
             playContent(episode.id);
         }
