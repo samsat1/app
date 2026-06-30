@@ -795,19 +795,19 @@
             margin-top: 2px;
         }
 
-        /* ✅ FIX PACK (Tab layout v2): force count to render UNDER the label.
-           Old CSS left .tab-label and .tab-count as inline spans, which on
-           some TV WebViews (older LG webOS, Samsung Tizen) collapsed them
-           onto the same line even though the parent has flex-direction:column.
-           These two rules force block-level layout for the two child spans so
-           the count always sits below the label, on every device. */
-        .source-tab .tab-label {
-            display: block;
-            font-size: 12px;
-            font-weight: 500;
-            line-height: 1.1;
-        }
-        .source-tab .tab-count {
+        /* ✅ FIX PACK (Tab layout v3): render the count UNDER the label using a
+           CSS pseudo-element on the data-count attribute. The previous
+           attempt added .tab-label/.tab-count CSS but the HTML never had those
+           spans — the JS overwrote the entire button with textContent
+           "Label (count)" so the count was always inline with the label.
+           This new approach:
+             1. JS sets button text to just the label and stores the count in
+                a data-count attribute.
+             2. ::after reads data-count and renders it as a styled badge
+                below the label (parent has flex-direction:column so the
+                pseudo-element stacks vertically automatically). */
+        .source-tab::after {
+            content: attr(data-count);
             display: block;
             font-size: 10px;
             opacity: 0.85;
@@ -817,9 +817,16 @@
             background: rgba(255, 255, 255, 0.12);
             min-width: 18px;
             text-align: center;
+            line-height: 1.2;
+            font-weight: 500;
         }
-        .source-tab.active .tab-count {
+        .source-tab.active::after {
             background: rgba(255, 255, 255, 0.25);
+        }
+        .source-tab[data-count="0"]::after,
+        .source-tab:not([data-count])::after {
+            content: '';
+            display: none;
         }
 
         .source-tab.active {
@@ -4308,44 +4315,36 @@
 
             } catch(e) { console.error('Error loading contentSources (Sports / TV LIVE):', e); }
             
-            // Update tab counts immediately
-            const moviesTabUpdate = document.querySelector('.source-tab[data-source="movies"]');
-            if (moviesTabUpdate) moviesTabUpdate.textContent = `Movies (${contentData.movies.content.length})`;
-
-            const adultTabUpdate = document.querySelector('.source-tab[data-source="adult"]');
-            if (adultTabUpdate) adultTabUpdate.textContent = `Adult (${contentData.adult.content.length})`;
+            // Update tab counts immediately using data-count + ::after (count goes UNDER label, see CSS)
+            setTabCount('.source-tab[data-source="movies"]', '🎬 Movies', contentData.movies.content.length);
+            setTabCount('.source-tab[data-source="adult"]', '🔞 Adult', contentData.adult.content.length);
 
             // Update Arabic tab count
-            const arabicTabUpdate = document.querySelector('.source-tab[data-source="arabic"]');
-            if (arabicTabUpdate && contentData.arabic) {
-                arabicTabUpdate.textContent = `Arabic (${contentData.arabic.content.length})`;
+            if (contentData.arabic) {
+                setTabCount('.source-tab[data-source="arabic"]', '🕌 Arabic', contentData.arabic.content.length);
             }
 
             // Update Series tab count
-            const seriesTabUpdate = document.querySelector('.source-tab[data-source="series"]');
-            if (seriesTabUpdate && contentData.series) {
-                seriesTabUpdate.textContent = `Series (${contentData.series.content.length})`;
+            if (contentData.series) {
+                setTabCount('.source-tab[data-source="series"]', '📺 Series', contentData.series.content.length);
                 console.log(`📺 Updated Series tab: ${contentData.series.content.length} series`);
             }
 
             // Update Live TV tab count (includes the newly added TV LIVE channels from contentSources)
-            const liveTabUpdate = document.querySelector('.source-tab[data-source="live"]');
-            if (liveTabUpdate && contentData.live) {
-                liveTabUpdate.textContent = `📺 Live TV (${contentData.live.content.length})`;
+            if (contentData.live) {
+                setTabCount('.source-tab[data-source="live"]', '📺 Live TV', contentData.live.content.length);
                 console.log(`📺 Updated Live TV tab: ${contentData.live.content.length} channels`);
             }
 
             // Update Sports tab count (from contentSources)
-            const sportsTabUpdate = document.querySelector('.source-tab[data-source="sports"]');
-            if (sportsTabUpdate && contentData.sports) {
-                sportsTabUpdate.textContent = `⚽ Sports (${contentData.sports.content.length})`;
+            if (contentData.sports) {
+                setTabCount('.source-tab[data-source="sports"]', '⚽ Sports', contentData.sports.content.length);
                 console.log(`⚽ Updated Sports tab: ${contentData.sports.content.length} channels`);
             }
 
             // Update Sports Plus tab count (from contentSources)
-            const sportsPlusTabUpdate = document.querySelector('.source-tab[data-source="sportsPlus"]');
-            if (sportsPlusTabUpdate && contentData.sportsPlus) {
-                sportsPlusTabUpdate.textContent = `🏆 Sports Plus (${contentData.sportsPlus.content.length})`;
+            if (contentData.sportsPlus) {
+                setTabCount('.source-tab[data-source="sportsPlus"]', '🏆 Sports Plus', contentData.sportsPlus.content.length);
                 console.log(`🏆 Updated Sports Plus tab: ${contentData.sportsPlus.content.length} channels`);
             }
             
@@ -4536,24 +4535,24 @@
                 console.error('❌ This is likely a CORS issue - browser blocking requests to local Plex server');
             }
             
-            // Update tab counts after live fetch
+            // Update tab counts after live fetch (count goes UNDER label via data-count + ::after)
             const moviesTab = document.querySelector('.source-tab[data-source="movies"]');
-            if (moviesTab) moviesTab.textContent = `Movies (${contentData.movies.content.length})`;
-            
+            if (moviesTab) setTabCount('.source-tab[data-source="movies"]', '🎬 Movies', contentData.movies.content.length);
+
             const adultTabLive = document.querySelector('.source-tab[data-source="adult"]');
-            if (adultTabLive) adultTabLive.textContent = `Adult (${contentData.adult.content.length})`;
-            
+            if (adultTabLive) setTabCount('.source-tab[data-source="adult"]', '🔞 Adult', contentData.adult.content.length);
+
             // Update Arabic tab count
             const arabicTab = document.querySelector('.source-tab[data-source="arabic"]');
             if (arabicTab && contentData.arabic) {
-                arabicTab.textContent = `Arabic (${contentData.arabic.content.length})`;
+                setTabCount('.source-tab[data-source="arabic"]', '🕌 Arabic', contentData.arabic.content.length);
                 console.log(`📺 Updated Arabic tab: ${contentData.arabic.content.length} videos`);
             }
-            
+
             // Update Series tab count
             const seriesTab = document.querySelector('.source-tab[data-source="series"]');
             if (seriesTab && contentData.series) {
-                seriesTab.textContent = `Series (${contentData.series.content.length})`;
+                setTabCount('.source-tab[data-source="series"]', '📺 Series', contentData.series.content.length);
                 console.log(`📺 Updated Series tab: ${contentData.series.content.length} series`);
             }
             
@@ -4751,16 +4750,16 @@
                     console.log(`🔞 Loaded ${mediaContent.adult.length} adult videos from Plex`);
                 }
                 
-                // Update tab labels with real counts
+                // Update tab labels with real counts (count goes UNDER label via data-count + ::after)
                 const moviesTab = document.querySelector('.source-tab[data-source="movies"]');
                 const vodTab = document.querySelector('.source-tab[data-source="vod"]');
-                if (moviesTab) moviesTab.textContent = `Movies (${contentData.movies.content.length})`;
-                if (vodTab) vodTab.textContent = `VOD (${contentData.vod.content.length})`;
-                
+                if (moviesTab) setTabCount('.source-tab[data-source="movies"]', '🎬 Movies', contentData.movies.content.length);
+                if (vodTab) setTabCount('.source-tab[data-source="vod"]', '📀 VOD', contentData.vod.content.length);
+
                 // Update Arabic tab count
                 const arabicTabLibraries = document.querySelector('.source-tab[data-source="arabic"]');
                 if (arabicTabLibraries && contentData.arabic) {
-                    arabicTabLibraries.textContent = `Arabic (${contentData.arabic.content.length})`;
+                    setTabCount('.source-tab[data-source="arabic"]', '🕌 Arabic', contentData.arabic.content.length);
                 }
                 
                 console.log('✅ Content updated from media libraries');
@@ -4844,10 +4843,10 @@
                     return;
                 }
                 
-                // Update tab count
+                // Update tab count (count goes UNDER label via data-count + ::after)
                 const seriesTab = document.querySelector('.source-tab[data-source="series"]');
                 if (seriesTab) {
-                    seriesTab.textContent = `Series (${seriesList.length})`;
+                    setTabCount('.source-tab[data-source="series"]', '📺 Series', seriesList.length);
                 }
                 
                 container.innerHTML = `
@@ -5338,6 +5337,25 @@
                 }, 2000);
             } catch (e) {
                 console.warn('🔄 [Auto-refresh] schedule failed:', e);
+            }
+        }
+
+        // ✅ FIX PACK (Tab layout v3 helper): set a source-tab button's label and
+        // count separately. The count is stored in a data-count attribute and
+        // rendered UNDER the label via the .source-tab::after CSS rule.
+        // Pass count=null/0 to hide the badge entirely.
+        function setTabCount(selector, label, count) {
+            try {
+                const tab = document.querySelector(selector);
+                if (!tab) return;
+                tab.textContent = label;
+                if (count === null || count === undefined || count === 0 || count === '0') {
+                    tab.removeAttribute('data-count');
+                } else {
+                    tab.setAttribute('data-count', String(count));
+                }
+            } catch (e) {
+                console.warn('setTabCount failed for', selector, e);
             }
         }
 
@@ -6175,7 +6193,7 @@
             if (currentSource === 'adult') {
                 const adultTabUpdate = document.querySelector('.source-tab[data-source="adult"]');
                 if (adultTabUpdate) {
-                    adultTabUpdate.textContent = `Adult (${availableContent.length})`;
+                    setTabCount('.source-tab[data-source="adult"]', '🔞 Adult', availableContent.length);
                 }
             }
             
