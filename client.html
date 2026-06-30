@@ -4885,8 +4885,8 @@
                                 <div class="series-info" style="padding: 12px;">
                                     <h3 style="color: #fff; margin: 0 0 8px 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${series.name}</h3>
                                     <div style="color: #aaa; font-size: 12px;">
-                                        <span>📂 ${series.totalSeasons || 0} Seasons</span>
-                                        <span style="margin-left: 10px;">🎬 ${series.totalEpisodes || 0} Episodes</span>
+                                        <span>📂 ${(series.totalSeasons || (Array.isArray(series.seasons) ? series.seasons.length : 0))} Seasons</span>
+                                        <span style="margin-left: 10px;">🎬 ${(series.totalEpisodes || (Array.isArray(series.seasons) ? series.seasons.reduce((sum, s) => sum + (Array.isArray(s.episodes) ? s.episodes.length : 0), 0) : 0))} Episodes</span>
                                     </div>
                                     ${series.description ? `<p style="color: #888; font-size: 11px; margin: 8px 0 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${series.description}</p>` : ''}
                                 </div>
