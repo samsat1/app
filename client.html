@@ -3790,50 +3790,71 @@
         // Get streaming mode for content
         function getContentStreamingMode(content) {
             if (!content) return 'on-demand';
-            
-            // Plex content (has sectionId) should always stream immediately
-            if (content.sectionId) {
-                return 'always-streaming';
-            }
-            
+
+            // ✅ FIX PACK (Streaming mode v3 — bandwidth saver):
+            //   - News / Sports / Sports Plus → always-streaming (preloaded, instant channel flip)
+            //   - Movies / Arabic / Adult / Series → on-demand (no preload, saves LAN bandwidth)
+            //   - Live TV source → only NEWS channels always-on, others on-demand
+            //
+            // Previous logic preloaded Movies too (wasted bandwidth streaming 62 movies).
+            // New logic keeps the stream warm only for the channels customers flip through
+            // quickly: News (BBC, Al Jazeera, etc.) and Sports (World Cup, leagues).
+
             // Determine streaming mode based on content type and source
             if (content.streamingMode && content.streamingMode !== 'on-demand') {
-                return content.streamingMode; // Use explicitly set mode (except on-demand for movies)
+                return content.streamingMode; // Use explicitly set mode (e.g. News item flagged always-streaming)
             }
-            
-            // Plex movies are always-streaming
-            if (content.type === 'movies' || content.type === 'mp4') {
-                return 'always-streaming';
-            }
-            
-            // Auto-detect based on content characteristics (with safety checks)
+
+            // Auto-detect based on content name / category / type
             const contentName = (content.name || '').toLowerCase();
             const contentDescription = (content.description || '').toLowerCase();
             const category = (content.category || '').toLowerCase();
-            
-            // Always-streaming content: News, Sports, Movies, Live TV
-            const alwaysStreamingKeywords = ['news', 'sport', 'movie', 'cinema', 'film', 'live'];
-            const isAlwaysStreaming = alwaysStreamingKeywords.some(keyword => 
-                contentName.includes(keyword) || 
-                contentDescription.includes(keyword) || 
-                category.includes(keyword)
-            );
-            
-            if (isAlwaysStreaming) {
+            const contentType = (content.type || '').toLowerCase();
+
+            // ✅ Always-streaming categories: News, Sports, Sports Plus
+            const isNewsContent =
+                contentName.includes('news') ||
+                contentDescription.includes('news') ||
+                category === 'news' || category === 'news-tv' ||
+                contentType === 'news' || contentType === 'news-tv' || contentType === 'newschannel';
+
+            const isSportsContent =
+                contentName.includes('sport') || contentName.includes('sports') ||
+                contentDescription.includes('sport') ||
+                category === 'sports' || category === 'sports-plus' || category === 'sportsplus' ||
+                category === 'sports-live' || category === 'sport' ||
+                contentType === 'sport' || contentType === 'sports' ||
+                contentType === 'sports-plus' || contentType === 'sportsplus' ||
+                contentType === 'sports-live';
+
+            if (isNewsContent || isSportsContent) {
                 return 'always-streaming';
             }
-            
-            // Check source-based streaming mode
+
+            // Source-based defaults
+            // live      → on-demand (only News items get always-streaming above)
+            // sports    → always-streaming (handled above, but default here)
+            // sportsPlus → always-streaming
+            // movies    → on-demand (was always-streaming before, wasted bandwidth)
+            // arabic    → on-demand
+            // adult     → on-demand
+            // series    → on-demand
+            // vod       → on-demand
             const sourceStreamingModes = {
-                'live': 'always-streaming',
-                'movies': 'always-streaming',
+                'live': 'on-demand',
+                'movies': 'on-demand',
                 'vod': 'on-demand',
                 'basic': 'on-demand',
                 'addon': 'on-demand',
                 'adult': 'on-demand',
-                'internet': 'on-demand'
+                'arabic': 'on-demand',
+                'series': 'on-demand',
+                'internet': 'on-demand',
+                'news': 'always-streaming',
+                'sports': 'always-streaming',
+                'sportsPlus': 'always-streaming'
             };
-            
+
             return sourceStreamingModes[currentSource] || 'on-demand';
         }
 
@@ -4188,7 +4209,10 @@
                         url: pkg.url || pkg.streamUrl || '',
                         package: pkg.packageName || '',
                         packageId: pkg.packageId || pkg.id,
-                        category: 'series'
+                        category: 'series',
+                        // Mark these as admin-source so the UI shows "—" instead of "0 / 0"
+                        // (admin packages don't carry episode/season metadata).
+                        _adminSource: true
                     }));
                     console.log(`📦 Loaded ${adminSeries.length} series from admin (section ID 18)`);
                     seriesLoaded = true;
@@ -4197,9 +4221,29 @@
                     try {
                         const series = JSON.parse(cachedSeries);
                         if (series && series.length > 0) {
+                            // ✅ FIX PACK (Series counts on cache load v2): older caches
+                            // and admin-package fallbacks may store series objects
+                            // WITHOUT totalSeasons/totalEpisodes/seasons populated.
+                            // Without these, the series list renders "0 / 0" for every
+                            // show. Normalize each entry here so the UI immediately
+                            // shows the real counts without forcing the user to click
+                            // into each show first.
+                            series.forEach(s => {
+                                try {
+                                    if (s && Array.isArray(s.seasons) && s.seasons.length) {
+                                        if (!s.totalSeasons) s.totalSeasons = s.seasons.length;
+                                        if (!s.totalEpisodes) {
+                                            s.totalEpisodes = s.seasons.reduce(
+                                                (sum, sn) => sum + (Array.isArray(sn.episodes) ? sn.episodes.length : 0),
+                                                0
+                                            );
+                                        }
+                                    }
+                                } catch (e) { /* ignore per-item */ }
+                            });
                             if (!contentData.series) contentData.series = { name: 'TV Series', content: [] };
                             contentData.series.content = series;
-                            console.log(`📦 Loaded ${series.length} series from Plex cache`);
+                            console.log(`📦 Loaded ${series.length} series from Plex cache (with normalized counts)`);
                             seriesLoaded = true;
                         }
                     } catch(e) { console.error('Error parsing cached series:', e); }
@@ -4885,8 +4929,10 @@
                                 <div class="series-info" style="padding: 12px;">
                                     <h3 style="color: #fff; margin: 0 0 8px 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${series.name}</h3>
                                     <div style="color: #aaa; font-size: 12px;">
+                                        ${series._adminSource ? '<span style="font-style: italic; opacity: 0.7;">Tap to load</span>' : `
                                         <span>📂 ${(series.totalSeasons || (Array.isArray(series.seasons) ? series.seasons.length : 0))} Seasons</span>
                                         <span style="margin-left: 10px;">🎬 ${(series.totalEpisodes || (Array.isArray(series.seasons) ? series.seasons.reduce((sum, s) => sum + (Array.isArray(s.episodes) ? s.episodes.length : 0), 0) : 0))} Episodes</span>
+                                        `}
                                     </div>
                                     ${series.description ? `<p style="color: #888; font-size: 11px; margin: 8px 0 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${series.description}</p>` : ''}
                                 </div>
@@ -5427,7 +5473,14 @@
             adultUnlocked = false;
             stopStream();
             updateUserInterface();
-            
+
+            // ✅ FIX PACK (Logout → fresh reload on next login v2):
+            // If the user logs out then logs in as a different account within
+            // the 30-min cooldown window, we want the next manual login to
+            // still fetch a fresh app (new account → fresh content).
+            try { localStorage.removeItem('_iwatchLastFreshReload'); } catch(e) {}
+            window._iwatchReloadScheduled = false;
+
             // Clear stored credentials when logging out
             clearStoredCredentials();
             
