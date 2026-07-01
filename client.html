@@ -4248,6 +4248,78 @@
                         }
                     } catch(e) { console.error('Error parsing cached series:', e); }
                 }
+
+                // ✅ FIX PACK (Series enrichment on load v3 — root cause fix):
+                // The admin panel saves plexSeriesCache with bare-minimum data
+                // (id, name, thumb, plexServer, plexToken) and NO season metadata.
+                // Previous patches tried to fix this in renderSeriesList (background
+                // fetch) and in cache-load (normalization), but both had gaps:
+                //   - renderSeriesList fetch only ran if localStorage.plexServerUrl
+                //     was set; failed silently when only the per-show plexServer
+                //     was populated (and that URL was 127.0.0.1 — wrong for TV).
+                //   - Cache-load normalization had no data to compute from.
+                //
+                // This is the ONE comprehensive fix: at the moment the cache is
+                // loaded, schedule a parallel fetch of season metadata for every
+                // show that doesn't already have it, using the BEST available
+                // server URL/token (localStorage → per-show → LAN default).
+                // As each fetch completes, the show's totals are updated in
+                // place and the Series tab is re-rendered. By the time the user
+                // clicks the Series tab (even on a TV cold-boot), most shows
+                // will already have real counts — no more "0/0" placeholder.
+                try {
+                    const seriesArr = (contentData.series && contentData.series.content) || [];
+                    if (seriesArr.length > 0) {
+                        const lsServer = localStorage.getItem('plexServerUrl');
+                        const lsToken = localStorage.getItem('plexToken') || localStorage.getItem('plexAutoToken');
+                        const lsLocal = localStorage.getItem('plexLocalUrl');
+                        const LAN_DEFAULT = 'http://192.168.1.100:32400';
+                        const pickServer = (s) => lsServer || (s && s.plexServer) || lsLocal || LAN_DEFAULT;
+                        const pickToken  = (s) => lsToken  || (s && s.plexToken) || '';
+                        const need = seriesArr.filter(s => {
+                            if (!s) return false;
+                            // Treat the `id` field as the ratingKey when not
+                            // already set (the admin cache stores Plex IDs in
+                            // `id`, not in `ratingKey`).
+                            if (!s.ratingKey && s.id && /^\d+$/.test(String(s.id))) {
+                                s.ratingKey = String(s.id);
+                            }
+                            const rk = s.ratingKey || (s.id ? String(s.id).replace(/^series_/, '') : null);
+                            const hasTotals = (s.totalSeasons || 0) > 0 || (s.totalEpisodes || 0) > 0;
+                            const hasSeasons = Array.isArray(s.seasons) && s.seasons.length > 0;
+                            return rk && /^\d+$/.test(String(rk)) && !hasTotals && !hasSeasons;
+                        });
+                        if (need.length > 0) {
+                            console.log(`📡 [Series enrichment] Pre-fetching season metadata for ${need.length} show(s) at cache load`);
+                            need.forEach(s => {
+                                const serverUrl = pickServer(s);
+                                const token = pickToken(s);
+                                const rk = s.ratingKey || String(s.id || '').replace(/^series_/, '');
+                                fetchSeriesSeasons(serverUrl, token, rk)
+                                    .then(seasons => {
+                                        if (seasons && seasons.length > 0) {
+                                            s.seasons = seasons;
+                                            s.totalSeasons = seasons.length;
+                                            s.totalEpisodes = seasons.reduce(
+                                                (sum, sn) => sum + (Array.isArray(sn.episodes) ? sn.episodes.length : 0), 0
+                                            );
+                                            console.log(`✅ [Series enrichment] ${s.name}: ${s.totalSeasons} season(s) / ${s.totalEpisodes} episode(s)`);
+                                            // Re-render the Series tab if user is currently viewing it
+                                            if (currentSource === 'series' && seriesViewState === 'list') {
+                                                const cl = document.getElementById('contentList');
+                                                if (cl) renderSeriesList(seriesArr, cl);
+                                            }
+                                        }
+                                    })
+                                    .catch(err => {
+                                        console.warn(`⚠️ [Series enrichment] Could not fetch ${s.name} (${serverUrl}/library/metadata/${rk}):`, err && err.message ? err.message : err);
+                                    });
+                            });
+                        }
+                    }
+                } catch (enrichErr) {
+                    console.warn('⚠️ [Series enrichment] Setup failed:', enrichErr);
+                }
             } catch(e) { console.error('Error loading Series:', e); }
             
             // Load cached live channels
@@ -4886,13 +4958,78 @@
                     `;
                     return;
                 }
-                
+
                 // Update tab count (count goes UNDER label via data-count + ::after)
                 const seriesTab = document.querySelector('.source-tab[data-source="series"]');
                 if (seriesTab) {
                     setTabCount('.source-tab[data-source="series"]', '📺 Series', seriesList.length);
                 }
-                
+
+                // ✅ FIX PACK (Series counts v3 — background fetch):
+                // The series cache is populated by admin_data.json sync and may
+                // NOT include the per-show `seasons` array (admin only saves
+                // name + ratingKey + thumb). The previous fix normalized totals
+                // from `series.seasons` if present, but the cache often has
+                // neither seasons NOR totalSeasons/totalEpisodes, so the card
+                // displays "0 Seasons 0 Episodes" until the user clicks into
+                // the show and triggers fetchSeriesSeasons.
+                //
+                // New behavior: when the Series tab renders the list, schedule
+                // a background fetch of the seasons tree for ANY show that is
+                // missing it and has a usable ratingKey. Each fetch completion
+                // re-renders the list so the counts appear as data arrives.
+                // This is fine on the user's LAN (Plex is local, requests are
+                // <500ms typically) and avoids the "always shows 0/0" problem.
+                try {
+                    const lsServer = localStorage.getItem('plexServerUrl');
+                    const lsToken = localStorage.getItem('plexToken') || localStorage.getItem('plexAutoToken');
+                    const lsLocal = localStorage.getItem('plexLocalUrl');
+                    const LAN_DEFAULT = 'http://192.168.1.100:32400';
+                    if (lsServer || lsToken) {
+                        const needsFetch = seriesList.filter(s => {
+                            if (!s || s._adminSource) return false;
+                            // Treat id as ratingKey for admin-cached series
+                            if (!s.ratingKey && s.id && /^\d+$/.test(String(s.id))) s.ratingKey = String(s.id);
+                            const rk = s.ratingKey || (s.id ? String(s.id).replace(/^series_/, '') : null);
+                            if (!rk || !/^\d+$/.test(String(rk))) return false;
+                            const hasTotals = (s.totalSeasons || 0) > 0 || (s.totalEpisodes || 0) > 0;
+                            const hasSeasons = Array.isArray(s.seasons) && s.seasons.length > 0;
+                            return !hasTotals && !hasSeasons;
+                        });
+                        if (needsFetch.length > 0) {
+                            console.log(`📡 [Series counts] Background-fetching seasons for ${needsFetch.length} show(s) missing data`);
+                            // Run fetches in parallel, re-render list on each completion
+                            needsFetch.forEach(s => {
+                                const serverUrl = lsServer || s.plexServer || lsLocal || LAN_DEFAULT;
+                                const token = lsToken || s.plexToken || '';
+                                const rk = s.ratingKey || String(s.id).replace(/^series_/, '');
+                                fetchSeriesSeasons(serverUrl, token, rk)
+                                    .then(seasons => {
+                                        if (seasons && seasons.length > 0) {
+                                            s.seasons = seasons;
+                                            s.totalSeasons = seasons.length;
+                                            s.totalEpisodes = seasons.reduce(
+                                                (sum, sn) => sum + (Array.isArray(sn.episodes) ? sn.episodes.length : 0),
+                                                0
+                                            );
+                                            console.log(`✅ [Series counts] ${s.name}: ${s.totalSeasons} seasons / ${s.totalEpisodes} episodes`);
+                                            // Re-render only if the Series tab is still the active one
+                                            if (currentSource === 'series' && seriesViewState === 'list') {
+                                                renderSeriesList(contentData.series?.content || seriesList, container);
+                                            }
+                                        }
+                                    })
+                                    .catch(e => {
+                                        // Silent — user will see "Tap to view" fallback when they click
+                                        console.warn(`⚠️ [Series counts] Could not fetch seasons for ${s.name} (${serverUrl}):`, e?.message || e);
+                                    });
+                            });
+                        }
+                    }
+                } catch (bgErr) {
+                    console.warn('⚠️ [Series counts] Background fetch setup failed:', bgErr);
+                }
+
                 container.innerHTML = `
                     <div class="series-header" style="
                         padding: 20px;
@@ -4929,10 +5066,16 @@
                                 <div class="series-info" style="padding: 12px;">
                                     <h3 style="color: #fff; margin: 0 0 8px 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${series.name}</h3>
                                     <div style="color: #aaa; font-size: 12px;">
-                                        ${series._adminSource ? '<span style="font-style: italic; opacity: 0.7;">Tap to load</span>' : `
-                                        <span>📂 ${(series.totalSeasons || (Array.isArray(series.seasons) ? series.seasons.length : 0))} Seasons</span>
-                                        <span style="margin-left: 10px;">🎬 ${(series.totalEpisodes || (Array.isArray(series.seasons) ? series.seasons.reduce((sum, s) => sum + (Array.isArray(s.episodes) ? s.episodes.length : 0), 0) : 0))} Episodes</span>
-                                        `}
+                                        ${(() => {
+                                            const totalSeasons = series.totalSeasons || (Array.isArray(series.seasons) ? series.seasons.length : 0);
+                                            const totalEpisodes = series.totalEpisodes || (Array.isArray(series.seasons) ? series.seasons.reduce((sum, s) => sum + (Array.isArray(s.episodes) ? s.episodes.length : 0), 0) : 0);
+                                            if (totalSeasons === 0 && totalEpisodes === 0) {
+                                                // No data yet — admin-source OR cache missing seasons
+                                                // (background fetch in renderSeriesList will fill this in)
+                                                return '<span style="font-style: italic; opacity: 0.7;">⏳ Loading…</span>';
+                                            }
+                                            return `<span>📂 ${totalSeasons} Seasons</span><span style="margin-left: 10px;">🎬 ${totalEpisodes} Episodes</span>`;
+                                        })()}
                                     </div>
                                     ${series.description ? `<p style="color: #888; font-size: 11px; margin: 8px 0 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${series.description}</p>` : ''}
                                 </div>
@@ -10055,5 +10198,117 @@
             -webkit-backdrop-filter: none !important;
         }
     </style>
+<style>
+#minimax-floating-ball {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 10px 12px;
+  background: #222222;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  color: #F8F8F8;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  z-index: 9999;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+#minimax-floating-ball:hover {
+  transform: translateY(-2px);
+  background: #383838;
+}
+.minimax-ball-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.minimax-logo-wave {
+  width: 20px;
+  height: 20px;
+  background-image: url("data:image/svg+xml,%3Csvg%20preserveAspectRatio%3D%27none%27%20width%3D%27100%25%27%20height%3D%27100%25%27%20overflow%3D%27visible%27%20style%3D%27display%3A%20block%3B%27%20viewBox%3D%270%200%20170.136%20138.225%27%20fill%3D%27none%27%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%3E%3Cg%20id%3D%27Frame%202116748449%27%3E%3Cpath%20id%3D%27Subtract%27%20d%3D%27M170%20101.783C170%20105.144%20168.49%20108.327%20165.886%20110.453L134.963%20135.702C132.964%20137.334%20130.463%20138.225%20127.883%20138.225H10.4938C4.69824%20138.225%200%20133.527%200%20127.732V39.2289C0%2035.8597%201.51758%2032.6698%204.13162%2030.5442L38.5402%202.56547C40.536%200.942662%2043.0298%200.0567377%2045.602%200.0567377H159.506C165.302%200.0567377%20170%204.75498%20170%2010.5506V101.783Z%27%20fill%3D%27black%27%20style%3D%27fill%3Ablack%3Bfill-opacity%3A1%3B%27/%3E%3Cpath%20id%3D%27Subtract_2%27%20d%3D%27M149.011%2094.4632C149.011%2096.1471%20148.253%2097.7415%20146.946%2098.8043L125.893%20115.936C124.895%20116.748%20123.648%20117.191%20122.361%20117.191H24.6479C22.716%20117.191%2021.15%20115.625%2021.15%20113.693V46.1166C21.15%2044.4267%2021.9135%2042.8274%2023.2274%2041.7648L47.367%2022.2437C48.3638%2021.4376%2049.607%2020.9982%2050.8888%2020.9988L145.514%2021.0427C147.446%2021.0436%20149.011%2022.6094%20149.011%2024.5406V94.4632Z%27%20fill%3D%27white%27%20style%3D%27fill%3Awhite%3Bfill-opacity%3A1%3B%27/%3E%3Cpath%20id%3D%27Rectangle%20111142564%27%20d%3D%27M42.111%2080.8025C42.111%2077.7115%2044.6167%2075.2057%2047.7077%2075.2057H60.9999C64.0908%2075.2057%2066.5966%2077.7115%2066.5966%2080.8025V121.029H42.111V80.8025Z%27%20fill%3D%27black%27%20style%3D%27fill%3Ablack%3Bfill-opacity%3A1%3B%27/%3E%3Cpath%20id%3D%27Rectangle%20111142567%27%20d%3D%27M79.1894%2080.8025C79.1894%2077.7115%2081.6952%2075.2057%2084.7861%2075.2057H98.0783C101.169%2075.2057%20103.675%2077.7115%20103.675%2080.8025V121.029H79.1894V80.8025Z%27%20fill%3D%27black%27%20style%3D%27fill%3Ablack%3Bfill-opacity%3A1%3B%27/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 14px 11px;
+  background-color: #8FD1FF;
+  border-radius: 4px;
+}
+
+.minimax-ball-text {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.minimax-close-icon {
+  margin-left: 8px;
+  font-size: 16px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.minimax-close-icon:hover {
+  opacity: 1;
+}
+</style>
+<div id="minimax-floating-ball">
+  <div class="minimax-ball-content">
+    <div class="minimax-logo-wave"></div>
+    <span class="minimax-ball-text">Created by MiniMax Agent</span>
+  </div>
+  <div class="minimax-close-icon">×</div>
+</div>
+<script>
+// Initialize floating ball functionality
+function initFloatingBall() {
+  const ball = document.getElementById('minimax-floating-ball');
+  if (!ball) return;
+
+  // Initial animation
+  ball.style.opacity = '0';
+  ball.style.transform = 'translateY(20px)';
+
+  setTimeout(() => {
+    ball.style.opacity = '1';
+    ball.style.transform = 'translateY(0)';
+  }, 500);
+
+  // Handle logo click
+  const ballContent = ball.querySelector('.minimax-ball-content');
+  ballContent.addEventListener('click', function (e) {
+    e.stopPropagation();
+    window.open('https://agent.minimax.io/', '_blank');
+    ball.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+      ball.style.transform = 'scale(1)';
+    }, 100);
+  });
+
+  // Handle close button click
+  const closeIcon = ball.querySelector('.minimax-close-icon');
+  closeIcon.addEventListener('click', function (e) {
+    e.stopPropagation();
+    ball.style.opacity = '0';
+    ball.style.transform = 'translateY(20px)';
+
+    setTimeout(() => {
+      ball.style.display = 'none';
+    }, 300);
+  });
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', initFloatingBall); 
+</script>
 </body>
 </html>
