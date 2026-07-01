@@ -4285,9 +4285,21 @@
                                 s.ratingKey = String(s.id);
                             }
                             const rk = s.ratingKey || (s.id ? String(s.id).replace(/^series_/, '') : null);
+                            // ✅ FIX PACK (Series enrichment v4 — also refetch when
+                            // episodes are missing ratingKey): the old filter
+                            // only checked for missing totals. If the cache
+                            // had totalSeasons set but the episodes inside the
+                            // seasons array didn't have a ratingKey field
+                            // (e.g. older admin-cache entries), the enrichment
+                            // would skip the show and the episodes would remain
+                            // broken. Now we re-fetch whenever ANY of the
+                            // above is missing.
                             const hasTotals = (s.totalSeasons || 0) > 0 || (s.totalEpisodes || 0) > 0;
                             const hasSeasons = Array.isArray(s.seasons) && s.seasons.length > 0;
-                            return rk && /^\d+$/.test(String(rk)) && !hasTotals && !hasSeasons;
+                            const episodesHaveRatingKey = hasSeasons && s.seasons.some(sn =>
+                                Array.isArray(sn.episodes) && sn.episodes.some(ep => ep && ep.ratingKey)
+                            );
+                            return rk && /^\d+$/.test(String(rk)) && (!hasTotals || !hasSeasons || !episodesHaveRatingKey);
                         });
                         if (need.length > 0) {
                             console.log(`📡 [Series enrichment] Pre-fetching season metadata for ${need.length} show(s) at cache load`);
@@ -5164,6 +5176,13 @@
                         duration: ep.duration,
                         seasonNumber: ep.parentIndex,
                         episodeNumber: ep.index,
+                        // ✅ FIX PACK (Episode ratingKey v2 — actually store it):
+                        // The previous version only embedded ratingKey in the
+                        // `id` string (`episode_${ep.ratingKey}`) and never set
+                        // a top-level ratingKey field. playEpisode relied on
+                        // episode.ratingKey and showed "No episode rating key
+                        // available." Now we store the field explicitly.
+                        ratingKey: ep.ratingKey,
                         thumb: ep.thumb ? `${serverUrl}${ep.thumb}?X-Plex-Token=${token}` : '',
                         url: ep.Media?.[0]?.Part?.[0]?.key ? `${serverUrl}${ep.Media[0].Part[0].key}?X-Plex-Token=${token}` : '',
                         plexToken: token
@@ -5383,42 +5402,40 @@
                 console.error('❌ Episode not found at index:', index);
                 return;
             }
-            if (!episode.url) {
-                showError('No video URL available for this episode.');
+            if (!episode.ratingKey) {
+                showError('No episode rating key available.');
                 return;
             }
 
-            // Add the episode to a flat content list so playContent can find it by ID
-            // This way playContent's authentication/package checks still apply
-            if (!contentData.series.content) contentData.series.content = [];
-
-            // Check if this episode is already in the flat list
-            const existingIndex = contentData.series.content.findIndex(c => String(c.id) === String(episode.id));
-            if (existingIndex === -1) {
-                contentData.series.content.push({
-                    id: episode.id,
-                    name: episode.name,
-                    description: episode.description || '',
-                    // ✅ FIX PACK (Series AC3 fallback v3): keep the direct MP4 URL
-                    // (so AAC shows like Mr. Bean still play instantly), but mark
-                    // this content as needing AC3 fallback. handlePlexContent will
-                    // try the direct MP4 first; if the WebView's <video> errors
-                    // out (typical for AC3 audio), it will automatically retry
-                    // with Plex HLS transcode so AC3 shows also work.
-                    url: episode.url,
-                    type: 'mp4',
-                    _seriesNeedsAc3Fallback: true,
-                    category: 'series',
-                    sectionId: 'series',
-                    isPlex: true,
-                    thumb: episode.thumb || '',
-                    plexToken: episode.plexToken || '',
-                    ratingKey: episode.ratingKey || ''
-                });
-            }
-
-            // Now call playContent with the episode ID (it will find it in contentData.series.content)
-            playContent(episode.id);
+            // ✅ FIX PACK (Series HLS-only v6 — DON'T pollute the shows list):
+            // Previous versions pushed each played episode into
+            // contentData.series.content (the list of SHOWS, like Mr. Bean
+            // / Çift Kişilik Oda). That made the Series tab count inflate
+            // from 6 to 10 to 15 ... each time the user played and went back.
+            // The fix: build the playback content object in a local variable
+            // and pass it DIRECTLY to playContent. The shows list stays clean.
+            //
+            // HLS transcode params (Plex requires these as query params when
+            // the request comes from a <video> src=... which can't send
+            // custom HTTP headers):
+            //   X-Plex-Product / Version / Platform / Device
+            //   directStreamAudio=0  (force audio transcode AC3→AAC)
+            //   directStreamVideo=1  (allow direct video stream)
+            //   copyts=1, hasMDE=1
+            const episodeContent = {
+                id: episode.id,
+                name: episode.name,
+                description: episode.description || '',
+                url: null,
+                type: 'hls',
+                category: 'series',
+                sectionId: 'series',
+                isPlex: true,
+                thumb: episode.thumb || '',
+                plexToken: episode.plexToken || '',
+                ratingKey: episode.ratingKey
+            };
+            playContent(episodeContent);
         }
         
         function formatDuration(ms) {
@@ -6667,14 +6684,26 @@
                 showError('Please login to start watching');
                 return;
             }
-            
-            console.log('📺 playContent called with ID:', contentId);
-            console.log('📺 Current source:', currentSource);
-            console.log('📺 Adult unlocked:', adultUnlocked);
-            
-            // Search in current source first, then fallback to movies/adult for Plex content
-            let content = contentData[currentSource]?.content?.find(item => String(item.id) === String(contentId));
-            
+
+            // ✅ FIX PACK (playContent v2 — accept content object directly):
+            // The function used to take only an ID and look up the content
+            // object by searching contentData[currentSource].content. That
+            // forced callers to pre-push the content into that array, which
+            // (for series episodes) inflated the shows list. Now we accept
+            // either an ID (legacy call sites) OR a content object directly
+            // (new playEpisode path). The shows list is no longer polluted.
+            let content;
+            if (contentId && typeof contentId === 'object') {
+                content = contentId;
+            } else {
+                console.log('📺 playContent called with ID:', contentId);
+                console.log('📺 Current source:', currentSource);
+                console.log('📺 Adult unlocked:', adultUnlocked);
+
+                // Search in current source first, then fallback to movies/adult for Plex content
+                content = contentData[currentSource]?.content?.find(item => String(item.id) === String(contentId));
+            }
+
             // Fallback: search in movies section for Plex content
             if (!content && contentData.movies?.content) {
                 content = contentData.movies.content.find(item => String(item.id) === String(contentId));
@@ -6848,18 +6877,17 @@
                     video.load();
                     
                     // Set timeout to detect if video doesn't start playing
+                    // (DISABLED v4: the old fallback replaced .mp4 with /master.m3u8
+                    // which is not a valid Plex URL. For series we now use HLS
+                    // transcode from the start, so this fallback is unnecessary.
+                    // For Movies/Arabic that direct-play MP4, we let the normal
+                    // video.onerror handler (or the player itself) report issues.)
                     let videoTimeout = setTimeout(() => {
-                        console.log('⚠️ Video timeout - checking state');
                         if (video.readyState < 2) {
-                            console.error('❌ Video not ready, trying HLS fallback');
-                            // Try HLS fallback
-                            if (content.url.includes('.mp4')) {
-                                const hlsUrl = content.url.replace('.mp4', '/master.m3u8');
-                                handleHLSStream(hlsUrl + '?X-Plex-Token=' + token);
-                            }
+                            console.log('⚠️ [silent] Video not ready after 5s (no fallback for non-series content)');
                         }
                     }, 5000);
-                    
+
                     video.oncanplay = function() {
                         console.log('✅ Video ready to play');
                         clearTimeout(videoTimeout);
@@ -6874,26 +6902,6 @@
                     video.onerror = function() {
                         console.error('❌ Video load error:', video.error);
                         clearTimeout(videoTimeout);
-                        // ✅ FIX PACK (Series AC3 fallback v3): if this is a series
-                        // episode that errored on direct MP4, automatically retry
-                        // with Plex HLS transcode (which transcodes AC3→AAC).
-                        // This is silent for the customer (no alert popup).
-                        if (content._seriesNeedsAc3Fallback && content.ratingKey && !content._hlsRetryDone) {
-                            content._hlsRetryDone = true;
-                            const rk = content.ratingKey;
-                            const tk = content.plexToken || localStorage.getItem('plexToken') || '';
-                            const transcodeUrl = serverUrl + '/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F' + rk + '&mediaIndex=0&partIndex=0&protocol=hls&fastSeek=1&directPlay=0&directStream=1&X-Plex-Token=' + tk;
-                            console.log('🔄 [AC3 fallback] Direct MP4 failed, trying HLS transcode:', transcodeUrl.substring(0, 100) + '...');
-                            try {
-                                video.onerror = null;
-                                video.src = transcodeUrl;
-                                video.load();
-                                video.play().catch(e => console.log('HLS play failed:', e));
-                                return;
-                            } catch (e) {
-                                console.log('HLS retry threw:', e);
-                            }
-                        }
                         // Silent — no customer-facing alert
                         console.log('[silent] Failed to load video');
                     };
@@ -6959,7 +6967,18 @@
                 }
                 
                 // Construct HLS transcode URL
-                const transcodeUrl = `${serverUrl}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${ratingKey}&mediaIndex=0&partIndex=0&protocol=hls&fastSeek=1&directPlay=0&directStream=1&X-Plex-Token=${token}`;
+                // ✅ FIX PACK (HLS transcode URL v6 — Plex client headers):
+                // Plex returns 400 Bad Request when the URL is missing the
+                // X-Plex-* client identification headers. Plex accepts these
+                // as query params as well as HTTP headers. Including them in
+                // the URL is the simplest way to make the request work from
+                // any browser (which can't send custom HTTP headers on
+                // <video src=...> requests).
+                //
+                // Added: X-Plex-Product, X-Plex-Version, X-Plex-Platform,
+                //        X-Plex-Device (all required by Plex universal
+                //        transcode endpoint, otherwise 400 Bad Request)
+                const transcodeUrl = `${serverUrl}/video/:/transcode/universal/start.m3u8?X-Plex-Token=${token}&X-Plex-Product=Plex%20Web&X-Plex-Version=4.118.0&X-Plex-Platform=Chrome&X-Plex-Device=Web&protocol=hls&copyts=1&hasMDE=1&directStreamAudio=0&directStreamVideo=1&directPlay=0&fastSeek=1&path=%2Flibrary%2Fmetadata%2F${ratingKey}&mediaIndex=0&partIndex=0`;
                 
                 console.log('✅ Playing via transcode URL:', transcodeUrl);
                 handleHLSStream(transcodeUrl);
@@ -8076,23 +8095,20 @@
 
         // Utility Functions
         function showError(message) {
-            console.log('Error:', message);
-            alert(message);
+            // ✅ FIX PACK (Silent error v1): never show alert() to customer.
+            // Log to console for admin debug, never interrupt the video.
+            console.log('[silent error]', message);
         }
 	
-        // Show error when device limit is reached
+        // Show error when device limit is reached (silent for customers)
         function showDeviceLimitError(maxDevices) {
-            const errorMsg = `Maximum devices reached!\n\n` +
-                `Your subscription allows ${maxDevices} TV${maxDevices > 1 ? '(s)' : ''}.\n\n` +
-                `To add this TV, please contact your administrator to:\n` +
-                `• Upgrade your subscription, or\n` +
-                `• Remove a registered TV from your account`;
-            alert(errorMsg);
+            const errorMsg = `Maximum devices reached! Your subscription allows ${maxDevices} TV(s). Contact admin.`;
+            console.log('[silent device limit]', errorMsg);
         }
 
         function showSuccess(message) {
-            console.log('Success:', message);
-            alert(message);
+            // Silent for customers — only log to console.
+            console.log('[silent success]', message);
         }
 
         // Auto-sync function - runs on startup
