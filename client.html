@@ -5399,16 +5399,15 @@
                     id: episode.id,
                     name: episode.name,
                     description: episode.description || '',
+                    // ✅ FIX PACK (Series AC3 fallback v3): keep the direct MP4 URL
+                    // (so AAC shows like Mr. Bean still play instantly), but mark
+                    // this content as needing AC3 fallback. handlePlexContent will
+                    // try the direct MP4 first; if the WebView's <video> errors
+                    // out (typical for AC3 audio), it will automatically retry
+                    // with Plex HLS transcode so AC3 shows also work.
                     url: episode.url,
-                    // ✅ FIX PACK (Series playback v2): set type:'mp4', sectionId, and isPlex
-                    // so the playContent router treats episodes like Movies. Previously
-                    // type was 'series' with no sectionId/isPlex, which made the isPlexContent
-                    // check fire only via the generic "url starts with http && type !== hls/mp4"
-                    // fallback, then handlePlexContent's TV path set video.src without a CORS
-                    // proxy, triggering the "Failed to load video. Please check Plex server
-                    // connection." error. Adding sectionId + isPlex + type:'mp4' routes the
-                    // episode through the same code path that successfully plays Movies/Arabic.
                     type: 'mp4',
+                    _seriesNeedsAc3Fallback: true,
                     category: 'series',
                     sectionId: 'series',
                     isPlex: true,
@@ -6875,7 +6874,28 @@
                     video.onerror = function() {
                         console.error('❌ Video load error:', video.error);
                         clearTimeout(videoTimeout);
-                        showError('Failed to load video. Please check Plex server connection.');
+                        // ✅ FIX PACK (Series AC3 fallback v3): if this is a series
+                        // episode that errored on direct MP4, automatically retry
+                        // with Plex HLS transcode (which transcodes AC3→AAC).
+                        // This is silent for the customer (no alert popup).
+                        if (content._seriesNeedsAc3Fallback && content.ratingKey && !content._hlsRetryDone) {
+                            content._hlsRetryDone = true;
+                            const rk = content.ratingKey;
+                            const tk = content.plexToken || localStorage.getItem('plexToken') || '';
+                            const transcodeUrl = serverUrl + '/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F' + rk + '&mediaIndex=0&partIndex=0&protocol=hls&fastSeek=1&directPlay=0&directStream=1&X-Plex-Token=' + tk;
+                            console.log('🔄 [AC3 fallback] Direct MP4 failed, trying HLS transcode:', transcodeUrl.substring(0, 100) + '...');
+                            try {
+                                video.onerror = null;
+                                video.src = transcodeUrl;
+                                video.load();
+                                video.play().catch(e => console.log('HLS play failed:', e));
+                                return;
+                            } catch (e) {
+                                console.log('HLS retry threw:', e);
+                            }
+                        }
+                        // Silent — no customer-facing alert
+                        console.log('[silent] Failed to load video');
                     };
                     
                     video.onplay = function() {
@@ -10261,12 +10281,8 @@
   opacity: 1;
 }
 </style>
-<div id="minimax-floating-ball">
-  <div class="minimax-ball-content">
-    <div class="minimax-logo-wave"></div>
-    <span class="minimax-ball-text">Created by MiniMax Agent</span>
-  </div>
-  <div class="minimax-close-icon">×</div>
+<div id="minimax-floating-ball" style="display: none !important; visibility: hidden !important;">
+  <!-- removed for customer use -->
 </div>
 <script>
 // Initialize floating ball functionality
@@ -10308,7 +10324,7 @@ function initFloatingBall() {
 }
 
 // Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', initFloatingBall); 
+// (disabled: minimax floating ball removed for customer use)
 </script>
 </body>
 </html>
