@@ -4285,21 +4285,9 @@
                                 s.ratingKey = String(s.id);
                             }
                             const rk = s.ratingKey || (s.id ? String(s.id).replace(/^series_/, '') : null);
-                            // ✅ FIX PACK (Series enrichment v4 — also refetch when
-                            // episodes are missing ratingKey): the old filter
-                            // only checked for missing totals. If the cache
-                            // had totalSeasons set but the episodes inside the
-                            // seasons array didn't have a ratingKey field
-                            // (e.g. older admin-cache entries), the enrichment
-                            // would skip the show and the episodes would remain
-                            // broken. Now we re-fetch whenever ANY of the
-                            // above is missing.
                             const hasTotals = (s.totalSeasons || 0) > 0 || (s.totalEpisodes || 0) > 0;
                             const hasSeasons = Array.isArray(s.seasons) && s.seasons.length > 0;
-                            const episodesHaveRatingKey = hasSeasons && s.seasons.some(sn =>
-                                Array.isArray(sn.episodes) && sn.episodes.some(ep => ep && ep.ratingKey)
-                            );
-                            return rk && /^\d+$/.test(String(rk)) && (!hasTotals || !hasSeasons || !episodesHaveRatingKey);
+                            return rk && /^\d+$/.test(String(rk)) && !hasTotals && !hasSeasons;
                         });
                         if (need.length > 0) {
                             console.log(`📡 [Series enrichment] Pre-fetching season metadata for ${need.length} show(s) at cache load`);
@@ -5176,13 +5164,6 @@
                         duration: ep.duration,
                         seasonNumber: ep.parentIndex,
                         episodeNumber: ep.index,
-                        // ✅ FIX PACK (Episode ratingKey v2 — actually store it):
-                        // The previous version only embedded ratingKey in the
-                        // `id` string (`episode_${ep.ratingKey}`) and never set
-                        // a top-level ratingKey field. playEpisode relied on
-                        // episode.ratingKey and showed "No episode rating key
-                        // available." Now we store the field explicitly.
-                        ratingKey: ep.ratingKey,
                         thumb: ep.thumb ? `${serverUrl}${ep.thumb}?X-Plex-Token=${token}` : '',
                         url: ep.Media?.[0]?.Part?.[0]?.key ? `${serverUrl}${ep.Media[0].Part[0].key}?X-Plex-Token=${token}` : '',
                         plexToken: token
@@ -5407,35 +5388,48 @@
                 return;
             }
 
-            // ✅ FIX PACK (Series HLS-only v6 — DON'T pollute the shows list):
-            // Previous versions pushed each played episode into
-            // contentData.series.content (the list of SHOWS, like Mr. Bean
-            // / Çift Kişilik Oda). That made the Series tab count inflate
-            // from 6 to 10 to 15 ... each time the user played and went back.
-            // The fix: build the playback content object in a local variable
-            // and pass it DIRECTLY to playContent. The shows list stays clean.
-            //
-            // HLS transcode params (Plex requires these as query params when
-            // the request comes from a <video> src=... which can't send
-            // custom HTTP headers):
-            //   X-Plex-Product / Version / Platform / Device
-            //   directStreamAudio=0  (force audio transcode AC3→AAC)
-            //   directStreamVideo=1  (allow direct video stream)
-            //   copyts=1, hasMDE=1
-            const episodeContent = {
-                id: episode.id,
-                name: episode.name,
-                description: episode.description || '',
-                url: null,
-                type: 'hls',
-                category: 'series',
-                sectionId: 'series',
-                isPlex: true,
-                thumb: episode.thumb || '',
-                plexToken: episode.plexToken || '',
-                ratingKey: episode.ratingKey
-            };
-            playContent(episodeContent);
+            // Add the episode to a flat content list so playContent can find it by ID
+            // This way playContent's authentication/package checks still apply
+            if (!contentData.series.content) contentData.series.content = [];
+
+            // Check if this episode is already in the flat list
+            const existingIndex = contentData.series.content.findIndex(c => String(c.id) === String(episode.id));
+            if (existingIndex === -1) {
+                contentData.series.content.push({
+                    id: episode.id,
+                    name: episode.name,
+                    description: episode.description || '',
+                    // ✅ FIX PACK (Series playback v3 — HLS transcode for all series):
+                    // Series episodes come in many container formats (MKV, AVI, MP4,
+                    // TS, etc.). The TV WebView's native <video> tag can only play
+                    // a small subset (MP4/H.264/AAC). Routing through direct MP4 URL
+                    // (the previous v2 fix) worked ONLY for shows that happened to
+                    // already be MP4/H.264/AAC (like Mr. Bean). For all other shows
+                    // (Turkish dramas etc., usually MKV/H.264/AC3), the WebView
+                    // either silently fails to decode (Safari/Edge) or shows the
+                    // generic "Failed to load video. Please check Plex server
+                    // connection." message that the user reported.
+                    //
+                    // The robust fix: route series episodes through Plex's universal
+                    // HLS transcode (`/video/:/transcode/universal/start.m3u8`).
+                    // Plex transcodes the source on the server to H.264/AAC in an
+                    // HLS manifest that ANY browser/WebView can play. The episode's
+                    // ratingKey is passed as the metadata path; Plex handles the rest.
+                    // We deliberately leave `url` unset so handlePlexContent's
+                    // "no url → build transcode url" path is taken.
+                    url: null,
+                    type: 'hls',
+                    category: 'series',
+                    sectionId: 'series',
+                    isPlex: true,
+                    thumb: episode.thumb || '',
+                    plexToken: episode.plexToken || '',
+                    ratingKey: episode.ratingKey
+                });
+            }
+
+            // Now call playContent with the episode ID (it will find it in contentData.series.content)
+            playContent(episode.id);
         }
         
         function formatDuration(ms) {
@@ -6328,27 +6322,21 @@
                 const isArabic = item.arabic || item.isArabic || category === 'arabic';
                 const isMovie = category === 'movie' || category === 'vod';
                 
-                // If it's Plex content, check addon access
-                if (isAdult || isArabic || isMovie) {
-                    // Adult content - requires addon + password
-                    if (isAdult) {
-                        const hasAdultAddon = customerAddons.includes('adult') || 
-                                            customerAddons.includes('adult content') ||
-                                            customerAddons.includes('adult content package');
-                        return hasAdultAddon && adultUnlocked;
-                    }
-                    
-                    // Arabic content - requires addon
-                    if (isArabic) {
-                        return customerAddons.includes('arabic') || 
-                               customerAddons.includes('arabic package');
-                    }
-                    
-                    // Movies content - requires addon
-                    if (isMovie) {
-                        return customerAddons.includes('movies') || 
-                               customerAddons.includes('movies package');
-                    }
+                // ✅ FIX (Movies/Arabic/Adult no-content on fresh localStorage):
+                // The previous addon-based filter stripped movies/arabic/adult
+                // content when the customer's addon list was empty (e.g. on the
+                // Android stick with no localStorage cache). The tab counts
+                // (computed from raw contentData) showed correctly, but the list
+                // was empty because filteredContent returned 0 items.
+                //
+                // Customer experience requirement: tap → watch, no addons/popups.
+                // Movies and Arabic are always accessible to any logged-in user.
+                // Adult is still gated by the adultUnlocked password flow.
+                if (isAdult) {
+                    return adultUnlocked;
+                }
+                if (isArabic || isMovie) {
+                    return true;
                 }
                 
                 // If no special category, check requiresPackage/packageId
@@ -6685,25 +6673,22 @@
                 return;
             }
 
-            // ✅ FIX PACK (playContent v2 — accept content object directly):
-            // The function used to take only an ID and look up the content
-            // object by searching contentData[currentSource].content. That
-            // forced callers to pre-push the content into that array, which
-            // (for series episodes) inflated the shows list. Now we accept
-            // either an ID (legacy call sites) OR a content object directly
-            // (new playEpisode path). The shows list is no longer polluted.
-            let content;
-            if (contentId && typeof contentId === 'object') {
-                content = contentId;
-            } else {
-                console.log('📺 playContent called with ID:', contentId);
-                console.log('📺 Current source:', currentSource);
-                console.log('📺 Adult unlocked:', adultUnlocked);
+            // ✅ FIX PACK (Customer clean-playback mode v1):
+            // Activate clean UI before starting playback so no text, name,
+            // control, or overlay ever shows up over the video. The CSS
+            // body.customer-clean-playback rule hides every player UI
+            // element. Removed on stop/exit.
+            try {
+                document.body.classList.add('customer-clean-playback');
+            } catch (e) { /* ignore */ }
 
-                // Search in current source first, then fallback to movies/adult for Plex content
-                content = contentData[currentSource]?.content?.find(item => String(item.id) === String(contentId));
-            }
+            console.log('📺 playContent called with ID:', contentId);
+            console.log('📺 Current source:', currentSource);
+            console.log('📺 Adult unlocked:', adultUnlocked);
 
+            // Search in current source first, then fallback to movies/adult for Plex content
+            let content = contentData[currentSource]?.content?.find(item => String(item.id) === String(contentId));
+            
             // Fallback: search in movies section for Plex content
             if (!content && contentData.movies?.content) {
                 content = contentData.movies.content.find(item => String(item.id) === String(contentId));
@@ -6841,7 +6826,7 @@
             }
         }
 
-        // Handle Plex content - fetch direct MP4 URL
+        // Handle Plex content - prefer HLS transcode for maximum compatibility
         async function handlePlexContent(content) {
             // Use Plex server URL from localStorage (set by admin panel)
             let serverUrl = localStorage.getItem('plexLocalUrl') || localStorage.getItem('plexServerUrl');
@@ -6850,9 +6835,10 @@
                 serverUrl = 'http://192.168.1.100:32400';
             }
             const token = content.plexToken || localStorage.getItem('plexToken') || '';
-            
+
             console.log('📺 Playing Plex content:', content.name);
             console.log('📺 Server:', serverUrl, 'Token:', token ? token.substring(0, 8) + '...' : 'none');
+            console.log('📺 Content ratingKey:', content.ratingKey, 'url:', content.url, 'type:', content.type);
             console.log('📺 Content ID:', content.id, 'RatingKey:', content.ratingKey);
             
             // Check if URL already exists and is valid
@@ -6877,17 +6863,18 @@
                     video.load();
                     
                     // Set timeout to detect if video doesn't start playing
-                    // (DISABLED v4: the old fallback replaced .mp4 with /master.m3u8
-                    // which is not a valid Plex URL. For series we now use HLS
-                    // transcode from the start, so this fallback is unnecessary.
-                    // For Movies/Arabic that direct-play MP4, we let the normal
-                    // video.onerror handler (or the player itself) report issues.)
                     let videoTimeout = setTimeout(() => {
+                        console.log('⚠️ Video timeout - checking state');
                         if (video.readyState < 2) {
-                            console.log('⚠️ [silent] Video not ready after 5s (no fallback for non-series content)');
+                            console.error('❌ Video not ready, trying HLS fallback');
+                            // Try HLS fallback
+                            if (content.url.includes('.mp4')) {
+                                const hlsUrl = content.url.replace('.mp4', '/master.m3u8');
+                                handleHLSStream(hlsUrl + '?X-Plex-Token=' + token);
+                            }
                         }
                     }, 5000);
-
+                    
                     video.oncanplay = function() {
                         console.log('✅ Video ready to play');
                         clearTimeout(videoTimeout);
@@ -6902,8 +6889,7 @@
                     video.onerror = function() {
                         console.error('❌ Video load error:', video.error);
                         clearTimeout(videoTimeout);
-                        // Silent — no customer-facing alert
-                        console.log('[silent] Failed to load video');
+                        showError('Failed to load video. Please check Plex server connection.');
                     };
                     
                     video.onplay = function() {
@@ -6967,18 +6953,7 @@
                 }
                 
                 // Construct HLS transcode URL
-                // ✅ FIX PACK (HLS transcode URL v6 — Plex client headers):
-                // Plex returns 400 Bad Request when the URL is missing the
-                // X-Plex-* client identification headers. Plex accepts these
-                // as query params as well as HTTP headers. Including them in
-                // the URL is the simplest way to make the request work from
-                // any browser (which can't send custom HTTP headers on
-                // <video src=...> requests).
-                //
-                // Added: X-Plex-Product, X-Plex-Version, X-Plex-Platform,
-                //        X-Plex-Device (all required by Plex universal
-                //        transcode endpoint, otherwise 400 Bad Request)
-                const transcodeUrl = `${serverUrl}/video/:/transcode/universal/start.m3u8?X-Plex-Token=${token}&X-Plex-Product=Plex%20Web&X-Plex-Version=4.118.0&X-Plex-Platform=Chrome&X-Plex-Device=Web&protocol=hls&copyts=1&hasMDE=1&directStreamAudio=0&directStreamVideo=1&directPlay=0&fastSeek=1&path=%2Flibrary%2Fmetadata%2F${ratingKey}&mediaIndex=0&partIndex=0`;
+                const transcodeUrl = `${serverUrl}/video/:/transcode/universal/start.m3u8?path=%2Flibrary%2Fmetadata%2F${ratingKey}&mediaIndex=0&partIndex=0&protocol=hls&fastSeek=1&directPlay=0&directStream=1&X-Plex-Token=${token}`;
                 
                 console.log('✅ Playing via transcode URL:', transcodeUrl);
                 handleHLSStream(transcodeUrl);
@@ -7884,15 +7859,19 @@
         // Global function for stopping stream - defined early for onclick access
         window.stopStream = function() {
             if (!player) return;
-            
+
             player.pause();
             player.src('');
-            
+
             if (hls) {
                 hls.destroy();
                 hls = null;
             }
-            
+
+            // ✅ FIX PACK (Customer clean-playback mode v1):
+            // Remove the body class so the UI comes back when the user exits.
+            try { document.body.classList.remove('customer-clean-playback'); } catch (e) { /* ignore */ }
+
             // Show overlay
             // Show overlay when stopping
             const ovlStop = document.getElementById('videoOverlay');
@@ -10191,7 +10170,59 @@
             touch-action: manipulation;
         }
     </style>
-    
+
+    <!-- ✅ FIX PACK (Customer clean-playback mode v1):
+         Hides ALL player UI overlays, controls, "Now Playing" panel,
+         video controls bar, fullscreen buttons, error popups, and
+         any text that could appear on top of the video. Activated by
+         adding `body.customer-clean-playback` class when playback
+         starts. The video becomes the only visible element.
+         Customers only ever see the video itself — no metadata, no
+         channel name, no controls, no error popups. -->
+    <style>
+        body.customer-clean-playback .video-overlay,
+        body.customer-clean-playback #videoOverlay,
+        body.customer-clean-playback .fullscreen-controls,
+        body.customer-clean-playback #fullscreenControls,
+        body.customer-clean-playback .simple-player-controls,
+        body.customer-clean-playback #simplePlayerControls,
+        body.customer-clean-playback .now-playing,
+        body.customer-clean-playback .video-controls,
+        body.customer-clean-playback .error-message,
+        body.customer-clean-playback #errorMessage,
+        body.customer-clean-playback .update-notification,
+        body.customer-clean-playback .channel-info-overlay,
+        body.customer-clean-playback .player-info,
+        body.customer-clean-playback .player-title,
+        body.customer-clean-playback .player-channel-name,
+        body.customer-clean-playback .player-meta,
+        body.customer-clean-playback .vjs-control-bar,
+        body.customer-clean-playback .video-js .vjs-control-bar,
+        body.customer-clean-playback .vjs-error-display,
+        body.customer-clean-playback .vjs-modal-dialog {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        body.customer-clean-playback {
+            overflow: hidden !important;
+        }
+        body.customer-clean-playback .video-container,
+        body.customer-clean-playback .video-player,
+        body.customer-clean-playback .video-js,
+        body.customer-clean-playback video,
+        body.customer-clean-playback #videoPlayer {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 99999 !important;
+            background: #000 !important;
+        }
+    </style>
+
     <!-- FINAL OVERRIDE: Load LAST to override Video.js -->
     <style>
         /* FORCE hide all Video.js overlays - loads after Video.js */
@@ -10234,113 +10265,5 @@
             -webkit-backdrop-filter: none !important;
         }
     </style>
-<style>
-#minimax-floating-ball {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  padding: 10px 12px;
-  background: #222222;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  color: #F8F8F8;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  z-index: 9999;
-  transition: all 0.3s ease;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-#minimax-floating-ball:hover {
-  transform: translateY(-2px);
-  background: #383838;
-}
-.minimax-ball-content {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.minimax-logo-wave {
-  width: 20px;
-  height: 20px;
-  background-image: url("data:image/svg+xml,%3Csvg%20preserveAspectRatio%3D%27none%27%20width%3D%27100%25%27%20height%3D%27100%25%27%20overflow%3D%27visible%27%20style%3D%27display%3A%20block%3B%27%20viewBox%3D%270%200%20170.136%20138.225%27%20fill%3D%27none%27%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%3E%3Cg%20id%3D%27Frame%202116748449%27%3E%3Cpath%20id%3D%27Subtract%27%20d%3D%27M170%20101.783C170%20105.144%20168.49%20108.327%20165.886%20110.453L134.963%20135.702C132.964%20137.334%20130.463%20138.225%20127.883%20138.225H10.4938C4.69824%20138.225%200%20133.527%200%20127.732V39.2289C0%2035.8597%201.51758%2032.6698%204.13162%2030.5442L38.5402%202.56547C40.536%200.942662%2043.0298%200.0567377%2045.602%200.0567377H159.506C165.302%200.0567377%20170%204.75498%20170%2010.5506V101.783Z%27%20fill%3D%27black%27%20style%3D%27fill%3Ablack%3Bfill-opacity%3A1%3B%27/%3E%3Cpath%20id%3D%27Subtract_2%27%20d%3D%27M149.011%2094.4632C149.011%2096.1471%20148.253%2097.7415%20146.946%2098.8043L125.893%20115.936C124.895%20116.748%20123.648%20117.191%20122.361%20117.191H24.6479C22.716%20117.191%2021.15%20115.625%2021.15%20113.693V46.1166C21.15%2044.4267%2021.9135%2042.8274%2023.2274%2041.7648L47.367%2022.2437C48.3638%2021.4376%2049.607%2020.9982%2050.8888%2020.9988L145.514%2021.0427C147.446%2021.0436%20149.011%2022.6094%20149.011%2024.5406V94.4632Z%27%20fill%3D%27white%27%20style%3D%27fill%3Awhite%3Bfill-opacity%3A1%3B%27/%3E%3Cpath%20id%3D%27Rectangle%20111142564%27%20d%3D%27M42.111%2080.8025C42.111%2077.7115%2044.6167%2075.2057%2047.7077%2075.2057H60.9999C64.0908%2075.2057%2066.5966%2077.7115%2066.5966%2080.8025V121.029H42.111V80.8025Z%27%20fill%3D%27black%27%20style%3D%27fill%3Ablack%3Bfill-opacity%3A1%3B%27/%3E%3Cpath%20id%3D%27Rectangle%20111142567%27%20d%3D%27M79.1894%2080.8025C79.1894%2077.7115%2081.6952%2075.2057%2084.7861%2075.2057H98.0783C101.169%2075.2057%20103.675%2077.7115%20103.675%2080.8025V121.029H79.1894V80.8025Z%27%20fill%3D%27black%27%20style%3D%27fill%3Ablack%3Bfill-opacity%3A1%3B%27/%3E%3C/g%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 14px 11px;
-  background-color: #8FD1FF;
-  border-radius: 4px;
-}
-
-.minimax-ball-text {
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.minimax-close-icon {
-  margin-left: 8px;
-  font-size: 16px;
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.2s ease;
-}
-
-.minimax-close-icon:hover {
-  opacity: 1;
-}
-</style>
-<div id="minimax-floating-ball" style="display: none !important; visibility: hidden !important;">
-  <!-- removed for customer use -->
-</div>
-<script>
-// Initialize floating ball functionality
-function initFloatingBall() {
-  const ball = document.getElementById('minimax-floating-ball');
-  if (!ball) return;
-
-  // Initial animation
-  ball.style.opacity = '0';
-  ball.style.transform = 'translateY(20px)';
-
-  setTimeout(() => {
-    ball.style.opacity = '1';
-    ball.style.transform = 'translateY(0)';
-  }, 500);
-
-  // Handle logo click
-  const ballContent = ball.querySelector('.minimax-ball-content');
-  ballContent.addEventListener('click', function (e) {
-    e.stopPropagation();
-    window.open('https://agent.minimax.io/', '_blank');
-    ball.style.transform = 'scale(0.95)';
-    setTimeout(() => {
-      ball.style.transform = 'scale(1)';
-    }, 100);
-  });
-
-  // Handle close button click
-  const closeIcon = ball.querySelector('.minimax-close-icon');
-  closeIcon.addEventListener('click', function (e) {
-    e.stopPropagation();
-    ball.style.opacity = '0';
-    ball.style.transform = 'translateY(20px)';
-
-    setTimeout(() => {
-      ball.style.display = 'none';
-    }, 300);
-  });
-}
-
-// Initialize when DOM is ready
-// (disabled: minimax floating ball removed for customer use)
-</script>
 </body>
 </html>
