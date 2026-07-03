@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-07-03T04:36:57.194Z",
+  "exportDate": "2026-07-03T04:40:02.008Z",
   "customers": [
     {
       "id": "CUST_1783038826884",
@@ -9493,240 +9493,30 @@
   ],
   "plexSeriesCache": [
     {
-      "id": "series_7148",
+      "id": "7148",
       "name": "AAC Outputs",
-      "description": "No description available",
-      "category": "series",
-      "isSeries": true,
-      "type": "series",
+      "title": "AAC Outputs",
+      "year": "",
       "thumb": "",
-      "art": "",
-      "ratingKey": "7148",
+      "poster": "",
+      "type": "series",
+      "sectionId": "18",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "xAqhP8yWtccQ2nJysF9r",
-      "seasons": [
-        {
-          "id": "7148_season_1",
-          "name": "Season 1",
-          "seasonNumber": 1,
-          "episodes": [
-            {
-              "id": "episode_7150",
-              "name": "Episode 1",
-              "description": "",
-              "duration": 2586773,
-              "seasonNumber": 1,
-              "episodeNumber": 1,
-              "thumb": "http://192.168.1.100:32400/library/metadata/7150/thumb/1783050479?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "url": "http://192.168.1.100:32400/library/parts/10742/1783048922/file.mp4?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "plexToken": "xAqhP8yWtccQ2nJysF9r"
-            },
-            {
-              "id": "episode_7151",
-              "name": "Episode 2",
-              "description": "",
-              "duration": 2755651,
-              "seasonNumber": 1,
-              "episodeNumber": 2,
-              "thumb": "http://192.168.1.100:32400/library/metadata/7151/thumb/1783050479?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "url": "http://192.168.1.100:32400/library/parts/10743/1783049013/file.mp4?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "plexToken": "xAqhP8yWtccQ2nJysF9r"
-            },
-            {
-              "id": "episode_7152",
-              "name": "Episode 3",
-              "description": "",
-              "duration": 2588421,
-              "seasonNumber": 1,
-              "episodeNumber": 3,
-              "thumb": "http://192.168.1.100:32400/library/metadata/7152/thumb/1783050479?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "url": "http://192.168.1.100:32400/library/parts/10744/1783049095/file.mp4?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "plexToken": "xAqhP8yWtccQ2nJysF9r"
-            },
-            {
-              "id": "episode_7153",
-              "name": "Episode 4",
-              "description": "",
-              "duration": 2355572,
-              "seasonNumber": 1,
-              "episodeNumber": 4,
-              "thumb": "http://192.168.1.100:32400/library/metadata/7153/thumb/1783050480?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "url": "http://192.168.1.100:32400/library/parts/10745/1783049177/file.mp4?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "plexToken": "xAqhP8yWtccQ2nJysF9r"
-            },
-            {
-              "id": "episode_7154",
-              "name": "Episode 5",
-              "description": "",
-              "duration": 2389891,
-              "seasonNumber": 1,
-              "episodeNumber": 5,
-              "thumb": "http://192.168.1.100:32400/library/metadata/7154/thumb/1783050480?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "url": "http://192.168.1.100:32400/library/parts/10746/1783049260/file.mp4?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "plexToken": "xAqhP8yWtccQ2nJysF9r"
-            },
-            {
-              "id": "episode_7155",
-              "name": "Episode 6",
-              "description": "",
-              "duration": 2431710,
-              "seasonNumber": 1,
-              "episodeNumber": 6,
-              "thumb": "http://192.168.1.100:32400/library/metadata/7155/thumb/1783050480?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "url": "http://192.168.1.100:32400/library/parts/10747/1783049334/file.mp4?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "plexToken": "xAqhP8yWtccQ2nJysF9r"
-            },
-            {
-              "id": "episode_7156",
-              "name": "Episode 7",
-              "description": "",
-              "duration": 2763825,
-              "seasonNumber": 1,
-              "episodeNumber": 7,
-              "thumb": "http://192.168.1.100:32400/library/metadata/7156/thumb/1783050480?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "url": "http://192.168.1.100:32400/library/parts/10748/1783049433/file.mp4?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "plexToken": "xAqhP8yWtccQ2nJysF9r"
-            },
-            {
-              "id": "episode_7157",
-              "name": "Episode 8",
-              "description": "",
-              "duration": 2498305,
-              "seasonNumber": 1,
-              "episodeNumber": 8,
-              "thumb": "http://192.168.1.100:32400/library/metadata/7157/thumb/1783050480?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "url": "http://192.168.1.100:32400/library/parts/10749/1783049523/file.mp4?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "plexToken": "xAqhP8yWtccQ2nJysF9r"
-            },
-            {
-              "id": "episode_7158",
-              "name": "Episode 9",
-              "description": "",
-              "duration": 2740976,
-              "seasonNumber": 1,
-              "episodeNumber": 9,
-              "thumb": "http://192.168.1.100:32400/library/metadata/7158/thumb/1783050480?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "url": "http://192.168.1.100:32400/library/parts/10750/1783049616/file.mp4?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "plexToken": "xAqhP8yWtccQ2nJysF9r"
-            },
-            {
-              "id": "episode_7159",
-              "name": "Episode 10",
-              "description": "",
-              "duration": 2423862,
-              "seasonNumber": 1,
-              "episodeNumber": 10,
-              "thumb": "http://192.168.1.100:32400/library/metadata/7159/thumb/1783050481?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "url": "http://192.168.1.100:32400/library/parts/10751/1783049701/file.mp4?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "plexToken": "xAqhP8yWtccQ2nJysF9r"
-            },
-            {
-              "id": "episode_7160",
-              "name": "Episode 11",
-              "description": "",
-              "duration": 2544466,
-              "seasonNumber": 1,
-              "episodeNumber": 11,
-              "thumb": "http://192.168.1.100:32400/library/metadata/7160/thumb/1783050481?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "url": "http://192.168.1.100:32400/library/parts/10752/1783049789/file.mp4?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "plexToken": "xAqhP8yWtccQ2nJysF9r"
-            },
-            {
-              "id": "episode_7161",
-              "name": "Episode 12",
-              "description": "",
-              "duration": 2659289,
-              "seasonNumber": 1,
-              "episodeNumber": 12,
-              "thumb": "http://192.168.1.100:32400/library/metadata/7161/thumb/1783050481?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "url": "http://192.168.1.100:32400/library/parts/10753/1783049869/file.mp4?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "plexToken": "xAqhP8yWtccQ2nJysF9r"
-            },
-            {
-              "id": "episode_7162",
-              "name": "Episode 13",
-              "description": "",
-              "duration": 2781820,
-              "seasonNumber": 1,
-              "episodeNumber": 13,
-              "thumb": "http://192.168.1.100:32400/library/metadata/7162/thumb/1783050481?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "url": "http://192.168.1.100:32400/library/parts/10754/1783049957/file.mp4?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "plexToken": "xAqhP8yWtccQ2nJysF9r"
-            },
-            {
-              "id": "episode_7163",
-              "name": "Episode 14",
-              "description": "",
-              "duration": 2714668,
-              "seasonNumber": 1,
-              "episodeNumber": 14,
-              "thumb": "http://192.168.1.100:32400/library/metadata/7163/thumb/1783050481?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "url": "http://192.168.1.100:32400/library/parts/10755/1783050051/file.mp4?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "plexToken": "xAqhP8yWtccQ2nJysF9r"
-            },
-            {
-              "id": "episode_7164",
-              "name": "Episode 15",
-              "description": "",
-              "duration": 2822896,
-              "seasonNumber": 1,
-              "episodeNumber": 15,
-              "thumb": "http://192.168.1.100:32400/library/metadata/7164/thumb/1783050482?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "url": "http://192.168.1.100:32400/library/parts/10756/1783050151/file.mp4?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "plexToken": "xAqhP8yWtccQ2nJysF9r"
-            }
-          ]
-        }
-      ],
-      "totalSeasons": 1,
-      "totalEpisodes": 15
+      "addedAt": 1783053562853
     },
     {
-      "id": "series_7165",
+      "id": "7165",
       "name": "Mr. Bean",
-      "description": "Mr Bean (portrayed by Sir Rowan Sebastian Atkinson) is a lazy, crazy, clumsy, mischievous and destructive lunatic alien man from outer space who has fallen to earth out of his UFO. Join him on his adventures of solving problems and creating worse disasters in this hilarious slapstick science fiction comedy Television sitcom series for the entire family.",
-      "category": "series",
-      "isSeries": true,
-      "type": "series",
+      "title": "Mr. Bean",
+      "year": "1990",
       "thumb": "http://192.168.1.100:32400/library/metadata/7165/thumb/1783050849?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-      "art": "http://192.168.1.100:32400/library/metadata/7165/art/1783050849?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-      "year": 1990,
-      "ratingKey": "7165",
+      "poster": "http://192.168.1.100:32400/library/metadata/7165/thumb/1783050849?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
+      "type": "series",
+      "sectionId": "18",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "xAqhP8yWtccQ2nJysF9r",
-      "seasons": [
-        {
-          "id": "7165_season_1",
-          "name": "Season 1",
-          "seasonNumber": 1,
-          "episodes": [
-            {
-              "id": "episode_7167",
-              "name": "Mind the Baby, Mr. Bean",
-              "description": "On his way to the Southsea funfair, Mr. Bean accidentally becomes lumbered with a baby boy with no idea of how or where he came from, forcing him to try having fun at the fair with the baby. Throughout the day, the baby manages to survive Bean's unique style of mishaps before eventually being reunited with his mother.",
-              "duration": 13061995,
-              "seasonNumber": 1,
-              "episodeNumber": 10,
-              "thumb": "http://192.168.1.100:32400/library/metadata/7167/thumb/1783050850?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "url": "http://192.168.1.100:32400/library/parts/10757/1780727515/file.mp4?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "plexToken": "xAqhP8yWtccQ2nJysF9r"
-            },
-            {
-              "id": "episode_7168",
-              "name": "Back to School Mr. Bean",
-              "description": "Mr. Bean attends an open day of a local school, where he unleashes his usual brand of chaos in the various classes he visits. Afterwards, Bean's day soon takes a sombre turn when he finds that his Mini isn't parked where he left it and is crushed by an Army Tank during the demonstration.",
-              "duration": 12473600,
-              "seasonNumber": 1,
-              "episodeNumber": 11,
-              "thumb": "http://192.168.1.100:32400/library/metadata/7168/thumb/1783050850?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "url": "http://192.168.1.100:32400/library/parts/10758/1780926241/file.mp4?X-Plex-Token=xAqhP8yWtccQ2nJysF9r",
-              "plexToken": "xAqhP8yWtccQ2nJysF9r"
-            }
-          ]
-        }
-      ],
-      "totalSeasons": 1,
-      "totalEpisodes": 2
+      "addedAt": 1783053562853
     }
   ],
   "contentSources": [],
