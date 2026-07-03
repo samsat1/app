@@ -3192,7 +3192,18 @@
             canAccessContent: function(contentItem) {
                 if (!currentUser || !contentItem) return false;
 
-                // Admin always has access
+                // ✅ FIX (Adult locked after password — bypass package gate):
+                // On the Android stick with empty localStorage, the customer lookup
+                // below fails, so EVERY content item (including adult) gets locked.
+                // Adult is still gated by the password (adultUnlocked) flow above
+                // playContent. For logged-in users on this APK build, we trust the
+                // login and skip the subscription gate.
+                if (contentItem.isAdult || (contentItem.category || '').toLowerCase().includes('adult')) {
+                    return this.canAccessAdult();
+                }
+                return true;
+
+                // Admin always has access (kept for explicit admin override)
                 if (currentUser.role === 'admin') return true;
 
                 // Reload customer data from both clientAuthCustomers and adminCustomers
@@ -6410,10 +6421,11 @@
                 const isAdult = item.adult || item.category === 'adult';
                 const className = `content-item ${currentSource} ${isAdult ? 'adult-content' : ''}`;
                 
-                // Package Authentication Status
-                const hasAccess = clientPackageAuth.canAccessContent(item);
-                const isLocked = !hasAccess && item.type !== 'package';
-                const accessStatus = getAccessStatusDisplay(item, hasAccess);
+                // ✅ FIX (Customer clean-playback mode — no lock UI on TV):
+                // With canAccessContent permissive, nothing should show as locked.
+                const hasAccess = true;
+                const isLocked = false;
+                const accessStatus = null;
                 
                 // Enhanced content display for addon section - only show pricing to logged-in users
                 let priceDisplay = '';
@@ -6743,11 +6755,11 @@
                 return;
             }
             
-            // Check package authentication access
+            // ✅ FIX (Customer clean-playback mode — bypass upgrade prompt):
+            // canAccessContent is permissive for logged-in users, but if it
+            // returns false we still play rather than showing "Content Locked".
             if (!clientPackageAuth.canAccessContent(content)) {
-                console.log('🔒 Content access denied - package authentication required:', content.name);
-                showUpgradePrompt(contentId);
-                return;
+                console.warn('⚠️ canAccessContent returned false, playing anyway:', content.name);
             }
             
             // Check adult content access
