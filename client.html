@@ -6791,27 +6791,32 @@
             })();
 
             // Filter content based on subscription access
-filteredContent = filteredContent.filter(item => {
-    // Check if this is Plex content (has category field set)
-    const category = (item.category || '').toLowerCase();
-    const isAdult = item.adult || item.isAdult || category === 'adult';
-    const isArabic = item.arabic || item.isArabic || category === 'arabic';
-    const isMovie = category === 'movie' || category === 'vod';
+            filteredContent = filteredContent.filter(item => {
+                // Check if this is Plex content (has category field set)
+                const category = (item.category || '').toLowerCase();
+                const isAdult = item.adult || item.isAdult || category === 'adult';
+                const isArabic = item.arabic || item.isArabic || category === 'arabic';
+                const isMovie = category === 'movie' || category === 'vod';
 
-    // ✅ FIX (Adult only shows 1 video):
-    // The previous filter required customerAddons to contain "adult" — for
-    // Plex-served adult content the addon string is often empty (no
-    // adminCustomer record for this user on the stick). All 100+ adult
-    // videos were being filtered to 0. The single miscategorized video
-    // that bypassed this filter is what you saw. Adult is still gated by
-    // the password (adultUnlocked) inside playContent — the addon gate
-    // was redundant for the customer experience.
-    if (isAdult) {
-        return true; // password gate (adultUnlocked) handled in playContent
-    }
+                // If it's Plex content, check addon access
+                if (isAdult || isArabic || isMovie) {
+                    // ✅ FIX (Adult only shows 1 video):
+                    // The previous filter required customerAddons to contain "adult".
+                    // For Plex-served adult content the addon string is usually empty
+                    // (no adminCustomer record on the stick) so all 51 adult videos
+                    // got filtered down to 0 — except one miscategorized item that
+                    // bypassed the check, which is what was visible. Password
+                    // (adultUnlocked) still gates each click in playContent below.
+                    if (isAdult) {
+                        return true;
+                    }
 
-    // If it's Plex content, check addon access
-    if (isArabic || isMovie) {
+                    // Arabic content - requires addon
+                    if (isArabic) {
+                        return customerAddons.includes('arabic') ||
+                               customerAddons.includes('arabic package');
+                    }
+
                     // Movies content - requires addon
                     if (isMovie) {
                         return customerAddons.includes('movies') ||
@@ -7344,10 +7349,8 @@ filteredContent = filteredContent.filter(item => {
             }
             
             if (streamingMode === 'always-streaming') {
-                // Always-streaming content: start immediately without delay
                 console.log('🔴 Playing always-streaming content:', content.name);
                 if (content.type === 'udp') {
-                    // UDP multicast - launch VLC
                     handleUDPStream(content);
                 } else if (content.type === 'hls' || content.type === 'movies' || content.url?.includes('.m3u8')) {
                     handleHLSContent(content);
@@ -7359,7 +7362,16 @@ filteredContent = filteredContent.filter(item => {
             } else {
                 // On-demand content: play immediately (no loading delay)
                 console.log('▶️ Playing on-demand content:', content.name);
-                if (content.type === 'hls' || content.type === 'movies' || content.url?.includes('.m3u8')) {
+                // ✅ FIX (Adult .ts files blocked by mixed content + unsupported codec):
+                // Plex serves some libraries (including the Adult library) as .ts
+                // transport stream parts. Video.js cannot play .ts directly and the
+                // HTTPS→HTTP request is blocked as mixed content. Route Plex content
+                // with .ts URLs (or any non-mp4/m3u8 url) through the Plex handler
+                // so it gets a proper HLS transcode URL.
+                if (content.sectionId || content.isPlex || content.plexToken) {
+                    console.log('📺 Routing Plex content to handlePlexContent:', content.name);
+                    handlePlexContent(content);
+                } else if (content.type === 'hls' || content.type === 'movies' || content.url?.includes('.m3u8')) {
                     handleHLSContent(content);
                 } else if (content.type === 'mp4') {
                     handleMP4Content(content);
