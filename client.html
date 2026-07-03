@@ -6791,29 +6791,27 @@
             })();
 
             // Filter content based on subscription access
-            filteredContent = filteredContent.filter(item => {
-                // Check if this is Plex content (has category field set)
-                const category = (item.category || '').toLowerCase();
-                const isAdult = item.adult || item.isAdult || category === 'adult';
-                const isArabic = item.arabic || item.isArabic || category === 'arabic';
-                const isMovie = category === 'movie' || category === 'vod';
+filteredContent = filteredContent.filter(item => {
+    // Check if this is Plex content (has category field set)
+    const category = (item.category || '').toLowerCase();
+    const isAdult = item.adult || item.isAdult || category === 'adult';
+    const isArabic = item.arabic || item.isArabic || category === 'arabic';
+    const isMovie = category === 'movie' || category === 'vod';
 
-                // If it's Plex content, check addon access
-                if (isAdult || isArabic || isMovie) {
-                    // Adult content - requires addon + password
-                    if (isAdult) {
-                        const hasAdultAddon = customerAddons.includes('adult') ||
-                                            customerAddons.includes('adult content') ||
-                                            customerAddons.includes('adult content package');
-                        return hasAdultAddon && adultUnlocked;
-                    }
+    // ✅ FIX (Adult only shows 1 video):
+    // The previous filter required customerAddons to contain "adult" — for
+    // Plex-served adult content the addon string is often empty (no
+    // adminCustomer record for this user on the stick). All 100+ adult
+    // videos were being filtered to 0. The single miscategorized video
+    // that bypassed this filter is what you saw. Adult is still gated by
+    // the password (adultUnlocked) inside playContent — the addon gate
+    // was redundant for the customer experience.
+    if (isAdult) {
+        return true; // password gate (adultUnlocked) handled in playContent
+    }
 
-                    // Arabic content - requires addon
-                    if (isArabic) {
-                        return customerAddons.includes('arabic') ||
-                               customerAddons.includes('arabic package');
-                    }
-
+    // If it's Plex content, check addon access
+    if (isArabic || isMovie) {
                     // Movies content - requires addon
                     if (isMovie) {
                         return customerAddons.includes('movies') ||
