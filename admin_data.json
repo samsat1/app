@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-07-04T00:21:09.499Z",
+  "exportDate": "2026-07-04T15:39:52.028Z",
   "customers": [
     {
       "id": "CUST_1783038826884",
@@ -303,7 +303,7 @@
   "resellerTransactions": [],
   "plexServerUrl": "http://192.168.1.100:32400",
   "plexLocalUrl": "http://192.168.1.100:32400",
-  "plexToken": "xAqhP8yWtccQ2nJysF9r",
+  "plexToken": "mG8zmHXrtwnYBRsn4N5S",
   "plexMoviesSection": "5",
   "plexAdultSection": "4",
   "plexArabicSection": "16",
