@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-07-13T00:44:50.075Z",
+  "exportDate": "2026-07-13T13:47:20.922Z",
   "customers": [
     {
       "id": "CUST_1783038826884",
@@ -21,26 +21,7 @@
       "createdAt": "2026-07-03T00:33:46.884Z"
     }
   ],
-  "clientAuthCustomers": [
-    {
-      "id": "CUST_1783038826884",
-      "username": "sam111",
-      "name": "sam",
-      "phone": "78956790",
-      "plan": "Basic TV Package, 2nd TV, 3rd TV",
-      "addons": "Sports Package, Sports Plus Package, Arabic Package, Movies Package, Series Package, Adult Content Package",
-      "monthlyPrice": 0,
-      "totalPrice": 0,
-      "expiryDate": "2027-04-03",
-      "password": "111111",
-      "macAddress": "",
-      "adultPassword": "112233",
-      "status": "active",
-      "duration": "9 Months",
-      "durationMonths": 9,
-      "createdAt": "2026-07-03T00:33:46.884Z"
-    }
-  ],
+  "clientAuthCustomers": [],
   "packages": [
     {
       "name": "Basic",
@@ -16690,6 +16671,97 @@
       "totalEpisodes": 2
     },
     {
+      "id": "series_11176",
+      "name": "Sakıncalı",
+      "description": "Sakıncalı, çocuğunu kaybetmesine rağmen dimdik bir şekilde ayakta duran Süreyya'nın adalet ve intikam için verdiği çarpıcı mücadeleyi konu alıyor. Öfke, vefat ve dayanışmanın iç içe geçtiği bu hikaye; güçlü bir kadının yeniden doğuşunu ekranlara taşıyor.",
+      "category": "series",
+      "isSeries": true,
+      "type": "series",
+      "thumb": "",
+      "art": "http://192.168.1.100:32400/library/metadata/11176/art/1783950376?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+      "year": 2025,
+      "ratingKey": "11176",
+      "plexServer": "http://192.168.1.100:32400",
+      "plexToken": "mG8zmHXrtwnYBRsn4N5S",
+      "seasons": [
+        {
+          "id": "11176_season_1",
+          "name": "Season 1",
+          "seasonNumber": 1,
+          "episodes": [
+            {
+              "id": "episode_11178",
+              "name": "Episode 10",
+              "description": "",
+              "duration": 2618189,
+              "seasonNumber": 1,
+              "episodeNumber": 10,
+              "thumb": "http://192.168.1.100:32400/library/metadata/11178/thumb/1783899687?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/18664/1783901482/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
+              "id": "episode_11179",
+              "name": "Episode 11",
+              "description": "",
+              "duration": 2591742,
+              "seasonNumber": 1,
+              "episodeNumber": 11,
+              "thumb": "http://192.168.1.100:32400/library/metadata/11179/thumb/1783901666?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/18676/1783902679/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
+              "id": "episode_11180",
+              "name": "Episode 12",
+              "description": "",
+              "duration": 2700527,
+              "seasonNumber": 1,
+              "episodeNumber": 12,
+              "thumb": "http://192.168.1.100:32400/library/metadata/11180/thumb/1783901727?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/18677/1783902763/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
+              "id": "episode_11181",
+              "name": "Episode 13",
+              "description": "",
+              "duration": 2603932,
+              "seasonNumber": 1,
+              "episodeNumber": 13,
+              "thumb": "http://192.168.1.100:32400/library/metadata/11181/thumb/1783901919?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/18678/1783902855/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
+              "id": "episode_11182",
+              "name": "Episode 14",
+              "description": "",
+              "duration": 2634095,
+              "seasonNumber": 1,
+              "episodeNumber": 14,
+              "thumb": "http://192.168.1.100:32400/library/metadata/11182/thumb/1783901919?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/18679/1783902941/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
+              "id": "episode_11183",
+              "name": "Episode 15",
+              "description": "",
+              "duration": 2735032,
+              "seasonNumber": 1,
+              "episodeNumber": 15,
+              "thumb": "http://192.168.1.100:32400/library/metadata/11183/thumb/1783902224?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/18680/1783903027/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            }
+          ]
+        }
+      ],
+      "totalSeasons": 1,
+      "totalEpisodes": 6
+    },
+    {
       "id": "series_9726",
       "name": "Yargı",
       "description": "Ceylin is a fierce, rule-bending defence attorney whose father was wrongly imprisoned — for her, justice always comes before the law. Ilgaz is a by-the-book prosecutor who believes the two are the same thing. When his brother is accused of murder, he has no choice but to go to her for help. What follows is a gripping cat-and-mouse legal thriller built on brilliant opposing chemistry — winner of the International Emmy for Best Telenovela in 2023.",
@@ -18080,96 +18152,6 @@
       ],
       "totalSeasons": 1,
       "totalEpisodes": 30
-    },
-    {
-      "id": "series_11176",
-      "name": "المشبوه",
-      "description": "No description available",
-      "category": "series",
-      "isSeries": true,
-      "type": "series",
-      "thumb": "",
-      "art": "",
-      "ratingKey": "11176",
-      "plexServer": "http://192.168.1.100:32400",
-      "plexToken": "mG8zmHXrtwnYBRsn4N5S",
-      "seasons": [
-        {
-          "id": "11176_season_1",
-          "name": "Season 1",
-          "seasonNumber": 1,
-          "episodes": [
-            {
-              "id": "episode_11178",
-              "name": "Episode 10",
-              "description": "",
-              "duration": 2618189,
-              "seasonNumber": 1,
-              "episodeNumber": 10,
-              "thumb": "http://192.168.1.100:32400/library/metadata/11178/thumb/1783899687?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
-              "url": "http://192.168.1.100:32400/library/parts/18664/1783901482/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
-              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
-            },
-            {
-              "id": "episode_11179",
-              "name": "Episode 11",
-              "description": "",
-              "duration": 2591742,
-              "seasonNumber": 1,
-              "episodeNumber": 11,
-              "thumb": "http://192.168.1.100:32400/library/metadata/11179/thumb/1783901666?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
-              "url": "http://192.168.1.100:32400/library/parts/18676/1783902679/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
-              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
-            },
-            {
-              "id": "episode_11180",
-              "name": "Episode 12",
-              "description": "",
-              "duration": 2700527,
-              "seasonNumber": 1,
-              "episodeNumber": 12,
-              "thumb": "http://192.168.1.100:32400/library/metadata/11180/thumb/1783901727?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
-              "url": "http://192.168.1.100:32400/library/parts/18677/1783902763/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
-              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
-            },
-            {
-              "id": "episode_11181",
-              "name": "Episode 13",
-              "description": "",
-              "duration": 2603932,
-              "seasonNumber": 1,
-              "episodeNumber": 13,
-              "thumb": "http://192.168.1.100:32400/library/metadata/11181/thumb/1783901919?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
-              "url": "http://192.168.1.100:32400/library/parts/18678/1783902855/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
-              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
-            },
-            {
-              "id": "episode_11182",
-              "name": "Episode 14",
-              "description": "",
-              "duration": 2634095,
-              "seasonNumber": 1,
-              "episodeNumber": 14,
-              "thumb": "http://192.168.1.100:32400/library/metadata/11182/thumb/1783901919?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
-              "url": "http://192.168.1.100:32400/library/parts/18679/1783902941/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
-              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
-            },
-            {
-              "id": "episode_11183",
-              "name": "Episode 15",
-              "description": "",
-              "duration": 2735032,
-              "seasonNumber": 1,
-              "episodeNumber": 15,
-              "thumb": "http://192.168.1.100:32400/library/metadata/11183/thumb/1783902224?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
-              "url": "http://192.168.1.100:32400/library/parts/18680/1783903027/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
-              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
-            }
-          ]
-        }
-      ],
-      "totalSeasons": 1,
-      "totalEpisodes": 6
     }
   ],
   "contentSources": [],
