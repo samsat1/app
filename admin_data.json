@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-07-22T00:45:02.441Z",
+  "exportDate": "2026-07-22T03:40:07.407Z",
   "customers": [
     {
       "id": "CUST_1783038826884",
@@ -178,7 +178,7 @@
       "password": "shady111",
       "status": "active",
       "commissionRate": 20,
-      "walletBalance": 100,
+      "walletBalance": 0,
       "updatedAt": "2026-07-22T00:23:40.501Z"
     },
     "reseller002": {
@@ -281,19 +281,7 @@
       "walletBalance": 0
     }
   },
-  "creditTransfers": [
-    {
-      "id": "credit_1784681082336",
-      "resellerId": "reseller001",
-      "amount": 100,
-      "type": "credit",
-      "date": "2026-07-22T00:44:42.336Z",
-      "note": "Admin credit transfer",
-      "timestamp": 1784681082336,
-      "previousBalance": 0,
-      "newBalance": 100
-    }
-  ],
+  "creditTransfers": [],
   "resellerTransactions": [],
   "plexServerUrl": "http://192.168.1.100:32400",
   "plexLocalUrl": "http://192.168.1.100:32400",
@@ -15003,8 +14991,8 @@
       "category": "series",
       "isSeries": true,
       "type": "series",
-      "thumb": "http://192.168.1.100:32400/library/metadata/13790/thumb/1784239505?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
-      "art": "http://192.168.1.100:32400/library/metadata/13790/art/1784239505?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+      "thumb": "http://192.168.1.100:32400/library/metadata/13790/thumb/1784680839?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+      "art": "http://192.168.1.100:32400/library/metadata/13790/art/1784680839?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
       "year": 1990,
       "ratingKey": "13790",
       "plexServer": "http://192.168.1.100:32400",
@@ -15132,7 +15120,7 @@
               "duration": 12473621,
               "seasonNumber": 1,
               "episodeNumber": 11,
-              "thumb": "http://192.168.1.100:32400/library/metadata/13793/thumb/1784239717?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "thumb": "http://192.168.1.100:32400/library/metadata/13793/thumb/1784680844?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "url": "http://192.168.1.100:32400/library/parts/21399/1784169536/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "plexToken": "mG8zmHXrtwnYBRsn4N5S"
             }
@@ -15141,6 +15129,141 @@
       ],
       "totalSeasons": 1,
       "totalEpisodes": 11
+    },
+    {
+      "id": "series_14033",
+      "name": "اطرق بابي",
+      "description": "Sen Çal Kapımı dizisinde, hayatta bütün umutlarını eğitimine bağlayan Eda Yıldız, yurt dışı eğitim bursunu keserek lise mezunu kalmasına neden olan Serkan Bolat ile karşı karşıya gelir. Serkan Bolat, Eda’ya kendisiyle iki ay nişanlı taklidi yaparsa, bursunu geri vermeyi teklif eder. Eda nefret ettiği bu adamın teklifini önce reddetse de koşullar değişince kabul etmek zorunda kalır. Nişanlı taklidi yaparken, Serkan ve Eda, bütün doğru bildiklerini unutturacak, tutkulu, zorlu bir ilişki yaşamaya başlayacaktır.",
+      "category": "series",
+      "isSeries": true,
+      "type": "series",
+      "thumb": "http://192.168.1.100:32400/library/metadata/14033/thumb/1784691099?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+      "art": "http://192.168.1.100:32400/library/metadata/14033/art/1784691099?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+      "year": 2020,
+      "ratingKey": "14033",
+      "plexServer": "http://192.168.1.100:32400",
+      "plexToken": "mG8zmHXrtwnYBRsn4N5S",
+      "seasons": [
+        {
+          "id": "14033_season_1",
+          "name": "Season 1",
+          "seasonNumber": 1,
+          "episodes": [
+            {
+              "id": "episode_14036",
+              "name": "1. Bölüm",
+              "description": "Hayatta bütün umutlarını eğitimine bağlayan Eda Yıldız, yurt dışı eğitim bursunu keserek lise mezunu kalmasına neden olan Serkan Bolat ile karşı karşıya gelir. Serkan Bolat, Eda'ya kendisiyle iki ay nişanlı taklidi yaparsa, bursunu geri vermeyi teklif eder.",
+              "duration": 5081687,
+              "seasonNumber": 1,
+              "episodeNumber": 1,
+              "thumb": "http://192.168.1.100:32400/library/metadata/14036/thumb/1784691390?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/21703/1784687508/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
+              "id": "episode_14037",
+              "name": "2. Bölüm",
+              "description": "Serkan Bolat uluslararası önemli bir yatırımı hakkında basın toplantısı yaparken Eda dudaklarına yapışınca toplantı dağıldı. Şimdi Serkan’ın kurtarması gereken bir prestiji var ve Eda da yaptığı hatayı düzeltmek zorunda. Çözüm basit: 2 ay boyunca nişanlı taklidi yapacaklar. Serkan’ın prestiji kurtarılacak ve karşılığında Eda’nın üniversite son sınıf ödemesi yapılacak. Tek bir sorun var, birbirlerine bir anda aşık olduklarına aile ve arkadaşlarını ikna etmek.",
+              "duration": 5035015,
+              "seasonNumber": 1,
+              "episodeNumber": 2,
+              "thumb": "http://192.168.1.100:32400/library/metadata/14037/thumb/1784691391?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/21704/1784687663/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
+              "id": "episode_14038",
+              "name": "3. Bölüm",
+              "description": "Serkan Bolat ve Eda Yıldız nişanlanıyor… Bu haber elbette sosyeteye bomba gibi düşüyor; herkes Eda’nın peşinde, nasıl biri, ne iş yapar, nereden mezun? Eda bu gösterişli, yalan dünyanın içinde tek başına kalıyor. Serkan’ın ise tek düşündüğü iş, çünkü Kaan Karadağ yine bir sinsilik peşinde… Herkes Eda’nın üstüne üstüne gelirken Serkan, Bolat’lığından taviz verip Eda’nın yanında olacak mı? Yoksa yaşadıklarının bir oyun olduğunu söyleyip Eda’nın kalbini mi kıracak?",
+              "duration": 5739300,
+              "seasonNumber": 1,
+              "episodeNumber": 3,
+              "thumb": "http://192.168.1.100:32400/library/metadata/14038/thumb/1784691392?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/21705/1784687839/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
+              "id": "episode_14039",
+              "name": "4. Bölüm",
+              "description": "Eda, üst üste aldığı haberlerle strese girdi ve Serkan’ın kollarında uyuyuverdi yine. Üstelik bu sefer ciddi bir derdi var, Selin’le Ferit ev ziyaretine gelmek istiyorlar. Ancak beraber yaşanan bir ev yok ortada. Hazırlık yapmak lazım; vakit dar, yapılması gereken çok, Serkan’ınsa tüm düşündüğü iş, iş ve yine iş.",
+              "duration": 5333252,
+              "seasonNumber": 1,
+              "episodeNumber": 4,
+              "thumb": "http://192.168.1.100:32400/library/metadata/14039/thumb/1784691394?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/21706/1784687985/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
+              "id": "episode_14040",
+              "name": "5. Bölüm",
+              "description": "Önemli bir anlaşmaya imza atmak için Antalya’ya giden ekibi bir sürpriz beklemektedir. Yatırımcıların ikisinin de imzasının alınması gerekmektedir ama boşanmak üzere oldukları için bir araya gelmek istemezler. Onları buluşturma görevi Serkan ve Eda’ya düşer. Antalya’da birlikte geçirdikleri büyülü anlarda, Eda ve Serkan hiç ummadıkları kadar yakınlaşırlar. Bu arada Kaan Karadağ’ın yaratacağı yeni bir kriz Eda için de bir test olacaktır. Serkan’ı kurtarmak için göze aldığı risk, ona olan duygularını fark etmesine de neden olacaktır. Serkan ise Eda’nın cazibesine giderek daha çok kapılmaktadır.",
+              "duration": 5035387,
+              "seasonNumber": 1,
+              "episodeNumber": 5,
+              "thumb": "http://192.168.1.100:32400/library/metadata/14040/thumb/1784691395?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/21707/1784688129/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
+              "id": "episode_14041",
+              "name": "6. Bölüm",
+              "description": "Serkan, Eda’yı paparazzilerden kurtarır. Hem de alacağı ödülü, Selin’le konuşmasını ve aylardır üzerinde çalıştığı sözleşmeyi umursamadan.\n\nEda, ilişkilerinin bambaşka bir boyut kazandığını düşünüyor artık. Ama gerçekten öyle mi? Ertesi gün Serkan Bolat ortadan yok oluyor, kimse nerede olduğunu bilmiyor. Selin hariç! Eda çıldırıyor bunu öğrenince. Selin ise aşırı mutlu.",
+              "duration": 5272253,
+              "seasonNumber": 1,
+              "episodeNumber": 6,
+              "thumb": "http://192.168.1.100:32400/library/metadata/14041/thumb/1784691395?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/21708/1784690493/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
+              "id": "episode_14042",
+              "name": "7. Bölüm",
+              "description": "Serkan, Eda’ya ilk kez içini açtı, çok özel bir sırrını paylaştı onunla… Eda, paylaştıkları anın büyüsüne kapılmış eve döndüğünde Ayfer, Eda’nın mutlulukla parlayan gözlerini fark eder hemen. Eda gerçekten aşık mıdır yoksa? Eda, Serkan’ın büyüsüne kapılmaktan çok korkuyor… Ama Serkan’dan uzak durmak o kadar zor ki. Ertesi gün Serkan’ın doğum günü…",
+              "duration": 3936851,
+              "seasonNumber": 1,
+              "episodeNumber": 7,
+              "thumb": "http://192.168.1.100:32400/library/metadata/14042/thumb/1784691395?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/21709/1784690591/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
+              "id": "episode_14043",
+              "name": "8. Bölüm",
+              "description": "Serkan, çalınan tasarım konusunda Eda’yı suçladı, Eda “ Bir daha yüzümü göremezsin” dedi. Şimdi Eda’sızlığa nasıl alışacak bakalım. Eda, Serkan’a suçsuzluğunu ispatlayacak, çok gururuna dokundu çünkü. Serkan ise gururundan Eda’ya “geri gel” diyemiyor.",
+              "duration": 4369415,
+              "seasonNumber": 1,
+              "episodeNumber": 8,
+              "thumb": "http://192.168.1.100:32400/library/metadata/14043/thumb/1784691396?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/21710/1784690704/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
+              "id": "episode_14044",
+              "name": "9. Bölüm",
+              "description": "Eda, suçsuzluğunu kanıtladıktan sonra ortadan kaybolur. Serkan, Eda’nın gönlünü almak ister ama Eda’yı bulmak kolay olmayacaktır. Uzun uğraşlar sonunda bulduğunda ise Eda onunla görüşmek istemeyince, bu kez Serkan ona kelepçe takar. Serkan davranışlarıyla ve kendi tarzında birçok kez özür diler. Ama Eda’nın beklentisi çok daha basittir.",
+              "duration": 5608827,
+              "seasonNumber": 1,
+              "episodeNumber": 9,
+              "thumb": "http://192.168.1.100:32400/library/metadata/14044/thumb/1784691396?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/21711/1784690859/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
+              "id": "episode_14035",
+              "name": "10. Bölüm",
+              "description": "\"Selin ve Ferit’in evlenme kararı Serkan ve Eda’yı altüst ediyor. Ferit, holding işlerine de karışmaya başladı. Serkan, Ferit’i bir an önce saf dışı bırakmaya çalışıyor. Eda “Biz de evlenmeye karar verdik” yalanını uydurunca, dörtlü sık sık birlikte vakit geçirmeye başlıyor. Ayfer ve Aydan tarafında ise evlilik haberiyle çeşitli sinir krizleri geçiriliyor.\n\nSerkan’ın asıl derdi Eda’nın hayatından çıkmaması. Ama Eda’nın onu sevmediğinden emin. Eda ise Serkan’ın Selin evlendiği için üzüldüğünü sanıyor. Bu arada Ferit, holdinge bütün dengeleri bozacak bir ortak getiriyor.\"",
+              "duration": 5976097,
+              "seasonNumber": 1,
+              "episodeNumber": 10,
+              "thumb": "http://192.168.1.100:32400/library/metadata/14035/thumb/1784691109?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/21702/1784690349/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            }
+          ]
+        }
+      ],
+      "totalSeasons": 1,
+      "totalEpisodes": 10
     },
     {
       "id": "series_13876",
@@ -15500,12 +15623,13 @@
     {
       "id": "series_14015",
       "name": "العائله",
-      "description": "No description available",
+      "description": "Dizi, varlıklı bir aile olan Soykanlar’ın başına geçen Aslan’ın, kendisiyle aynı yerden yaralı psikolog Devin’le tanışmasıyla aile içinde değişen dengeleri, gelişen olayları ve ‘aile’ kavramının en tartışmalı yönlerini ele alacak.",
       "category": "series",
       "isSeries": true,
       "type": "series",
-      "thumb": "",
-      "art": "",
+      "thumb": "http://192.168.1.100:32400/library/metadata/14015/thumb/1784680746?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+      "art": "http://192.168.1.100:32400/library/metadata/14015/art/1784680746?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+      "year": 2023,
       "ratingKey": "14015",
       "plexServer": "http://192.168.1.100:32400",
       "plexToken": "mG8zmHXrtwnYBRsn4N5S",
@@ -15516,46 +15640,145 @@
           "seasonNumber": 1,
           "episodes": [
             {
+              "id": "episode_14045",
+              "name": "1. Bölüm",
+              "description": "Aslan, amcasıyla ilgili ‘karanlık’ işlerinden birini daha çözmek için İzmir uçağındadır. Devin de kız kardeşinin başını soktuğu yeni bir belayı halletmek üzere İzmir’e gitmektedir. Psikolog Devin ve Aslan’ın yolları işte bu yolculukta kesişir. Farklı dünyaların insanları oldukları çok açıktır. Ancak ortak yaralarını keşfetmeleri uzun sürmez; Aileleri.",
+              "duration": 8321823,
+              "seasonNumber": 1,
+              "episodeNumber": 1,
+              "thumb": "http://192.168.1.100:32400/library/metadata/14045/thumb/1784691423?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/21712/1784676996/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
+              "id": "episode_14046",
+              "name": "2. Bölüm",
+              "description": "Devin’in sofraya gelişi, Hülya’nın onu bir tehdit olarak görmesi için yeterlidir. Hülya en iyi bildiği taktiği uygulamaya karar verir: Dostlarını yakınında, düşmanlarını ise daha yakınında tutmak… Devin ise Aslan’la geçireceği ilk gecede aralarındaki çekime yenik düşerken, Aslan’ın hiç beklemediği hamlesiyle karşı karşıya kalır.",
+              "duration": 7421167,
+              "seasonNumber": 1,
+              "episodeNumber": 2,
+              "thumb": "http://192.168.1.100:32400/library/metadata/14046/thumb/1784691423?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/21713/1784590196/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
+              "id": "episode_14047",
+              "name": "3. Bölüm",
+              "description": "Devin’in evlenme teklifinden sonra Aslan ve Devin, birbirlerini yakından tanımaya karar verirler. Çiftlikte çıkan kriz, Aslan’ı Devin’in içindeki potansiyelle; ertesi gece yaşanacak tatsız olay ise Devin’i Aslan’ın karanlık tarafıyla tanıştırır.",
+              "duration": 8825255,
+              "seasonNumber": 1,
+              "episodeNumber": 3,
+              "thumb": "http://192.168.1.100:32400/library/metadata/14047/thumb/1784691423?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/21714/1784590521/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
+              "id": "episode_14048",
+              "name": "4. Bölüm",
+              "description": "İlişkileri büyük bir çıkmaza giren Aslan ve Devin, kendilerini ayrılığın eşiğinde bulurlar. Karşı koyamadıkları hisleriyle nihayet yüzleştiklerinde ise barışmak kaçınılmaz olurken; ikili evlilik için ilk adımlarını atar.",
+              "duration": 9550205,
+              "seasonNumber": 1,
+              "episodeNumber": 4,
+              "thumb": "http://192.168.1.100:32400/library/metadata/14048/thumb/1784691423?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/21715/1784590843/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
+              "id": "episode_14049",
+              "name": "5. Bölüm",
+              "description": "Aslan, saldırıyı düzenleyen kişinin kim olduğunu bulur. Şimdi intikam vaktidir.",
+              "duration": 9752985,
+              "seasonNumber": 1,
+              "episodeNumber": 5,
+              "thumb": "http://192.168.1.100:32400/library/metadata/14049/thumb/1784691423?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/21716/1784593613/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
+              "id": "episode_14050",
+              "name": "6. Bölüm",
+              "description": "Devin’in karşısında daha önce tanışmadığı bir Aslan vardır. Ve şimdi yüzleşme sırası Devin’dedir.",
+              "duration": 9483773,
+              "seasonNumber": 1,
+              "episodeNumber": 6,
+              "thumb": "http://192.168.1.100:32400/library/metadata/14050/thumb/1784691423?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/21717/1784593954/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
+              "id": "episode_14051",
+              "name": "7. Bölüm",
+              "description": "Hülya gerçekleri ortaya çıkaracak, bu durum başta Aslan ve Devin olmak üzere tüm aileyi yeni bir tehlikeye sürükleyecektir.",
+              "duration": 9898667,
+              "seasonNumber": 1,
+              "episodeNumber": 7,
+              "thumb": "http://192.168.1.100:32400/library/metadata/14051/thumb/1784691423?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/21718/1784594289/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
+              "id": "episode_14052",
+              "name": "8. Bölüm",
+              "description": "Aslan’ın soracağı bir soru, Devin’in herkesin kaderini değiştirecek bir karar vermesini sağlayacaktır.",
+              "duration": 9836135,
+              "seasonNumber": 1,
+              "episodeNumber": 8,
+              "thumb": "http://192.168.1.100:32400/library/metadata/14052/thumb/1784691424?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/21719/1784594667/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
+              "id": "episode_14053",
+              "name": "9. Bölüm",
+              "description": "Serhat Koruzade’nin avukatı Suat, tüm yaşananları öğrenir ve her şeyi Serhat'ın babası İlyas Koruzade’ye anlatmakla tehdit eder. Serhat’ın ölümü Soykanlar için büyük bir savaşın başlangıcıdır.",
+              "duration": 9790253,
+              "seasonNumber": 1,
+              "episodeNumber": 9,
+              "thumb": "http://192.168.1.100:32400/library/metadata/14053/thumb/1784691424?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/21720/1784594973/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "plexToken": "mG8zmHXrtwnYBRsn4N5S"
+            },
+            {
               "id": "episode_14017",
-              "name": "Episode 10",
-              "description": "",
-              "duration": 9722438,
+              "name": "10. Bölüm",
+              "description": "İlyas'ın ani gelişiyle Soykanlar tehlikeyle karşılaşırken, İlyas oğlunun kaybolmasının nedenini araştırırken gerçeklerin ortaya çıkması yakındır; aile içindeki tartışmalar, ilişkilerin sarsılması ve yeni keşiflerle dolu karmaşık bir hikaye gelişirken, Aslan'ın Yusuf Soykan'ın ruhunun etkisine kapılma olasılığı ortaya çıkar.",
+              "duration": 9722427,
               "seasonNumber": 1,
               "episodeNumber": 10,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14017/thumb/1784593317?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14017/thumb/1784681867?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "url": "http://192.168.1.100:32400/library/parts/21667/1784651203/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "plexToken": "mG8zmHXrtwnYBRsn4N5S"
             },
             {
               "id": "episode_14018",
-              "name": "Episode 11",
-              "description": "",
-              "duration": 10067835,
+              "name": "Bölüm 11",
+              "description": "Devin, ailesiyle kalıp yalan ifade verme veya gemileri yakıp aileyi karşısına alma kararı arasında sıkışırken, İlyas'ın yönlendirdiği seçim karşısında Hülya kaderi etkileyecek bir karar alır ve Yusuf Soykan'ın ölüm yıldönümünde yaşanacak büyük bir olay aileyi tehlikeye sokar.",
+              "duration": 10067824,
               "seasonNumber": 1,
               "episodeNumber": 11,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14018/thumb/1784594368?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14018/thumb/1784681867?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "url": "http://192.168.1.100:32400/library/parts/21668/1784651601/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "plexToken": "mG8zmHXrtwnYBRsn4N5S"
             },
             {
               "id": "episode_14021",
-              "name": "Episode 12",
-              "description": "",
-              "duration": 10155583,
+              "name": "Bölüm 12",
+              "description": "Mezarlık patlamasının ardından Aysel ve bebeğinin durumu kritik hale gelir, İlyas savaşını sürdürürken Hülya'yı oğulları arasında seçim yapmaya zorlar ve Aslan ailesine yapılanları cezalandırmak için bir plan yapar; Hülya ise ailesini korumak için İlyas'a cevap vermek zorunda kalır ve sonunda oğulları arasında bir seçim yapar.",
+              "duration": 10155572,
               "seasonNumber": 1,
               "episodeNumber": 12,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14021/thumb/1784597270?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14021/thumb/1784681867?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "url": "http://192.168.1.100:32400/library/parts/21671/1784651996/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "plexToken": "mG8zmHXrtwnYBRsn4N5S"
             },
             {
               "id": "episode_14019",
-              "name": "Episode 13",
-              "description": "",
-              "duration": 9801154,
+              "name": "Bölüm 13",
+              "description": "İlyas Aslan'ı öldürmeyi planlar, ancak evlatlık sırrı ve kanlı geçmişle ilgili büyük bir ipucu verir; Devin hamile olduğunu söyler ve Aslan yeni bir hayat kurmaya çalışırken Devin kararlıdır; Aslan ve Hülya'nın ilişkisini derinden sarsan gerçek ortaya çıkar; Hülya, Devin ve Cihan'ın gizlice seans yaptığını açıklar ve aile büyük bir hesaplaşmaya doğru yol alırken yıkıma sürüklenir.",
+              "duration": 9801143,
               "seasonNumber": 1,
               "episodeNumber": 13,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14019/thumb/1784595132?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14019/thumb/1784681867?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "url": "http://192.168.1.100:32400/library/parts/21669/1784652404/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "plexToken": "mG8zmHXrtwnYBRsn4N5S"
             },
@@ -15563,10 +15786,10 @@
               "id": "episode_14020",
               "name": "Episode 14",
               "description": "",
-              "duration": 9956704,
+              "duration": 9956693,
               "seasonNumber": 1,
               "episodeNumber": 14,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14020/thumb/1784597137?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14020/thumb/1784681868?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "url": "http://192.168.1.100:32400/library/parts/21670/1784652791/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "plexToken": "mG8zmHXrtwnYBRsn4N5S"
             },
@@ -15574,10 +15797,10 @@
               "id": "episode_14022",
               "name": "Episode 15",
               "description": "",
-              "duration": 9987355,
+              "duration": 9987344,
               "seasonNumber": 1,
               "episodeNumber": 15,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14022/thumb/1784597270?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14022/thumb/1784681868?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "url": "http://192.168.1.100:32400/library/parts/21672/1784653168/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "plexToken": "mG8zmHXrtwnYBRsn4N5S"
             },
@@ -15585,10 +15808,10 @@
               "id": "episode_14023",
               "name": "Episode 16",
               "description": "",
-              "duration": 9579241,
+              "duration": 9579230,
               "seasonNumber": 1,
               "episodeNumber": 16,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14023/thumb/1784652303?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14023/thumb/1784681868?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "url": "http://192.168.1.100:32400/library/parts/21682/1784665751/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "plexToken": "mG8zmHXrtwnYBRsn4N5S"
             },
@@ -15596,10 +15819,10 @@
               "id": "episode_14024",
               "name": "Episode 17",
               "description": "",
-              "duration": 9773754,
+              "duration": 9773743,
               "seasonNumber": 1,
               "episodeNumber": 17,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14024/thumb/1784653052?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14024/thumb/1784681868?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "url": "http://192.168.1.100:32400/library/parts/21683/1784666097/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "plexToken": "mG8zmHXrtwnYBRsn4N5S"
             },
@@ -15610,7 +15833,7 @@
               "duration": 10062437,
               "seasonNumber": 1,
               "episodeNumber": 18,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14026/thumb/1784670704?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14026/thumb/1784681869?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "url": "http://192.168.1.100:32400/library/parts/21692/1784677375/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "plexToken": "mG8zmHXrtwnYBRsn4N5S"
             },
@@ -15618,10 +15841,10 @@
               "id": "episode_14025",
               "name": "Episode 19",
               "description": "",
-              "duration": 10171791,
+              "duration": 10171780,
               "seasonNumber": 1,
               "episodeNumber": 19,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14025/thumb/1784654667?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14025/thumb/1784681869?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "url": "http://192.168.1.100:32400/library/parts/21684/1784666444/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "plexToken": "mG8zmHXrtwnYBRsn4N5S"
             },
@@ -15632,7 +15855,7 @@
               "duration": 9988900,
               "seasonNumber": 1,
               "episodeNumber": 20,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14027/thumb/1784671669?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14027/thumb/1784681869?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "url": "http://192.168.1.100:32400/library/parts/21693/1784677771/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "plexToken": "mG8zmHXrtwnYBRsn4N5S"
             },
@@ -15643,7 +15866,7 @@
               "duration": 9970811,
               "seasonNumber": 1,
               "episodeNumber": 21,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14028/thumb/1784672793?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14028/thumb/1784681869?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "url": "http://192.168.1.100:32400/library/parts/21694/1784678184/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "plexToken": "mG8zmHXrtwnYBRsn4N5S"
             },
@@ -15654,7 +15877,7 @@
               "duration": 10191424,
               "seasonNumber": 1,
               "episodeNumber": 22,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14029/thumb/1784674417?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14029/thumb/1784681870?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "url": "http://192.168.1.100:32400/library/parts/21695/1784678547/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "plexToken": "mG8zmHXrtwnYBRsn4N5S"
             },
@@ -15665,7 +15888,7 @@
               "duration": 9892746,
               "seasonNumber": 1,
               "episodeNumber": 23,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14031/thumb/1784676029?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14031/thumb/1784681870?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "url": "http://192.168.1.100:32400/library/parts/21696/1784678974/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "plexToken": "mG8zmHXrtwnYBRsn4N5S"
             },
@@ -15676,8 +15899,8 @@
               "duration": 10044024,
               "seasonNumber": 1,
               "episodeNumber": 24,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14032/thumb/1784676772?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
-              "url": "http://192.168.1.100:32400/library/parts/21691/1784676703/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14032/thumb/1784681870?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/21699/1784679375/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "plexToken": "mG8zmHXrtwnYBRsn4N5S"
             },
             {
@@ -15687,15 +15910,15 @@
               "duration": 9869201,
               "seasonNumber": 1,
               "episodeNumber": 25,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14030/thumb/1784675196?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
-              "url": "http://192.168.1.100:32400/library/parts/21689/1784675132/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14030/thumb/1784681870?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "url": "http://192.168.1.100:32400/library/parts/21700/1784679712/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "plexToken": "mG8zmHXrtwnYBRsn4N5S"
             }
           ]
         }
       ],
       "totalSeasons": 1,
-      "totalEpisodes": 16
+      "totalEpisodes": 25
     },
     {
       "id": "series_13794",
@@ -15971,8 +16194,8 @@
       "category": "series",
       "isSeries": true,
       "type": "series",
-      "thumb": "http://192.168.1.100:32400/library/metadata/13673/thumb/1784239505?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
-      "art": "http://192.168.1.100:32400/library/metadata/13673/art/1784239505?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+      "thumb": "http://192.168.1.100:32400/library/metadata/13673/thumb/1784680845?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+      "art": "http://192.168.1.100:32400/library/metadata/13673/art/1784680845?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
       "year": 2021,
       "ratingKey": "13673",
       "plexServer": "http://192.168.1.100:32400",
@@ -17877,8 +18100,8 @@
       "category": "series",
       "isSeries": true,
       "type": "series",
-      "thumb": "http://192.168.1.100:32400/library/metadata/13665/thumb/1784239829?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
-      "art": "http://192.168.1.100:32400/library/metadata/13665/art/1784239829?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+      "thumb": "http://192.168.1.100:32400/library/metadata/13665/thumb/1784680846?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+      "art": "http://192.168.1.100:32400/library/metadata/13665/art/1784680846?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
       "year": 2025,
       "ratingKey": "13665",
       "plexServer": "http://192.168.1.100:32400",
@@ -19261,7 +19484,7 @@
               "duration": 6851477,
               "seasonNumber": 1,
               "episodeNumber": 4,
-              "thumb": "http://192.168.1.100:32400/library/metadata/13823/thumb/1784239519?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "thumb": "http://192.168.1.100:32400/library/metadata/13823/thumb/1784680878?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "url": "http://192.168.1.100:32400/library/parts/21425/1783069735/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "plexToken": "mG8zmHXrtwnYBRsn4N5S"
             },
@@ -19745,7 +19968,7 @@
               "duration": 6211279,
               "seasonNumber": 1,
               "episodeNumber": 48,
-              "thumb": "http://192.168.1.100:32400/library/metadata/13871/thumb/1784239519?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
+              "thumb": "http://192.168.1.100:32400/library/metadata/13871/thumb/1784680879?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "url": "http://192.168.1.100:32400/library/parts/21478/1783079410/file.mp4?X-Plex-Token=mG8zmHXrtwnYBRsn4N5S",
               "plexToken": "mG8zmHXrtwnYBRsn4N5S"
             },
