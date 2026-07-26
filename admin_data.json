@@ -19,6 +19,19 @@
       "duration": "9 Months",
       "durationMonths": 9,
       "createdAt": "2026-07-03T00:33:46.884Z"
+    },
+    {
+      "id": "test_cust_1785047115",
+      "name": "Test Customer 1785047115",
+      "username": "testuser1785047115",
+      "password": "test123",
+      "phone": "70000000",
+      "addons": "Sports Package",
+      "expiryDate": "2027-12-31",
+      "packageName": "Test Package",
+      "packagePrice": 5,
+      "createdAt": "2026-07-26T06:25:15.917Z",
+      "status": "active"
     }
   ],
   "clientAuthCustomers": [],
@@ -178,7 +191,7 @@
       "password": "shady111",
       "status": "active",
       "commissionRate": 20,
-      "walletBalance": 0,
+      "walletBalance": -5,
       "updatedAt": "2026-07-22T00:23:40.501Z"
     },
     "reseller002": {
@@ -282,7 +295,18 @@
     }
   },
   "creditTransfers": [],
-  "resellerTransactions": [],
+  "resellerTransactions": [
+    {
+      "id": "txn_1785047116245",
+      "resellerId": "reseller001",
+      "type": "sale",
+      "amount": -5,
+      "customerId": "test_cust_1785047115",
+      "customerName": "Test Customer 1785047115",
+      "packageName": "Test Package",
+      "date": "2026-07-26T06:25:16.245Z"
+    }
+  ],
   "plexServerUrl": "http://192.168.1.100:32400",
   "plexLocalUrl": "http://192.168.1.100:32400",
   "plexToken": "TY7JxXBoM71JjEVcMK1y",
