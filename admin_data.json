@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-10-10T04:53:13.141Z",
+  "exportDate": "2026-10-10T05:33:18.791Z",
   "customers": [
     {
       "id": "CUST_1783038826884",
@@ -364,7 +364,7 @@
   "creditTransfers": [],
   "resellerTransactions": [],
   "plexServerUrl": "http://192.168.1.100:32400",
-  "plexLocalUrl": "http://192.168.1.100:32400",
+  "plexLocalUrl": "http://192.168.2.100:32400",
   "plexToken": "M6jzhg_wc9qePR9Aw4zC",
   "plexMoviesSection": "5",
   "plexAdultSection": "4",
@@ -12829,8 +12829,8 @@
       "category": "series",
       "isSeries": true,
       "type": "series",
-      "thumb": "http://192.168.1.100:32400/library/metadata/14092/thumb/1790128361?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
-      "art": "http://192.168.1.100:32400/library/metadata/14092/art/1790128361?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+      "thumb": "http://192.168.1.100:32400/library/metadata/14092/thumb/1791608913?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+      "art": "http://192.168.1.100:32400/library/metadata/14092/art/1791608913?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
       "year": 2022,
       "ratingKey": "14092",
       "plexServer": "http://192.168.1.100:32400",
@@ -12848,7 +12848,7 @@
               "duration": 2537732,
               "seasonNumber": 1,
               "episodeNumber": 1,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14094/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14094/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/21964/1784844826/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -12859,7 +12859,7 @@
               "duration": 2625411,
               "seasonNumber": 1,
               "episodeNumber": 2,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14095/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14095/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/21965/1784844895/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -12870,7 +12870,7 @@
               "duration": 2609134,
               "seasonNumber": 1,
               "episodeNumber": 3,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14112/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14112/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/21998/1784845412/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -12881,7 +12881,7 @@
               "duration": 2517113,
               "seasonNumber": 1,
               "episodeNumber": 4,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14096/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14096/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/21967/1784844959/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -12892,7 +12892,7 @@
               "duration": 2511424,
               "seasonNumber": 1,
               "episodeNumber": 5,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14097/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14097/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/21968/1784845027/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -12903,7 +12903,7 @@
               "duration": 2525333,
               "seasonNumber": 1,
               "episodeNumber": 6,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14098/thumb/1790128349?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14098/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/21969/1784845092/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -12914,7 +12914,7 @@
               "duration": 2420007,
               "seasonNumber": 1,
               "episodeNumber": 7,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14099/thumb/1790128349?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14099/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/21970/1784845154/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -12925,7 +12925,7 @@
               "duration": 2593785,
               "seasonNumber": 1,
               "episodeNumber": 8,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14100/thumb/1790128349?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14100/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/21973/1784845220/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -12936,7 +12936,7 @@
               "duration": 2581270,
               "seasonNumber": 1,
               "episodeNumber": 9,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14101/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14101/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/21974/1784845283/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -12947,7 +12947,7 @@
               "duration": 2455348,
               "seasonNumber": 1,
               "episodeNumber": 10,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14102/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14102/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/21976/1784845347/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -12958,7 +12958,7 @@
               "duration": 2579064,
               "seasonNumber": 1,
               "episodeNumber": 11,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14103/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14103/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/21999/1784847113/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -12969,7 +12969,7 @@
               "duration": 2497631,
               "seasonNumber": 1,
               "episodeNumber": 12,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14105/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14105/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/22000/1784847121/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -12980,7 +12980,7 @@
               "duration": 2619141,
               "seasonNumber": 1,
               "episodeNumber": 13,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14106/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14106/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/22001/1784847188/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -12991,7 +12991,7 @@
               "duration": 2422422,
               "seasonNumber": 1,
               "episodeNumber": 14,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14104/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14104/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/22002/1784847251/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -13002,7 +13002,7 @@
               "duration": 2672454,
               "seasonNumber": 1,
               "episodeNumber": 15,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14107/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14107/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/22003/1784847320/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -13013,7 +13013,7 @@
               "duration": 2583568,
               "seasonNumber": 1,
               "episodeNumber": 16,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14115/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14115/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/22006/1784847575/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -13024,7 +13024,7 @@
               "duration": 2424860,
               "seasonNumber": 1,
               "episodeNumber": 17,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14116/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14116/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/22007/1784847770/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -13035,7 +13035,7 @@
               "duration": 2609505,
               "seasonNumber": 1,
               "episodeNumber": 18,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14117/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14117/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/22008/1784847908/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -13046,7 +13046,7 @@
               "duration": 2524009,
               "seasonNumber": 1,
               "episodeNumber": 19,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14118/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14118/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/22009/1784848150/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -13057,7 +13057,7 @@
               "duration": 2699459,
               "seasonNumber": 1,
               "episodeNumber": 20,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14119/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14119/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/22010/1784848006/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -13068,7 +13068,7 @@
               "duration": 3003455,
               "seasonNumber": 1,
               "episodeNumber": 21,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14126/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14126/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/22016/1784849815/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -13079,7 +13079,7 @@
               "duration": 2997093,
               "seasonNumber": 1,
               "episodeNumber": 22,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14127/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14127/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/22017/1784849898/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -13090,7 +13090,7 @@
               "duration": 2482028,
               "seasonNumber": 1,
               "episodeNumber": 23,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14128/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14128/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/22018/1784849964/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -13101,7 +13101,7 @@
               "duration": 2631448,
               "seasonNumber": 1,
               "episodeNumber": 24,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14130/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14130/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/22020/1784850029/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -13112,7 +13112,7 @@
               "duration": 2417987,
               "seasonNumber": 1,
               "episodeNumber": 25,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14131/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14131/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/22021/1784850086/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -13123,7 +13123,7 @@
               "duration": 2529861,
               "seasonNumber": 1,
               "episodeNumber": 26,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14146/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14146/thumb/1791608920?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/22040/1784850916/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
@@ -13134,7 +13134,7 @@
               "duration": 2567779,
               "seasonNumber": 1,
               "episodeNumber": 27,
-              "thumb": "http://192.168.1.100:32400/library/metadata/14147/thumb/1784854517?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+              "thumb": "http://192.168.1.100:32400/library/metadata/14147/thumb/1791608921?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "url": "http://192.168.1.100:32400/library/parts/22041/1784850988/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
               "plexToken": "M6jzhg_wc9qePR9Aw4zC"
             },
