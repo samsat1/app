@@ -7792,8 +7792,10 @@
         }
         
         // Show "Press OK to play" prompt for TV browsers when autoplay is blocked
-        function showTVPlayPrompt(content) {
+                function showTVPlayPrompt(content) {
+            return; // Bypasses the prompt layer completely
             const overlay = document.getElementById('videoOverlay');
+
             if (!overlay) return;
             
             overlay.style.display = 'flex';
