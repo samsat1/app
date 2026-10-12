@@ -10273,14 +10273,16 @@
                         }
                     });
                 } 
-                // For Safari (native HLS support)
+                                // For Safari (native HLS support)
                 else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
                     console.log('🎥 Using native HLS support (Safari)');
+                    videoElement.setAttribute('crossorigin', 'anonymous');
                     videoElement.src = streamUrl;
                     videoElement.addEventListener('loadedmetadata', function() {
                         videoElement.play().catch(function(e) {
                             console.log('Auto-play blocked');
                         });
+
                     });
                 }
                 else {
