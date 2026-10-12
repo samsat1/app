@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-10-12T01:04:39.650Z",
+  "exportDate": "2026-10-12T01:29:31.498Z",
   "customers": [
     {
       "id": "CUST_1783038826884",
@@ -364,7 +364,7 @@
   "creditTransfers": [],
   "resellerTransactions": [],
   "plexServerUrl": "http://192.168.1.100:32400",
-  "plexLocalUrl": "http://192.168.2.100:32400",
+  "plexLocalUrl": "http://127.0.0.1:32400",
   "plexToken": "M6jzhg_wc9qePR9Aw4zC",
   "plexMoviesSection": "5",
   "plexAdultSection": "4",
@@ -398,10 +398,11 @@
       "adult": false,
       "arabic": false,
       "type": "mp4",
-      "thumb": "",
-      "art": "",
-      "url": "http://192.168.1.100:32400/library/parts/31614/1791766998/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+      "thumb": "http://192.168.1.100:32400/library/metadata/18249/thumb/1791767639?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+      "art": "http://192.168.1.100:32400/library/metadata/18249/art/1791767639?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
+      "url": "http://192.168.1.100:32400/library/parts/31614/1791767575/file.mp4?X-Plex-Token=M6jzhg_wc9qePR9Aw4zC",
       "streamingMode": "on-demand",
+      "duration": 5246880,
       "ratingKey": "18249"
     }
   ],
