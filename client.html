@@ -6973,6 +6973,11 @@
                 content = contentData.live.content.find(item => String(item.id) === String(contentId));
                 if (content) console.log('📺 Found content in live section:', content.name);
             }
+			            if (!content && contentData.series?.content) {
+                content = contentData.series.content.find(item => String(item.id) === String(contentId));
+                if (content) console.log('📺 Found content in series section:', content.name);
+            }
+
             
             if (!content) {
                 console.log('❌ Content not found:', contentId, 'in sources:', Object.keys(contentData));
