@@ -7130,12 +7130,7 @@
                     let videoTimeout = setTimeout(() => {
                         console.log('⚠️ Video timeout - checking state');
                         if (video.readyState < 2) {
-                            console.error('❌ Video not ready, trying HLS fallback');
-                            // Try HLS fallback
-                            if (content.url.includes('.mp4')) {
-                                const hlsUrl = content.url.replace('.mp4', '/master.m3u8');
-                                handleHLSStream(hlsUrl + '?X-Plex-Token=' + token);
-                            }
+                            console.warn('⚠️ Slow network buffering - waiting for direct file stream');
                         }
                     }, 5000);
                     
@@ -7143,6 +7138,7 @@
                         console.log('✅ Video ready to play');
                         clearTimeout(videoTimeout);
                         video.play().catch(e => console.log('⚠️ Play failed:', e));
+
                     };
                     
                     video.onloadedmetadata = function() {
