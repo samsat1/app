@@ -10299,7 +10299,7 @@
                 // Non-HLS stream, use Video.js
                 console.log('🎥 Using Video.js for direct stream');
                 if (player) {
-                    player.src({ src: streamUrl, type: 'application/x-mpegURL' });
+                    player.src({ src: streamUrl, type: 'video/mp4' });
                     player.play().catch(function(e) {
                         console.log('Auto-play blocked');
                     });
