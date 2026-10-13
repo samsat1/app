@@ -7754,13 +7754,12 @@
                 nativeVideo.style.visibility = 'visible';
                 
                 // Set source directly on native video element
+                nativeVideo.setAttribute("crossorigin", "anonymous");
                 nativeVideo.src = content.url;
                 nativeVideo.load();
-                
                 // Add error listener
                 nativeVideo.onerror = function() {
                     console.error('❌ MP4 Video load error:', nativeVideo.error);
-                    showError('Failed to load MP4 video. URL may be invalid or server unreachable.');
                 };
                 
                 // Play immediately
@@ -7769,8 +7768,9 @@
                     playPromise.then(() => {
                         console.log('✅ TV Video playing in preview!');
                     }).catch(e => {
-                        console.log('⚠️ TV play failed:', e.message);
-                        showTVPlayPrompt(content);
+                        console.log('⚠️ TV play failed, trying muted forced playback:', e.message);
+                        nativeVideo.muted = true;
+                        nativeVideo.play();
                     });
                 }
             } else {
