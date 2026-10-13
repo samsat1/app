@@ -1,51 +1,51 @@
 <!DOCTYPE html>
-<!-- VERSION 7.0 - Fixed Plex Content Addon Filtering 2026-03-18 -->
-<!-- LOCAL VERSION - Green Indicator -->
-<html lang="en">
+<html lang="en-LB">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iWATCH TV - Professional Streaming</title>
-    <meta name="description" content="Professional IPTV streaming service with live TV, movies, and sports content">
-    <meta name="author" content="iWATCH TV">
-    <meta name="keywords" content="IPTV, streaming, live TV, movies, sports, entertainment">
-    
-    <!-- PWA Manifest for TV -->
-    <!-- PWA support - optional -->
-    <!-- <link rel="manifest" href="manifest.json"></link> -->
-    <meta name="theme-color" content="#7c3aed">
-    <meta name="background-color" content="#0f0f23">
-    
-    <!-- LOCAL VERSION INDICATOR - Green Dot -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>iWATCH TV - Professional Streaming Client</title>
     <style>
-    .local-indicator {
-        position: fixed;
-        top: 15px;
-        left: 15px;
-        z-index: 10000;
-        width: 14px;
-        height: 14px;
-        background: linear-gradient(135deg, #10b981, #059669);
-        border-radius: 50%;
-        box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
-        pointer-events: none;
-    }
-    .local-indicator::after {
-        content: 'LOCAL';
-        position: absolute;
-        left: 20px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: rgba(16, 185, 129, 0.9);
-        color: #fff;
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 10px;
-        font-weight: bold;
-        white-space: nowrap;
-    }
+        :root {
+            --bg-primary: #0f111a;
+            --bg-surface: #161925;
+            --bg-card: #1f2336;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-glow: rgba(59, 130, 246, 0.5);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-drag: none; }
+        body { background-color: var(--bg-primary); color: var(--text-main); font-family: sans-serif; overflow: hidden; width: 100vw; height: 100vh; display: flex; flex-direction: column; }
+        header { background-color: var(--bg-surface); height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 2px solid #1e2235; }
+        .logo-block { display: flex; align-items: center; gap: 15px; font-size: 24px; font-weight: 700; letter-spacing: 1px; color: var(--text-main); }
+        .system-ticker { font-size: 16px; color: var(--text-muted); font-weight: 500; }
+        .main-container { flex: 1; display: flex; overflow: hidden; width: 100%; }
+        .sidebar { width: 260px; background-color: var(--bg-surface); border-right: 2px solid #1e2235; display: flex; flex-direction: column; padding: 20px 0; gap: 10px; }
+        .menu-item { height: 55px; margin: 0 15px; padding: 0 20px; display: flex; align-items: center; gap: 15px; font-size: 18px; font-weight: 600; color: var(--text-muted); border-radius: 12px; cursor: pointer; transition: all 0.2s ease; background: transparent; border: none; text-align: left; width: calc(100% - 30px); }
+        .menu-item:focus, .menu-item.active { color: var(--text-main); background-color: var(--accent-color); box-shadow: 0 4px 14px var(--border-glow); outline: none; }
+        .viewport { flex: 1; padding: 30px 40px; overflow-y: auto; display: flex; flex-direction: column; gap: 25px; }
+        .category-title { font-size: 26px; font-weight: 700; letter-spacing: 0.5px; border-left: 5px solid var(--accent-color); padding-left: 15px; }
+        .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 25px; width: 100%; }
+        .movie-card { background-color: var(--bg-card); border-radius: 16px; overflow: hidden; aspect-ratio: 2/3; display: flex; flex-direction: column; position: relative; cursor: pointer; border: 2px solid transparent; transition: all 0.2s ease; outline: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .movie-card img { width: 100%; height: 100%; object-fit: cover; }
+        .movie-card .card-meta { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.9) 70%); padding: 20px 15px 15px 15px; display: flex; flex-direction: column; justify-content: flex-end; height: 50%; opacity: 0.9; }
+        .movie-card .title { font-size: 16px; font-weight: 700; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .movie-card:focus { transform: scale(1.06); border-color: var(--accent-color); box-shadow: 0 0 20px var(--border-glow); z-index: 10; }
+        .iwatch-player-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000; z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; }
+        video { width: 100%; height: 100%; object-fit: contain; background-color: #000; }
+        .player-controls { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 80%; background-color: rgba(15, 17, 26, 0.85); backdrop-filter: blur(10px); border-radius: 20px; padding: 20px 30px; display: flex; flex-direction: column; gap: 15px; border: 1px solid #2e344e; opacity: 0; transition: opacity 0.3s ease; }
+        .iwatch-player-overlay:hover .player-controls, .iwatch-player-overlay:focus-within .player-controls { opacity: 1; }
+        .progress-bar-container { width: 100%; height: 8px; background-color: rgba(255,255,255,0.2); border-radius: 4px; overflow: hidden; position: relative; }
+        .progress-bar-fill { width: 0%; height: 100%; background-color: var(--accent-color); transition: width 0.1s linear; }
+        .control-row { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+        .metadata-display { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
+        .time-display { font-size: 16px; font-weight: 600; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+        .button-pool { display: flex; gap: 15px; }
+        .control-btn { background-color: var(--bg-card); border: none; color: var(--text-main); padding: 10px 25px; font-size: 16px; font-weight: 600; border-radius: 10px; cursor: pointer; outline: none; transition: all 0.2s ease; }
+        .control-btn:focus { background-color: var(--accent-color); box-shadow: 0 0 12px var(--border-glow); }
+        .no-data-alert { grid-column: 1 / -1; text-align: center; padding: 60px 0; font-size: 18px; color: var(--text-muted); font-weight: 600; }
     </style>
-    
     <!-- App Icons - All TV Platforms -->
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
