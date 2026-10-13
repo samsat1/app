@@ -10173,15 +10173,17 @@
             if (typeof videojs !== 'undefined' && !player) {
                 const videoElement = document.getElementById('videoPlayer');
                 if (videoElement) {
-                    player = videojs(videoElement, {
+                     player = videojs(videoElement, {
                         controls: true,
                         autoplay: 'muted',
-                        preload: 'auto',
-                        fluid: true,
-                        playbackRates: [0.5, 1, 1.5, 2],
+                        preload: 'metadata',
+                        liveui: true,
                         html5: {
                             vhs: {
-                                overrideNative: true
+                                overrideNative: true,
+                                maxBufferLength: 2,
+                                maxBufferSize: 0,
+                                lowLatencyMode: true
                             }
                         }
                     });
