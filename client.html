@@ -10297,19 +10297,20 @@
                         });
                     }
                 }
-                                   } else {
-                // Non-HLS stream - Unified Safe Secure MP4 Playback Engine
+                                               } else {
+                // Non-HLS stream - Unified Safe Secure MP4 Playback Engine with Direct Stream Fallback
                 console.log('🎥 Initializing unblocked Video.js native hardware stream for MP4 asset');
                 if (typeof videojs !== 'undefined' && player) {
                     try {
-                        // Force full cross-origin unblock flags inside the player engine
+                        // FORCE Plex to bypass database locks and stream the raw video container bytes directly
+                        let optimizedUrl = streamUrl.includes('?') ? (streamUrl + "&download=1") : (streamUrl + "?download=1");
+                        
                         if (player.el_ && player.el_.querySelector('video')) {
                             player.el_.querySelector('video').setAttribute('crossorigin', 'anonymous');
                         }
                         
-                        // Use the official clean player API to load and execute the stream safely
                         player.src({ 
-                            src: streamUrl, 
+                            src: optimizedUrl, 
                             type: 'video/mp4' 
                         });
                         
@@ -10322,21 +10323,21 @@
                     } catch (err) {
                         console.error('💥 Player API routing error fallback:', err);
                         if (videoElement) {
+                            let optimizedUrl = streamUrl.includes('?') ? (streamUrl + "&download=1") : (streamUrl + "?download=1");
                             videoElement.setAttribute("crossorigin", "anonymous");
-                            videoElement.src = streamUrl;
+                            videoElement.src = optimizedUrl;
                             videoElement.load();
                             videoElement.play().catch(e => { videoElement.muted = true; videoElement.play(); });
                         }
                     }
                 } else if (videoElement) {
-                    // Fallback to raw native video container if player object is completely uninitialized
+                    let optimizedUrl = streamUrl.includes('?') ? (streamUrl + "&download=1") : (streamUrl + "?download=1");
                     videoElement.setAttribute("crossorigin", "anonymous");
-                    videoElement.src = streamUrl;
+                    videoElement.src = optimizedUrl;
                     videoElement.load();
                     videoElement.play().catch(e => { videoElement.muted = true; videoElement.play(); });
                 }
             }
-        };
 
         
         // Stop stream function enhancement
