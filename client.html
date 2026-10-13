@@ -10540,13 +10540,28 @@
                     }
                 }
                 
-                // OK / Enter Hardware Click Routing
+                // OK / Enter Hardware Click Routing with Accurate Login Modal Bridge
                 if (e.keyCode === 13 || e.keyCode === 23) {
-                    if (document.activeElement) {
-                        document.activeElement.click();
+                    let activeEl = document.activeElement;
+                    if (activeEl && activeEl !== document.body) {
+                        // Natively intercept execution if the remote target is the Guest profile banner chassis
+                        if (activeEl.id === 'userStatus' || activeEl.classList.contains('user-status')) {
+                            console.log('👤 Opening verified loginModal ID target...');
+                            const targetBox = document.getElementById('loginModal') || document.querySelector('.login-modal') || document.querySelector('.modal');
+                            if (targetBox) {
+                                targetBox.style.cssText = 'display:block!important;visibility:visible!important;opacity:1!important;';
+                                targetBox.classList.add('show');
+                                // Snap remote D-Pad focus straight inside your first input field instantly
+                                setTimeout(() => { document.getElementById('username')?.focus(); }, 150);
+                            }
+                        } else {
+                            activeEl.click();
+                        }
                         e.preventDefault();
+                        return;
                     }
                 }
+
                 
                 console.log('🎮 Remote Key:', e.key, e.keyCode);
             });
