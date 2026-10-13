@@ -10297,23 +10297,43 @@
                         });
                     }
                 }
-                        } else {
-                // Non-HLS stream - Force Raw Hardware Mapping Bypass Loop
-                console.log('🎥 Triggering raw hardware processing sandbox escape for direct MP4 deployment');
-                if (videoElement) {
-                    // Strip player wrappers to render the stream file container natively
-                    videoElement.removeAttribute('data-vjs-player');
-                    videoElement.className = "";
+                                   } else {
+                // Non-HLS stream - Unified Safe Secure MP4 Playback Engine
+                console.log('🎥 Initializing unblocked Video.js native hardware stream for MP4 asset');
+                if (typeof videojs !== 'undefined' && player) {
+                    try {
+                        // Force full cross-origin unblock flags inside the player engine
+                        if (player.el_ && player.el_.querySelector('video')) {
+                            player.el_.querySelector('video').setAttribute('crossorigin', 'anonymous');
+                        }
+                        
+                        // Use the official clean player API to load and execute the stream safely
+                        player.src({ 
+                            src: streamUrl, 
+                            type: 'video/mp4' 
+                        });
+                        
+                        player.load();
+                        player.play().catch(function(error) {
+                            console.log('⚠️ Muted playback fallback triggered:', error.message);
+                            player.muted(true);
+                            player.play().catch(err => console.log('Forced playback failed:', err));
+                        });
+                    } catch (err) {
+                        console.error('💥 Player API routing error fallback:', err);
+                        if (videoElement) {
+                            videoElement.setAttribute("crossorigin", "anonymous");
+                            videoElement.src = streamUrl;
+                            videoElement.load();
+                            videoElement.play().catch(e => { videoElement.muted = true; videoElement.play(); });
+                        }
+                    }
+                } else if (videoElement) {
+                    // Fallback to raw native video container if player object is completely uninitialized
                     videoElement.setAttribute("crossorigin", "anonymous");
                     videoElement.src = streamUrl;
                     videoElement.load();
-                    
-                    videoElement.play()
-                        .then(() => { console.log('Direct hardware rendering engine initialized safely.'); })
-                        .catch(function(e) { 
-                            videoElement.muted = true; 
-                            videoElement.play().catch(err => console.log('Playback completely blocked:', err)); 
-                        });
+                    videoElement.play().catch(e => { videoElement.muted = true; videoElement.play(); });
                 }
             }
         };
