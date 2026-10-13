@@ -10681,9 +10681,9 @@
     })();
     </script>
     
-    <!-- Enhanced CSS for Mobile & TV -->
+   <!-- Enhanced CSS for Mobile & TV -->
     <style>
-        /* 1. VIEWPORT CANVAS PROTECTION MATRIX */
+        /* 1. HARD RESETS AND VISUAL CANVAS PROPORTIONS */
         html, body {
             overflow: hidden !important;
             height: 100vh !important;
@@ -10694,20 +10694,12 @@
             position: relative !important;
             margin: 0 !important; padding: 0 !important;
             font-family: Arial, sans-serif !important;
-            display: block !important; /* Forcefully destroys clashing flex-direction column styles */
         }
         
-        /* Allow normal input text field selection and user focus inside forms */
-        input, textarea, select {
-            user-select: text !important;
-            -webkit-user-select: text !important;
-            cursor: text !important;
-        }
-        
-        /* 2. FORCE HORIZONTAL GRID SIDE-BY-SIDE SPACING ARRANGEMENT */
+        /* 2. SIDE-BY-SIDE FLEX CONTAINER LAYOUT */
         .app-container, .main-container, #appContainer, #mainContainer {
             display: flex !important;
-            flex-direction: row !important; /* Locks left-to-right horizontal alignment layout track */
+            flex-direction: row !important; /* Locks left-to-right layout path horizontally */
             justify-content: flex-start !important;
             align-items: stretch !important;
             position: absolute !important;
@@ -10721,7 +10713,7 @@
             box-sizing: border-box !important;
         }
         
-        /* Left Sidebar container locked cleanly to the left edge side */
+        /* Sidebar container locked cleanly to the left side edge */
         .sidebar, #sidebar {
             width: 280px !important;
             min-width: 280px !important;
@@ -10734,7 +10726,7 @@
             display: block !important;
         }
 
-        /* 3. VIEWPORT LOCK: Expands your main movie content area to fill the remaining space */
+        /* 3. REPAIRS MAIN CONTAINER BLOCK FROM DROPPING UNDER SIDEBAR */
         .viewport, .main-content, .content-area, #contentArea, #content_area, .main_content {
             flex: 1 !important;
             display: block !important;
@@ -10750,7 +10742,7 @@
             left: 0 !important; right: 0 !important; top: 0 !important;
         }
         
-        /* High-definition television remote selection focus outlines */
+        /* TV Focus Outlines with clean cyan highlights */
         .tv-focused, :focus {
             outline: 4px solid #00E5FF !important;
             outline-offset: 3px !important;
@@ -10764,14 +10756,14 @@
         }
     </style>
     
-    <!-- MASTER LOGIN OVERRIDE: Centers the layout window and deletes duplicate frames -->
+    <!-- MASTER LOGIN OVERRIDE: Hardware-Accelerated Centering & Layer Fixes -->
     <style>
-        /* 4. Locks your actual loginModal layout box dead-center in the middle of wide displays */
+        /* 4. Locks your actual loginModal layout box dead-center in the middle of your 65" screen */
         .login-modal, .adult-modal, .modal, #loginModal, #loginWindow, #loginFormContainer {
             position: fixed !important;
             top: 50% !important;
             left: 50% !important;
-            transform: translate(-50%, -50%) !important; /* Perfect 2D hardware-accelerated centering math */
+            transform: translate(-50%, -50%) !important; /* Perfect hardware-accelerated 2D centering matrix */
             width: 460px !important;
             max-width: 95% !important;
             height: auto !important;
@@ -10785,12 +10777,11 @@
             box-sizing: border-box !important;
         }
         
-        /* Class trigger hook to render the container view active cleanly on command */
         .login-modal.show, #loginModal.show, #loginWindow.show {
             display: block !important;
         }
 
-        /* 5. ELIMINATE LAYER CONFLICTS: Clears out the duplicate hidden window frame sitting behind your form */
+        /* 5. ELIMINATES THE SHADOW DUPLICATE BOX IN THE BACKGROUND */
         #loginWindow, .modal:not(#loginModal):not(.login-modal) {
             opacity: 0 !important;
             visibility: hidden !important;
@@ -10799,7 +10790,7 @@
             display: none !important;
         }
 
-        /* Force clear heavy Video.js processing overlays */
+        /* Clear blocking overlays */
         .vjs-big-play-button, .video-js .vjs-big-play-button, .vjs-loading-spinner, .vjs-error-display {
             display: none !important; visibility: hidden !important; opacity: 0 !important;
         }
@@ -10828,20 +10819,17 @@
                         modalBox.classList.add('show');
                         setTimeout(() => {
                             const inputField = document.getElementById('username') || modalBox.querySelector('input');
-                            if (inputField) {
-                                inputField.focus();
-                                inputField.select();
-                            }
+                            if (inputField) inputField.focus();
                         }, 150);
                     }
                 };
             }
 
-            // Lock the active submission router to pass variables cleanly through your database verification scripts
+            // Clean data verification loops to prevent form dropping or loops
             const loginFormElement = document.getElementById('loginForm') || document.querySelector('.login-form');
             if (loginFormElement) {
                 loginFormElement.onsubmit = function(e) {
-                    console.log('🔐 Processing user profile identity verification payload fields...');
+                    console.log('🔐 Processing clean verification submission payload...');
                     const modalBox = document.getElementById('loginModal') || document.querySelector('.login-modal') || document.querySelector('.modal');
                     if (modalBox) modalBox.classList.remove('show');
                     if (typeof handleLoginSubmit === 'function') {
@@ -10853,17 +10841,17 @@
             }
         }
 
-        // 7. STREAM OVERRIDE ENGINE: Rewrites video URLs dynamically on click to call direct local network routes
+        // 7. SECURE RE-ROUTING ENGINE: Patches protocols on-the-fly to unblock browser media playback lanes
         const originalLoadStream = window.loadStreamEnhanced;
         window.loadStreamEnhanced = function(streamUrl, contentName) {
-            console.log('🎥 Re-routing packet channels over unblocked local network stream lanes...');
+            console.log('🎥 Re-routing video stream channels over true operational network lanes...');
             let cleanedUrl = streamUrl;
             
-            // Redirect old disconnected IP networks out to your server's true VLAN home path
+            // Re-route IP lanes dynamically from .2 network to true .1 network path
             if (cleanedUrl.includes('192.168.2.100')) {
                 cleanedUrl = cleanedUrl.replace('192.168.2.100', '192.168.1.100');
             }
-            // Append direct download tokens to instantly force Plex to push raw file bytes to your TV box
+            // Append direct download tokens to bypass Plex relational API security masks instantly
             if (!cleanedUrl.includes('download=1')) {
                 cleanedUrl = cleanedUrl.includes('?') ? (cleanedUrl + '&download=1') : (cleanedUrl + '?download=1');
             }
@@ -10881,16 +10869,17 @@
             }
         };
 
-        // 8. ACCURATE SYSTEM INITIALIZATION BLOCK
+        // Initialize event triggers safely on application load (TYPO FIXED)
         function init() {
             if (typeof enableMobileTouch === 'function') enableMobileTouch();
             if (typeof initTouchSwipe === 'function') initTouchSwipe();
             if (typeof initTVRemoteEnhancement === 'function') initTVRemoteEnhancement();
             if (typeof manageTVFocus === 'function') manageTVFocus();
             bindGuestLoginTriggers();
+            console.log('✅ Mobile & TV Navigation System Hardened and Ready');
         }
 
-                // Initialize engine event hooks safely on page load
+        // Initialize engine event hooks safely on page load
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', init);
         } else {
@@ -10901,5 +10890,3 @@
     </script>
 </body>
 </html>
-
-
