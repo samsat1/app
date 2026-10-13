@@ -10683,7 +10683,6 @@
     
     <!-- Enhanced CSS for Mobile & TV -->
     <style>
-        /* 1. HARD LOCK THE VIEWPORT CANVAS FRAME MATRIX */
         html, body {
             overflow: hidden !important;
             height: 100vh !important;
@@ -10696,14 +10695,13 @@
             font-family: Arial, sans-serif !important;
         }
         
-        /* 2. FORCE INTUITIVE SIDE-BY-SIDE HORIZONTAL GRID LAYOUT */
         .app-container, .main-container, #appContainer, #mainContainer {
             display: flex !important;
-            flex-direction: row !important; /* Locks left-to-right horizontal alignment path */
+            flex-direction: row !important;
             justify-content: flex-start !important;
             align-items: stretch !important;
             position: absolute !important;
-            top: 70px !important; /* Spaces perfectly beneath your top navigation header bar */
+            top: 70px !important;
             bottom: 0 !important;
             left: 0 !important;
             right: 0 !important;
@@ -10713,7 +10711,6 @@
             box-sizing: border-box !important;
         }
         
-        /* Left Sidebar structural lane anchor */
         .sidebar, #sidebar {
             width: 280px !important;
             min-width: 280px !important;
@@ -10726,7 +10723,6 @@
             display: block !important;
         }
 
-        /* 3. VIEWPORT ALIGNMENT OVERRIDE: Stems late-running script positioning loops */
         .viewport, .main-content, .content-area, #contentArea, #content_area, .main_content {
             flex: 1 !important;
             display: block !important;
@@ -10742,7 +10738,6 @@
             left: 0 !important; right: 0 !important; top: 0 !important;
         }
         
-        /* High-definition television remote selection focus outlines */
         .tv-focused, :focus {
             outline: 4px solid #00E5FF !important;
             outline-offset: 3px !important;
@@ -10756,14 +10751,12 @@
         }
     </style>
     
-    <!-- MASTER LOGIN OVERRIDE: Centers the layout window and deletes duplicate frames -->
     <style>
-        /* 4. Locks your actual loginModal layout box dead-center in the middle of 65" displays */
         .login-modal, .adult-modal, .modal, #loginModal, #loginWindow, #loginFormContainer {
             position: fixed !important;
             top: 50% !important;
             left: 50% !important;
-            transform: translate(-50%, -50%) !important; /* hardware-accelerated center vector math */
+            transform: translate(-50%, -50%) !important;
             width: 460px !important;
             max-width: 95% !important;
             height: auto !important;
@@ -10777,12 +10770,10 @@
             box-sizing: border-box !important;
         }
         
-        /* Class trigger hook to render the container view active cleanly on command */
         .login-modal.show, #loginModal.show, #loginWindow.show {
             display: block !important;
         }
 
-        /* 5. ELIMINATE LAYER CONFLICTS: Clears the duplicate hidden window frame sitting behind your form */
         #loginWindow, .modal:not(#loginModal):not(.login-modal) {
             opacity: 0 !important;
             visibility: hidden !important;
@@ -10791,7 +10782,6 @@
             display: none !important;
         }
 
-        /* Force clear heavy Video.js processing overlays */
         .vjs-big-play-button, .video-js .vjs-big-play-button, .vjs-loading-spinner, .vjs-error-display {
             display: none !important; visibility: hidden !important; opacity: 0 !important;
         }
@@ -10807,13 +10797,11 @@
     </style>
 
     <script>
-        // 6. SINGLE-ACTION TRIGGER BINDINGS: Hooks up click handlers and form verifications safely
         function bindGuestLoginTriggers() {
             const guestButton = document.getElementById('userStatus') || document.querySelector('.user-status');
             if (guestButton) {
                 guestButton.style.cursor = 'pointer';
                 guestButton.onclick = function(e) {
-                    console.log('👤 Opening clean centered loginModal element block...');
                     const modalBox = document.getElementById('loginModal') || document.querySelector('.login-modal') || document.querySelector('.modal');
                     if (modalBox) {
                         modalBox.style.setProperty('display', 'block', 'important');
@@ -10826,11 +10814,9 @@
                 };
             }
 
-            // Lock the active submission router to pass variables cleanly through your Plex database scripts
             const loginFormElement = document.getElementById('loginForm') || document.querySelector('.login-form');
             if (loginFormElement) {
                 loginFormElement.onsubmit = function(e) {
-                    console.log('🔐 Processing user profile identity verification payload fields...');
                     const modalBox = document.getElementById('loginModal') || document.querySelector('.login-modal') || document.querySelector('.modal');
                     if (modalBox) modalBox.classList.remove('show');
                     if (typeof handleLoginSubmit === 'function') {
@@ -10842,10 +10828,8 @@
             }
         }
 
-        // 7. STREAM OVERRIDE ENGINE: Rewrites video URLs dynamically on click to call direct network routes
         const originalLoadStream = window.loadStreamEnhanced;
         window.loadStreamEnhanced = function(streamUrl, contentName) {
-            console.log('🎥 Re-routing packet channels over unblocked local network stream lanes...');
             let cleanedUrl = streamUrl;
             
             if (cleanedUrl.includes('192.168.2.100')) {
@@ -10868,24 +10852,21 @@
             }
         };
 
-        // 8. ACCURATE SYSTEM INITIALIZATION BLOCK (TYPO REMOVED)
         function init() {
-            enableMobileTouch();
-            initTouchSwipe();
-            initTVRemoteEnhancement();
-            manageTVFocus();
+            if (typeof enableMobileTouch === 'function') enableMobileTouch();
+            if (typeof initTouchSwipe === 'function') initTouchSwipe();
+            if (typeof initTVRemoteEnhancement === 'function') initTVRemoteEnhancement();
+            if (typeof manageTVFocus === 'function') manageTVFocus();
             bindGuestLoginTriggers();
-            console.log('✅ Mobile & TV Navigation System Ready');
         }
 
-        // Initialize engine event hooks safely on page load
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', init);
         } else {
             init();
         }
         setTimeout(init, 500);
-        setTimeout(init, 1500);
+        setTimeout(init, 1000);
     </script>
 </body>
 </html>
