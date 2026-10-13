@@ -10297,17 +10297,27 @@
                         });
                     }
                 }
-            } else {
-                // Non-HLS stream, use Video.js
-                console.log('🎥 Using Video.js for direct stream');
-                if (player) {
-                    player.src({ src: streamUrl, type: 'video/mp4' });
-                    player.play().catch(function(e) {
-                        console.log('Auto-play blocked');
-                    });
+                        } else {
+                // Non-HLS stream - Force Raw Hardware Mapping Bypass Loop
+                console.log('🎥 Triggering raw hardware processing sandbox escape for direct MP4 deployment');
+                if (videoElement) {
+                    // Strip player wrappers to render the stream file container natively
+                    videoElement.removeAttribute('data-vjs-player');
+                    videoElement.className = "";
+                    videoElement.setAttribute("crossorigin", "anonymous");
+                    videoElement.src = streamUrl;
+                    videoElement.load();
+                    
+                    videoElement.play()
+                        .then(() => { console.log('Direct hardware rendering engine initialized safely.'); })
+                        .catch(function(e) { 
+                            videoElement.muted = true; 
+                            videoElement.play().catch(err => console.log('Playback completely blocked:', err)); 
+                        });
                 }
             }
         };
+
         
         // Stop stream function enhancement
         window.stopStreamEnhanced = function() {
