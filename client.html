@@ -10645,7 +10645,7 @@
     
     <!-- Enhanced CSS for Mobile & TV -->
     <style>
-        /* Lock viewports to a strict, non-overflowing television canvas frame */
+        /* Lock the main television frame to prevent large monitor stretching */
         html, body {
             overflow: hidden !important;
             height: 100vh !important;
@@ -10654,106 +10654,127 @@
             background-color: #0f111a;
             position: relative !important;
             margin: 0; padding: 0;
+            font-family: sans-serif;
         }
         
-        /* Center and lock down your app container structures */
+        /* 👑 FIXED: Forces the left sidebar and right content area to sit perfectly side-by-side */
         .app-container, .main-container {
             display: flex !important;
+            flex-direction: row !important; /* Locks structural row path left-to-right */
             position: relative !important;
-            height: calc(100vh - 70px) !important; /* Accounts for header height */
+            height: calc(100vh - 70px) !important;
             width: 100% !important;
             overflow: hidden !important;
         }
         
-        /* Fixes the split page layout so the sidebar and grids sit beautifully side-by-side */
+        /* Sidebar container locked to the left side edge */
         .sidebar {
-            width: 260px !important;
+            width: 280px !important;
             height: 100% !important;
             flex-shrink: 0 !important;
             background-color: #161925;
             border-right: 2px solid #1e2235;
         }
 
+        /* 👑 FIXED: Forces the right movie page content area to stay locked on the right side */
         .viewport, .main-content, .content-area, #contentArea {
             flex: 1 !important;
+            width: calc(100% - 280px) !important;
             height: 100% !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
             padding: 30px 40px !important;
-            -webkit-overflow-scrolling: touch !important;
+            display: block !important;
         }
         
-        /* ✅ FIXED: High Visibility TV Focus Outlines with scaling triggers */
+        /* High Visibility TV Focus Outlines */
         .tv-focused, :focus {
             outline: 4px solid #00E5FF !important;
             outline-offset: 3px !important;
-            transform: scale(1.05);
+            transform: scale(1.02);
             z-index: 1000 !important;
             position: relative;
         }
         
-        /* Touch/D-Pad friendly targets */
         .content-card, .source-tab, .package-card, button {
             min-height: 48px; min-width: 48px;
             touch-action: manipulation;
         }
         
-        /* Horizontal scroll containers for carousels */
         .source-tabs, .package-tabs, .channel-list {
             overflow-x: auto !important;
             overflow-y: hidden !important;
             white-space: nowrap !important;
-            scroll-snap-type: x mandatory !important;
-        }
-        
-        .source-tab, .package-tab {
-            scroll-snap-align: start !important; flex-shrink: 0 !important;
         }
     </style>
     
-    <!-- FINAL OVERRIDE: Re-centers Modal Windows and Clears Video.js Overlays -->
+    <!-- FINAL OVERRIDE: Re-centers Modal Windows perfectly in the middle of 65" displays -->
     <style>
-        /* ✅ FIXED: Locks your Login window to the absolute center of your 65-inch screen */
+        /* 👑 FIXED: Locks your Login window layout to the absolute mathematical center of the screen */
         .login-modal, .adult-modal, .modal, #loginModal, #loginWindow {
             position: fixed !important;
             top: 50% !important;
             left: 50% !important;
-            transform: translate(-50%, -50%) !important; /* Perfect hardware-accelerated centering math */
-            width: 450px !important;
-            max-width: 90% !important;
+            transform: translate(-50%, -50%) !important; /* Perfect 2D center positioning matrix */
+            width: 460px !important;
+            max-width: 95% !important;
             background-color: #1f2336 !important;
-            border: 2px solid #3b82f6 !important;
+            border: 2px solid #00E5FF !important;
             border-radius: 20px !important;
-            padding: 30px !important;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), 0 0 25px var(--border-glow) !important;
-            z-index: 99999 !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-        }
-
-        /* FORCE hide all Video.js overlays */
-        .vjs-big-play-button, .video-js .vjs-big-play-button, .video-js button.vjs-big-play-button,
-        .vjs-loading-spinner, .video-js .vjs-loading-spinner, .vjs-poster, .video-js .vjs-poster,
-        .vjs-modal-dialog, .vjs-error-display {
-            display: none !important; visibility: hidden !important; opacity: 0 !important;
-            width: 0 !important; height: 0 !important; transform: scale(0) !important; pointer-events: none !important;
+            padding: 35px !important;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7) !important;
+            z-index: 999999 !important;
+            display: none; /* Controlled purely by visibility hooks */
         }
         
-        /* FORCE video elements visible */
-        video, .video-js video, video.vjs-tech, #videoPlayer {
+        .login-modal.show, #loginModal.show, #loginWindow.show {
+            display: block !important;
+        }
+
+        /* FORCE hide all Video.js blocking overlays */
+        .vjs-big-play-button, .video-js .vjs-big-play-button, .vjs-loading-spinner, .vjs-error-display {
+            display: none !important; visibility: hidden !important; opacity: 0 !important;
+        }
+        
+        video, #videoPlayer {
             display: block !important; visibility: visible !important; opacity: 1 !important;
             width: 100% !important; height: 100% !important;
         }
         
-        /* FORCE solid backgrounds - no blur lags on smart TVs */
         .header, .sidebar, .user-status {
             backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
         }
-
-        /* CRITICAL BROWSER FOCUS FALLBACK REPAIR RULE */
-        .login-icon, #loginIcon, .top-bar button, [tabindex]:focus {
-            outline: 4px solid #00E5FF !important; outline-offset: 3px !important;
-        }
     </style>
+
+    <script>
+        // 👑 FIXED: Unified Fail-Safe click routing that handles both mouse taps and D-Pad OK presses
+        function bindGuestLoginTriggers() {
+            const guestButton = document.getElementById('userStatus') || document.querySelector('.user-status');
+            if (guestButton) {
+                guestButton.style.cursor = 'pointer';
+                guestButton.onclick = function(e) {
+                    console.log('👤 Waking up loginModal engine via secure bypass controller...');
+                    const modalBox = document.getElementById('loginModal') || document.getElementById('loginWindow') || document.querySelector('.login-modal') || document.querySelector('.modal');
+                    if (modalBox) {
+                        modalBox.style.setProperty('display', 'block', 'important');
+                        modalBox.classList.add('show');
+                        setTimeout(() => {
+                            const inputField = document.getElementById('username') || modalBox.querySelector('input');
+                            if (inputField) inputField.focus();
+                        }, 150);
+                    }
+                };
+            }
+        }
+
+        // Initialize event observers instantly on page boot
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bindGuestLoginTriggers);
+        } else {
+            bindGuestLoginTriggers();
+        }
+        setTimeout(bindGuestLoginTriggers, 500);
+        setTimeout(bindGuestLoginTriggers, 1500);
+    </script>
 </body>
 </html>
