@@ -10683,97 +10683,115 @@
     
     <!-- Enhanced CSS for Mobile & TV -->
     <style>
-        /* Lock the primary television canvas frame to prevent large monitor pixel stretching */
+        /* 1. HARD LOCK THE VIEWPORT CANVAS FRAME MATRIX */
         html, body {
             overflow: hidden !important;
             height: 100vh !important;
             max-height: 100vh !important;
             width: 100vw !important;
-            background-color: #0f111a;
+            max-width: 100vw !important;
+            background-color: #0f111a !important;
             position: relative !important;
-            margin: 0; padding: 0;
-            font-family: Arial, sans-serif;
-            color: #ffffff;
+            margin: 0 !important; padding: 0 !important;
+            font-family: Arial, sans-serif !important;
         }
         
-        /* 👑 FIXED: Forces the sidebar and the main content page to lock side-by-side horizontally across 65" screens */
-        .app-container, .main-container {
+        /* 2. FORCE INTUITIVE SIDE-BY-SIDE HORIZONTAL GRID LAYOUT */
+        .app-container, .main-container, #appContainer, #mainContainer {
             display: flex !important;
-            flex-direction: row !important; /* Locks structural horizontal path left-to-right */
+            flex-direction: row !important; /* Locks left-to-right horizontal alignment path */
             justify-content: flex-start !important;
-            position: relative !important;
+            align-items: stretch !important;
+            position: absolute !important;
+            top: 70px !important; /* Spaces perfectly beneath your top navigation header bar */
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
             height: calc(100vh - 70px) !important;
-            width: 100% !important;
+            width: 100vw !important;
             overflow: hidden !important;
+            box-sizing: border-box !important;
         }
         
-        /* Sidebar container locked cleanly to the left side edge */
-        .sidebar {
+        /* Left Sidebar structural lane anchor */
+        .sidebar, #sidebar {
             width: 280px !important;
+            min-width: 280px !important;
+            max-width: 280px !important;
             height: 100% !important;
             flex-shrink: 0 !important;
-            background-color: #161925;
-            border-right: 2px solid #1e2235;
-            box-sizing: border-box;
+            background-color: #161925 !important;
+            border-right: 2px solid #1e2235 !important;
+            box-sizing: border-box !important;
+            display: block !important;
         }
 
-        /* 👑 FIXED: Forces the right movie page grid to spread beautifully across the remaining right side area */
-        .viewport, .main-content, .content-area, #contentArea {
+        /* 3. VIEWPORT ALIGNMENT OVERRIDE: Stems late-running script positioning loops */
+        .viewport, .main-content, .content-area, #contentArea, #content_area, .main_content {
             flex: 1 !important;
-            width: calc(100% - 280px) !important;
+            display: block !important;
+            position: relative !important;
+            width: calc(100vw - 280px) !important;
             height: 100% !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
             padding: 30px 40px !important;
-            display: block !important;
-            box-sizing: border-box;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+            background-color: #0f111a !important;
+            left: 0 !important; right: 0 !important; top: 0 !important;
         }
         
-        /* High Visibility TV Focus Outlines with clean cyan scaling triggers */
+        /* High-definition television remote selection focus outlines */
         .tv-focused, :focus {
             outline: 4px solid #00E5FF !important;
             outline-offset: 3px !important;
-            transform: scale(1.02);
-            z-index: 1000 !important;
-            position: relative;
+            transform: scale(1.02) !important;
+            z-index: 9999 !important;
         }
         
         .content-card, .source-tab, .package-card, button {
             min-height: 48px; min-width: 48px;
             touch-action: manipulation;
         }
-        
-        .source-tabs, .package-tabs, .channel-list {
-            overflow-x: auto !important;
-            overflow-y: hidden !important;
-            white-space: nowrap !important;
-        }
     </style>
     
-    <!-- FINAL OVERRIDE: Re-centers Modal Windows and Clears Video.js Overlays -->
+    <!-- MASTER LOGIN OVERRIDE: Centers the layout window and deletes duplicate frames -->
     <style>
-        /* Locks your Login window layout to the absolute mathematical center of your wide display */
-        .login-modal, .adult-modal, .modal, #loginModal, #loginWindow {
+        /* 4. Locks your actual loginModal layout box dead-center in the middle of 65" displays */
+        .login-modal, .adult-modal, .modal, #loginModal, #loginWindow, #loginFormContainer {
             position: fixed !important;
             top: 50% !important;
             left: 50% !important;
-            transform: translate(-50%, -50%) !important; /* Perfect hardware-accelerated centering matrix */
+            transform: translate(-50%, -50%) !important; /* hardware-accelerated center vector math */
             width: 460px !important;
             max-width: 95% !important;
+            height: auto !important;
             background-color: #1f2336 !important;
             border: 2px solid #00E5FF !important;
             border-radius: 20px !important;
             padding: 35px !important;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7) !important;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85) !important;
             z-index: 999999 !important;
             display: none; 
+            box-sizing: border-box !important;
         }
         
+        /* Class trigger hook to render the container view active cleanly on command */
         .login-modal.show, #loginModal.show, #loginWindow.show {
             display: block !important;
         }
 
-        /* FORCE hide all old Video.js blocking overlays */
+        /* 5. ELIMINATE LAYER CONFLICTS: Clears the duplicate hidden window frame sitting behind your form */
+        #loginWindow, .modal:not(#loginModal):not(.login-modal) {
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            z-index: -1000 !important;
+            display: none !important;
+        }
+
+        /* Force clear heavy Video.js processing overlays */
         .vjs-big-play-button, .video-js .vjs-big-play-button, .vjs-loading-spinner, .vjs-error-display {
             display: none !important; visibility: hidden !important; opacity: 0 !important;
         }
@@ -10789,14 +10807,14 @@
     </style>
 
     <script>
-        // 👑 FIXED: Hardened click router that intercepts Guest actions and unblocks login verification profiles
+        // 6. SINGLE-ACTION TRIGGER BINDINGS: Hooks up click handlers and form verifications safely
         function bindGuestLoginTriggers() {
             const guestButton = document.getElementById('userStatus') || document.querySelector('.user-status');
             if (guestButton) {
                 guestButton.style.cursor = 'pointer';
                 guestButton.onclick = function(e) {
-                    console.log('👤 Opening login modal overlay...');
-                    const modalBox = document.getElementById('loginModal') || document.getElementById('loginWindow') || document.querySelector('.login-modal') || document.querySelector('.modal') || document.getElementById('loginForm');
+                    console.log('👤 Opening clean centered loginModal element block...');
+                    const modalBox = document.getElementById('loginModal') || document.querySelector('.login-modal') || document.querySelector('.modal');
                     if (modalBox) {
                         modalBox.style.setProperty('display', 'block', 'important');
                         modalBox.classList.add('show');
@@ -10808,12 +10826,13 @@
                 };
             }
 
-            // 👑 FIXED: Intercepts the login submission to prevent silent data dropouts and logouts
+            // Lock the active submission router to pass variables cleanly through your Plex database scripts
             const loginFormElement = document.getElementById('loginForm') || document.querySelector('.login-form');
             if (loginFormElement) {
                 loginFormElement.onsubmit = function(e) {
-                    console.log('🔐 Processing user verification data submission fields...');
-                    // Allows the internal customer state functions to evaluate data before closing the tab windows
+                    console.log('🔐 Processing user profile identity verification payload fields...');
+                    const modalBox = document.getElementById('loginModal') || document.querySelector('.login-modal') || document.querySelector('.modal');
+                    if (modalBox) modalBox.classList.remove('show');
                     if (typeof handleLoginSubmit === 'function') {
                         handleLoginSubmit(e);
                     } else if (typeof loginUser === 'function') {
@@ -10823,16 +10842,15 @@
             }
         }
 
-        // 👑 FIXED: Fallback unblocked stream handler that injects raw Direct Stream parameters natively
+        // 7. STREAM OVERRIDE ENGINE: Rewrites video URLs dynamically on click to call direct network routes
         const originalLoadStream = window.loadStreamEnhanced;
         window.loadStreamEnhanced = function(streamUrl, contentName) {
-            console.log('🎬 Routing stream url over native unblocked local network path...');
-            // Clean out subnet mismatches dynamically on execution runtime
+            console.log('🎥 Re-routing packet channels over unblocked local network stream lanes...');
             let cleanedUrl = streamUrl;
+            
             if (cleanedUrl.includes('192.168.2.100')) {
                 cleanedUrl = cleanedUrl.replace('192.168.2.100', '192.168.1.100');
             }
-            // Inject direct download download headers to bypass Plex relational API filters instantly
             if (!cleanedUrl.includes('download=1')) {
                 cleanedUrl = cleanedUrl.includes('?') ? (cleanedUrl + '&download=1') : (cleanedUrl + '?download=1');
             }
@@ -10850,14 +10868,24 @@
             }
         };
 
-        // Initialize event observers instantly on page boot
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', bindGuestLoginTriggers);
-        } else {
+        // 8. ACCURATE SYSTEM INITIALIZATION BLOCK (TYPO REMOVED)
+        function init() {
+            enableMobileTouch();
+            initTouchSwipe();
+            initTVRemoteEnhancement();
+            manageTVFocus();
             bindGuestLoginTriggers();
+            console.log('✅ Mobile & TV Navigation System Ready');
         }
-        setTimeout(bindGuestLoginTriggers, 500);
-        setTimeout(bindGuestLoginTriggers, 1500);
+
+        // Initialize engine event hooks safely on page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+        setTimeout(init, 500);
+        setTimeout(init, 1500);
     </script>
 </body>
 </html>
