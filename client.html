@@ -10595,14 +10595,17 @@
             });
         }
         
-        // Initialize everything
-        function init() {
-            enableMobileTouch();
-            initTouchSwipe();
-            initTVRemoteEnhancement();
-            manageTVFocus();
-            console.log('✅ Mobile & TV Navigation System Ready');
-        }
+             // Map web browser mouse click triggers directly to your login window ID container
+            document.getElementById('userStatus')?.addEventListener('click', function(e) {
+                console.log('🖱️ Web click detected on Guest profile - launching modal view');
+                const targetBox = document.getElementById('loginModal') || document.querySelector('.login-modal') || document.querySelector('.modal');
+                if (targetBox) {
+                    targetBox.style.cssText = 'display:block!important;visibility:visible!important;opacity:1!important;';
+                    targetBox.classList.add('show');
+                    setTimeout(() => { document.getElementById('username')?.focus(); }, 150);
+                }
+            });
+
         
         // Run on load
         if (document.readyState === 'loading') {
