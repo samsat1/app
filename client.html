@@ -1,62 +1,51 @@
 <!DOCTYPE html>
-<html lang="en-LB">
+<!-- VERSION 7.0 - Fixed Plex Content Addon Filtering 2026-03-18 -->
+<!-- LOCAL VERSION - Green Indicator -->
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>iWATCH TV - Professional Streaming Client</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iWATCH TV - Professional Streaming</title>
+    <meta name="description" content="Professional IPTV streaming service with live TV, movies, and sports content">
+    <meta name="author" content="iWATCH TV">
+    <meta name="keywords" content="IPTV, streaming, live TV, movies, sports, entertainment">
+    
+    <!-- PWA Manifest for TV -->
+    <!-- PWA support - optional -->
+    <!-- <link rel="manifest" href="manifest.json"></link> -->
+    <meta name="theme-color" content="#7c3aed">
+    <meta name="background-color" content="#0f0f23">
+    
+    <!-- LOCAL VERSION INDICATOR - Green Dot -->
     <style>
-        :root {
-            --bg-primary: #0f111a;
-            --bg-surface: #161925;
-            --bg-card: #1f2336;
-            --accent-color: #3b82f6;
-            --accent-hover: #2563eb;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border-glow: rgba(59, 130, 246, 0.5);
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-drag: none; }
-        html, body { 
-            background-color: var(--bg-primary); 
-            color: var(--text-main); 
-            font-family: sans-serif; 
-            overflow: hidden; 
-            width: 100%; 
-            height: 100%; 
-            display: flex; 
-            flex-direction: column; 
-            margin: 0;
-            padding: 0;
-        }
-        header { background-color: var(--bg-surface); height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 2px solid #1e2235; }
-        .logo-block { display: flex; align-items: center; gap: 15px; font-size: 24px; font-weight: 700; letter-spacing: 1px; color: var(--text-main); }
-        .system-ticker { font-size: 16px; color: var(--text-muted); font-weight: 500; }
-        .main-container { flex: 1; display: flex; overflow: hidden; width: 100%; }
-        .sidebar { width: 260px; background-color: var(--bg-surface); border-right: 2px solid #1e2235; display: flex; flex-direction: column; padding: 20px 0; gap: 10px; }
-        .menu-item { height: 55px; margin: 0 15px; padding: 0 20px; display: flex; align-items: center; gap: 15px; font-size: 18px; font-weight: 600; color: var(--text-muted); border-radius: 12px; cursor: pointer; transition: all 0.2s ease; background: transparent; border: none; text-align: left; width: calc(100% - 30px); }
-        .menu-item:focus, .menu-item.active { color: var(--text-main); background-color: var(--accent-color); box-shadow: 0 4px 14px var(--border-glow); outline: none; }
-        .viewport { flex: 1; padding: 30px 40px; overflow-y: auto; display: flex; flex-direction: column; gap: 25px; }
-        .category-title { font-size: 26px; font-weight: 700; letter-spacing: 0.5px; border-left: 5px solid var(--accent-color); padding-left: 15px; }
-        .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 25px; width: 100%; }
-        .movie-card { background-color: var(--bg-card); border-radius: 16px; overflow: hidden; aspect-ratio: 2/3; display: flex; flex-direction: column; position: relative; cursor: pointer; border: 2px solid transparent; transition: all 0.2s ease; outline: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .movie-card img { width: 100%; height: 100%; object-fit: cover; }
-        .movie-card .card-meta { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.9) 70%); padding: 20px 15px 15px 15px; display: flex; flex-direction: column; justify-content: flex-end; height: 50%; opacity: 0.9; }
-        .movie-card .title { font-size: 16px; font-weight: 700; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .movie-card:focus { transform: scale(1.06); border-color: var(--accent-color); box-shadow: 0 0 20px var(--border-glow); z-index: 10; }
-        .iwatch-player-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000; z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; }
-        video { width: 100%; height: 100%; object-fit: contain; background-color: #000; }
-        .player-controls { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 80%; background-color: rgba(15, 17, 26, 0.85); backdrop-filter: blur(10px); border-radius: 20px; padding: 20px 30px; display: flex; flex-direction: column; gap: 15px; border: 1px solid #2e344e; opacity: 0; transition: opacity 0.3s ease; }
-        .iwatch-player-overlay:hover .player-controls, .iwatch-player-overlay:focus-within .player-controls { opacity: 1; }
-        .progress-bar-container { width: 100%; height: 8px; background-color: rgba(255,255,255,0.2); border-radius: 4px; overflow: hidden; position: relative; }
-        .progress-bar-fill { width: 0%; height: 100%; background-color: var(--accent-color); transition: width 0.1s linear; }
-        .control-row { display: flex; align-items: center; justify-content: space-between; width: 100%; }
-        .metadata-display { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
-        .time-display { font-size: 16px; font-weight: 600; color: var(--text-muted); font-variant-numeric: tabular-nums; }
-        .button-pool { display: flex; gap: 15px; }
-        .control-btn { background-color: var(--bg-card); border: none; color: var(--text-main); padding: 10px 25px; font-size: 16px; font-weight: 600; border-radius: 10px; cursor: pointer; outline: none; transition: all 0.2s ease; }
-        .control-btn:focus { background-color: var(--accent-color); box-shadow: 0 0 12px var(--border-glow); }
-        .no-data-alert { grid-column: 1 / -1; text-align: center; padding: 60px 0; font-size: 18px; color: var(--text-muted); font-weight: 600; }
+    .local-indicator {
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        z-index: 10000;
+        width: 14px;
+        height: 14px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+        pointer-events: none;
+    }
+    .local-indicator::after {
+        content: 'LOCAL';
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(16, 185, 129, 0.9);
+        color: #fff;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: bold;
+        white-space: nowrap;
+    }
     </style>
+    
     <!-- App Icons - All TV Platforms -->
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
@@ -826,12 +815,9 @@
             margin-top: 80px; /* Account for fixed header */
             height: calc(100vh - 80px);
             max-height: calc(100vh - 80px);
-            width: 100%; /* FIX: Ensure full width */
-            max-width: 100%; /* FIX: Remove any max-width constraint */
             overflow: hidden;
             position: relative;
             z-index: 1;
-            box-sizing: border-box;
         }
         
         /* Prevent body/html scroll - only content-list scrolls */
@@ -1798,11 +1784,6 @@
             min-width: 300px;
             border: 2px solid #667eea;
             box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
-            /* FIXED: Center the login modal properly */
-            position: relative;
-            margin: 0 auto;
-            left: 0;
-            right: 0;
             /* animation removed for WebView compatibility */
         }
 
@@ -2310,10 +2291,8 @@
             
             .login-content {
                 padding: 25px;
-                margin-top: 0;
-                margin-bottom: 0;
-                margin-left: auto;
-                margin-right: auto;
+                margin-top: 20px;
+                margin-bottom: 20px;
             }
             
             .login-title {
@@ -2365,10 +2344,9 @@
         /* TV Large Screen Optimizations */
         @media (min-width: 1920px) {
             .main-container {
-                max-width: 100%; /* FIX: Fill full screen */
-                margin: 0;
+                max-width: 1600px;
+                margin: 0 auto;
                 margin-top: 80px;
-                width: 100%;
             }
             
             .header {
@@ -6769,8 +6747,6 @@
             
             player = videojs('videoPlayer', {
                 controls: true,
-				autoplay: 'muted',
-                crossOrigin: 'anonymous',
                 responsive: true,
                 fluid: true,
                 bigPlayButton: false,
@@ -7776,12 +7752,13 @@
                 nativeVideo.style.visibility = 'visible';
                 
                 // Set source directly on native video element
-                nativeVideo.setAttribute("crossorigin", "anonymous");
                 nativeVideo.src = content.url;
                 nativeVideo.load();
+                
                 // Add error listener
                 nativeVideo.onerror = function() {
                     console.error('❌ MP4 Video load error:', nativeVideo.error);
+                    showError('Failed to load MP4 video. URL may be invalid or server unreachable.');
                 };
                 
                 // Play immediately
@@ -7790,9 +7767,8 @@
                     playPromise.then(() => {
                         console.log('✅ TV Video playing in preview!');
                     }).catch(e => {
-                        console.log('⚠️ TV play failed, trying muted forced playback:', e.message);
-                        nativeVideo.muted = true;
-                        nativeVideo.play();
+                        console.log('⚠️ TV play failed:', e.message);
+                        showTVPlayPrompt(content);
                     });
                 }
             } else {
@@ -8423,21 +8399,6 @@
                     hideLoginModal();
                 }
             });
-            
-            // FIX: User status click handler for login modal - works in browser
-            const userStatusEl = document.getElementById('userStatus');
-            if (userStatusEl) {
-                userStatusEl.addEventListener('click', function(e) {
-                    console.log('👤 User status clicked');
-                    if (typeof showLoginModal === 'function') {
-                        showLoginModal();
-                    } else {
-                        console.error('showLoginModal not found');
-                    }
-                });
-                // Also keep the onclick attribute as fallback
-                userStatusEl.style.cursor = 'pointer';
-            }
         }
 
         // Time Display
@@ -10334,48 +10295,17 @@
                         });
                     }
                 }
-                                               } else {
-                // Non-HLS stream - Unified Safe Secure MP4 Playback Engine with Direct Stream Fallback
-                console.log('🎥 Initializing unblocked Video.js native hardware stream for MP4 asset');
-                if (typeof videojs !== 'undefined' && player) {
-                    try {
-                        // FORCE Plex to bypass database locks and stream the raw video container bytes directly
-                        let optimizedUrl = streamUrl.includes('?') ? (streamUrl + "&download=1") : (streamUrl + "?download=1");
-                        
-                        if (player.el_ && player.el_.querySelector('video')) {
-                            player.el_.querySelector('video').setAttribute('crossorigin', 'anonymous');
-                        }
-                        
-                        player.src({ 
-                            src: optimizedUrl, 
-                            type: 'video/mp4' 
-                        });
-                        
-                        player.load();
-                        player.play().catch(function(error) {
-                            console.log('⚠️ Muted playback fallback triggered:', error.message);
-                            player.muted(true);
-                            player.play().catch(err => console.log('Forced playback failed:', err));
-                        });
-                    } catch (err) {
-                        console.error('💥 Player API routing error fallback:', err);
-                        if (videoElement) {
-                            let optimizedUrl = streamUrl.includes('?') ? (streamUrl + "&download=1") : (streamUrl + "?download=1");
-                            videoElement.setAttribute("crossorigin", "anonymous");
-                            videoElement.src = optimizedUrl;
-                            videoElement.load();
-                            videoElement.play().catch(e => { videoElement.muted = true; videoElement.play(); });
-                        }
-                    }
-                } else if (videoElement) {
-                    let optimizedUrl = streamUrl.includes('?') ? (streamUrl + "&download=1") : (streamUrl + "?download=1");
-                    videoElement.setAttribute("crossorigin", "anonymous");
-                    videoElement.src = optimizedUrl;
-                    videoElement.load();
-                    videoElement.play().catch(e => { videoElement.muted = true; videoElement.play(); });
+            } else {
+                // Non-HLS stream, use Video.js
+                console.log('🎥 Using Video.js for direct stream');
+                if (player) {
+                    player.src({ src: streamUrl, type: 'video/mp4' });
+                    player.play().catch(function(e) {
+                        console.log('Auto-play blocked');
+                    });
                 }
             }
-
+        };
         
         // Stop stream function enhancement
         window.stopStreamEnhanced = function() {
@@ -10503,7 +10433,6 @@
             }
         }
         
-
         // ===============================
         // TV REMOTE NAVIGATION ENHANCEMENT
         // ===============================
@@ -10528,106 +10457,23 @@
             document.dispatchEvent(event);
         }
         
-               // Enhanced TV remote key handler - Hardened Spatial Snapping
+        // Enhanced TV remote key handler
         function initTVRemoteEnhancement() {
             document.addEventListener('keydown', function(e) {
-                // Prevent default behavior for arrow keys to block raw page shifting
+                // Prevent default for arrow keys to avoid page scroll
                 if ([37, 38, 39, 40].includes(e.keyCode)) {
-                    e.preventDefault();
-                    
-                    // Gather every clickable and focusable item currently active on the page
-                    const interactables = Array.from(document.querySelectorAll('.source-tab, .content-card, .package-card, button, input, [tabindex], .login-icon, #loginIcon'))
-                                               .filter(el => el.offsetWidth > 0 && el.offsetHeight > 0);
-                    
-                    let active = document.activeElement;
-                    if (!interactables.includes(active)) {
-                        const fallbackItem = document.querySelector('.source-tab') || interactables[0];
-                        if (fallbackItem) fallbackItem.focus();
-                        return;
-                    }
-
-                    let activeRect = active.getBoundingClientRect();
-                    let bestTarget = null;
-                    let minDistance = Infinity;
-
-                    interactables.forEach(target => {
-                        if (target === active) return;
-                        let targetRect = target.getBoundingClientRect();
-
-                        // Compute center points of your layout boxes on the screen
-                        let activeX = activeRect.left + activeRect.width / 2;
-                        let activeY = activeRect.top + activeRect.height / 2;
-                        let targetX = targetRect.left + targetRect.width / 2;
-                        let targetY = targetRect.top + targetRect.height / 2;
-
-                        let dx = targetX - activeX;
-                        let dy = targetY - activeY;
-                        let isValidDirection = false;
-
-                        // Verify directional layout angles perfectly
-                        switch (e.keyCode) {
-                            case 37: // ◄ LEFT
-                                if (dx < -2 && Math.abs(dy) < Math.abs(dx) * 1.5) isValidDirection = true;
-                                break;
-                            case 39: // ► RIGHT
-                                if (dx > 2 && Math.abs(dy) < Math.abs(dx) * 1.5) isValidDirection = true;
-                                break;
-                            case 38: // ▲ UP
-                                if (dy < -2 && Math.abs(dx) < Math.abs(dy) * 1.5) isValidDirection = true;
-                                break;
-                            case 40: // ▼ DOWN
-                                if (dy > 2 && Math.abs(dx) < Math.abs(dy) * 1.5) isValidDirection = true;
-                                break;
-                        }
-
-                        if (isValidDirection) {
-                            // Calculate alignment vector scores
-                            let distance = Math.sqrt(dx * dx + dy * dy) + (Math.abs(e.keyCode === 38 || e.keyCode === 40 ? dx : dy) * 0.8);
-                            if (distance < minDistance) {
-                                minDistance = distance;
-                                bestTarget = target;
-                            }
-                        }
-                    });
-
-                    // Execute target element focus transition smoothly
-                    if (bestTarget) {
-                        bestTarget.focus();
-                        if (typeof bestTarget.scrollIntoView === 'function') {
-                            bestTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                        }
-                    }
-                }
-                
-                // OK / Enter Hardware Click Routing with Accurate Login Modal Bridge
-                if (e.keyCode === 13 || e.keyCode === 23) {
-                    let activeEl = document.activeElement;
-                    if (activeEl && activeEl !== document.body) {
-                        // Natively intercept execution if the remote target is the Guest profile banner chassis
-                        if (activeEl.id === 'userStatus' || activeEl.classList.contains('user-status')) {
-                            console.log('👤 Opening verified loginModal ID target...');
-                            const targetBox = document.getElementById('loginModal') || document.querySelector('.login-modal') || document.querySelector('.modal');
-                            if (targetBox) {
-                                targetBox.style.cssText = 'display:block!important;visibility:visible!important;opacity:1!important;';
-                                targetBox.classList.add('show');
-                                // Snap remote D-Pad focus straight inside your first input field instantly
-                                setTimeout(() => { document.getElementById('username')?.focus(); }, 150);
-                            }
-                        } else {
-                            activeEl.click();
-                        }
+                    // Only prevent if focus is on interactive element
+                    if (e.target.tagName === 'BODY' || e.target.classList.contains('content-card')) {
                         e.preventDefault();
-                        return;
                     }
                 }
-
                 
+                // Log keypress for debugging
                 console.log('🎮 Remote Key:', e.key, e.keyCode);
             });
             
-            console.log('✅ TV Remote enhancement active with directional snapping');
+            console.log('✅ TV Remote enhancement active');
         }
-
         
         // Focus management for TV
         function manageTVFocus() {
@@ -10654,17 +10500,14 @@
             });
         }
         
-             // Map web browser mouse click triggers directly to your login window ID container
-            document.getElementById('userStatus')?.addEventListener('click', function(e) {
-                console.log('🖱️ Web click detected on Guest profile - launching modal view');
-                const targetBox = document.getElementById('loginModal') || document.querySelector('.login-modal') || document.querySelector('.modal');
-                if (targetBox) {
-                    targetBox.style.cssText = 'display:block!important;visibility:visible!important;opacity:1!important;';
-                    targetBox.classList.add('show');
-                    setTimeout(() => { document.getElementById('username')?.focus(); }, 150);
-                }
-            });
-
+        // Initialize everything
+        function init() {
+            enableMobileTouch();
+            initTouchSwipe();
+            initTVRemoteEnhancement();
+            manageTVFocus();
+            console.log('✅ Mobile & TV Navigation System Ready');
+        }
         
         // Run on load
         if (document.readyState === 'loading') {
@@ -10681,7 +10524,7 @@
     })();
     </script>
     
-  <!-- Enhanced CSS for Mobile & TV -->
+    <!-- Enhanced CSS for Mobile & TV -->
     <style>
         /* Mobile Scroll Fix - Allow normal scrolling */
         html, body {
