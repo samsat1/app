@@ -10683,46 +10683,128 @@
     
   <!-- Enhanced CSS for Mobile & TV -->
     <style>
-        /* Restore original non-interfering television viewport styling */
+        /* Mobile Scroll Fix - Allow normal scrolling */
         html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #0f111a;
+            overflow: auto !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior: auto !important;
+            height: auto !important;
+            max-height: none !important;
+            position: static !important;
         }
         
-        /* High-visibility focused border outline helper for standard remote navigation */
-        .tv-focused, :focus {
-            outline: 3px solid #00E5FF !important;
-            outline-offset: 2px !important;
+        /* Content Areas - Enable Scroll */
+        .content-list,
+        .main-content,
+        .content-area,
+        #contentArea {
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
+            height: auto !important;
+            max-height: none !important;
+            position: static !important;
         }
         
-        /* Re-center standard modal inputs cleanly on screen */
-        .login-modal, .modal, #loginModal, #loginWindow {
-            position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            z-index: 99999 !important;
+        /* Remove any fixed positioning that blocks scrolling */
+        .app-container, 
+        .main-container,
+        .container {
+            position: static !important;
+            height: auto !important;
+            overflow: visible !important;
+        }
+        
+        /* TV Focus Styles - High Visibility */
+        .tv-focused {
+            outline: 4px solid #00E5FF !important;
+            outline-offset: 3px !important;
+            transform: scale(1.05);
+            z-index: 1000 !important;
+            position: relative;
+        }
+        
+        /* Touch-friendly targets */
+        .content-card,
+        .source-tab,
+        .package-card,
+        button {
+            min-height: 48px;
+            min-width: 48px;
+            touch-action: manipulation;
+        }
+        
+        /* Horizontal scroll containers */
+        .source-tabs,
+        .package-tabs {
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            white-space: nowrap !important;
+            -webkit-overflow-scrolling: touch !important;
+            scroll-snap-type: x mandatory !important;
+            -webkit-scroll-snap-type: mandatory;
+        }
+        
+        .source-tab,
+        .package-tab {
+            scroll-snap-align: start !important;
+            flex-shrink: 0 !important;
+        }
+        
+        /* Disable pull-to-refresh on mobile */
+        body {
+            overscroll-behavior-y: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Prevent zoom on double tap */
+        * {
+            touch-action: manipulation;
         }
     </style>
-
-    <script>
-        // Restored default boot initializer mapping
-        function init() {
-            if (typeof enableMobileTouch === 'function') enableMobileTouch();
-            if (typeof initTouchSwipe === 'function') initTouchSwipe();
-            if (typeof initTVRemoteEnhancement === 'function') initTVRemoteEnhancement();
-            if (typeof manageTVFocus === 'function') manageTVFocus();
-            console.log('✅ Application layout safely restored to original baseline.');
+    
+    <!-- FINAL OVERRIDE: Load LAST to override Video.js -->
+    <style>
+        /* FORCE hide all Video.js overlays - loads after Video.js */
+        .vjs-big-play-button,
+        .video-js .vjs-big-play-button,
+        .video-js button.vjs-big-play-button,
+        .vjs-loading-spinner,
+        .video-js .vjs-loading-spinner,
+        .vjs-poster,
+        .video-js .vjs-poster,
+        .vjs-modal-dialog,
+        .vjs-error-display {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            width: 0 !important;
+            height: 0 !important;
+            transform: scale(0) !important;
+            pointer-events: none !important;
         }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
-        } else {
-            init();
+        
+        /* FORCE no blur anywhere */
+        * {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
         }
-    </script>
+        
+        /* FORCE video visible */
+        video, .video-js video, video.vjs-tech, #videoPlayer {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+        
+        /* FORCE solid backgrounds - no blur */
+        .login-modal, .adult-modal, .header, .sidebar, .user-status {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+    </style>
 </body>
 </html>
