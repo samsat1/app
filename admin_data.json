@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-10-20T08:40:20.892Z",
+  "exportDate": "2026-10-20T21:55:26.382Z",
   "customers": [
     {
       "id": "CUST_1783038826884",
@@ -443,6 +443,24 @@
       "year": 2023,
       "duration": 6316083,
       "ratingKey": "18581"
+    },
+    {
+      "id": "plex_5_18615",
+      "name": "Money Talks",
+      "description": "Chris Tucker is a small time con man who instantly becomes famous after a murder, wanted dead or alive, his only hope is a journalist named James Russell (Sheen).",
+      "category": "movie",
+      "isAdult": false,
+      "isArabic": false,
+      "adult": false,
+      "arabic": false,
+      "type": "mp4",
+      "thumb": "http://192.168.1.100:32400/library/metadata/18615/thumb/1792485948?X-Plex-Token=cjjZ7-JgSeEPLFiqJube",
+      "art": "http://192.168.1.100:32400/library/metadata/18615/art/1792485948?X-Plex-Token=cjjZ7-JgSeEPLFiqJube",
+      "url": "http://192.168.1.100:32400/library/parts/32440/1783572555/file.mp4?X-Plex-Token=cjjZ7-JgSeEPLFiqJube",
+      "streamingMode": "on-demand",
+      "year": 1997,
+      "duration": 7343728,
+      "ratingKey": "18615"
     }
   ],
   "plexAdultCache": [
