@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-10-24T18:08:49.504Z",
+  "exportDate": "2026-10-26T01:39:07.107Z",
   "packages": [
     {
       "name": "Basic",
@@ -148,118 +148,6 @@
       "id": "PKG_1792692344385"
     }
   ],
-  "resellers": {
-    "reseller001": {
-      "name": "Reseller 001",
-      "id": "reseller001",
-      "username": "reseller001",
-      "password": "res001_pass",
-      "status": "active",
-      "commissionRate": 20,
-      "walletBalance": 0
-    },
-    "reseller002": {
-      "name": "Reseller 002",
-      "id": "reseller002",
-      "username": "reseller002",
-      "password": "res002_pass",
-      "status": "active",
-      "commissionRate": 20,
-      "walletBalance": 0
-    },
-    "reseller003": {
-      "name": "Reseller 003",
-      "id": "reseller003",
-      "username": "reseller003",
-      "password": "res003_pass",
-      "status": "active",
-      "commissionRate": 20,
-      "walletBalance": 0
-    },
-    "reseller004": {
-      "name": "Reseller 004",
-      "id": "reseller004",
-      "username": "reseller004",
-      "password": "res004_pass",
-      "status": "active",
-      "commissionRate": 20,
-      "walletBalance": 0
-    },
-    "reseller005": {
-      "name": "Reseller 005",
-      "id": "reseller005",
-      "username": "reseller005",
-      "password": "res005_pass",
-      "status": "active",
-      "commissionRate": 20,
-      "walletBalance": 0
-    },
-    "reseller006": {
-      "name": "Reseller 006",
-      "id": "reseller006",
-      "username": "reseller006",
-      "password": "res006_pass",
-      "status": "active",
-      "commissionRate": 20,
-      "walletBalance": 0
-    },
-    "reseller007": {
-      "name": "Reseller 007",
-      "id": "reseller007",
-      "username": "reseller007",
-      "password": "res007_pass",
-      "status": "active",
-      "commissionRate": 20,
-      "walletBalance": 0
-    },
-    "reseller008": {
-      "name": "Reseller 008",
-      "id": "reseller008",
-      "username": "reseller008",
-      "password": "res008_pass",
-      "status": "active",
-      "commissionRate": 20,
-      "walletBalance": 0
-    },
-    "reseller009": {
-      "name": "Reseller 009",
-      "id": "reseller009",
-      "username": "reseller009",
-      "password": "res009_pass",
-      "status": "active",
-      "commissionRate": 20,
-      "walletBalance": 0
-    },
-    "reseller010": {
-      "name": "Reseller 010",
-      "id": "reseller010",
-      "username": "reseller010",
-      "password": "res010_pass",
-      "status": "active",
-      "commissionRate": 20,
-      "walletBalance": 0
-    },
-    "reseller011": {
-      "name": "Reseller 011",
-      "id": "reseller011",
-      "username": "reseller011",
-      "password": "res011_pass",
-      "status": "active",
-      "commissionRate": 20,
-      "walletBalance": 0
-    },
-    "reseller012": {
-      "name": "Reseller 012",
-      "id": "reseller012",
-      "username": "reseller012",
-      "password": "res012_pass",
-      "status": "active",
-      "commissionRate": 20,
-      "walletBalance": 0
-    }
-  },
-  "creditTransfers": [],
-  "resellerTransactions": [],
   "plexServerUrl": "http://192.168.2.100:32400",
   "plexLocalUrl": "http://127.0.0.1:32400",
   "mediaBaseUrl": "http://192.168.2.100:32400",
@@ -269,7 +157,7 @@
   "plexArabicSection": "16",
   "plexSeriesSection": "24",
   "contentSources": [],
-  "tvSyncUrl": "http://192.168.2.100:8080/admin_data.json",
+  "tvSyncUrl": "https://raw.githubusercontent.com/samsat1/app/main/admin_data.json",
   "githubSyncUrl": "https://raw.githubusercontent.com/samsat1/app/main/admin_data.json",
   "githubUsername": "samsat1",
   "githubRepo": "app",
