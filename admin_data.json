@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-10-26T01:39:13.354Z",
+  "exportDate": "2026-10-26T08:35:51.137Z",
   "packages": [
     {
       "name": "Basic",
@@ -156,8 +156,117 @@
   "plexAdultSection": "4",
   "plexArabicSection": "16",
   "plexSeriesSection": "24",
-  "contentSources": [],
-  "tvSyncUrl": "https://raw.githubusercontent.com/samsat1/app/main/admin_data.json",
+  "contentSources": [
+    {
+      "id": "hd_1_mvoult23",
+      "name": "Red TV HD",
+      "type": "Live TV Channel",
+      "url": "https://lyrics-viewing-routes-had.trycloudflare.com/live/1.m3u8?k=68cd694ee0fbd4d7bd7f5fdcf875db34",
+      "quality": "HD",
+      "packageId": "PKG_1792691952555",
+      "packageName": "Basic",
+      "category": "live-tv",
+      "addedAt": "2026-10-26T06:00:56.667Z",
+      "active": true
+    },
+    {
+      "id": "hd_2_mvoult24",
+      "name": "OTV",
+      "type": "Live TV Channel",
+      "url": "https://lyrics-viewing-routes-had.trycloudflare.com/live/2.m3u8?k=7a03e0c3b70f48207025f0aea8c69f92",
+      "quality": "HD",
+      "packageId": "PKG_1792691952555",
+      "packageName": "Basic",
+      "category": "live-tv",
+      "addedAt": "2026-10-26T06:00:56.668Z",
+      "active": true
+    },
+    {
+      "id": "hd_3_mvoult24",
+      "name": "NBN",
+      "type": "Live TV Channel",
+      "url": "https://lyrics-viewing-routes-had.trycloudflare.com/live/3.m3u8?k=06d46d734221ecdedc6d18e6b4ccfabd",
+      "quality": "HD",
+      "packageId": "PKG_1792691952555",
+      "packageName": "Basic",
+      "category": "live-tv",
+      "addedAt": "2026-10-26T06:00:56.668Z",
+      "active": true
+    },
+    {
+      "id": "hd_4_mvoult24",
+      "name": "Arabica",
+      "type": "Live TV Channel",
+      "url": "https://lyrics-viewing-routes-had.trycloudflare.com/live/4.m3u8?k=d225435502e3ed3f927942b62fa085c1",
+      "quality": "HD",
+      "packageId": "PKG_1792691952555",
+      "packageName": "Basic",
+      "category": "live-tv",
+      "addedAt": "2026-10-26T06:00:56.668Z",
+      "active": true
+    },
+    {
+      "id": "hd_5_mvoult24",
+      "name": "Aghani",
+      "type": "Live TV Channel",
+      "url": "https://lyrics-viewing-routes-had.trycloudflare.com/live/5.m3u8?k=9411e49575266a4cb8f7d6b4e42d2612",
+      "quality": "HD",
+      "packageId": "PKG_1792691952555",
+      "packageName": "Basic",
+      "category": "live-tv",
+      "addedAt": "2026-10-26T06:00:56.668Z",
+      "active": true
+    },
+    {
+      "id": "hd_6_mvoult24",
+      "name": "MTV Lebanon HD",
+      "type": "Live TV Channel",
+      "url": "https://lyrics-viewing-routes-had.trycloudflare.com/live/6.m3u8?k=b0c87e4d6dece78582612cd284208937",
+      "quality": "HD",
+      "packageId": "PKG_1792691952555",
+      "packageName": "Basic",
+      "category": "live-tv",
+      "addedAt": "2026-10-26T06:00:56.668Z",
+      "active": true
+    },
+    {
+      "id": "hd_7_mvoult24",
+      "name": "ONE TV  HD",
+      "type": "Live TV Channel",
+      "url": "https://lyrics-viewing-routes-had.trycloudflare.com/live/7.m3u8?k=e506ff364c1ec6736b18c525c9298229",
+      "quality": "HD",
+      "packageId": "PKG_1792691952555",
+      "packageName": "Basic",
+      "category": "live-tv",
+      "addedAt": "2026-10-26T06:00:56.668Z",
+      "active": true
+    },
+    {
+      "id": "hd_8_mvoult24",
+      "name": "ALJADEED TV HD",
+      "type": "Live TV Channel",
+      "url": "https://lyrics-viewing-routes-had.trycloudflare.com/live/8.m3u8?k=17abf3d55b33cbb36534855ec2cf9a68",
+      "quality": "HD",
+      "packageId": "PKG_1792691952555",
+      "packageName": "Basic",
+      "category": "live-tv",
+      "addedAt": "2026-10-26T06:00:56.668Z",
+      "active": true
+    },
+    {
+      "id": "hd_9_mvoult24",
+      "name": "LBC International",
+      "type": "Live TV Channel",
+      "url": "https://lyrics-viewing-routes-had.trycloudflare.com/live/9.m3u8?k=397b7e1251d673dd81886df5f1cf2a8d",
+      "quality": "HD",
+      "packageId": "PKG_1792691952555",
+      "packageName": "Basic",
+      "category": "live-tv",
+      "addedAt": "2026-10-26T06:00:56.668Z",
+      "active": true
+    }
+  ],
+  "tvSyncUrl": "http://192.168.2.100:8080/admin_data.json",
   "githubSyncUrl": "https://raw.githubusercontent.com/samsat1/app/main/admin_data.json",
   "githubUsername": "samsat1",
   "githubRepo": "app",
