@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exportDate": "2026-10-30T03:05:15.449Z",
+  "exportDate": "2026-10-30T22:40:17.558Z",
   "packages": [
     {
       "name": "Basic",
@@ -467,6 +467,138 @@
       "packageName": "Sports Plus",
       "category": "sports-plus",
       "addedAt": "2026-10-30T03:03:53.186Z",
+      "active": true
+    },
+    {
+      "id": "hd_27_mvvk1kex",
+      "name": "MBC 1",
+      "type": "Live TV Channel",
+      "url": "http://192.168.2.100:8090/live/27.m3u8?k=afac841ec854fe29bb651333870ce128",
+      "quality": "HD",
+      "packageId": "PKG_1792691952555",
+      "packageName": "Basic",
+      "category": "live-tv",
+      "addedAt": "2026-10-30T22:39:39.417Z",
+      "active": true
+    },
+    {
+      "id": "hd_28_mvvk1kex",
+      "name": "MBC 4",
+      "type": "Live TV Channel",
+      "url": "http://192.168.2.100:8090/live/28.m3u8?k=b29c9f0feee4e65c2132a609df20b4ad",
+      "quality": "HD",
+      "packageId": "PKG_1792691952555",
+      "packageName": "Basic",
+      "category": "live-tv",
+      "addedAt": "2026-10-30T22:39:39.417Z",
+      "active": true
+    },
+    {
+      "id": "hd_29_mvvk1kex",
+      "name": "MBC Drama",
+      "type": "Live TV Channel",
+      "url": "http://192.168.2.100:8090/live/29.m3u8?k=975aac101ea63e34fecf37fd1f0ce626",
+      "quality": "HD",
+      "packageId": "PKG_1792691952555",
+      "packageName": "Basic",
+      "category": "live-tv",
+      "addedAt": "2026-10-30T22:39:39.417Z",
+      "active": true
+    },
+    {
+      "id": "hd_30_mvvk1kex",
+      "name": "CNN",
+      "type": "Live TV Channel",
+      "url": "http://192.168.2.100:8090/live/30.m3u8?k=a6180d1606028a8e54ac0ae739f706bc",
+      "quality": "HD",
+      "packageId": "PKG_1792691952555",
+      "packageName": "Basic",
+      "category": "live-tv",
+      "addedAt": "2026-10-30T22:39:39.417Z",
+      "active": true
+    },
+    {
+      "id": "hd_31_mvvk1kex",
+      "name": "Al Jazeera Documentary",
+      "type": "Live TV Channel",
+      "url": "http://192.168.2.100:8090/live/31.m3u8?k=be4fe7c0f042d267e35ec7aa51bf6bc5",
+      "quality": "HD",
+      "packageId": "PKG_1792691952555",
+      "packageName": "Basic",
+      "category": "live-tv",
+      "addedAt": "2026-10-30T22:39:39.417Z",
+      "active": true
+    },
+    {
+      "id": "hd_32_mvvk1kex",
+      "name": "MBC Bollywood",
+      "type": "Live TV Channel",
+      "url": "http://192.168.2.100:8090/live/32.m3u8?k=add1b18eb5970c6fdac94203f0f7bcb3",
+      "quality": "HD",
+      "packageId": "PKG_1792691952555",
+      "packageName": "Basic",
+      "category": "live-tv",
+      "addedAt": "2026-10-30T22:39:39.417Z",
+      "active": true
+    },
+    {
+      "id": "hd_33_mvvk1kex",
+      "name": "Al Jazeera",
+      "type": "Live TV Channel",
+      "url": "http://192.168.2.100:8090/live/33.m3u8?k=30df961b5318a1de2606bd27eca9c805",
+      "quality": "HD",
+      "packageId": "PKG_1792691952555",
+      "packageName": "Basic",
+      "category": "live-tv",
+      "addedAt": "2026-10-30T22:39:39.417Z",
+      "active": true
+    },
+    {
+      "id": "hd_34_mvvk1kex",
+      "name": "MBC 2",
+      "type": "Live TV Channel",
+      "url": "http://192.168.2.100:8090/live/34.m3u8?k=5305180b0acc883efbf5f5baac989a6d",
+      "quality": "HD",
+      "packageId": "PKG_1792691952555",
+      "packageName": "Basic",
+      "category": "live-tv",
+      "addedAt": "2026-10-30T22:39:39.417Z",
+      "active": true
+    },
+    {
+      "id": "hd_35_mvvk1kex",
+      "name": "MBC Action",
+      "type": "Live TV Channel",
+      "url": "http://192.168.2.100:8090/live/35.m3u8?k=fdb095677c1ac8d6f457a65a9db7f7ef",
+      "quality": "HD",
+      "packageId": "PKG_1792691952555",
+      "packageName": "Basic",
+      "category": "live-tv",
+      "addedAt": "2026-10-30T22:39:39.417Z",
+      "active": true
+    },
+    {
+      "id": "hd_36_mvvk1kex",
+      "name": "Al Hadath",
+      "type": "Live TV Channel",
+      "url": "http://192.168.2.100:8090/live/36.m3u8?k=e1be53c808984b10411d91649f56972f",
+      "quality": "HD",
+      "packageId": "PKG_1792691952555",
+      "packageName": "Basic",
+      "category": "live-tv",
+      "addedAt": "2026-10-30T22:39:39.417Z",
+      "active": true
+    },
+    {
+      "id": "hd_37_mvvk1kex",
+      "name": "Al Arabiya",
+      "type": "Live TV Channel",
+      "url": "http://192.168.2.100:8090/live/37.m3u8?k=3b6c008369700c6425f7ed2714b46538",
+      "quality": "HD",
+      "packageId": "PKG_1792691952555",
+      "packageName": "Basic",
+      "category": "live-tv",
+      "addedAt": "2026-10-30T22:39:39.417Z",
       "active": true
     }
   ],
